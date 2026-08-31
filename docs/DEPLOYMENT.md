@@ -39,6 +39,8 @@ docker compose up -d backend
 curl -fsS http://127.0.0.1:3000/api/health
 ```
 
+Compose 默认只将 MySQL 和 Backend 发布到 `127.0.0.1`；公网访问必须经过受控 Nginx/HTTPS，禁止直接开放数据库或应用容器端口。
+
 将 `deploy/nginx/sowind-crm.conf.example` 复制到 Nginx，并替换域名。TLS 证书由生产环境证书管理工具配置。
 
 ## 日常发布
@@ -86,4 +88,3 @@ tar -czf sowind_storage_$(date +%Y%m%d_%H%M%S).tgz storage
 - 429/503/Timeout：由 Outbox 自动退避；不要从浏览器直发。
 - Dead Letter：确认根因和 Payload 后，由有 `lead.sync` 权限的账号重新激活。
 - 账号泄露：立即禁用或重置，系统会撤销 Session；再检查审计日志。
-
