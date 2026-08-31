@@ -33,7 +33,7 @@ RUN_SOWIND_LIVE_TESTS=false
 ```bash
 docker compose build backend
 docker compose up -d mysql
-docker compose run --rm backend npx prisma migrate deploy --schema backend/prisma/schema.prisma
+docker compose run --rm backend npm --workspace backend exec -- prisma migrate deploy --schema prisma/schema.prisma
 docker compose run --rm backend node backend/dist/prisma/seed.js
 docker compose up -d backend
 curl -fsS http://127.0.0.1:3000/api/health
