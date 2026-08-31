@@ -1,0 +1,19 @@
+{
+  "name": "sowind-crm",
+  "version": "1.15.0",
+  "private": true,
+  "workspaces": ["backend"],
+  "overrides": { "exceljs": { "uuid": "11.1.1" } },
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "dev": "npm --workspace backend run dev",
+    "build": "npm --workspace backend run build",
+    "start": "npm --workspace backend run start",
+    "test": "npm --workspace backend run test",
+    "lint": "npm --workspace backend run lint",
+    "prisma:generate": "npm --workspace backend run prisma:generate",
+    "prisma:validate": "node scripts/with-env.mjs npm --workspace backend run prisma:validate",
+    "prisma:migrate:deploy": "node scripts/with-env.mjs npm --workspace backend run prisma:migrate:deploy",
+    "prisma:seed": "node scripts/with-env.mjs npm --workspace backend run prisma:seed"
+  }
+}

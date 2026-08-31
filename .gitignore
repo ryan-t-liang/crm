@@ -1,0 +1,14 @@
+node_modules/
+backend/dist/
+.env
+.env.*
+!.env.example
+storage/imports/*
+storage/exports/*
+!storage/imports/.gitkeep
+!storage/exports/.gitkeep
+*.log
+.DS_Store
+coverage/
+outputs/
+docs/reference/

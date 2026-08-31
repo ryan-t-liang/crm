@@ -1,0 +1,14 @@
+.lead-filter-panel { margin-bottom: 20px; }
+.lead-table { min-width: 1360px; }
+.lead-table tr { grid-template-columns: 44px 220px 120px 170px 190px 80px 150px 100px 120px 166px; }
+.lead-table th { height: 48px; align-items: center; }
+.lead-table td { height: 72px; padding-top: 12px; padding-bottom: 12px; align-items: center; line-height: 1.45; overflow-wrap: normal; }
+.lead-table .lead-no strong,
+.lead-table .lead-contact strong,
+.lead-table .lead-topic strong { white-space: nowrap; }
+.lead-table .lead-no span,
+.lead-table .lead-contact span { white-space: nowrap; }
+.lead-table td:last-child .table-actions { width: 100%; justify-content: flex-end; flex-wrap: nowrap; }
+.lead-table td:last-child .btn { white-space: nowrap; }
+.member-table th,
+.member-table td { align-items: center; vertical-align: middle; }

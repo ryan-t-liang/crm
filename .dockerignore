@@ -1,0 +1,14 @@
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+node_modules
+backend/node_modules
+backend/dist
+storage/*
+!storage/.gitkeep
+outputs
+docs/reference
+*.log
+.DS_Store
