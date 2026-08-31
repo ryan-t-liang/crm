@@ -1,18 +1,26 @@
 "use strict";
 
+import { ADDRESS_TREE, COUNTRY_OPTIONS, canonicalCountry, countryLabel } from "./address-data.js";
+
 const APP_BASE_PATH = (() => {
   const modulePath = new URL(import.meta.url).pathname;
   const suffix = "/js/app.js";
   return modulePath.endsWith(suffix) ? modulePath.slice(0, -suffix.length) : "";
 })();
 const appUrl = (path) => `${APP_BASE_PATH}${path.startsWith("/") ? path : `/${path}`}`;
-const state = { me: null, brands: [], customers: [], leads: [], users: [], roles: [], permissions: [], currentCustomer: null, currentLead: null, currentBrand: "ALL", forms: new Map(), importType: null, importBrand: null };
+const state = {
+  me: null, brands: [], customers: [], leads: [], users: [], roles: [], permissions: [],
+  currentCustomer: null, currentLead: null, currentBrand: "ALL", currentBrandProfile: "ALL", forms: new Map(),
+  importType: null, importBrand: null, importStep: 1, importResult: null, importFileName: "", importError: "", importing: false,
+  importHistoryMode: false, importHistory: [],
+};
 const $ = (id) => document.getElementById(id);
 const esc = (value) => String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
 const dt = (value) => value ? new Date(value).toLocaleString("sv-SE", { hour12: false }).replace("T", " ").slice(0, 19) : "-";
 const brandLabel = (brand) => brand?.name || ({ UN: "UN 雅典表", GP: "GP 芝柏表" }[brand] || brand || "-");
 const statusLabel = (status) => ({ NOT_SYNCED: "未同步", PENDING: "待同步", RETRY_WAITING: "待重试", GATEWAY_QUEUED: "Gateway 已受理", SUCCEEDED: "同步成功", FAILED: "同步失败", FAILED_AUTH: "鉴权失败", FAILED_VALIDATION: "校验失败", FAILED_PERMANENT: "同步失败", ACTIVE: "启用", DISABLED: "禁用" })[status] || status || "-";
 const can = (permission) => Boolean(state.me?.permissions?.includes(permission));
+const sourceLabel = (source) => ({ ADMIN_MANUAL: "后台手动新增", BATCH_IMPORT: "批量导入", WECHAT_MINIPROGRAM: "微信小程序", USER_SUBMITTED: "用户提交" })[source] || source || "-";
 
 async function api(path, options = {}) {
   const headers = { accept: "application/json", ...(options.body instanceof FormData ? {} : { "content-type": "application/json" }), ...(options.headers || {}) };
@@ -148,24 +156,72 @@ async function openLead(id) {
   } catch (error) { notify(error.message); }
 }
 
-function fieldCards(profile) {
-  const fields = [["品牌会员 ID", profile.brandMemberNo || "-"], ["姓氏", profile.lastName || "-"], ["名字", profile.firstName || "-"], ["称谓", profile.salutation || "-"], ["出生日期", profile.birthday?.slice(0, 10) || "-"], ["国家 / 地区", profile.country || "-"], ["省 / 地区", profile.region || "-"], ["城市", profile.city || "-"], ["邮编", profile.postalCode || "-"], ["联系地址", profile.addressLine || "-"], ["通信语言", profile.language || "-"], ["首选联系渠道", profile.preferredContact || "-"], [`${profile.brand.name} Email`, profile.email || "-"], ["手机号", profile.mobile || "-"], ["兴趣中心", profile.interestCenter || "-"], ["偏爱的系列", profile.favoriteCollection || "-"], [`您是否拥有 ${profile.brand.name}`, profile.ownsBrandWatch == null ? "-" : profile.ownsBrandWatch ? "是" : "否"], ["希望购买渠道", profile.purchaseChannel || "-"], ["创建时间", dt(profile.createdAt)], ["更新时间", dt(profile.updatedAt)]];
-  return fields.map(([label, value]) => `<div class="profile-field"><span>${esc(label)}</span><strong>${esc(value)}</strong></div>`).join("");
+function profileField(label, value, wide = false) {
+  return `<div class="brand-profile-field${wide ? " wide" : ""}"><label>${esc(label)}</label><strong>${esc(value == null || value === "" ? "-" : value)}</strong></div>`;
+}
+function profileConsentField(label, granted) {
+  return `<div class="brand-profile-field"><label>${esc(label)}</label><strong class="brand-profile-consent${granted ? "" : " no"}"><svg><use href="#i-${granted ? "check" : "x"}"/></svg>${granted ? "已选择" : "未选择"}</strong></div>`;
+}
+function consentGranted(profile, purpose) {
+  return profile.consents?.find((record) => record.purpose === purpose)?.status === "GRANTED";
+}
+function profileDisplayName(profile) { return profile.displayName || `${profile.lastName || ""}${profile.firstName || ""}` || "-"; }
+function brandTheme(profile) {
+  const config = profile.brand.themeConfig || {};
+  return { accent: config.accent || (profile.brand.code === "UN" ? "#607f99" : "#b4935e"), tint: config.tint || (profile.brand.code === "UN" ? "#eef3f6" : "#f7f1e6") };
+}
+function brandVisual(profile) {
+  const theme = brandTheme(profile);
+  return `<div class="brand-affiliation-visual" style="--brand-accent:${esc(theme.accent)};--brand-tint:${esc(theme.tint)}"><h3>${esc(profile.brand.name)}</h3><span class="brand-affiliation-logo">${esc(profile.brand.shortName || profile.brand.code)}</span></div>`;
+}
+function brandSummary(profile) {
+  return `<article class="brand-profile-summary" data-profile-brand="${esc(profile.brand.code)}">${brandVisual(profile)}<div class="brand-summary-body"><div class="brand-summary-name"><strong>${esc(profileDisplayName(profile))}</strong><span>${esc(profile.email || "未填写 Email")}</span></div><div class="brand-summary-grid">${profileField("品牌会员 ID", profile.brandMemberNo)}${profileField("国家 / 城市", `${countryLabel(profile.country)} · ${profile.city || "-"}`)}${profileField("偏爱的系列", profile.favoriteCollection)}${profileField(`您是否拥有${profile.brand.name}`, profile.ownsBrandWatch == null ? "-" : profile.ownsBrandWatch ? "是" : "否")}${profileConsentField("营销选择", consentGranted(profile, "MARKETING_COMMUNICATION"))}${profileField("注册时间", dt(profile.registeredAt || profile.createdAt))}</div></div><div class="brand-summary-footer"><button class="btn btn-small" data-view-brand-profile="${esc(profile.brand.code)}">查看完整资料</button></div></article>`;
+}
+function profileGroup(title, fields, wide = false) {
+  return `<section class="brand-profile-group${wide ? " wide" : ""}"><h4>${esc(title)}</h4><div class="brand-profile-group-grid">${fields.join("")}</div></section>`;
+}
+function brandDetail(profile) {
+  const groups = [
+    profileGroup("个人信息", [profileField("姓氏", profile.lastName), profileField("名字", profile.firstName), profileField("称谓", profile.salutation), profileField("出生日期", profile.birthday?.slice(0, 10))]),
+    profileGroup("联系方式", [profileField(`${profile.brand.name} Email`, profile.email), profileField("品牌注册手机号", profile.mobile), profileField("首选联系方式", profile.preferredContact)]),
+    profileGroup("地址", [profileField("国家 / 地区", countryLabel(profile.country)), profileField("省 / 地区", profile.region), profileField("城市", profile.city), profileField("邮编", profile.postalCode), profileField("联系地址", profile.addressLine, true)], true),
+    profileGroup("会员信息", [profileField("品牌会员 ID", profile.brandMemberNo), profileField("注册时间", dt(profile.registeredAt || profile.createdAt)), profileField("注册来源", sourceLabel(profile.registrationSource)), profileField("创建时间", dt(profile.createdAt)), profileField("更新时间", dt(profile.updatedAt)), profileField(`您是否拥有${profile.brand.name}`, profile.ownsBrandWatch == null ? "-" : profile.ownsBrandWatch ? "是" : "否")]),
+    profileGroup("偏好", [profileField("通信语言", profile.language), profileField("偏爱的系列", profile.favoriteCollection), profileField("兴趣中心", profile.interestCenter), profileField("希望购买渠道", profile.purchaseChannel)]),
+    profileGroup("授权", [profileConsentField("营销选择", consentGranted(profile, "MARKETING_COMMUNICATION")), profileConsentField("个人数据处理同意", consentGranted(profile, "DATA_PROCESSING"))], true),
+  ].join("");
+  return `<article class="brand-profile-detail" data-profile-brand="${esc(profile.brand.code)}">${brandVisual(profile)}<div class="brand-profile-detail-body">${groups}</div></article>`;
+}
+function renderWechatIdentity() {
+  const profiles = state.currentCustomer?.profiles || [];
+  const visible = state.currentBrandProfile === "ALL" ? profiles : profiles.filter((profile) => profile.brand.code === state.currentBrandProfile);
+  const content = $("wechatIdentityContent");
+  content.className = `wechat-identity-content${visible.length <= 1 ? " is-single" : ""}`;
+  content.innerHTML = visible.length ? visible.map((profile) => `<section class="wechat-identity-group"><h4>${esc(profile.brand.name)}</h4><div class="wechat-identity-fields"><div class="wechat-identity-field"><label>OpenID</label><strong>${esc(profile.openId ? `****${profile.openId.slice(-6)}` : "未获取")}</strong></div><div class="wechat-identity-field"><label>UnionID（Open Platform 作用域）</label><strong>${esc(profile.unionId ? `****${profile.unionId.slice(-6)}` : "未获取")}</strong></div></div></section>`).join("") : `<div class="wechat-identity-empty">暂无微信身份信息</div>`;
 }
 async function openCustomer(id) {
   try {
     const result = await api(`/api/v1/customers/${id}`); const customer = result.data; state.currentCustomer = customer;
     document.querySelectorAll(".view").forEach((view) => view.classList.remove("is-active")); $("detailView").classList.add("is-active"); $("breadcrumbText").textContent = "会员 / 会员详情";
     $("detailAvatar").textContent = profileInitial(customer); $("detailName").textContent = customer.displayName; $("detailContact").textContent = customer.mobile; $("detailMemberId").textContent = `会员 ID · ${customer.customerNo}`; $("detailBrandBadges").innerHTML = customer.profiles.map((p) => brandPill(p.brand)).join(" ");
-    $("customerIdentityFields").innerHTML = [["会员 ID", customer.customerNo], ["姓名", customer.displayName], ["手机号", customer.mobile], ["创建时间", dt(customer.createdAt)], ["更新时间", dt(customer.updatedAt)]].map(([k, v]) => `<div class="identity-field"><span>${k}</span><strong>${esc(v)}</strong></div>`).join("");
-    renderBrandProfile(customer.profiles[0]?.brand.code);
-    $("brandProfileSwitcher").innerHTML = customer.profiles.map((p, i) => `<button class="${i === 0 ? "is-active" : ""}" data-detail-brand="${p.brand.code}">${esc(p.brand.name)}</button>`).join("");
+    $("customerIdentityFields").innerHTML = [["会员 ID", customer.customerNo], ["手机号", customer.mobile], ["关联品牌", customer.profiles.map((p) => p.brand.name).join(" · ")], ["创建时间", dt(customer.createdAt)]].map(([k, v]) => `<div class="customer-identity-item"><label>${esc(k)}</label><strong>${esc(v)}</strong></div>`).join("");
+    state.currentBrandProfile = "ALL";
+    $("brandProfileSwitcher").innerHTML = `<button class="segment is-active" data-detail-brand="ALL">全部品牌</button>${customer.profiles.map((p) => `<button class="segment" data-detail-brand="${p.brand.code}">${esc(p.brand.name)}</button>`).join("")}`;
     $("brandProfileSwitcher").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => renderBrandProfile(b.dataset.detailBrand)));
-    $("wechatIdentityContent").innerHTML = customer.profiles.map((p) => `<div><strong>${esc(p.brand.name)}</strong><span>OpenID · ${esc(p.openId ? `****${p.openId.slice(-6)}` : "-")}</span><span>UnionID（Open Platform 作用域）· ${esc(p.unionId ? `****${p.unionId.slice(-6)}` : "-")}</span></div>`).join("");
+    renderBrandProfile("ALL");
+    $("wechatIdentityDetails").open = false;
     renderCustomerTabs(customer); renderCustomerModule("leads");
   } catch (error) { notify(error.message); }
 }
-function renderBrandProfile(code) { const profile = state.currentCustomer?.profiles.find((p) => p.brand.code === code); if (!profile) return; $("brandProfileContent").innerHTML = `<div class="profile-section-grid">${fieldCards(profile)}</div>`; $("brandProfileSwitcher").querySelectorAll("button").forEach((b) => b.classList.toggle("is-active", b.dataset.detailBrand === code)); }
+function renderBrandProfile(code) {
+  const profiles = state.currentCustomer?.profiles || [];
+  state.currentBrandProfile = code === "ALL" || profiles.some((profile) => profile.brand.code === code) ? code : "ALL";
+  const content = $("brandProfileContent");
+  content.className = `brand-profile-content brand-profile-grid ${state.currentBrandProfile === "ALL" ? profiles.length === 1 ? "is-single" : profiles.length === 2 ? "is-pair" : "is-grid" : "is-detail"}`;
+  content.innerHTML = state.currentBrandProfile === "ALL" ? profiles.map(brandSummary).join("") : brandDetail(profiles.find((profile) => profile.brand.code === state.currentBrandProfile));
+  $("brandProfileSwitcher").querySelectorAll("button").forEach((button) => button.classList.toggle("is-active", button.dataset.detailBrand === state.currentBrandProfile));
+  content.querySelectorAll("[data-view-brand-profile]").forEach((button) => button.addEventListener("click", () => renderBrandProfile(button.dataset.viewBrandProfile)));
+  renderWechatIdentity();
+}
 function renderCustomerTabs(customer) {
   const tabs = [["leads", `线索 ${customer.leads.length}`], ["journey", "客户旅程"], ["notes", `备注 ${customer.notes.length}`], ["activity", "操作记录"]];
   $("customerDetailModuleTabs").innerHTML = tabs.map(([key, label], i) => `<button class="${i === 0 ? "is-active" : ""}" data-module="${key}">${label}</button>`).join("");
@@ -183,10 +239,35 @@ function renderCustomerModule(key) {
 
 async function getForm(brandCode, objectType) { const key = `${brandCode}:${objectType}`; if (!state.forms.has(key)) state.forms.set(key, (await api(`/api/v1/forms?brandCode=${brandCode}&objectType=${objectType}`)).data[0]); return state.forms.get(key); }
 function dynamicField(field, prefix) {
-  const id = `${prefix}-${field.key}`; const required = field.required ? `<span class="required-mark">*</span>` : "";
-  if (field.type === "checkbox") return `<label class="full consent-control"><input id="${id}" data-field="${field.key}" type="checkbox"><span>${esc(field.label)}${required}</span></label>`;
-  if (field.type === "select") return `<label><span class="field-label">${esc(field.label)}${required}</span><select class="control" id="${id}" data-field="${field.key}"><option value="">请选择</option>${(field.options || []).map((o) => `<option>${esc(o)}</option>`).join("")}</select></label>`;
-  return `<label><span class="field-label">${esc(field.label)}${required}</span><input class="control" id="${id}" data-field="${field.key}" type="${field.type === "date" ? "date" : field.type === "email" ? "email" : "text"}"></label>`;
+  const id = `${prefix}-${field.key}`; const required = field.required ? `<span class="required-mark">*</span>` : ""; const requiredAttr = field.required ? " required" : "";
+  if (field.type === "checkbox") return `<label class="full consent-control"><input id="${id}" data-field="${field.key}" type="checkbox"${requiredAttr}><span>${esc(field.label)}${required}</span></label>`;
+  if (field.key === "country") return `<label><span class="field-label">${esc(field.label)}${required}</span><select class="control" id="${id}" data-field="${field.key}"${requiredAttr}><option value="">请选择</option>${COUNTRY_OPTIONS.map((option) => `<option value="${esc(option.value)}">${esc(option.label)}</option>`).join("")}</select></label>`;
+  if (prefix === "member" && ["province", "city"].includes(field.key)) return `<label><span class="field-label">${esc(field.label)}${required}</span><select class="control" id="${id}" data-field="${field.key}"${requiredAttr} disabled><option value="">请先选择${field.key === "province" ? "国家 / 地区" : "省 / 地区"}</option></select></label>`;
+  if (field.type === "select") return `<label><span class="field-label">${esc(field.label)}${required}</span><select class="control" id="${id}" data-field="${field.key}"${requiredAttr}><option value="">请选择</option>${(field.options || []).map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join("")}</select></label>`;
+  const inputType = field.type === "date" ? "date" : field.type === "email" ? "email" : field.type === "tel" ? "tel" : "text";
+  return `<label><span class="field-label">${esc(field.label)}${required}</span><input class="control" id="${id}" data-field="${field.key}" type="${inputType}"${requiredAttr}></label>`;
+}
+function replaceSelectOptions(select, values, placeholder, selectedValue = "") {
+  select.innerHTML = `<option value="">${esc(placeholder)}</option>${values.map((value) => `<option value="${esc(value)}">${esc(value)}</option>`).join("")}`;
+  select.disabled = values.length === 0;
+  select.value = values.includes(selectedValue) ? selectedValue : "";
+}
+function bindMemberAddressControls() {
+  const country = $("member-country"); const province = $("member-province"); const city = $("member-city");
+  if (!country || !province || !city) return;
+  const refreshCities = (selected = "") => {
+    const values = ADDRESS_TREE[canonicalCountry(country.value)]?.[province.value] || [];
+    replaceSelectOptions(city, values, province.value ? "请选择城市" : "请先选择省 / 地区", selected);
+  };
+  const refreshProvinces = (selectedProvince = "", selectedCity = "") => {
+    const values = Object.keys(ADDRESS_TREE[canonicalCountry(country.value)] || {});
+    replaceSelectOptions(province, values, country.value ? "请选择省 / 地区" : "请先选择国家 / 地区", selectedProvince);
+    refreshCities(selectedCity);
+  };
+  country.addEventListener("change", () => refreshProvinces());
+  province.addEventListener("change", () => refreshCities());
+  if (!country.value) country.value = "China";
+  refreshProvinces();
 }
 async function openCreateLead(customerId = null) {
   const brands = customerId ? state.currentCustomer.profiles.map((p) => p.brand) : state.brands; $("createLeadBrand").innerHTML = brands.map((b) => `<option value="${b.code}">${esc(b.name)}</option>`).join("");
@@ -199,8 +280,17 @@ async function saveLead(event) {
   const body = { ...fields, brandCode: $("createLeadBrand").value, leadType: "PURCHASE_INTENT", source: $("createLeadSource").value, submissionMode: $("createLeadSource").value === "ADMIN_MANUAL" ? "ADMIN_MANUAL" : "USER_SUBMITTED", formVersion: $("createLeadVersion").value, customerId: $("canonicalLeadForm").dataset.customerId || null };
   try { await api("/api/v1/leads", { method: "POST", body: JSON.stringify(body), headers: { "idempotency-key": crypto.randomUUID() } }); $("leadCreateDialog").close(); notify("线索已创建并进入待同步队列"); await loadLeads(); if (state.currentCustomer) await openCustomer(state.currentCustomer.id); } catch (error) { showError($("createLeadErrors"), error); }
 }
-async function openCreateMember() { $("createMemberBrand").innerHTML = state.brands.map((b) => `<option value="${b.code}">${esc(b.name)}</option>`).join(""); await renderMemberFields(); $("memberCreateDialog").showModal(); }
-async function renderMemberFields() { const form = await getForm($("createMemberBrand").value, "CUSTOMER"); $("dynamicMemberRegistrationFields").innerHTML = `<div class="dynamic-form-grid">${form.schemaJson.fields.map((f) => dynamicField(f, "member")).join("")}</div>`; }
+async function openCreateMember() {
+  $("memberRegistrationForm").reset(); $("createMemberErrors").hidden = true;
+  $("createMemberBrand").innerHTML = state.brands.map((b) => `<option value="${b.code}">${esc(b.name)}</option>`).join("");
+  await renderMemberFields(); $("memberCreateDialog").showModal();
+  $("memberCreateDialog").querySelector(".dialog-body").scrollTop = 0;
+}
+async function renderMemberFields() {
+  const form = await getForm($("createMemberBrand").value, "CUSTOMER");
+  $("dynamicMemberRegistrationFields").innerHTML = `<div class="dynamic-form-grid">${form.schemaJson.fields.map((f) => dynamicField(f, "member")).join("")}</div>`;
+  bindMemberAddressControls();
+}
 async function saveMember(event) {
   event.preventDefault(); const fields = Object.fromEntries(Array.from($("dynamicMemberRegistrationFields").querySelectorAll("[data-field]"), (el) => [el.dataset.field, el.type === "checkbox" ? el.checked : el.value]));
   const profile = { brandCode: $("createMemberBrand").value, salutation: fields.salutation, lastName: fields.last_name, firstName: fields.first_name, birthday: fields.birthday || null, email: fields.email || null, country: fields.country || null, region: fields.province || null, city: fields.city || null, postalCode: fields.postal_code || null, addressLine: fields.address_line || null, language: fields.language || null, preferredContact: fields.preferred_contact || null, ownsBrandWatch: fields.owns_brand_watch === "Yes", interestCenter: fields.interest_center || null, favoriteCollection: fields.favorite_collection || null, marketingOptIn: Boolean(fields.marketing_opt_in), processingConsent: Boolean(fields.processing_consent), registrationData: fields };
@@ -263,24 +353,110 @@ async function loadRoles(preferredRoleId = null) {
 async function loadAudit() { const result = await api("/api/v1/audit-logs?pageSize=200"); $("securityAuditCount").textContent = `${result.meta.total} 条记录`; $("securityAuditRows").innerHTML = result.data.map((a) => `<tr><td>${esc(dt(a.createdAt))}</td><td>${esc(a.actorName)}</td><td>${esc(a.action)}</td><td>${esc(a.module)}</td><td>${esc(`${a.targetType}${a.targetId ? ` · ${a.targetId}` : ""}`)}</td><td>${esc(a.details ? JSON.stringify(a.details) : "-")}</td></tr>`).join(""); }
 
 async function exportData(type) { try { const result = await api(`/api/v1/exports/${type}`, { method: "POST", body: "{}" }); const link = document.createElement("a"); link.href = appUrl(result.data.downloadUrl); link.download = result.data.fileName; document.body.append(link); link.click(); link.remove(); notify(`已导出 ${result.data.rowCount} 条数据`); } catch (error) { notify(error.message); } }
-function openImport(type) { state.importType = type; state.importBrand = state.brands[0]?.code; $("importDialogTitle").textContent = type === "customers" ? "批量导入会员" : "批量导入线索"; renderImport(); $("importDialog").showModal(); }
-function renderImport() { $("importSteps").innerHTML = `<span class="is-active">1 选择品牌与文件</span><span>2 服务端校验</span><span>3 导入结果</span>`; $("importBody").innerHTML = `<div class="import-choice-grid">${state.brands.map((b) => `<button class="import-scope-card ${state.importBrand === b.code ? "is-selected" : ""}" data-import-brand="${b.code}"><strong>${esc(b.name)}</strong><span>按当前有效表单配置校验</span></button>`).join("")}</div><div class="import-upload-zone"><button class="btn" id="downloadTemplate">下载带必填标记的模板</button><button class="btn btn-primary" id="chooseImportFile">选择 .xlsx 文件</button></div>`; $("importFooter").innerHTML = `<button class="btn" id="cancelImport">取消</button>`; document.querySelectorAll("[data-import-brand]").forEach((b) => b.onclick = () => { state.importBrand = b.dataset.importBrand; renderImport(); }); $("downloadTemplate").onclick = () => { location.href = appUrl(`/api/v1/templates/${state.importType}?brandCode=${state.importBrand}`); }; $("chooseImportFile").onclick = () => $("importFileInput").click(); $("cancelImport").onclick = () => $("importDialog").close(); }
-async function uploadImport(file) { const data = new FormData(); data.append("file", file); try { const result = await api(`/api/v1/imports/${state.importType}?brandCode=${state.importBrand}&conflictStrategy=SKIP`, { method: "POST", body: data }); $("importBody").innerHTML = `<div class="import-result"><h3>导入完成</h3><p>成功 ${result.data.successCount} 条，失败 ${result.data.failedCount} 条，跳过 ${result.data.skippedCount} 条。</p></div>`; $("importFooter").innerHTML = `<button class="btn btn-primary" id="finishImport">完成</button>`; $("finishImport").onclick = () => { $("importDialog").close(); state.importType === "customers" ? loadCustomers() : loadLeads(); }; } catch (error) { notify(error.message); } }
+function importObjectLabel() { return state.importType === "customers" ? "会员" : "线索"; }
+function importBrandLabel() { return brandLabel(state.brands.find((brand) => brand.code === state.importBrand)); }
+function renderImportSteps() {
+  const labels = ["选择品牌与文件", "服务端校验与导入", "导入结果"];
+  $("importSteps").hidden = state.importHistoryMode;
+  $("importSteps").innerHTML = labels.map((label, index) => { const step = index + 1; return `<div class="import-step${step === state.importStep ? " is-active" : ""}${step < state.importStep ? " is-complete" : ""}"><strong>${esc(label)}</strong></div>`; }).join("");
+}
+function renderImportHistory() {
+  const rows = state.importHistory.filter((job) => job.type === state.importType).map((job) => `<tr><td>${esc(job.result.jobNo)}</td><td>${esc(job.fileName)}</td><td>${esc(brandLabel(state.brands.find((brand) => brand.code === job.brand)))}</td><td>${esc(state.me?.name || "-")}</td><td>${job.result.totalCount}</td><td>${job.result.failedCount}</td><td>${esc(dt(job.createdAt))}</td><td><span class="row-status ${job.result.failedCount ? "warning" : "success"}">${job.result.failedCount ? "部分完成" : "已完成"}</span></td></tr>`).join("");
+  $("importBody").innerHTML = `<div class="history-view"><h3>本次会话导入记录</h3><p class="section-intro">显示本次登录会话中已完成的${importObjectLabel()}导入。</p>${rows ? `<div class="preview-table-wrap"><table class="history-table"><thead><tr><th>导入编号</th><th>文件</th><th>品牌</th><th>操作人</th><th>处理数量</th><th>失败数量</th><th>时间</th><th>状态</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<div class="preview-empty">本次会话暂无导入记录</div>`}</div>`;
+  $("importFooter").innerHTML = `<button class="btn" type="button" id="backToImport">返回导入</button><span class="spacer"></span><button class="btn" type="button" id="closeImportHistory">关闭</button>`;
+  $("backToImport").onclick = () => { state.importHistoryMode = false; renderImport(); };
+  $("closeImportHistory").onclick = () => $("importDialog").close();
+}
+function renderImportUpload() {
+  const leadType = state.importType === "leads" ? `<label><span class="field-label">线索类型</span><select class="control" disabled><option>购买意向</option></select></label>` : "";
+  return `<div class="upload-stage"><h3>上传${importObjectLabel()}数据</h3><p class="section-intro">选择导入范围并上传文件，服务端将按当前品牌的有效表单配置校验。</p><div class="import-context${state.importType === "customers" ? " is-single" : ""}"><label><span class="field-label">导入品牌</span><select class="control" id="importBrand">${state.brands.map((brand) => `<option value="${esc(brand.code)}"${brand.code === state.importBrand ? " selected" : ""}>${esc(brand.name)}</option>`).join("")}</select></label>${leadType}</div>${state.importError ? `<div class="inline-alert error">${esc(state.importError)}</div>` : ""}<div class="upload-card" id="uploadCard"><div><div class="upload-symbol"><svg><use href="#i-upload"/></svg></div><div class="upload-copy"><strong>拖放 XLSX 文件</strong><span>单个文件不超过 10 MB，单次最多 5,000 行</span></div><div class="upload-actions"><button class="btn btn-primary btn-small" type="button" id="chooseImportFile">选择文件</button><button class="text-action" type="button" id="downloadTemplate">下载 ${esc(importBrandLabel())} ${importObjectLabel()}模板</button></div><span class="template-guidance">Excel 模板 · 红色 <b>*</b> 为必填字段 · 手机号按文本格式保存完整数字</span></div></div></div>`;
+}
+function renderImportProcessing() {
+  return `<div class="upload-stage"><h3>服务端校验与导入</h3><p class="section-intro">正在按 ${esc(importBrandLabel())} 当前有效表单配置校验并写入数据。</p><div class="file-summary"><div class="file-summary-icon"><svg><use href="#i-upload"/></svg></div><div class="file-summary-copy"><strong>${esc(state.importFileName)}</strong><span>校验、去重与导入由同一个服务端任务执行</span><span class="file-state">处理中，请勿关闭窗口</span></div><span class="state-spinner"></span></div></div>`;
+}
+function renderImportResult() {
+  const result = state.importResult;
+  const summary = `共处理 ${result.totalCount} 条，成功 ${result.successCount} 条${result.failedCount ? `，失败 ${result.failedCount} 条` : ""}${result.skippedCount ? `，跳过 ${result.skippedCount} 条` : ""}。`;
+  return `<div class="result-body"><div class="result-hero"><div class="result-icon"><svg><use href="#i-check"/></svg></div><div><h3>导入完成</h3><p>${esc(summary)}</p></div></div><div class="result-stats"><div class="result-stat"><span>处理总数</span><strong>${result.totalCount}</strong></div><div class="result-stat"><span>成功</span><strong>${result.successCount}</strong></div><div class="result-stat"><span>失败</span><strong>${result.failedCount}</strong></div><div class="result-stat"><span>跳过</span><strong>${result.skippedCount}</strong></div></div></div>`;
+}
+function bindImportUploadActions() {
+  if ($("importBrand")) $("importBrand").onchange = (event) => { state.importBrand = event.target.value; state.importError = ""; renderImport(); };
+  if ($("chooseImportFile")) $("chooseImportFile").onclick = () => { $("importFileInput").value = ""; $("importFileInput").click(); };
+  if ($("downloadTemplate")) $("downloadTemplate").onclick = () => { location.href = appUrl(`/api/v1/templates/${state.importType}?brandCode=${state.importBrand}`); };
+  const card = $("uploadCard");
+  if (card) {
+    ["dragenter", "dragover"].forEach((type) => card.addEventListener(type, (event) => { event.preventDefault(); card.classList.add("is-dragging"); }));
+    ["dragleave", "drop"].forEach((type) => card.addEventListener(type, (event) => { event.preventDefault(); card.classList.remove("is-dragging"); }));
+    card.addEventListener("drop", (event) => { const file = event.dataTransfer?.files?.[0]; if (file) uploadImport(file); });
+  }
+}
+function renderImport() {
+  $("importDialogTitle").textContent = `批量导入${importObjectLabel()}`;
+  $("importDialogSubtitle").textContent = state.importHistoryMode ? "本次会话记录" : `${importBrandLabel()}${state.importType === "leads" ? " · 购买意向" : ""}`;
+  document.querySelector(".import-shell").classList.toggle("is-compact", !state.importHistoryMode && [1, 3].includes(state.importStep));
+  renderImportSteps();
+  if (state.importHistoryMode) return renderImportHistory();
+  $("importBody").innerHTML = state.importStep === 1 ? renderImportUpload() : state.importStep === 2 ? renderImportProcessing() : renderImportResult();
+  if (state.importStep === 1) {
+    $("importFooter").innerHTML = `<span class="spacer"></span><button class="btn" type="button" id="cancelImport">取消</button>`;
+    $("cancelImport").onclick = () => $("importDialog").close(); bindImportUploadActions();
+  } else if (state.importStep === 2) {
+    $("importFooter").innerHTML = `<span class="spacer"></span><button class="btn" type="button" disabled>正在处理</button>`;
+  } else {
+    $("importFooter").innerHTML = `<button class="btn" type="button" id="newImportJob">继续导入</button><span class="spacer"></span><button class="btn btn-primary" type="button" id="finishImport">返回${importObjectLabel()}列表</button>`;
+    $("newImportJob").onclick = () => { state.importStep = 1; state.importResult = null; state.importFileName = ""; state.importError = ""; renderImport(); };
+    $("finishImport").onclick = () => { $("importDialog").close(); state.importType === "customers" ? loadCustomers() : loadLeads(); };
+  }
+}
+function openImport(type) {
+  state.importType = type; state.importBrand = state.brands[0]?.code; state.importStep = 1; state.importResult = null; state.importFileName = ""; state.importError = ""; state.importing = false; state.importHistoryMode = false;
+  renderImport(); $("importDialog").showModal(); $("importDialogTitle").focus({ preventScroll: true });
+}
+async function uploadImport(file) {
+  if (state.importing) return;
+  if (!file.name.toLowerCase().endsWith(".xlsx")) { state.importError = "请上传 .xlsx 文件"; return renderImport(); }
+  if (file.size > 10 * 1024 * 1024) { state.importError = "单个文件不能超过 10 MB"; return renderImport(); }
+  state.importing = true; state.importFileName = file.name; state.importError = ""; state.importStep = 2; renderImport();
+  const data = new FormData(); data.append("file", file);
+  try {
+    const result = await api(`/api/v1/imports/${state.importType}?brandCode=${state.importBrand}&conflictStrategy=SKIP`, { method: "POST", body: data });
+    state.importResult = result.data; state.importHistory.unshift({ type: state.importType, brand: state.importBrand, fileName: file.name, result: result.data, createdAt: new Date().toISOString() }); state.importStep = 3;
+  } catch (error) { state.importStep = 1; state.importError = error.message; notify(error.message); }
+  finally { state.importing = false; renderImport(); }
+}
+
+function passwordAssessment(value) {
+  const password = String(value || ""); const lower = password.toLowerCase();
+  const obvious = ["123456789012", "password1234", "aaaaaaaaaaaa", "qwerty123456"].includes(lower) || /^\d+$/.test(password) || /^(.)\1{11,}$/.test(password);
+  if (!password) return { level: "empty", label: "—", width: 0 };
+  if (password.length < 12 || obvious) return { level: "weak", label: "弱", width: 28 };
+  const variety = [/[a-z]/.test(password), /[A-Z]/.test(password), /\d/.test(password), /[^A-Za-z0-9]/.test(password)].filter(Boolean).length;
+  if (password.length >= 16 || variety >= 3) return { level: "strong", label: "强", width: 100 };
+  return { level: "medium", label: "中", width: 62 };
+}
+function updateStrength(containerId, value) {
+  const assessment = passwordAssessment(value); const container = $(containerId); if (!container) return;
+  container.className = `password-strength${assessment.level === "medium" ? " is-medium" : assessment.level === "strong" ? " is-strong" : ""}`;
+  container.querySelector(".password-strength-fill").style.width = `${assessment.width}%`;
+  container.querySelector(".password-strength-label").textContent = `密码强度：${assessment.label}`;
+}
 
 function bindEvents() {
   $("loginForm").addEventListener("submit", async (event) => { event.preventDefault(); $("loginError").hidden = true; try { const result = await api("/api/v1/auth/login", { method: "POST", body: JSON.stringify({ loginAccount: $("loginAccountInput").value, password: $("loginPasswordInput").value }) }); state.me = result.data; await afterAuth(); } catch (error) { showError($("loginError"), error); } });
-  $("forcePasswordForm").addEventListener("submit", async (event) => { event.preventDefault(); const password = $("forcedNewPasswordInput").value; const confirm = $("forcedConfirmPasswordInput").value; try { await api("/api/v1/auth/change-password", { method: "POST", body: JSON.stringify({ currentPassword: $("loginPasswordInput").value, newPassword: password, confirmPassword: confirm }) }); state.me.mustChangePassword = false; hideForcePassword(); notify("密码已更新"); await afterAuth(); } catch (error) { showError($("forcePasswordError"), error); } });
+  $("forcePasswordForm").addEventListener("submit", async (event) => { event.preventDefault(); $("forcePasswordError").hidden = true; const password = $("forcedNewPasswordInput").value; const confirm = $("forcedConfirmPasswordInput").value; try { await api("/api/v1/auth/change-password", { method: "POST", body: JSON.stringify({ currentPassword: $("loginPasswordInput").value, newPassword: password, confirmPassword: confirm }) }); state.me.mustChangePassword = false; hideForcePassword(); notify("密码已更新"); await afterAuth(); } catch (error) { showError($("forcePasswordError"), error); } });
   $("backToList").onclick = () => navigate("contacts"); $("searchMembers").onclick = loadCustomers; $("resetMemberFilters").onclick = () => { $("memberSearch").value = ""; $("memberBrandFilter").value = "ALL"; loadCustomers(); }; $("searchLeads").onclick = loadLeads; $("resetLeadFilters").onclick = () => { $("leadKeyword").value = ""; $("leadBrandFilter").value = "ALL"; loadLeads(); }; $("reloadLeads").onclick = loadLeads;
   $("newMemberBtn").onclick = openCreateMember; $("closeMemberCreate").onclick = () => $("memberCreateDialog").close(); $("cancelMemberCreate").onclick = () => $("memberCreateDialog").close(); $("createMemberBrand").onchange = renderMemberFields; $("memberRegistrationForm").onsubmit = saveMember;
   $("openLeadCreate").onclick = () => openCreateLead(); $("newLeadBtn").onclick = () => openCreateLead(state.currentCustomer?.id); $("panelNewLead").onclick = () => openCreateLead(state.currentCustomer?.id); $("closeLeadCreate").onclick = () => $("leadCreateDialog").close(); $("cancelLeadCreate").onclick = () => $("leadCreateDialog").close(); $("createLeadBrand").onchange = renderLeadFields; $("canonicalLeadForm").onsubmit = saveLead; $("closeLeadDrawer").onclick = () => $("leadDrawer").classList.remove("is-open");
-  $("memberExportBtn").onclick = () => exportData("customers"); $("leadExportBtn").onclick = () => exportData("leads"); $("memberImportBtn").onclick = () => openImport("customers"); $("leadImportBtn").onclick = () => openImport("leads"); $("closeImportDialog").onclick = () => $("importDialog").close(); $("importFileInput").onchange = (event) => event.target.files[0] && uploadImport(event.target.files[0]);
+  $("memberExportBtn").onclick = () => exportData("customers"); $("leadExportBtn").onclick = () => exportData("leads"); $("memberImportBtn").onclick = () => openImport("customers"); $("leadImportBtn").onclick = () => openImport("leads"); $("closeImportDialog").onclick = () => $("importDialog").close(); $("importHistoryBtn").onclick = () => { state.importHistoryMode = !state.importHistoryMode; renderImport(); }; $("importFileInput").onchange = (event) => event.target.files[0] && uploadImport(event.target.files[0]);
   $("addAccountBtn").onclick = () => openAccountDrawer(); $("closeAccountDrawer").onclick = $("cancelAccountDrawer").onclick = closeAccountDrawer; $("accountRoleInput").onchange = updateAccountScopeState; $("accountForm").onsubmit = saveAccount;
   $("addNoteBtn").onclick = () => $("noteComposer").classList.add("is-open"); $("cancelNote").onclick = () => $("noteComposer").classList.remove("is-open"); $("saveNote").onclick = async () => { if (!$("noteInput").value.trim()) return; await api(`/api/v1/customers/${state.currentCustomer.id}/notes`, { method: "POST", body: JSON.stringify({ body: $("noteInput").value }) }); $("noteInput").value = ""; await openCustomer(state.currentCustomer.id); renderCustomerModule("notes"); };
   $("accountMenuTrigger").onclick = () => { $("accountMenu").hidden = !$("accountMenu").hidden; }; $("logoutMenuItem").onclick = async () => { await api("/api/v1/auth/logout", { method: "POST", body: "{}" }); state.me = null; showLogin(); };
   $("personalSettingsMenuItem").onclick = () => { $("personalSettingsBody").innerHTML = `<div class="settings-summary"><strong>${esc(state.me.name)}</strong><span>${esc(state.me.loginAccount)}</span><span>${esc(state.me.role.name)}</span></div>`; $("personalSettingsDrawer").classList.add("is-open"); };
-  $("closePersonalSettings").onclick = $("closePersonalSettingsFooter").onclick = () => $("personalSettingsDrawer").classList.remove("is-open"); $("changePasswordMenuItem").onclick = () => $("changePasswordDialog").showModal(); $("closeChangePassword").onclick = $("cancelChangePassword").onclick = () => $("changePasswordDialog").close();
+  $("closePersonalSettings").onclick = $("closePersonalSettingsFooter").onclick = () => $("personalSettingsDrawer").classList.remove("is-open"); $("changePasswordMenuItem").onclick = () => { $("changePasswordForm").reset(); $("changePasswordError").hidden = true; updateStrength("changePasswordStrength", ""); $("changePasswordDialog").showModal(); }; $("closeChangePassword").onclick = $("cancelChangePassword").onclick = () => $("changePasswordDialog").close();
   $("changePasswordForm").onsubmit = async (event) => { event.preventDefault(); try { await api("/api/v1/auth/change-password", { method: "POST", body: JSON.stringify({ currentPassword: $("currentPasswordInput").value, newPassword: $("newPasswordInput").value, confirmPassword: $("confirmPasswordInput").value }) }); $("changePasswordDialog").close(); notify("密码已更新"); } catch (error) { showError($("changePasswordError"), error); } };
   $("forgotPasswordBtn").onclick = () => $("forgotPasswordDialog").showModal(); $("closeForgotPassword").onclick = $("ackForgotPassword").onclick = () => $("forgotPasswordDialog").close();
+  $("newPasswordInput").addEventListener("input", (event) => updateStrength("changePasswordStrength", event.target.value));
+  $("forcedNewPasswordInput").addEventListener("input", (event) => updateStrength("forcePasswordStrength", event.target.value));
   document.addEventListener("click", (event) => { const toggle = event.target.closest("[data-password-toggle]"); if (toggle) { const input = $(toggle.dataset.passwordToggle); input.type = input.type === "password" ? "text" : "password"; toggle.textContent = input.type === "password" ? "显示" : "隐藏"; } });
 }
 

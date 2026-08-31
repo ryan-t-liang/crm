@@ -542,7 +542,7 @@
       border-radius: 8px;
       outline: none;
     }
-    .control:focus { border-color: #8c8c87; box-shadow: 0 0 0 3px rgba(20,20,20,.06); }
+    .control:focus, .control:focus-visible { outline: 0; border-color: #8c8c87; box-shadow: 0 0 0 2px rgba(20,20,20,.06); }
     textarea.control { height: auto; min-height: 96px; padding-top: 10px; resize: vertical; }
     .filter-footer {
       margin-top: 13px;
@@ -1504,10 +1504,10 @@
     .sync-contract { padding: 11px; color: #5f695f; background: #f4f7f4; border: 1px solid #dfe7e1; border-radius: 9px; font-size: 10px; }
     .sync-contract code { color: var(--forest); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 
-    dialog.lead-create-dialog { width: min(900px, calc(100vw - 56px)); }
-    .lead-create-dialog #canonicalLeadForm { max-height: calc(100vh - 52px); display: flex; flex-direction: column; }
+    dialog.lead-create-dialog { width: min(900px, calc(100vw - 56px)); max-height: calc(100vh - 40px); overflow: hidden; }
+    .lead-create-dialog #canonicalLeadForm, .lead-create-dialog #memberRegistrationForm { width: 100%; max-height: calc(100vh - 42px); display: flex; flex-direction: column; overflow: hidden; }
     .lead-create-dialog .dialog-header, .lead-create-dialog .form-context-bar, .lead-create-dialog .dialog-footer { flex: 0 0 auto; background-clip: padding-box; }
-    .lead-create-dialog .dialog-body { flex: 1 1 auto; max-height: none; overflow: auto; }
+    .lead-create-dialog .dialog-body { min-height: 0; flex: 1 1 auto; max-height: none; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
     .form-context-bar { padding: 12px 20px; display: flex; align-items: center; gap: 9px; color: #655b4d; background: #f8f3e9; border-bottom: 1px solid #e8dece; font-size: 10px; }
     .form-context-bar strong { color: var(--ink); }
     .canonical-form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
@@ -2355,7 +2355,7 @@
       </div>
       <div class="import-body" id="importBody"></div>
       <div class="import-footer" id="importFooter"></div>
-      <input type="file" id="importFileInput" accept=".csv,.xlsx" hidden>
+      <input type="file" id="importFileInput" accept=".xlsx" hidden>
     </section>
   </dialog>
 
