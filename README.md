@@ -68,6 +68,7 @@ Seed 创建的账号首次登录必须使用环境变量中的统一初始密码
 ```bash
 cp .env.example .env
 # 修改 .env，生产环境必须 COOKIE_SECURE=true、CORS_ORIGIN=https://实际域名
+# 若通过 https://实际域名/crm 部署，同时设置 APP_BASE_PATH=/crm
 docker compose build backend
 docker compose up -d mysql
 docker compose run --rm backend npx prisma migrate deploy --schema backend/prisma/schema.prisma

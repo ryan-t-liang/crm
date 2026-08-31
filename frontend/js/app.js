@@ -1,5 +1,11 @@
 "use strict";
 
+const APP_BASE_PATH = (() => {
+  const modulePath = new URL(import.meta.url).pathname;
+  const suffix = "/js/app.js";
+  return modulePath.endsWith(suffix) ? modulePath.slice(0, -suffix.length) : "";
+})();
+const appUrl = (path) => `${APP_BASE_PATH}${path.startsWith("/") ? path : `/${path}`}`;
 const state = { me: null, brands: [], customers: [], leads: [], users: [], roles: [], permissions: [], currentCustomer: null, currentLead: null, currentBrand: "ALL", forms: new Map(), importType: null, importBrand: null };
 const $ = (id) => document.getElementById(id);
 const esc = (value) => String(value ?? "").replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;" })[char]);
@@ -10,7 +16,7 @@ const can = (permission) => Boolean(state.me?.permissions?.includes(permission))
 
 async function api(path, options = {}) {
   const headers = { accept: "application/json", ...(options.body instanceof FormData ? {} : { "content-type": "application/json" }), ...(options.headers || {}) };
-  const response = await fetch(path, { credentials: "same-origin", ...options, headers });
+  const response = await fetch(appUrl(path), { credentials: "same-origin", ...options, headers });
   const contentType = response.headers.get("content-type") || "";
   const payload = contentType.includes("application/json") ? await response.json() : await response.blob();
   if (!response.ok) {
@@ -256,9 +262,9 @@ async function loadRoles(preferredRoleId = null) {
 }
 async function loadAudit() { const result = await api("/api/v1/audit-logs?pageSize=200"); $("securityAuditCount").textContent = `${result.meta.total} 条记录`; $("securityAuditRows").innerHTML = result.data.map((a) => `<tr><td>${esc(dt(a.createdAt))}</td><td>${esc(a.actorName)}</td><td>${esc(a.action)}</td><td>${esc(a.module)}</td><td>${esc(`${a.targetType}${a.targetId ? ` · ${a.targetId}` : ""}`)}</td><td>${esc(a.details ? JSON.stringify(a.details) : "-")}</td></tr>`).join(""); }
 
-async function exportData(type) { try { const result = await api(`/api/v1/exports/${type}`, { method: "POST", body: "{}" }); const link = document.createElement("a"); link.href = result.data.downloadUrl; link.download = result.data.fileName; document.body.append(link); link.click(); link.remove(); notify(`已导出 ${result.data.rowCount} 条数据`); } catch (error) { notify(error.message); } }
+async function exportData(type) { try { const result = await api(`/api/v1/exports/${type}`, { method: "POST", body: "{}" }); const link = document.createElement("a"); link.href = appUrl(result.data.downloadUrl); link.download = result.data.fileName; document.body.append(link); link.click(); link.remove(); notify(`已导出 ${result.data.rowCount} 条数据`); } catch (error) { notify(error.message); } }
 function openImport(type) { state.importType = type; state.importBrand = state.brands[0]?.code; $("importDialogTitle").textContent = type === "customers" ? "批量导入会员" : "批量导入线索"; renderImport(); $("importDialog").showModal(); }
-function renderImport() { $("importSteps").innerHTML = `<span class="is-active">1 选择品牌与文件</span><span>2 服务端校验</span><span>3 导入结果</span>`; $("importBody").innerHTML = `<div class="import-choice-grid">${state.brands.map((b) => `<button class="import-scope-card ${state.importBrand === b.code ? "is-selected" : ""}" data-import-brand="${b.code}"><strong>${esc(b.name)}</strong><span>按当前有效表单配置校验</span></button>`).join("")}</div><div class="import-upload-zone"><button class="btn" id="downloadTemplate">下载带必填标记的模板</button><button class="btn btn-primary" id="chooseImportFile">选择 .xlsx 文件</button></div>`; $("importFooter").innerHTML = `<button class="btn" id="cancelImport">取消</button>`; document.querySelectorAll("[data-import-brand]").forEach((b) => b.onclick = () => { state.importBrand = b.dataset.importBrand; renderImport(); }); $("downloadTemplate").onclick = () => { location.href = `/api/v1/templates/${state.importType}?brandCode=${state.importBrand}`; }; $("chooseImportFile").onclick = () => $("importFileInput").click(); $("cancelImport").onclick = () => $("importDialog").close(); }
+function renderImport() { $("importSteps").innerHTML = `<span class="is-active">1 选择品牌与文件</span><span>2 服务端校验</span><span>3 导入结果</span>`; $("importBody").innerHTML = `<div class="import-choice-grid">${state.brands.map((b) => `<button class="import-scope-card ${state.importBrand === b.code ? "is-selected" : ""}" data-import-brand="${b.code}"><strong>${esc(b.name)}</strong><span>按当前有效表单配置校验</span></button>`).join("")}</div><div class="import-upload-zone"><button class="btn" id="downloadTemplate">下载带必填标记的模板</button><button class="btn btn-primary" id="chooseImportFile">选择 .xlsx 文件</button></div>`; $("importFooter").innerHTML = `<button class="btn" id="cancelImport">取消</button>`; document.querySelectorAll("[data-import-brand]").forEach((b) => b.onclick = () => { state.importBrand = b.dataset.importBrand; renderImport(); }); $("downloadTemplate").onclick = () => { location.href = appUrl(`/api/v1/templates/${state.importType}?brandCode=${state.importBrand}`); }; $("chooseImportFile").onclick = () => $("importFileInput").click(); $("cancelImport").onclick = () => $("importDialog").close(); }
 async function uploadImport(file) { const data = new FormData(); data.append("file", file); try { const result = await api(`/api/v1/imports/${state.importType}?brandCode=${state.importBrand}&conflictStrategy=SKIP`, { method: "POST", body: data }); $("importBody").innerHTML = `<div class="import-result"><h3>导入完成</h3><p>成功 ${result.data.successCount} 条，失败 ${result.data.failedCount} 条，跳过 ${result.data.skippedCount} 条。</p></div>`; $("importFooter").innerHTML = `<button class="btn btn-primary" id="finishImport">完成</button>`; $("finishImport").onclick = () => { $("importDialog").close(); state.importType === "customers" ? loadCustomers() : loadLeads(); }; } catch (error) { notify(error.message); } }
 
 function bindEvents() {

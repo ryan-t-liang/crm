@@ -21,6 +21,14 @@ const schema = z.object({
   SEED_DEMO_DATA: booleanFromEnv.default(false),
   COOKIE_SECURE: booleanFromEnv.default(true),
   CORS_ORIGIN: z.string().default("https://crm.example.com"),
+  APP_BASE_PATH: z.string().default("").transform((value, ctx) => {
+    const normalized = value.trim().replace(/\/$/, "");
+    if (normalized && (!normalized.startsWith("/") || normalized.includes("//"))) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "APP_BASE_PATH must be empty or a single URL path beginning with /" });
+      return z.NEVER;
+    }
+    return normalized;
+  }),
   TRUST_PROXY: booleanFromEnv.default(false),
   MAX_BODY_BYTES: z.coerce.number().int().positive().default(10 * 1024 * 1024),
   STORAGE_DIR: z.string().default("../storage"),
@@ -48,6 +56,7 @@ export type AppConfig = {
   seedDemoData: boolean;
   cookieSecure: boolean;
   corsOrigin: string;
+  appBasePath: string;
   trustProxy: boolean;
   maxBodyBytes: number;
   storageDir: string;
@@ -77,6 +86,7 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     seedDemoData: env.SEED_DEMO_DATA,
     cookieSecure: env.COOKIE_SECURE,
     corsOrigin: env.CORS_ORIGIN,
+    appBasePath: env.APP_BASE_PATH,
     trustProxy: env.TRUST_PROXY,
     maxBodyBytes: env.MAX_BODY_BYTES,
     storageDir: resolve(process.cwd(), env.STORAGE_DIR),

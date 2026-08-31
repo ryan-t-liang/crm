@@ -78,13 +78,13 @@ export function setSessionCookie(reply: FastifyReply, token: string, expiresAt: 
     httpOnly: true,
     secure: reply.server.config.cookieSecure,
     sameSite: "strict",
-    path: "/",
+    path: reply.server.config.appBasePath || "/",
     expires: expiresAt,
   });
 }
 
 export function clearSessionCookie(reply: FastifyReply): void {
-  reply.clearCookie(SESSION_COOKIE, { path: "/", httpOnly: true, secure: reply.server.config.cookieSecure, sameSite: "strict" });
+  reply.clearCookie(SESSION_COOKIE, { path: reply.server.config.appBasePath || "/", httpOnly: true, secure: reply.server.config.cookieSecure, sameSite: "strict" });
 }
 
 export function safeEqual(left: string, right: string): boolean {
