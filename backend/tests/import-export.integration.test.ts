@@ -14,7 +14,16 @@ import { templateWorkbook } from "../src/jobs/import-export.service.js";
 
 const enabled = process.env.RUN_DB_INTEGRATION_TESTS === "true";
 const runKey = `${Date.now()}-${randomUUID().slice(0, 8)}`;
-const baseMobile = `+86135${String(Date.now() % 100_000_000).padStart(8, "0")}`;
+const mobileSeed = String(Date.now() % 10_000_000).padStart(7, "0");
+type MobileSlot = 0 | 1 | 2 | 3 | 8;
+const testMobile = (slot: MobileSlot) => `+86135${mobileSeed}${slot}`;
+const baseMobile = testMobile(0);
+const duplicateMobile = testMobile(1);
+const conflictMobile = testMobile(2);
+const createMemberMobile = testMobile(3);
+const viewerMobile = testMobile(8);
+const fixtureMobiles = [baseMobile, duplicateMobile, conflictMobile, createMemberMobile, viewerMobile];
+if (new Set(fixtureMobiles).size !== fixtureMobiles.length) throw new Error("R3 mobile fixtures must be unique within one test run");
 
 function multipart(buffer: Buffer, filename: string) {
   const boundary = `----sowind-${randomUUID()}`;
@@ -91,8 +100,8 @@ describe.skipIf(!enabled)("Remediation Round 3 Import/Export", () => {
   });
 
   it("MI-F/H: file duplicate and scoped identity conflict become row errors with failure CSV", async () => {
-    const duplicateFile = await workbook("CUSTOMER", "GP", [memberRow("GP", `${baseMobile.slice(0, -1)}1`), memberRow("GP", `${baseMobile.slice(0, -1)}1`, { firstName: "重复" })]); const duplicate = await upload("customers", "GP", duplicateFile); expect(duplicate.json().data.preflight.fileDuplicate).toBe(1);
-    const conflictMobile = `${baseMobile.slice(0, -1)}2`; const conflictFile = await workbook("CUSTOMER", "GP", [memberRow("GP", conflictMobile, { openId: `gp-open-${runKey}` })]); const conflict = await upload("customers", "GP", conflictFile); expect(conflict.json().data.rows[0].errors).toEqual(expect.arrayContaining([expect.objectContaining({ code: "IDENTITY_CONFLICT" })])); const result = await execute(conflict.json().data.id); expect(result.json().data.job.status).toBe("FAILED");
+    const duplicateFile = await workbook("CUSTOMER", "GP", [memberRow("GP", duplicateMobile), memberRow("GP", duplicateMobile, { firstName: "重复" })]); const duplicate = await upload("customers", "GP", duplicateFile); expect(duplicate.json().data.preflight.fileDuplicate).toBe(1);
+    const conflictFile = await workbook("CUSTOMER", "GP", [memberRow("GP", conflictMobile, { openId: `gp-open-${runKey}` })]); const conflict = await upload("customers", "GP", conflictFile); expect(conflict.json().data.rows[0].errors).toEqual(expect.arrayContaining([expect.objectContaining({ code: "IDENTITY_CONFLICT" })])); const result = await execute(conflict.json().data.id); expect(result.json().data.job.status).toBe("FAILED");
     const failure = await inject({ method: "GET", url: `/api/v1/imports/${conflict.json().data.id}/failures` }); expect(failure.statusCode).toBe(200); expect(failure.body).toContain("original_row_number"); expect(failure.body).toContain("PREFLIGHT_ERROR"); expect((await inject({ method: "GET", url: `/api/v1/imports/${conflict.json().data.id}/failures` }, unCookie)).statusCode).toBe(404);
   });
 
@@ -101,7 +110,7 @@ describe.skipIf(!enabled)("Remediation Round 3 Import/Export", () => {
     const gpJob = await prisma.importJob.findFirstOrThrow({ where: { brandId: gpId, createdBy: userId } });
     expect((await inject({ method: "GET", url: `/api/v1/imports/${gpJob.id}` }, unCookie)).statusCode).toBe(404);
     expect((await inject({ method: "POST", url: "/api/v1/exports/customers", payload: { scope: "ALL", brandCode: "GP" } }, unCookie)).statusCode).toBe(403);
-    const viewerForm = multipart(await workbook("CUSTOMER", "UN", [memberRow("UN", `${baseMobile.slice(0, -1)}8`)]), "viewer-import.xlsx"); expect((await inject({ method: "POST", url: "/api/v1/imports/customers?brandCode=UN", ...viewerForm }, viewerCookie)).statusCode).toBe(403);
+    const viewerForm = multipart(await workbook("CUSTOMER", "UN", [memberRow("UN", viewerMobile)]), "viewer-import.xlsx"); expect((await inject({ method: "POST", url: "/api/v1/imports/customers?brandCode=UN", ...viewerForm }, viewerCookie)).statusCode).toBe(403);
   });
 
   it("LI-A/C/E/K: GP Email-only lead imports locally with no member and no Outbox", async () => {
@@ -114,7 +123,7 @@ describe.skipIf(!enabled)("Remediation Round 3 Import/Export", () => {
   });
 
   it("LI-F/G: CREATE_MEMBER requires phone and creates a reusable Customer when valid", async () => {
-    const mobile = `${baseMobile.slice(0, -1)}3`; const valid = await upload("leads", "UN", await workbook("LEAD", "UN", [leadRow("UN", "create-member", { phone: mobile })]), "&unmatchedStrategy=CREATE_MEMBER"); expect(valid.json().data.preflight.error).toBe(0); const done = await execute(valid.json().data.id, { unmatchedStrategy: "CREATE_MEMBER" }); expect(done.json().data.result.createdMembers).toBe(1); expect(await prisma.customer.count({ where: { mobileNormalized: mobile } })).toBe(1);
+    const valid = await upload("leads", "UN", await workbook("LEAD", "UN", [leadRow("UN", "create-member", { phone: createMemberMobile })]), "&unmatchedStrategy=CREATE_MEMBER"); expect(valid.json().data.preflight.error).toBe(0); const done = await execute(valid.json().data.id, { unmatchedStrategy: "CREATE_MEMBER" }); expect(done.json().data.result.createdMembers).toBe(1); expect(await prisma.customer.count({ where: { mobileNormalized: createMemberMobile } })).toBe(1);
     const invalid = await upload("leads", "UN", await workbook("LEAD", "UN", [leadRow("UN", "no-phone-member")]), "&unmatchedStrategy=CREATE_MEMBER"); expect(invalid.json().data.rows[0].errors).toEqual(expect.arrayContaining([expect.objectContaining({ code: "PHONE_REQUIRED_FOR_MEMBER" })]));
   });
 

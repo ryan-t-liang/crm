@@ -31,7 +31,6 @@ jobs:
       INITIAL_PASSWORD: CiOnly!Fixture_9xK2_2026
       COOKIE_SECURE: "false"
       CORS_ORIGIN: "*"
-      RUN_DB_INTEGRATION_TESTS: "true"
       RUN_SOWIND_LIVE_TESTS: "false"
       SOWIND_GATEWAY_ACCESS_KEY: fake-ci-key
       INTEGRATION_CLIENT_ID: ci-client
@@ -49,6 +48,10 @@ jobs:
       - run: npm run prisma:seed
       - run: npm run lint
       - run: npm test
+        env:
+          RUN_DB_INTEGRATION_TESTS: "false"
       - run: npm run test:integration
+        env:
+          RUN_DB_INTEGRATION_TESTS: "true"
       - run: npm run build
       - run: npm run test:frontend
