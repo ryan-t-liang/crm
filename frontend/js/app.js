@@ -21,6 +21,17 @@ const brandLabel = (brand) => brand?.name || ({ UN: "UN 雅典表", GP: "GP 芝�
 const statusLabel = (status) => ({ NOT_SYNCED: "未同步", PENDING: "待同步", RETRY_WAITING: "待重试", GATEWAY_QUEUED: "Gateway 已受理", SUCCEEDED: "同步成功", FAILED: "同步失败", FAILED_AUTH: "鉴权失败", FAILED_VALIDATION: "校验失败", FAILED_PERMANENT: "同步失败", ACTIVE: "启用", DISABLED: "禁用" })[status] || status || "-";
 const can = (permission) => Boolean(state.me?.permissions?.includes(permission));
 const sourceLabel = (source) => ({ ADMIN_MANUAL: "后台手动新增", BATCH_IMPORT: "批量导入", WECHAT_MINIPROGRAM: "微信小程序", USER_SUBMITTED: "用户提交" })[source] || source || "-";
+const contactChannelLabel = (channel) => ({
+  WECHAT: "微信", PHONE: "电话", EMAIL: "电子邮件", SMS: "短信",
+  WHATSAPP: "WhatsApp 消息", SIGNAL: "Signal 消息", TELEGRAM: "Telegram 消息",
+  "ALL OF THE ABOVE": "以上全部",
+})[String(channel || "").trim().toUpperCase()] || channel || "-";
+const yesNoLabel = (value) => ({ YES: "是", NO: "否", TRUE: "是", FALSE: "否" })[String(value ?? "").trim().toUpperCase()] || value || "-";
+function formOptionLabel(fieldKey, option) {
+  if (["preferred_contact", "preferredContact"].includes(fieldKey)) return contactChannelLabel(option);
+  if (["owns_brand_watch", "ownsBrandWatch", "ownership"].includes(fieldKey)) return yesNoLabel(option);
+  return option;
+}
 
 async function api(path, options = {}) {
   const headers = { accept: "application/json", ...(options.body instanceof FormData ? {} : { "content-type": "application/json" }), ...(options.headers || {}) };
@@ -149,7 +160,7 @@ async function openLead(id) {
   try {
     const result = await api(`/api/v1/leads/${id}`); const lead = result.data; state.currentLead = lead;
     $("drawerSyncStatusBadge").textContent = statusLabel(lead.syncStatus); $("drawerSyncStatusBadge").className = `sync-pill ${String(lead.syncStatus).startsWith("FAILED") ? "failed" : ["GATEWAY_QUEUED", "SUCCEEDED"].includes(lead.syncStatus) ? "synced" : "not-synced"}`;
-    const fields = [["线索编号", lead.leadNo], ["品牌", lead.brand.name], ["来源", lead.source === "ADMIN_MANUAL" ? "后台手动提交" : "用户提交"], ["关联会员 ID", lead.customer?.customerNo || "-"], ["称谓", lead.salutation], ["姓氏", lead.lastname], ["名字", lead.firstname], ["Email", lead.email], ["电话号码", lead.phone], ["国家 / 地区", lead.country], ["城市", lead.city || "-"], ["通信语言", lead.language], ["首选联系方式", lead.preferredContact], [`您是否拥有 ${lead.brand.name}`, lead.ownership === "Yes" || lead.ownership === "是" ? "是" : lead.ownership === "No" || lead.ownership === "否" ? "否" : "-"], ["产品", lead.sku || "-"], ["营销选择", lead.marketingOptIn ? "已选择" : "未选择"], ["个人数据处理同意", lead.processingConsent ? "已同意" : "未同意"], ["创建人", lead.submissionMode === "ADMIN_MANUAL" ? lead.createdByName || "-" : "-"], ["创建时间", dt(lead.createdAt)]];
+    const fields = [["线索编号", lead.leadNo], ["品牌", lead.brand.name], ["来源", lead.source === "ADMIN_MANUAL" ? "后台手动提交" : "用户提交"], ["关联会员 ID", lead.customer?.customerNo || "-"], ["称谓", lead.salutation], ["姓氏", lead.lastname], ["名字", lead.firstname], ["Email", lead.email], ["电话号码", lead.phone], ["国家 / 地区", lead.country], ["城市", lead.city || "-"], ["通信语言", lead.language], ["首选联系方式", contactChannelLabel(lead.preferredContact)], [`您是否拥有 ${lead.brand.name}`, yesNoLabel(lead.ownership)], ["产品", lead.sku || "-"], ["营销选择", lead.marketingOptIn ? "已选择" : "未选择"], ["个人数据处理同意", lead.processingConsent ? "已同意" : "未同意"], ["创建人", lead.submissionMode === "ADMIN_MANUAL" ? lead.createdByName || "-" : "-"], ["创建时间", dt(lead.createdAt)]];
     const attempts = lead.syncRecord?.attempts || [];
     $("leadDrawerSections").innerHTML = `<section class="drawer-section"><h3>线索详情</h3><div class="drawer-field-grid">${fields.map(([k, v]) => `<div><span>${esc(k)}</span><strong>${esc(v)}</strong></div>`).join("")}</div></section><section class="drawer-section"><h3>同步记录</h3>${attempts.length ? attempts.map((a) => `<div class="activity-item"><strong>${esc(statusLabel(a.httpStatus === 202 ? "SUCCEEDED" : "FAILED"))}</strong><span>${esc(dt(a.completedAt))} · HTTP ${esc(a.httpStatus ?? "-")} ${a.errorMessage ? `· ${esc(a.errorMessage)}` : ""}</span></div>`).join("") : `<div class="empty-copy">暂无同步记录</div>`}</section>${can("lead.sync") && !["GATEWAY_QUEUED", "SUCCEEDED"].includes(lead.syncStatus) ? `<div class="drawer-footer"><button class="btn btn-primary" id="drawerSyncBtn">${String(lead.syncStatus).startsWith("FAILED") ? "重试同步" : "手动同步"}</button></div>` : ""}`;
     $("leadDrawer").classList.add("is-open"); $("leadDrawer").setAttribute("aria-hidden", "false"); if ($("drawerSyncBtn")) $("drawerSyncBtn").onclick = () => syncLead(id);
@@ -183,7 +194,7 @@ function profileGroup(title, fields, wide = false) {
 function brandDetail(profile) {
   const groups = [
     profileGroup("个人信息", [profileField("姓氏", profile.lastName), profileField("名字", profile.firstName), profileField("称谓", profile.salutation), profileField("出生日期", profile.birthday?.slice(0, 10))]),
-    profileGroup("联系方式", [profileField(`${profile.brand.name} Email`, profile.email), profileField("品牌注册手机号", profile.mobile), profileField("首选联系方式", profile.preferredContact)]),
+    profileGroup("联系方式", [profileField(`${profile.brand.name} Email`, profile.email), profileField("品牌注册手机号", profile.mobile), profileField("首选联系方式", contactChannelLabel(profile.preferredContact))]),
     profileGroup("地址", [profileField("国家 / 地区", countryLabel(profile.country)), profileField("省 / 地区", profile.region), profileField("城市", profile.city), profileField("邮编", profile.postalCode), profileField("联系地址", profile.addressLine, true)], true),
     profileGroup("会员信息", [profileField("品牌会员 ID", profile.brandMemberNo), profileField("注册时间", dt(profile.registeredAt || profile.createdAt)), profileField("注册来源", sourceLabel(profile.registrationSource)), profileField("创建时间", dt(profile.createdAt)), profileField("更新时间", dt(profile.updatedAt)), profileField(`您是否拥有${profile.brand.name}`, profile.ownsBrandWatch == null ? "-" : profile.ownsBrandWatch ? "是" : "否")]),
     profileGroup("偏好", [profileField("通信语言", profile.language), profileField("偏爱的系列", profile.favoriteCollection), profileField("兴趣中心", profile.interestCenter), profileField("希望购买渠道", profile.purchaseChannel)]),
@@ -243,7 +254,7 @@ function dynamicField(field, prefix) {
   if (field.type === "checkbox") return `<label class="full consent-control"><input id="${id}" data-field="${field.key}" type="checkbox"${requiredAttr}><span>${esc(field.label)}${required}</span></label>`;
   if (field.key === "country") return `<label><span class="field-label">${esc(field.label)}${required}</span><select class="control" id="${id}" data-field="${field.key}"${requiredAttr}><option value="">请选择</option>${COUNTRY_OPTIONS.map((option) => `<option value="${esc(option.value)}">${esc(option.label)}</option>`).join("")}</select></label>`;
   if (prefix === "member" && ["province", "city"].includes(field.key)) return `<label><span class="field-label">${esc(field.label)}${required}</span><select class="control" id="${id}" data-field="${field.key}"${requiredAttr} disabled><option value="">请先选择${field.key === "province" ? "国家 / 地区" : "省 / 地区"}</option></select></label>`;
-  if (field.type === "select") return `<label><span class="field-label">${esc(field.label)}${required}</span><select class="control" id="${id}" data-field="${field.key}"${requiredAttr}><option value="">请选择</option>${(field.options || []).map((o) => `<option value="${esc(o)}">${esc(o)}</option>`).join("")}</select></label>`;
+  if (field.type === "select") return `<label><span class="field-label">${esc(field.label)}${required}</span><select class="control" id="${id}" data-field="${field.key}"${requiredAttr}><option value="">请选择</option>${(field.options || []).map((o) => `<option value="${esc(o)}">${esc(formOptionLabel(field.key, o))}</option>`).join("")}</select></label>`;
   const inputType = field.type === "date" ? "date" : field.type === "email" ? "email" : field.type === "tel" ? "tel" : "text";
   return `<label><span class="field-label">${esc(field.label)}${required}</span><input class="control" id="${id}" data-field="${field.key}" type="${inputType}"${requiredAttr}></label>`;
 }
@@ -441,6 +452,30 @@ function updateStrength(containerId, value) {
   container.querySelector(".password-strength-label").textContent = `密码强度：${assessment.label}`;
 }
 
+function closePersonalSettings() {
+  $("personalSettingsDrawer").classList.remove("is-open");
+  $("personalSettingsDrawer").setAttribute("aria-hidden", "true");
+}
+function openChangePassword() {
+  closePersonalSettings();
+  $("accountMenu").hidden = true;
+  $("accountMenuTrigger").setAttribute("aria-expanded", "false");
+  $("changePasswordForm").reset();
+  $("changePasswordError").hidden = true;
+  updateStrength("changePasswordStrength", "");
+  $("changePasswordDialog").showModal();
+  setTimeout(() => $("currentPasswordInput").focus(), 30);
+}
+function openPersonalSettings() {
+  const scope = state.me.allBrands ? "全部品牌" : state.brands.map((brand) => brand.name).join("、") || "-";
+  $("personalSettingsBody").innerHTML = `<section class="security-form-section"><h3>账号信息</h3><div class="security-form-grid"><div class="readonly-field"><span>姓名</span><strong>${esc(state.me.name)}</strong></div><div class="readonly-field"><span>登录账号</span><strong>${esc(state.me.loginAccount)}</strong></div><div class="readonly-field"><span>角色</span><strong>${esc(state.me.role.name)}</strong></div><div class="readonly-field"><span>品牌范围</span><strong>${esc(scope)}</strong></div></div></section><section class="security-form-section"><h3>安全</h3><div class="password-summary"><div class="password-summary-copy"><strong>••••••••••••</strong><span>密码不会在页面中显示</span></div><button class="btn" type="button" id="personalChangePasswordBtn">修改密码</button></div></section>`;
+  $("accountMenu").hidden = true;
+  $("accountMenuTrigger").setAttribute("aria-expanded", "false");
+  $("personalSettingsDrawer").classList.add("is-open");
+  $("personalSettingsDrawer").setAttribute("aria-hidden", "false");
+  $("personalChangePasswordBtn").onclick = openChangePassword;
+}
+
 function bindEvents() {
   $("loginForm").addEventListener("submit", async (event) => { event.preventDefault(); $("loginError").hidden = true; try { const result = await api("/api/v1/auth/login", { method: "POST", body: JSON.stringify({ loginAccount: $("loginAccountInput").value, password: $("loginPasswordInput").value }) }); state.me = result.data; await afterAuth(); } catch (error) { showError($("loginError"), error); } });
   $("forcePasswordForm").addEventListener("submit", async (event) => { event.preventDefault(); $("forcePasswordError").hidden = true; const password = $("forcedNewPasswordInput").value; const confirm = $("forcedConfirmPasswordInput").value; try { await api("/api/v1/auth/change-password", { method: "POST", body: JSON.stringify({ currentPassword: $("loginPasswordInput").value, newPassword: password, confirmPassword: confirm }) }); state.me.mustChangePassword = false; hideForcePassword(); notify("密码已更新"); await afterAuth(); } catch (error) { showError($("forcePasswordError"), error); } });
@@ -450,9 +485,9 @@ function bindEvents() {
   $("memberExportBtn").onclick = () => exportData("customers"); $("leadExportBtn").onclick = () => exportData("leads"); $("memberImportBtn").onclick = () => openImport("customers"); $("leadImportBtn").onclick = () => openImport("leads"); $("closeImportDialog").onclick = () => $("importDialog").close(); $("importHistoryBtn").onclick = () => { state.importHistoryMode = !state.importHistoryMode; renderImport(); }; $("importFileInput").onchange = (event) => event.target.files[0] && uploadImport(event.target.files[0]);
   $("addAccountBtn").onclick = () => openAccountDrawer(); $("closeAccountDrawer").onclick = $("cancelAccountDrawer").onclick = closeAccountDrawer; $("accountRoleInput").onchange = updateAccountScopeState; $("accountForm").onsubmit = saveAccount;
   $("addNoteBtn").onclick = () => $("noteComposer").classList.add("is-open"); $("cancelNote").onclick = () => $("noteComposer").classList.remove("is-open"); $("saveNote").onclick = async () => { if (!$("noteInput").value.trim()) return; await api(`/api/v1/customers/${state.currentCustomer.id}/notes`, { method: "POST", body: JSON.stringify({ body: $("noteInput").value }) }); $("noteInput").value = ""; await openCustomer(state.currentCustomer.id); renderCustomerModule("notes"); };
-  $("accountMenuTrigger").onclick = () => { $("accountMenu").hidden = !$("accountMenu").hidden; }; $("logoutMenuItem").onclick = async () => { await api("/api/v1/auth/logout", { method: "POST", body: "{}" }); state.me = null; showLogin(); };
-  $("personalSettingsMenuItem").onclick = () => { $("personalSettingsBody").innerHTML = `<div class="settings-summary"><strong>${esc(state.me.name)}</strong><span>${esc(state.me.loginAccount)}</span><span>${esc(state.me.role.name)}</span></div>`; $("personalSettingsDrawer").classList.add("is-open"); };
-  $("closePersonalSettings").onclick = $("closePersonalSettingsFooter").onclick = () => $("personalSettingsDrawer").classList.remove("is-open"); $("changePasswordMenuItem").onclick = () => { $("changePasswordForm").reset(); $("changePasswordError").hidden = true; updateStrength("changePasswordStrength", ""); $("changePasswordDialog").showModal(); }; $("closeChangePassword").onclick = $("cancelChangePassword").onclick = () => $("changePasswordDialog").close();
+  $("accountMenuTrigger").onclick = () => { const willOpen = $("accountMenu").hidden; $("accountMenu").hidden = !willOpen; $("accountMenuTrigger").setAttribute("aria-expanded", String(willOpen)); }; $("logoutMenuItem").onclick = async () => { await api("/api/v1/auth/logout", { method: "POST", body: "{}" }); state.me = null; showLogin(); };
+  $("personalSettingsMenuItem").onclick = openPersonalSettings;
+  $("closePersonalSettings").onclick = $("closePersonalSettingsFooter").onclick = closePersonalSettings; $("changePasswordMenuItem").onclick = openChangePassword; $("closeChangePassword").onclick = $("cancelChangePassword").onclick = () => $("changePasswordDialog").close();
   $("changePasswordForm").onsubmit = async (event) => { event.preventDefault(); try { await api("/api/v1/auth/change-password", { method: "POST", body: JSON.stringify({ currentPassword: $("currentPasswordInput").value, newPassword: $("newPasswordInput").value, confirmPassword: $("confirmPasswordInput").value }) }); $("changePasswordDialog").close(); notify("密码已更新"); } catch (error) { showError($("changePasswordError"), error); } };
   $("forgotPasswordBtn").onclick = () => $("forgotPasswordDialog").showModal(); $("closeForgotPassword").onclick = $("ackForgotPassword").onclick = () => $("forgotPasswordDialog").close();
   $("newPasswordInput").addEventListener("input", (event) => updateStrength("changePasswordStrength", event.target.value));
