@@ -1,4 +1,4 @@
-# Sowind CRM v1.15.0
+# Sowind CRM v1.15.0 · Production Readiness Closure
 
 Sowind 中国区多品牌会员与线索 CRM。当前版本保留 v1.14.0 已确认的页面结构和视觉语言，并将前端 Mock 替换为 MySQL、Fastify API、服务端 Session、RBAC、品牌数据权限、导入导出和 Sowind Gateway Outbox。
 
@@ -10,6 +10,9 @@ Sowind 中国区多品牌会员与线索 CRM。当前版本保留 v1.14.0 已确
 - Sowind Gateway Key 只在发送请求前于内存中注入；前端、Outbox、Audit、源码和日志均不保存 Key。
 - HTTP 202 `queued + ref` 才表示 Gateway 已受理，不表示 HQ CRM 已完成处理。
 - 真实 Gateway 测试默认关闭，本次未使用真实 accessKey 发起请求。
+- Role 权限依赖由服务端强制归一化；列表指标由服务端按完整 Brand Scope 计算。
+- API 字段校验统一为 HTTP 422 + `fieldErrors`，错误响应与日志通过 `traceId` 关联。
+- Outbox 使用 lease 与原子 claim 支持崩溃恢复；`/api/ready` 提供数据库与集成运行摘要。
 
 ## 技术栈
 
@@ -59,7 +62,7 @@ storage/                  本地导入导出文件（不入 Git/ZIP 数据）
    npm start
    ```
 
-5. 打开 `http://127.0.0.1:3000`，健康检查为 `GET /api/health`。
+5. 打开 `http://127.0.0.1:3000`。健康检查为 `GET /api/health`，部署就绪检查为 `GET /api/ready`。
 
 Seed 创建的账号首次登录必须使用环境变量中的统一初始密码，并立即修改。`SEED_DEMO_DATA=false` 时不会创建演示会员和线索。
 
@@ -82,9 +85,16 @@ curl -fsS http://127.0.0.1:3000/api/health
 ## 常用命令
 
 ```bash
+npm ci
+npm run prisma:generate
+npm run prisma:validate
+npm run prisma:migrate:deploy
+npm run prisma:seed
+npm run lint
 npm run build
 npm test
-npm run prisma:validate
+npm run test:integration
+npm run test:frontend
 npm audit --omit=dev
 docker compose config
 ```
@@ -92,10 +102,18 @@ docker compose config
 显式真实 Gateway 测试：
 
 ```bash
-RUN_SOWIND_LIVE_TESTS=true SOWIND_GATEWAY_ACCESS_KEY='从 Secret Manager 注入' npm test
+RUN_SOWIND_LIVE_TESTS=true \
+SOWIND_LIVE_TEST_AUTHORIZED=true \
+SOWIND_GATEWAY_ACCESS_KEY='从 Secret Manager 注入' \
+SOWIND_LIVE_GP_EMAIL='获授权测试邮箱' \
+SOWIND_LIVE_UN_EMAIL='获授权测试邮箱' \
+SOWIND_LIVE_GP_SKU='真实 GP SKU' \
+SOWIND_LIVE_UN_SKU='真实 UN SKU' \
+npm test
 ```
 
 此命令会向 GP 和 UN 真实 Endpoint 提交测试线索；只有获得业务和运维授权后才能运行。
+Live Harness 必须连接已完成 Migration/Seed、且没有任何可执行 Outbox 的独立 UAT 数据库；它会走 Integration API、DB、Outbox、Worker 和真实 Gateway，并在该 UAT 数据库保留 Attempt/Audit 证据。不要指向生产库或日常测试库。
 
 ## 安全约束
 
@@ -111,6 +129,8 @@ RUN_SOWIND_LIVE_TESTS=true SOWIND_GATEWAY_ACCESS_KEY='从 Secret Manager 注入'
 - [API 说明](docs/API.md)
 - [Sowind Gateway 映射](docs/SOWIND_GATEWAY_MAPPING.md)
 - [部署与运维](docs/DEPLOYMENT.md)
+- [生产运维手册](docs/OPERATIONS.md)
+- [交接清单](docs/HANDOFF.md)
 - [UAT 报告](docs/UAT_REPORT.md)
 - [实现与范围报告](docs/IMPLEMENTATION_REPORT.md)
 - [多品牌产品化与线索模块设计说明](docs/多品牌产品化与线索模块设计说明.md)

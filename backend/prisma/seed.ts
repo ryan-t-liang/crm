@@ -2,6 +2,7 @@ import { PrismaClient, UserStatus } from "@prisma/client";
 import { hashPassword } from "../src/common/password.js";
 import { loadConfig } from "../src/common/config.js";
 import { createCanonicalLead } from "../src/leads/service.js";
+import { formalImportFields } from "../src/jobs/formal-schema.js";
 
 const prisma = new PrismaClient();
 
@@ -67,7 +68,7 @@ const leadBaseFields = [
   { key: "salutation", label: "称谓", type: "select", required: true, options: ["Dr", "Mr", "Mrs", "Ms", "Prefer not to say"] },
   { key: "firstname", label: "名字", type: "text", required: true },
   { key: "lastname", label: "姓氏", type: "text", required: true },
-  { key: "phone", label: "电话号码", type: "tel", required: true },
+  { key: "phone", label: "电话号码", type: "tel", required: false },
   { key: "preferredContact", label: "首选联系方式", type: "select", required: true, options: ["WhatsApp", "WeChat", "Phone", "Email", "Signal", "Telegram", "SMS", "All of the above"] },
   { key: "country", label: "国家 / 地区", type: "select", required: true, options: ["China", "Hong Kong", "Macau", "Taiwan"] },
   { key: "city", label: "城市", type: "text", required: false },
@@ -127,8 +128,8 @@ async function seed(): Promise<void> {
   for (const brand of [gp, un]) {
     await prisma.formDefinition.upsert({
       where: { brandId_objectType_formKey_version: { brandId: brand.id, objectType: "CUSTOMER", formKey: "REGISTRATION", version: "2026.1" } },
-      update: { active: true, schemaJson: { fields: memberFields } },
-      create: { brandId: brand.id, objectType: "CUSTOMER", formKey: "REGISTRATION", version: "2026.1", active: true, schemaJson: { fields: memberFields }, policyVersion: `${brand.code}-CN-PRIVACY-2026.1`, termsVersion: `${brand.code}-CN-MEMBER-2026.1`, effectiveAt },
+      update: { active: true, schemaJson: { fields: memberFields, importFields: formalImportFields("CUSTOMER", brand.code as "GP" | "UN") } },
+      create: { brandId: brand.id, objectType: "CUSTOMER", formKey: "REGISTRATION", version: "2026.1", active: true, schemaJson: { fields: memberFields, importFields: formalImportFields("CUSTOMER", brand.code as "GP" | "UN") }, policyVersion: `${brand.code}-CN-PRIVACY-2026.1`, termsVersion: `${brand.code}-CN-MEMBER-2026.1`, effectiveAt },
     });
     const fields = leadBaseFields.map((field) => field.key === "ownsBrandWatch" ? { ...field, required: brand.code === "UN", label: `您是否拥有${brand.name}` } : field);
     if (brand.code === "UN") fields.splice(10, 0,
@@ -137,8 +138,8 @@ async function seed(): Promise<void> {
     );
     await prisma.formDefinition.upsert({
       where: { brandId_objectType_formKey_version: { brandId: brand.id, objectType: "LEAD", formKey: "PURCHASE_INTENT", version: "2.0" } },
-      update: { active: true, schemaJson: { leadType: "PURCHASE_INTENT", fields } },
-      create: { brandId: brand.id, objectType: "LEAD", formKey: "PURCHASE_INTENT", version: "2.0", active: true, schemaJson: { leadType: "PURCHASE_INTENT", fields }, policyVersion: `${brand.code}-GATEWAY-2026.2`, termsVersion: `${brand.code}-LEAD-2026.2`, effectiveAt },
+      update: { active: true, schemaJson: { leadType: "PURCHASE_INTENT", fields, importFields: formalImportFields("LEAD", brand.code as "GP" | "UN") } },
+      create: { brandId: brand.id, objectType: "LEAD", formKey: "PURCHASE_INTENT", version: "2.0", active: true, schemaJson: { leadType: "PURCHASE_INTENT", fields, importFields: formalImportFields("LEAD", brand.code as "GP" | "UN") }, policyVersion: `${brand.code}-GATEWAY-2026.2`, termsVersion: `${brand.code}-LEAD-2026.2`, effectiveAt },
     });
   }
 
@@ -169,18 +170,30 @@ async function seed(): Promise<void> {
       { brand: gp, memberNo: "GP-CN-00128", email: "zhang.gp@example.cn", favorite: "Laureato 桂冠", interest: "经典腕表", owns: false, channel: null },
     ];
     for (const item of demoProfiles) {
+      const openId = `o${item.brand.code.toLowerCase()}_demo_00128`;
+      const unionId = `union_${item.brand.code.toLowerCase()}_demo_00128`;
       const profile = await prisma.customerBrandProfile.upsert({
         where: { customerId_brandId: { customerId: customer.id, brandId: item.brand.id } },
-        update: { email: item.email, favoriteCollection: item.favorite, interestCenter: item.interest },
-        create: { customerId: customer.id, brandId: item.brand.id, brandMemberNo: item.memberNo, displayName: "张一二", salutation: "Mr", lastName: "张", firstName: "一二", birthday: new Date("1990-08-18"), email: item.email, mobile: customer.mobile, country: "China", region: "上海市", city: "上海", postalCode: "200040", addressLine: "上海市静安区示例路 1 号", language: "简体中文", preferredContact: "WeChat", ownsBrandWatch: item.owns, purchaseChannel: item.channel, interestCenter: item.interest, favoriteCollection: item.favorite, registrationSource: "WECHAT_MINIPROGRAM", registeredAt: new Date("2026-08-26T06:20:00.000Z"), openId: `o${item.brand.code.toLowerCase()}_demo_00128`, unionId: `union_${item.brand.code.toLowerCase()}_demo_00128` },
+        update: { email: item.email, favoriteCollection: item.favorite, interestCenter: item.interest, openId, unionId },
+        create: { customerId: customer.id, brandId: item.brand.id, brandMemberNo: item.memberNo, displayName: "张一二", salutation: "Mr", lastName: "张", firstName: "一二", birthday: new Date("1990-08-18"), email: item.email, mobile: customer.mobile, country: "China", region: "上海市", city: "上海", postalCode: "200040", addressLine: "上海市静安区示例路 1 号", language: "简体中文", preferredContact: "WeChat", ownsBrandWatch: item.owns, purchaseChannel: item.channel, interestCenter: item.interest, favoriteCollection: item.favorite, registrationSource: "WECHAT_MINIPROGRAM", registeredAt: new Date("2026-08-26T06:20:00.000Z"), openId, unionId },
+      });
+      await prisma.customerIdentity.upsert({
+        where: { brandId_identityType_scope_value: { brandId: item.brand.id, identityType: "OPENID", scope: `DEMO_APP:${item.brand.code}`, value: openId } },
+        update: { source: "DEMO_SEED" },
+        create: { customerId: customer.id, brandId: item.brand.id, identityType: "OPENID", scope: `DEMO_APP:${item.brand.code}`, value: openId, source: "DEMO_SEED" },
+      });
+      await prisma.customerIdentity.upsert({
+        where: { brandId_identityType_scope_value: { brandId: item.brand.id, identityType: "UNIONID", scope: `DEMO_OPEN_PLATFORM:${item.brand.code}`, value: unionId } },
+        update: { source: "DEMO_SEED" },
+        create: { customerId: customer.id, brandId: item.brand.id, identityType: "UNIONID", scope: `DEMO_OPEN_PLATFORM:${item.brand.code}`, value: unionId, source: "DEMO_SEED" },
       });
       if (await prisma.consentRecord.count({ where: { customerBrandProfileId: profile.id } }) === 0) await prisma.consentRecord.createMany({ data: [
         { customerId: customer.id, customerBrandProfileId: profile.id, brandId: item.brand.id, purpose: "DATA_PROCESSING", channel: "ALL", status: "GRANTED", policyVersion: `${item.brand.code}-CN-PRIVACY-2026.1`, source: "WECHAT_MINIPROGRAM", capturedAt: new Date("2026-08-26T06:20:00.000Z") },
         { customerId: customer.id, customerBrandProfileId: profile.id, brandId: item.brand.id, purpose: "MARKETING_COMMUNICATION", channel: "EMAIL", status: "GRANTED", policyVersion: `${item.brand.code}-CN-PRIVACY-2026.1`, source: "WECHAT_MINIPROGRAM", capturedAt: new Date("2026-08-26T06:20:00.000Z") },
       ] });
     }
-    await prisma.customerJourneyEvent.upsert({ where: { id: "demo-journey-registration-00128" }, update: {}, create: { id: "demo-journey-registration-00128", customerId: customer.id, brandId: un.id, eventType: "MEMBER_REGISTERED", title: "UN 雅典表会员登记", eventAt: new Date("2026-08-26T06:20:00.000Z"), source: "WECHAT_MINIPROGRAM" } });
-    await createCanonicalLead(prisma, loadConfig(), { brandCode: "GP", customerId: null, source: "WECHAT_MINIPROGRAM", submissionMode: "USER_SUBMITTED", formVersion: "2.0", sku: "81010-11-3475-1CM", email: "lead.gp@example.cn", salutation: "Mr", firstname: "一二", lastname: "张", phone: "+8618872720202", preferredContact: "WeChat", country: "China", city: "Shanghai", ownsBrandWatch: "No", processingConsent: true, marketingOptIn: true, idempotencyKey: "DEMO:GP:001", createdByService: "wechat-miniprogram" });
+    await prisma.customerJourneyEvent.upsert({ where: { id: "demo-journey-registration-00128" }, update: { eventType: "REGISTER" }, create: { id: "demo-journey-registration-00128", customerId: customer.id, brandId: un.id, eventType: "REGISTER", title: "UN 雅典表会员登记", eventAt: new Date("2026-08-26T06:20:00.000Z"), source: "WECHAT_MINIPROGRAM" } });
+    await createCanonicalLead(prisma, loadConfig(), { brandCode: "GP", customerId: null, source: "MINI_PROGRAM", submissionMode: "USER_SUBMITTED", formVersion: "2.0", sku: "81010-11-3475-1CM", email: "lead.gp@example.cn", salutation: "Mr", firstname: "一二", lastname: "张", phone: "+8618872720202", preferredContact: "WeChat", country: "China", city: "Shanghai", ownsBrandWatch: "No", processingConsent: true, marketingOptIn: true, idempotencyKey: "DEMO:GP:001", createdByService: "wechat-miniprogram" });
     await createCanonicalLead(prisma, loadConfig(), { brandCode: "UN", customerId: customer.id, source: "ADMIN_MANUAL", submissionMode: "ADMIN_MANUAL", formVersion: "2.0", sku: "2405-500-2A/3C", email: "lead.un@example.cn", salutation: "Ms", firstname: "嘉宁", lastname: "陈", phone: "+8618603087126", preferredContact: "Phone", country: "China", city: "Shanghai", ownsBrandWatch: "Yes", processingConsent: true, marketingOptIn: false, idempotencyKey: "DEMO:UN:001", createdBy: admin.id });
   }
 

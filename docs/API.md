@@ -4,7 +4,9 @@
 
 - 同源 Web API 使用 HttpOnly Session Cookie。
 - 成功响应：`{ "data": ..., "meta": ... }`。
-- 失败响应：`{ "error": { "code", "message", "details?", "requestId" } }`。
+- 失败响应：`{ "error": { "code", "message", "fieldErrors?" }, "traceId": "..." }`。
+- 字段校验失败使用 HTTP 422；`fieldErrors` 每项包含稳定字段路径 `field`、错误码 `code` 与中文/可展示 `message`。
+- HTTP 400 仅用于 malformed request 或非字段型请求错误；401 未认证；403 无权限/品牌范围；404 不存在；409 明确业务冲突；422 字段不符合业务 Schema。
 - 列表接口由服务端强制加入账号的品牌范围；无权查看的单条资源返回 404，避免枚举泄露。
 - 首次登录待改密账号除 `/auth/me`、`/auth/change-password`、`/auth/logout` 外均返回 `403 PASSWORD_CHANGE_REQUIRED`。
 
@@ -32,6 +34,8 @@
 
 会员主档以已验证手机号规范值唯一；各品牌 Email、注册姓名、地址、偏好、OpenID/UnionID 保存在 Brand Profile/Identity 中。Email 不作为自动合并依据。
 
+会员列表响应的 `metrics` 由服务端基于完整可见数据集计算，包含 `memberTotal`、`dualBrandMembers`、`marketingCoverage.numerator/denominator/percentage`。单品牌账号的双品牌数固定为 0，避免泄露另一品牌关系。
+
 ## 线索
 
 | 方法 | 路径 | 权限 |
@@ -44,6 +48,8 @@
 `POST /leads` 要求 `Idempotency-Key`。后台手动新增与外部提交进入同一个 Lead Service、Form Definition、Consent 与 Outbox 契约，仅通过 `source/submissionMode` 区分。
 
 手动同步只会创建或重新激活 Outbox，不会让浏览器直连 Gateway。
+
+线索列表响应的 `metrics` 由服务端按正式六种 `sync_status` 计算，包含 `leadTotal`、各状态计数、`pending`、`gatewayAccepted` 与 `syncExceptions`，不以当前分页推算。
 
 ## 账号、角色、审计
 
@@ -92,3 +98,10 @@ Idempotency-Key
 
 本地成功落库返回 HTTP 202；这只表示本地 Lead 和 Outbox 已接受，不表示 Gateway 已接受。
 
+## Security-safe 404 例外
+
+跨品牌访问单条客户、线索、Import Failure File 或其他私有资源时，服务端可返回 404 而不是 403，以避免暴露资源是否存在。该规则只适用于防枚举场景；普通缺少操作权限仍返回 403。
+
+## Trace 与审计
+
+每个请求都有 `x-trace-id`，错误响应正文包含相同 `traceId`。Audit 为应用层 append-only，仅提供创建与读取；记录 operator、action、module、target、IP、user agent、traceId 与脱敏 details，不提供 Update/Delete API。

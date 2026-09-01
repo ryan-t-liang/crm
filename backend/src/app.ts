@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { randomUUID } from "node:crypto";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import helmet from "@fastify/helmet";
@@ -23,12 +24,16 @@ import { formRoutes } from "./forms/routes.js";
 import { auditRoutes } from "./audit/routes.js";
 import { importExportRoutes } from "./jobs/routes.js";
 import { integrationRoutes } from "./integrations/routes.js";
+import { WechatApiClient } from "./wechat/wechat.client.js";
+import { wechatRoutes } from "./wechat/routes.js";
+import type { WechatClient } from "./wechat/wechat.types.js";
 
 export type BuildAppOptions = {
   config?: AppConfig;
   prisma?: PrismaClient;
   startWorker?: boolean;
   frontendRoot?: string;
+  wechatClient?: WechatClient;
 };
 
 function inferFrontendRoot(): string {
@@ -39,12 +44,16 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   const config = options.config ?? loadConfig();
   const prisma = options.prisma ?? new PrismaClient({ datasources: { db: { url: config.databaseUrl } } });
   const app = Fastify({
+    genReqId: (request) => {
+      const incoming = request.headers["x-request-id"];
+      return typeof incoming === "string" && /^[A-Za-z0-9._:-]{1,64}$/.test(incoming) ? incoming : randomUUID();
+    },
     bodyLimit: config.maxBodyBytes,
     trustProxy: config.trustProxy,
     logger: {
-      level: config.nodeEnv === "test" ? "silent" : "info",
+      level: config.logLevel ?? (config.nodeEnv === "test" ? "silent" : "info"),
       redact: {
-        paths: ["req.headers.cookie", "req.headers.authorization", "req.body.password", "req.body.currentPassword", "req.body.newPassword", "req.body.confirmPassword", "req.body.accessKey", "*.accessKey", "config.sessionSecret", "config.initialPassword", "config.sowindGatewayAccessKey"],
+        paths: ["req.headers.cookie", "req.headers.authorization", "req.headers.x-wechat-context-token", "req.body.code", "req.body.password", "req.body.currentPassword", "req.body.newPassword", "req.body.confirmPassword", "req.body.accessKey", "*.accessKey", "config.sessionSecret", "config.initialPassword", "config.sowindGatewayAccessKey", "config.wechatGpAppSecret", "config.wechatUnAppSecret"],
         censor: "[REDACTED]",
       },
     },
@@ -70,6 +79,13 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   await app.register(multipart, { limits: { fileSize: config.maxBodyBytes, files: 1 } });
   installErrorHandler(app);
 
+  app.addHook("onRequest", async (request, reply) => {
+    reply.header("x-trace-id", request.id);
+  });
+  app.addHook("onResponse", async (request, reply) => {
+    request.log.info({ traceId: request.id, method: request.method, route: request.routeOptions.url, statusCode: reply.statusCode, durationMs: Math.round(reply.elapsedTime) }, "request completed");
+  });
+
   app.addHook("preHandler", async (request) => {
     if (!["POST", "PUT", "PATCH", "DELETE"].includes(request.method)) return;
     if (!request.url.startsWith("/api/v1/") || request.url === "/api/v1/auth/login") return;
@@ -90,10 +106,11 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   await app.register(auditRoutes);
   await app.register(importExportRoutes);
   await app.register(integrationRoutes);
+  await app.register(async (instance) => wechatRoutes(instance, options.wechatClient ?? new WechatApiClient(config)));
 
   await app.register(staticPlugin, { root: options.frontendRoot ?? inferFrontendRoot(), prefix: "/" });
   app.setNotFoundHandler((request, reply) => {
-    if (request.url.startsWith("/api/")) return reply.status(404).send({ error: { code: "RESOURCE_NOT_FOUND", message: "接口不存在", requestId: request.id } });
+    if (request.url.startsWith("/api/")) return reply.status(404).send({ error: { code: "RESOURCE_NOT_FOUND", message: "接口不存在" }, traceId: request.id });
     return reply.sendFile("index.html");
   });
   let stopWorker: (() => void) | undefined;

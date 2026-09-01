@@ -11,6 +11,7 @@ const booleanFromEnv = z.preprocess(
 
 const schema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"]).optional(),
   PORT: z.coerce.number().int().positive().default(3000),
   DATABASE_URL: z.string().min(1),
   SESSION_SECRET: z.string().min(32),
@@ -33,6 +34,8 @@ const schema = z.object({
   MAX_BODY_BYTES: z.coerce.number().int().positive().default(10 * 1024 * 1024),
   STORAGE_DIR: z.string().default("../storage"),
   OUTBOX_POLL_INTERVAL_MS: z.coerce.number().int().min(1000).default(5000),
+  OUTBOX_LEASE_SECONDS: z.coerce.number().int().min(10).max(3600).default(60),
+  WORKER_INSTANCE_ID: z.string().trim().max(64).optional().default(""),
   SOWIND_GATEWAY_ACCESS_KEY: z.string().optional().default(""),
   SOWIND_GATEWAY_GP_URL: z.string().url().default("https://b2b.girard-perregaux.com/n8n-webhook/wechat-leads/gp"),
   SOWIND_GATEWAY_UN_URL: z.string().url().default("https://b2b.ulysse-nardin.com/n8n-webhook/wechat-leads/un"),
@@ -42,10 +45,18 @@ const schema = z.object({
   RUN_SOWIND_LIVE_TESTS: booleanFromEnv.default(false),
   INTEGRATION_CLIENT_ID: z.string().optional().default(""),
   INTEGRATION_CLIENT_SECRET: z.string().optional().default(""),
+  WECHAT_GP_APP_ID: z.string().optional().default(""),
+  WECHAT_GP_APP_SECRET: z.string().optional().default(""),
+  WECHAT_GP_OPEN_PLATFORM_SCOPE: z.string().optional().default(""),
+  WECHAT_UN_APP_ID: z.string().optional().default(""),
+  WECHAT_UN_APP_SECRET: z.string().optional().default(""),
+  WECHAT_UN_OPEN_PLATFORM_SCOPE: z.string().optional().default(""),
+  WECHAT_CONTEXT_TTL_MINUTES: z.coerce.number().int().min(5).max(1440).default(30),
 });
 
 export type AppConfig = {
   nodeEnv: "development" | "test" | "production";
+  logLevel?: "fatal" | "error" | "warn" | "info" | "debug" | "trace" | "silent";
   port: number;
   databaseUrl: string;
   sessionSecret: string;
@@ -61,6 +72,8 @@ export type AppConfig = {
   maxBodyBytes: number;
   storageDir: string;
   outboxPollIntervalMs: number;
+  outboxLeaseSeconds?: number;
+  workerInstanceId?: string;
   sowindGatewayAccessKey: string;
   sowindGatewayGpUrl: string;
   sowindGatewayUnUrl: string;
@@ -70,12 +83,20 @@ export type AppConfig = {
   runSowindLiveTests: boolean;
   integrationClientId: string;
   integrationClientSecret: string;
+  wechatGpAppId?: string;
+  wechatGpAppSecret?: string;
+  wechatGpOpenPlatformScope?: string;
+  wechatUnAppId?: string;
+  wechatUnAppSecret?: string;
+  wechatUnOpenPlatformScope?: string;
+  wechatContextTtlMinutes?: number;
 };
 
 export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
   const env = schema.parse(process.env);
   const config: AppConfig = {
     nodeEnv: env.NODE_ENV,
+    logLevel: env.LOG_LEVEL ?? (env.NODE_ENV === "test" ? "silent" : "info"),
     port: env.PORT,
     databaseUrl: env.DATABASE_URL,
     sessionSecret: env.SESSION_SECRET,
@@ -91,6 +112,8 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     maxBodyBytes: env.MAX_BODY_BYTES,
     storageDir: resolve(process.cwd(), env.STORAGE_DIR),
     outboxPollIntervalMs: env.OUTBOX_POLL_INTERVAL_MS,
+    outboxLeaseSeconds: env.OUTBOX_LEASE_SECONDS,
+    workerInstanceId: env.WORKER_INSTANCE_ID,
     sowindGatewayAccessKey: env.SOWIND_GATEWAY_ACCESS_KEY,
     sowindGatewayGpUrl: env.SOWIND_GATEWAY_GP_URL,
     sowindGatewayUnUrl: env.SOWIND_GATEWAY_UN_URL,
@@ -100,6 +123,13 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     runSowindLiveTests: env.RUN_SOWIND_LIVE_TESTS,
     integrationClientId: env.INTEGRATION_CLIENT_ID,
     integrationClientSecret: env.INTEGRATION_CLIENT_SECRET,
+    wechatGpAppId: env.WECHAT_GP_APP_ID,
+    wechatGpAppSecret: env.WECHAT_GP_APP_SECRET,
+    wechatGpOpenPlatformScope: env.WECHAT_GP_OPEN_PLATFORM_SCOPE,
+    wechatUnAppId: env.WECHAT_UN_APP_ID,
+    wechatUnAppSecret: env.WECHAT_UN_APP_SECRET,
+    wechatUnOpenPlatformScope: env.WECHAT_UN_OPEN_PLATFORM_SCOPE,
+    wechatContextTtlMinutes: env.WECHAT_CONTEXT_TTL_MINUTES,
   };
   return { ...config, ...overrides };
 }

@@ -10,6 +10,8 @@
     "build": "npm --workspace backend run build",
     "start": "npm --workspace backend run start",
     "test": "npm --workspace backend run test",
+    "test:integration": "npm --workspace backend run test:integration",
+    "test:frontend": "node --check frontend/js/app.js && node --check frontend/js/address-data.js",
     "lint": "npm --workspace backend run lint",
     "prisma:generate": "npm --workspace backend run prisma:generate",
     "prisma:validate": "node scripts/with-env.mjs npm --workspace backend run prisma:validate",

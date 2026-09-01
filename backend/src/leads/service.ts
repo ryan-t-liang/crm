@@ -19,7 +19,7 @@ export type CanonicalLeadInput = {
   salutation: string;
   firstname: string;
   lastname: string;
-  phone: string;
+  phone?: string | null;
   preferredContact: string;
   country: string;
   city?: string | null;
@@ -38,10 +38,19 @@ export type CanonicalLeadInput = {
   createdByService?: string | null;
 };
 
+const MINI_PROGRAM_SOURCES = new Set(["MINI_PROGRAM", "WECHAT_MINIPROGRAM"]);
+
+export function shouldAutoDispatchLead(input: Pick<CanonicalLeadInput, "leadType" | "source" | "submissionMode">): boolean {
+  const leadType = input.leadType ?? "PURCHASE_INTENT";
+  return leadType === "PURCHASE_INTENT"
+    && ["USER_SUBMITTED", "EXTERNAL_API"].includes(input.submissionMode)
+    && MINI_PROGRAM_SOURCES.has(input.source.toUpperCase());
+}
+
 export async function createCanonicalLead(db: DbClient, config: AppConfig, input: CanonicalLeadInput) {
   if (input.idempotencyKey) {
     const existing = await db.lead.findUnique({ where: { idempotencyKey: input.idempotencyKey }, include: { brand: true } });
-    if (existing) return { lead: existing, duplicate: true };
+    if (existing) return { lead: existing, duplicate: true, outboxCreated: false };
   }
   const brand = await db.brand.findUnique({ where: { code: input.brandCode } });
   if (!brand || !brand.active) throw new ApiError(400, "VALIDATION_ERROR", "品牌不存在或未启用");
@@ -51,8 +60,9 @@ export async function createCanonicalLead(db: DbClient, config: AppConfig, input
   }
   const form = await db.formDefinition.findFirst({ where: { brandId: brand.id, objectType: "LEAD", formKey: "PURCHASE_INTENT", version: input.formVersion ?? "2.0", active: true } });
   if (!form) throw new ApiError(400, "VALIDATION_ERROR", "找不到有效的品牌线索表单配置");
-  const normalizedPhone = normalizeMobile(input.phone);
+  const normalizedPhone = input.phone?.trim() ? normalizeMobile(input.phone) : null;
   const leadType = input.leadType ?? "PURCHASE_INTENT";
+  const autoDispatch = shouldAutoDispatchLead({ ...input, leadType });
   const attributes = {
     birthday: input.birthday?.toISOString().slice(0, 10) ?? null,
     purchaseMethod: input.purchaseMethod ?? null,
@@ -70,7 +80,7 @@ export async function createCanonicalLead(db: DbClient, config: AppConfig, input
       retailer: input.retailer, processingConsent: true, marketingOptIn: input.marketingOptIn ?? false,
       attributes: attributes as Prisma.InputJsonValue,
       originalSnapshot: (input.originalSnapshot ?? input) as Prisma.InputJsonValue,
-      syncStatus: leadType === "PURCHASE_INTENT" ? "PENDING" : "NOT_SYNCED",
+      syncStatus: autoDispatch ? "SYNC_PENDING" : "NOT_SYNCED",
       idempotencyKey: input.idempotencyKey, createdBy: input.createdBy, createdByService: input.createdByService,
     },
     include: { brand: true },
@@ -80,19 +90,19 @@ export async function createCanonicalLead(db: DbClient, config: AppConfig, input
     { customerId: input.customerId, leadId: lead.id, brandId: brand.id, purpose: "MARKETING_COMMUNICATION", channel: "EMAIL", status: input.marketingOptIn ? "GRANTED" : "DENIED", policyVersion: input.policyVersion ?? form.policyVersion ?? "CURRENT", termsVersion: input.termsVersion ?? form.termsVersion, source: input.source, capturedAt: new Date(), capturedBy: input.createdBy },
   ] });
   if (input.customerId) await db.customerJourneyEvent.create({ data: { customerId: input.customerId, brandId: brand.id, eventType: "LEAD_SUBMITTED", title: `${brand.name}线索提交`, description: input.sku || "品牌咨询", eventAt: new Date(), source: input.source, metadata: { leadId: lead.id, leadNo: lead.leadNo } } });
-  if (leadType === "PURCHASE_INTENT") await enqueueLeadForSowind(db, config, {
+  if (autoDispatch) await enqueueLeadForSowind(db, config, {
     id: lead.id, brandId: brand.id, brandCode: brand.code as "GP" | "UN", brand: brand.code as "GP" | "UN",
     sku: lead.sku, email: lead.email, salutation: lead.salutation, firstname: lead.firstname, lastname: lead.lastname,
     phone: lead.phone, preferredContact: lead.preferredContact, country: lead.country, city: lead.city,
     ownsBrandWatch: lead.ownership, processingConsent: lead.processingConsent, marketingOptIn: lead.marketingOptIn,
     birthday: lead.birthday, purchaseMethod: lead.purchaseMethod, retailer: lead.retailer,
-  });
-  return { lead, duplicate: false };
+  }, "AUTO");
+  return { lead, duplicate: false, outboxCreated: autoDispatch };
 }
 
 export function dbLeadToSowindInput(lead: {
   id: string; brandId: string; brand: { code: string }; sku: string | null; email: string; salutation: string;
-  firstname: string; lastname: string; phone: string; preferredContact: string; country: string; city: string | null;
+  firstname: string; lastname: string; phone: string | null; preferredContact: string; country: string; city: string | null;
   ownership: string | null; processingConsent: boolean; marketingOptIn: boolean; birthday: Date | null;
   purchaseMethod: string | null; retailer: string | null;
 }) {

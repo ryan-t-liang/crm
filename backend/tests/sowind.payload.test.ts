@@ -42,6 +42,14 @@ describe("Sowind Gateway v2.0 payload", () => {
     expect(() => new SowindPayloadBuilder(config).build({ ...common, brand: "UN", marketingOptIn: false })).toThrow(/UN 雅典表/);
   });
 
+  it("omits an absent phone and normalizes a present phone to E.164", () => {
+    const withoutPhone = new SowindPayloadBuilder(config).build({ ...common, phone: null, brand: "GP", marketingOptIn: false });
+    expect(Object.fromEntries(withoutPhone.fields.map((item) => [item.name, item.value]))).not.toHaveProperty("phone");
+
+    const withPhone = new SowindPayloadBuilder(config).build({ ...common, phone: "+86 138 1234 5678", brand: "GP", marketingOptIn: false });
+    expect(Object.fromEntries(withPhone.fields.map((item) => [item.name, item.value])).phone).toBe("+8613812345678");
+  });
+
   it("uses GENERAL fallback and the complete Appendix A country set", () => {
     const payload = new SowindPayloadBuilder(config).build({ ...common, brand: "UN", sku: "", ownsBrandWatch: "No", marketingOptIn: false });
     expect(payload.context.pageName).toBe("WeChat Miniprogram | GENERAL");

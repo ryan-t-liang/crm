@@ -4,6 +4,8 @@ import { ApiError } from "../common/errors.js";
 import { safeEqual } from "../common/auth.js";
 import { createCanonicalLead } from "../leads/service.js";
 import { leadInputSchema } from "../leads/routes.js";
+import { trustedCustomerIdForWechatLead } from "../wechat/routes.js";
+import { appendAuditRecord } from "../common/audit.js";
 
 function canonicalJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
@@ -24,7 +26,13 @@ export async function integrationRoutes(app: FastifyInstance): Promise<void> {
     const bodyHash = createHash("sha256").update(canonicalJson(request.body)).digest("hex");
     const expected = createHmac("sha256", app.config.integrationClientSecret).update(`${timestamp}.${nonce}.${bodyHash}`).digest("hex");
     if (!safeEqual(signature, expected)) throw new ApiError(401, "INVALID_SIGNATURE", "集成身份校验失败");
-    const body = leadInputSchema.parse({ ...(request.body as object), submissionMode: "EXTERNAL_API", source: (request.body as { source?: string }).source || "WECHAT_MINIPROGRAM" });
+    const parsed = leadInputSchema.parse({ ...(request.body as object), submissionMode: "EXTERNAL_API", source: "MINI_PROGRAM" });
+    const brand = await app.prisma.brand.findUnique({ where: { code: parsed.brandCode } });
+    if (!brand || !brand.active) throw new ApiError(400, "VALIDATION_ERROR", "品牌不存在或未启用");
+    let trustedCustomerId: string | null = null;
+    try { trustedCustomerId = await trustedCustomerIdForWechatLead(app, request, brand.id); }
+    catch { trustedCustomerId = null; }
+    const body = { ...parsed, customerId: trustedCustomerId };
     const result = await app.prisma.$transaction(async (tx) => {
       try {
         await tx.integrationNonce.create({ data: { clientId, nonce, expiresAt: new Date(Date.now() + 10 * 60 * 1000) } });
@@ -32,7 +40,7 @@ export async function integrationRoutes(app: FastifyInstance): Promise<void> {
         throw new ApiError(409, "REPLAY_DETECTED", "重复 nonce 已被拒绝");
       }
       const created = await createCanonicalLead(tx, app.config, { ...body, idempotencyKey: request.headers["idempotency-key"]?.toString() || body.idempotencyKey, createdByService: clientId, originalSnapshot: request.body as Record<string, unknown> });
-      if (!created.duplicate) await tx.auditLog.create({ data: { actorName: clientId, action: "INTEGRATION_LEAD_ACCEPTED", module: "integration", targetType: "lead", targetId: created.lead.id, brandId: created.lead.brandId, requestId: request.id, ipAddress: request.ip, details: { localAccepted: true, gatewayDirectCall: false } } });
+      if (!created.duplicate) await appendAuditRecord(tx, { actorName: clientId, requestId: request.id, traceId: request.id, ipAddress: request.ip, userAgent: request.headers["user-agent"]?.slice(0, 500) ?? null }, { action: "INTEGRATION_LEAD_ACCEPTED", module: "integration", targetType: "lead", targetId: created.lead.id, brandId: created.lead.brandId, details: { localAccepted: true, gatewayDirectCall: false } });
       return created;
     });
     return reply.status(result.duplicate ? 200 : 202).send({ data: { id: result.lead.id, leadNo: result.lead.leadNo, syncStatus: result.lead.syncStatus }, meta: { duplicate: result.duplicate } });

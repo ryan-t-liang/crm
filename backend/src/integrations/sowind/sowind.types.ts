@@ -1,4 +1,5 @@
 export type SowindBrandCode = "GP" | "UN";
+export type IntegrationTrigger = "AUTO" | "ADMIN" | "RETRY_JOB";
 
 export type SowindLeadInput = {
   brand: SowindBrandCode;
@@ -7,7 +8,7 @@ export type SowindLeadInput = {
   salutation: string;
   firstname: string;
   lastname: string;
-  phone: string;
+  phone?: string | null;
   preferredContact: string;
   country: string;
   city?: string | null;

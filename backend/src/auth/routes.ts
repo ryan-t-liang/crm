@@ -68,7 +68,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
     await app.prisma.$transaction(async (tx) => {
       await tx.user.update({ where: { id: user.id }, data: { passwordHash, mustChangePassword: false, passwordChangedAt: new Date() } });
       await tx.session.updateMany({ where: { userId: user.id, id: { not: request.auth!.sessionId }, revokedAt: null }, data: { revokedAt: new Date() } });
-      await appendAudit(tx, request, { action: "CHANGE_PASSWORD", module: "auth", targetType: "user", targetId: user.id, details: { otherSessionsRevoked: true } });
+      await appendAudit(tx, request, { action: user.mustChangePassword ? "PASSWORD_FORCE_CHANGE" : "CHANGE_PASSWORD", module: "auth", targetType: "user", targetId: user.id, details: { otherSessionsRevoked: true } });
     });
     return reply.send({ data: { changed: true } });
   });

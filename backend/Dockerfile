@@ -3,7 +3,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates openssl && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json* ./
 COPY backend/package.json backend/package.json
-RUN npm install
+RUN npm ci
 COPY backend backend
 RUN npm --workspace backend run prisma:generate && npm --workspace backend run build
 
@@ -13,7 +13,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates openssl && rm -rf /var/lib/apt/lists/*
 COPY package.json package-lock.json* ./
 COPY backend/package.json backend/package.json
-RUN npm install --omit=dev
+RUN npm ci --omit=dev
 COPY --from=build /app/backend/prisma /app/backend/prisma
 RUN npm --workspace backend run prisma:generate
 COPY --from=build /app/backend/dist /app/backend/dist

@@ -46,11 +46,13 @@ export class SowindPayloadBuilder {
       field("salutation", salutation),
       field("firstname", requiredText(input.firstname, "名字")),
       field("lastname", requiredText(input.lastname, "姓氏")),
-      field("phone", normalizeMobile(input.phone)),
+    ];
+    if (input.phone?.trim()) fields.push(field("phone", normalizeMobile(input.phone)));
+    fields.push(
       field("hs_language", "zh"),
       field("preferred_method_of_communication", preferredContact),
       field("country_list_", country),
-    ];
+    );
     const city = String(input.city ?? "").trim();
     if (city) fields.push(field("city", city));
     if (ownership) fields.push(field(brand.ownershipField, ownership));

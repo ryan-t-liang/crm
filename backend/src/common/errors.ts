@@ -1,6 +1,8 @@
 import type { FastifyInstance } from "fastify";
 import { ZodError } from "zod";
 
+export type FieldError = { field: string; code: string; message: string };
+
 export class ApiError extends Error {
   constructor(
     public readonly statusCode: number,
@@ -15,18 +17,24 @@ export class ApiError extends Error {
 export function installErrorHandler(app: FastifyInstance): void {
   app.setErrorHandler((error, request, reply) => {
     if (error instanceof ZodError) {
-      return reply.status(400).send({
+      const fieldErrors: FieldError[] = error.issues.map((issue) => ({
+        field: issue.path.map(String).join(".") || "$",
+        code: issue.code,
+        message: issue.message,
+      }));
+      return reply.status(422).send({
         error: {
           code: "VALIDATION_ERROR",
           message: "请求数据校验失败",
-          details: error.issues,
-          requestId: request.id,
+          fieldErrors,
         },
+        traceId: request.id,
       });
     }
     if (error instanceof ApiError) {
       return reply.status(error.statusCode).send({
-        error: { code: error.code, message: error.message, details: error.details, requestId: request.id },
+        error: { code: error.code, message: error.message, ...(error.statusCode === 422 ? { fieldErrors: error.details } : error.details === undefined ? {} : { details: error.details }) },
+        traceId: request.id,
       });
     }
     const statusCode = typeof (error as { statusCode?: unknown }).statusCode === "number"
@@ -37,8 +45,8 @@ export function installErrorHandler(app: FastifyInstance): void {
       error: {
         code: statusCode >= 500 ? "INTERNAL_ERROR" : "REQUEST_ERROR",
         message: statusCode >= 500 ? "服务暂时不可用" : error instanceof Error ? error.message : "请求处理失败",
-        requestId: request.id,
       },
+      traceId: request.id,
     });
   });
 }

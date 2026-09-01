@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: sowind_ci
+          MYSQL_USER: sowind
+          MYSQL_PASSWORD: sowind_ci_password
+          MYSQL_ROOT_PASSWORD: sowind_ci_root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -psowind_ci_root_password"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=30
+    env:
+      NODE_ENV: test
+      LOG_LEVEL: silent
+      DATABASE_URL: mysql://sowind:sowind_ci_password@127.0.0.1:3306/sowind_ci
+      TEST_DATABASE_URL: mysql://sowind:sowind_ci_password@127.0.0.1:3306/sowind_ci
+      SESSION_SECRET: ci-session-secret-at-least-32-characters
+      INITIAL_PASSWORD: CiOnly!Fixture_9xK2_2026
+      COOKIE_SECURE: "false"
+      CORS_ORIGIN: "*"
+      RUN_DB_INTEGRATION_TESTS: "true"
+      RUN_SOWIND_LIVE_TESTS: "false"
+      SOWIND_GATEWAY_ACCESS_KEY: fake-ci-key
+      INTEGRATION_CLIENT_ID: ci-client
+      INTEGRATION_CLIENT_SECRET: ci-client-secret
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run prisma:generate
+      - run: npm run prisma:validate
+      - run: npm run prisma:migrate:deploy
+      - run: npm run prisma:seed
+      - run: npm run lint
+      - run: npm test
+      - run: npm run test:integration
+      - run: npm run build
+      - run: npm run test:frontend
