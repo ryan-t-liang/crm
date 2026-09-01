@@ -36,7 +36,9 @@ Gateway Client 发送前在内存顶层注入：
 
 ## 字段规则
 
-- 必填：Email、称谓、名字、姓氏、电话、首选联系方式、国家、个人数据处理同意。
+- Lead：Email、称谓、名字、姓氏、首选联系方式、国家、个人数据处理同意为必填；Phone 可选。
+- Lead Phone 有值时先标准化为 E.164 再写入 Gateway `fields`；Phone 缺省或空白时完全省略 `phone` field，不发送空字符串、`null` 或假电话号码。
+- Member 注册与 Lead 提交是不同契约：Member 必须使用可信 WeChat 流程验证的手机号；该规则不能套用到 Lead。
 - UN 腕表持有必填；GP 可选。
 - `hs_language` 固定为 `zh`。
 - Country 必须属于规范中的 219 个 Internal Values；常用中文别名先映射。
@@ -45,7 +47,7 @@ Gateway Client 发送前在内存顶层注入：
 
 ## 响应与状态
 
-唯一成功：HTTP 202，Body 同时满足 `status=queued` 且有字符串 `ref`。本地状态写为 `GATEWAY_QUEUED`，界面显示“Gateway 已受理”。这不是 HQ CRM 处理完成状态。
+唯一成功：HTTP 202，Body 同时满足 `status=queued` 且有字符串 `ref`。本地 Lead 状态写为 `GATEWAY_ACCEPTED`，界面显示“Gateway 已受理”。该响应只表示 Sowind Gateway 已完成鉴权与校验，并已存储/排队请求；不表示 HQ CRM Contact 已最终创建，不表示 CRM 已确认，也不表示 HubSpot 最终处理成功。
 
 | 响应 | 行为 |
 |---|---|
@@ -69,4 +71,3 @@ SOWIND_GATEWAY_ACCESS_KEY=<secret>
 ```
 
 才会向两个真实 Endpoint 发送测试线索。本轮未运行该测试。
-

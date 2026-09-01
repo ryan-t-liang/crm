@@ -71,9 +71,13 @@ tar -czf sowind_storage_$(date +%Y%m%d_%H%M%S).tgz storage
 
 ## 监控与告警
 
+当前 Lead runtime status set：`NOT_SYNCED`、`SYNC_PENDING`、`SYNCING`、`GATEWAY_ACCEPTED`、`SYNC_FAILED`、`DEAD_LETTER`。
+
+当前 Outbox runtime status set：`PENDING`、`PROCESSING`、`RETRY_WAITING`、`SUCCEEDED`、`FAILED`、`DEAD_LETTER`。
+
 - `/api/health` 非 200、数据库不可达。
-- `integration_outbox` 的 `PENDING/RETRY_WAITING` 积压量和最老年龄。
-- `DEAD_LETTER`、`FAILED_AUTH`、`FAILED_PERMANENT`。
+- Lead：重点告警 `SYNC_FAILED`、`DEAD_LETTER` 的数量和增长率。
+- Outbox：监控 `PENDING`、`RETRY_WAITING` 的积压量和最老年龄；重点告警 `FAILED`、`DEAD_LETTER`，并监控长时间停留在 `PROCESSING` 的租约。
 - Gateway 429/503、超时、`annual_cap_reached`。
 - 登录 401/429 激增、账号禁用/重置、角色权限变更。
 - 导入失败率、磁盘和 MySQL 容量。

@@ -18,12 +18,22 @@
 
 ## 3. Outbox Worker
 
-结构化日志可按 `event=outbox.claimed|outbox.completed|outbox.retry_scheduled|outbox.dead_letter`、`outboxId`、`leadId`、`traceId` 查询。`PROCESSING` 使用 `lock_owner` 与 `lease_until`；租约过期后 Worker 自动回收，未过期任务不会被另一 Worker 抢占。
+Worker 结构化日志没有 `event` 字段。Fastify/Pino 将日志消息写在 `msg`，应使用当前真实字段检索：
+
+- `msg="outbox delivery started"`：包含 `workerId`、`outboxId`、`leadId`、`brand`。
+- `msg="outbox delivery completed"`：包含 `workerId`、`outboxId`、`leadId`、`status`、`durationMs`；`status` 可用于定位 `GATEWAY_ACCEPTED`、`RETRY_WAITING`、`SYNC_FAILED`、`DEAD_LETTER`。
+- `msg="Sowind Gateway delivery requires operational attention"`：包含 `leadId`、`brand`、`errorCode`；再使用同一 `leadId` 关联完成日志与数据库 Outbox。
+- `msg="recovered stale outbox leases"`：包含 `workerId`、`recovered`。逐条恢复记录写入审计动作 `GATEWAY_STALE_RECOVERED`，并在 Outbox 的 `last_error` 保存 `STALE_PROCESSING_RECOVERED`。
+
+例如，可按 `outboxId` 定位一个 Outbox、按 `leadId` 关联一个 Lead 的开始/完成日志、按 `workerId` 定位执行实例，或按 `status="RETRY_WAITING"` / `status="DEAD_LETTER"` 定位重试与死信。HTTP 请求日志使用 `traceId`；异步 Worker 日志使用上述业务 ID 关联，不应假设存在请求 `traceId`。
+
+`PROCESSING` 使用 `lock_owner` 与 `lease_until`；租约过期后 Worker 自动回收，未过期任务不会被另一 Worker 抢占。
 
 查询待处理与死信：
 
 ```sql
-SELECT id, aggregate_id, status, attempts, available_at, lease_until, last_error
+SELECT id, entity_id, status, attempts, next_retry_at,
+       lock_owner, lease_until, last_http_status, last_error, updated_at
 FROM integration_outbox
 WHERE status IN ('PENDING','RETRY_WAITING','PROCESSING','DEAD_LETTER')
 ORDER BY updated_at DESC;
