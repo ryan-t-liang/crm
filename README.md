@@ -14,6 +14,29 @@ Sowind 中国区多品牌会员与线索 CRM。当前版本保留 v1.14.0 已确
 - API 字段校验统一为 HTTP 422 + `fieldErrors`，错误响应与日志通过 `traceId` 关联。
 - Outbox 使用 lease 与原子 claim 支持崩溃恢复；`/api/ready` 提供数据库与集成运行摘要。
 
+## 正式交付状态
+
+当前版本已完成开发、自动化测试及最终交付审计。
+
+- Repository：`https://github.com/ryan-t-liang/crm.git`
+- Branch：`main`
+- V3 最终审计基线 SHA：`e02f5c50d91dfda162afcef6a8aa2f3372e43647`
+- Final Verdict：`B — HANDOFF READY WITH SETUP`
+- Hosted CI：PASS（Run `33531995506`）
+- Fresh MySQL 8.4：5/5 Migration PASS
+- Unit：39 passed / 49 skipped
+- Documentation Contract：6/6 PASS
+- Integration：45/45 PASS
+- Docker：PASS
+- Remaining Code Gaps：`NONE`
+- Remaining Documentation Gaps：`NONE`
+
+V3 审计结论为：GitHub Repository 可以正式交接给公司开发。上述 SHA 是已审计的 Release Baseline；本轮或未来的文档提交不应被表述为已经包含在该次 V3 审计中。
+
+当前 Repository 的核心 CRM 实现已经完成。公司开发接手后不需要继续修改 Customer / Member、Brand Profile、WeChat Identity、Lead、Gateway / Outbox / Retry、Import / Export、RBAC / Brand Scope、Authentication / Session、Audit / Metrics / Error Contract，以及 Database Schema / Migration。后续工作属于：Production Setup → Credentials → Deploy → Authorized Live UAT → Go-live。
+
+正式接手请从 [docs/HANDOFF.md](docs/HANDOFF.md) 开始。
+
 ## 技术栈
 
 - Node.js 22+
@@ -126,11 +149,11 @@ Live Harness 必须连接已完成 Migration/Seed、且没有任何可执行 Out
 
 ## 文档
 
-- [API 说明](docs/API.md)
-- [Sowind Gateway 映射](docs/SOWIND_GATEWAY_MAPPING.md)
-- [部署与运维](docs/DEPLOYMENT.md)
-- [生产运维手册](docs/OPERATIONS.md)
-- [交接清单](docs/HANDOFF.md)
+- [正式技术交接清单](docs/HANDOFF.md)
+- [部署、升级与回滚](docs/DEPLOYMENT.md)
+- [生产运维与 Outbox 排障](docs/OPERATIONS.md)
+- [API Contract](docs/API.md)
+- [Sowind Gateway / HQ 数据映射](docs/SOWIND_GATEWAY_MAPPING.md)
 - [UAT 报告](docs/UAT_REPORT.md)
 - [实现与范围报告](docs/IMPLEMENTATION_REPORT.md)
 - [多品牌产品化与线索模块设计说明](docs/多品牌产品化与线索模块设计说明.md)
