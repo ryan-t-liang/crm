@@ -1,5 +1,7 @@
 # Sowind CRM API v1.15.0
 
+冻结发布名为 `Kivisense_CRM_v1`。`GET /api/health` 与 `GET /api/ready` 同时返回 `release: "Kivisense_CRM_v1"` 和内部 SemVer `version: "1.15.0"`，部署与回滚应以 Git Tag / `release` 为准。
+
 ## 通用约定
 
 - 同源 Web API 使用 HttpOnly Session Cookie。

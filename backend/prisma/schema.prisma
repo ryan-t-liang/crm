@@ -181,6 +181,13 @@ model Customer {
   @@map("customers")
 }
 
+model CustomerNumberSequence {
+  id        BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
+
+  @@map("customer_number_sequences")
+}
+
 model CustomerBrandProfile {
   id                 String          @id @default(cuid()) @db.VarChar(32)
   customerId         String          @map("customer_id") @db.VarChar(32)

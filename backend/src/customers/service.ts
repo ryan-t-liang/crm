@@ -169,18 +169,26 @@ export async function registerCanonicalMember(db: DbClient, input: RegisterCanon
   }
   const existingProfile = existingByMobile?.profiles.find((profile) => profile.brandId === input.brand.id);
   if (existingProfile && (input.duplicateProfilePolicy ?? "REJECT") === "REJECT") {
-    throw new ApiError(409, "CONFLICT", "该手机号已存在此品牌会员关系");
+    throw new ApiError(409, "DUPLICATE_BRAND_MEMBER", `该手机号已是${input.brand.name}会员，不能重复创建同品牌会员`, {
+      customerId: existingByMobile!.id,
+      customerNo: existingByMobile!.customerNo,
+      brandCode: input.brand.code,
+      brandName: input.brand.name,
+    });
   }
 
-  const customer = existingByMobile ?? await db.customer.create({
-    data: {
-      customerNo: customerNumber(),
-      displayName: `${input.profile.lastName}${input.profile.firstName}`,
-      mobile: input.mobile,
-      mobileNormalized: normalizedMobile,
-      createdBy: input.createdBy ?? null,
-    },
-  });
+  const customer = existingByMobile ?? await (async () => {
+    const sequence = await db.customerNumberSequence.create({ data: {} });
+    return db.customer.create({
+      data: {
+        customerNo: customerNumber(sequence.id),
+        displayName: `${input.profile.lastName}${input.profile.firstName}`,
+        mobile: input.mobile,
+        mobileNormalized: normalizedMobile,
+        createdBy: input.createdBy ?? null,
+      },
+    });
+  })();
   const identities = identityInputs(customer.id, input.brand, normalizedMobile, input.profile, input.verifiedWechatIdentity);
   await bindIdentities(db, identities, input.audit);
 

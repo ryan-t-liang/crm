@@ -14,13 +14,22 @@ export class ApiError extends Error {
   }
 }
 
+function localizedZodMessage(issue: ZodError["issues"][number]): string {
+  if (issue.code === "invalid_format" && "format" in issue && issue.format === "email") return "请输入有效的 Email 地址";
+  if (issue.code === "invalid_value") return "请选择有效选项";
+  if (issue.code === "invalid_type") return "输入类型不正确";
+  if (issue.code === "too_small") return "此项为必填项或内容长度不足";
+  if (issue.code === "too_big") return "输入内容过长";
+  return "输入内容不符合要求";
+}
+
 export function installErrorHandler(app: FastifyInstance): void {
   app.setErrorHandler((error, request, reply) => {
     if (error instanceof ZodError) {
       const fieldErrors: FieldError[] = error.issues.map((issue) => ({
         field: issue.path.map(String).join(".") || "$",
         code: issue.code,
-        message: issue.message,
+        message: localizedZodMessage(issue),
       }));
       return reply.status(422).send({
         error: {

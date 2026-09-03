@@ -1,12 +1,15 @@
 import type { FastifyInstance } from "fastify";
 
+const RELEASE_NAME = "Kivisense_CRM_v1";
+const INTERNAL_VERSION = "1.15.0";
+
 export async function healthRoutes(app: FastifyInstance): Promise<void> {
   app.get("/api/health", async (_request, reply) => {
     try {
       await app.prisma.$queryRaw`SELECT 1`;
-      return reply.send({ status: "ok", database: "ok", version: "1.15.0" });
+      return reply.send({ status: "ok", database: "ok", release: RELEASE_NAME, version: INTERNAL_VERSION });
     } catch {
-      return reply.status(503).send({ status: "error", database: "unavailable", version: "1.15.0" });
+      return reply.status(503).send({ status: "error", database: "unavailable", release: RELEASE_NAME, version: INTERNAL_VERSION });
     }
   });
   app.get("/api/ready", async (_request, reply) => {
@@ -21,7 +24,8 @@ export async function healthRoutes(app: FastifyInstance): Promise<void> {
       return reply.send({
         status: "ready",
         database: "ok",
-        version: "1.15.0",
+        release: RELEASE_NAME,
+        version: INTERNAL_VERSION,
         integrations: {
           sowindGateway: app.config.sowindGatewayAccessKey ? "configured" : "unconfigured",
           wechatGp: app.config.wechatGpAppId && app.config.wechatGpAppSecret ? "configured" : "unconfigured",
@@ -30,7 +34,7 @@ export async function healthRoutes(app: FastifyInstance): Promise<void> {
         outbox: { processing, retryWaiting, deadLetter, oldestPendingAt: oldestPending?.createdAt ?? null },
       });
     } catch {
-      return reply.status(503).send({ status: "not_ready", database: "unavailable", version: "1.15.0" });
+      return reply.status(503).send({ status: "not_ready", database: "unavailable", release: RELEASE_NAME, version: INTERNAL_VERSION });
     }
   });
 }

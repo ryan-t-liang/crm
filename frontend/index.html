@@ -202,8 +202,9 @@
       font-family: Georgia, serif;
       font-weight: 600;
     }
-    .admin-copy strong { display: block; font-size: 12px; font-weight: 600; }
-    .admin-copy span { display: block; color: var(--sidebar-muted); font-size: 10px; }
+    .admin-copy { min-width: 0; white-space: nowrap; }
+    .admin-copy strong { display: block; font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .admin-copy span { display: block; color: var(--sidebar-muted); font-size: 10px; white-space: nowrap; }
 
     .workspace {
       width: calc(100% - var(--sidebar));
@@ -245,27 +246,21 @@
     body.is-sidebar-collapsed .admin-copy,
     body.is-sidebar-collapsed .account-chevron { display: none; }
     body.is-sidebar-collapsed .nav-item { justify-content: center; padding: 0 7px; gap: 5px; }
-    body.is-sidebar-collapsed .nav-count { margin-left: 0; min-width: 18px; height: 18px; padding: 0 5px; font-size: 10px; }
+    body.is-sidebar-collapsed .nav-count { display: none; }
     body.is-sidebar-collapsed .sidebar-footer { justify-content: center; padding-left: 0; padding-right: 0; }
     body.is-sidebar-collapsed .sidebar-toggle svg { transform: rotate(0deg); }
-    body.is-sidebar-collapsed .nav-item:hover::after {
-      content: attr(data-tooltip);
-      position: absolute;
-      left: calc(100% + 14px);
-      top: 50%;
-      z-index: 50;
-      transform: translateY(-50%);
-      padding: 6px 9px;
-      color: white;
-      background: #171717;
-      border-radius: 6px;
-      font-size: 10px;
-      line-height: 1;
-      white-space: nowrap;
-      box-shadow: 0 6px 18px rgba(0,0,0,.18);
-      pointer-events: none;
-    }
-
+    body.is-sidebar-transitioning .app-brand-wordmark,
+    body.is-sidebar-transitioning .nav-item > span,
+    body.is-sidebar-transitioning .nav-label,
+    body.is-sidebar-transitioning .nav-section,
+    body.is-sidebar-transitioning .admin-copy,
+    body.is-sidebar-transitioning .account-chevron,
+    body.is-sidebar-transitioning .nav-count { display: none; }
+    body.is-sidebar-transitioning .brand-lockup { justify-content: flex-start; padding: 0 10px; }
+    body.is-sidebar-transitioning .app-brand-logo-shell { width: 54px; flex-basis: 54px; }
+    body.is-sidebar-transitioning .nav-item { justify-content: flex-start; padding: 0 12px; gap: 12px; }
+    body.is-sidebar-transitioning .sidebar-footer { justify-content: flex-start; padding-left: 10px; padding-right: 10px; }
+    body.is-sidebar-transitioning .sidebar-toggle { cursor: default; }
     .topbar {
       position: sticky;
       top: 0;
@@ -1151,6 +1146,7 @@
     .note-composer.is-open { display: block; }
     .composer-actions { margin-top: 8px; display: flex; justify-content: flex-end; gap: 7px; }
     .notes-list { padding: 4px 17px; }
+    .notes-empty-state { min-height: 300px; }
     .note-item { padding: 15px 2px; border-bottom: 1px solid var(--line); }
     .note-item:last-child { border-bottom: 0; }
     .note-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
@@ -1505,13 +1501,42 @@
     .sync-contract code { color: var(--forest); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
 
     dialog.lead-create-dialog { width: min(900px, calc(100vw - 56px)); max-height: calc(100vh - 40px); overflow: hidden; }
-    .lead-create-dialog #canonicalLeadForm, .lead-create-dialog #memberRegistrationForm { width: 100%; max-height: calc(100vh - 42px); display: flex; flex-direction: column; overflow: hidden; }
+    .lead-create-dialog #canonicalLeadForm,
+    .lead-create-dialog #memberRegistrationForm,
+    .lead-create-dialog #profileEditForm { width: 100%; max-height: calc(100vh - 42px); display: flex; flex-direction: column; overflow: hidden; }
     .lead-create-dialog .dialog-header, .lead-create-dialog .form-context-bar, .lead-create-dialog .dialog-footer { flex: 0 0 auto; background-clip: padding-box; }
     .lead-create-dialog .dialog-body { min-height: 0; flex: 1 1 auto; max-height: none; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
     .form-context-bar { padding: 12px 20px; display: flex; align-items: center; gap: 9px; color: #655b4d; background: #f8f3e9; border-bottom: 1px solid #e8dece; font-size: 10px; }
     .form-context-bar strong { color: var(--ink); }
     .canonical-form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
     .canonical-form-grid .full { grid-column: 1/-1; }
+    #dynamicMemberRegistrationFields .dynamic-form-grid { display: grid; grid-template-columns: minmax(0,1fr); gap: 18px; }
+    #dynamicMemberRegistrationFields .dynamic-form-grid > label { min-width: 0; }
+    #dynamicLeadFields .dynamic-form-grid, #dynamicProfileFields .dynamic-form-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 18px 14px; }
+    #dynamicLeadFields .dynamic-form-grid > label, #dynamicProfileFields .dynamic-form-grid > label { min-width: 0; }
+    .dynamic-field { display: block; min-width: 0; }
+    .dynamic-field.full { grid-column: 1/-1; }
+    #dynamicMemberRegistrationFields .consent-control,
+    #dynamicLeadFields .consent-control,
+    #dynamicProfileFields .consent-control {
+      min-height: 52px;
+      padding: 13px 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      line-height: 1.6;
+      background: #faf9f5;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    #dynamicMemberRegistrationFields .consent-control input,
+    #dynamicLeadFields .consent-control input,
+    #dynamicProfileFields .consent-control input { flex: 0 0 auto; margin: 4px 0 0; }
+    .dynamic-field.is-invalid .control { border-color: #b7524d; background: #fff8f7; box-shadow: 0 0 0 3px rgba(183,82,77,.08); }
+    .consent-control.is-invalid { border-color: #b7524d !important; background: #fff8f7 !important; }
+    .field-error { display: none; margin-top: 5px; color: #aa4e50; font-size: 10px; line-height: 1.5; }
+    .dynamic-field.is-invalid .field-error { display: block; }
     .canonical-form-grid textarea.control { min-height: 82px; padding-top: 10px; resize: vertical; }
     .canonical-form-grid .triple { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; grid-column: 1/-1; }
     .required-mark { color: #b7524d; margin-left: 2px; }
@@ -1562,6 +1587,17 @@
     .account-menu button.danger { margin-top: 4px; border-top: 1px solid var(--line); border-radius: 0 0 7px 7px; color: #8e4f50; }
     .account-menu button.danger:hover { background: var(--rose-soft); }
     .account-menu svg { width: 15px; height: 15px; }
+    .account-menu-identity strong,
+    .account-menu-identity span,
+    .account-menu button span { white-space: nowrap; }
+    body.is-sidebar-collapsed .account-menu {
+      position: fixed;
+      width: 210px;
+      left: calc(var(--sidebar-collapsed) + 12px);
+      right: auto;
+      bottom: 18px;
+      z-index: 4;
+    }
     .lead-drawer-actions { align-items: center; }
     .brand-panel { align-content: start; }
 
@@ -1607,7 +1643,7 @@
     .customer-identity-item { min-width: 0; padding-bottom: 9px; border-bottom: 1px solid #ecece8; }
     .customer-identity-item label, .brand-profile-field label { display: block; color: var(--soft-muted); font-size: 10px; }
     .customer-identity-item strong, .brand-profile-field strong { display: block; margin-top: 4px; font-size: 10px; font-weight: 620; word-break: break-word; }
-    .brand-profile-switcher { margin: 0 17px 14px; width: calc(100% - 34px); }
+    .brand-profile-switcher { margin: 14px 17px; width: calc(100% - 34px); }
     .brand-profile-switcher .segment { flex: 1 1 auto; min-width: 0; }
     .brand-profile-content { padding: 0 17px 17px; }
     .brand-profile-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(230px,100%),1fr)); gap: 11px; }
@@ -1965,7 +2001,6 @@
     .forced-password-card { width: min(500px,100%); }
     .security-note { margin-top: 12px; color: var(--muted); font-size: 9px; line-height: 1.55; }
     body.security-no-customer-edit #newMemberBtn,
-    body.security-no-customer-edit #editMemberProfile,
     body.security-no-customer-edit [data-profile-edit],
     body.security-no-customer-edit #addNoteBtn,
     body.security-no-customer-edit #panelNewLead,
@@ -2129,7 +2164,7 @@
           <div class="metrics lead-metrics" aria-label="线索指标">
             <article class="metric-card"><div class="metric-label">线索总数</div><div class="metric-value" id="leadMetricTotal">6</div></article>
             <article class="metric-card"><div class="metric-label">待同步</div><div class="metric-value" id="leadMetricOpen">3</div></article>
-            <article class="metric-card"><div class="metric-label">Gateway 已受理</div><div class="metric-value" id="leadMetricSynced">2</div></article>
+            <article class="metric-card"><div class="metric-label">HQ</div><div class="metric-value" id="leadMetricSynced">2</div></article>
             <article class="metric-card"><div class="metric-label">同步异常</div><div class="metric-value" id="leadMetricFailed">1</div></article>
           </div>
 
@@ -2152,7 +2187,7 @@
             <div id="leadReadyState">
               <div class="table-scroll">
                 <table class="lead-table">
-                  <thead><tr><th class="select-column"><input type="checkbox" id="selectAllLeads" aria-label="选择当前线索"></th><th>线索</th><th>品牌</th><th>客户</th><th>产品 / 主题</th><th>状态</th><th>创建时间</th><th>跟进人</th><th>Gateway 状态</th><th>操作</th></tr></thead>
+                  <thead><tr><th class="select-column"><input type="checkbox" id="selectAllLeads" aria-label="选择当前线索"></th><th>线索</th><th>品牌</th><th>客户</th><th>产品 / 主题</th><th>状态</th><th>创建时间</th><th>跟进人</th><th>HQ</th><th>操作</th></tr></thead>
                   <tbody id="leadRows"></tbody>
                 </table>
               </div>
@@ -2160,7 +2195,7 @@
             </div>
             <div class="lead-state" id="leadLoadingState" hidden><div><div class="state-spinner"></div><h3>正在加载线索</h3></div></div>
             <div class="lead-state" id="leadErrorState" hidden><div><div class="empty-illustration"><svg><use href="#i-x"/></svg></div><h3>线索加载失败</h3><button class="btn btn-primary" id="retryLeadLoad">重试加载</button></div></div>
-            <div class="lead-state" id="leadEmptyState" hidden><div><div class="empty-illustration"><svg><use href="#i-lead"/></svg></div><h3>暂无匹配的线索</h3><button class="btn" id="emptyLeadReset">清除查询</button><button class="btn btn-primary" id="emptyLeadCreate">新增线索</button></div></div>
+            <div class="lead-state" id="leadEmptyState" hidden><div><div class="empty-illustration"><svg><use href="#i-lead"/></svg></div><h3>暂无匹配的线索</h3><button class="btn" id="emptyLeadReset">清除查询</button></div></div>
           </section>
         </div>
       </section>
@@ -2227,7 +2262,7 @@
         <div class="detail-grid">
           <aside class="detail-column detail-side">
             <article class="content-card customer-identity-card">
-              <div class="content-card-header"><svg class="icon"><use href="#i-user"/></svg><h3>客户身份</h3><span class="spacer"></span><button class="card-edit" id="editMemberProfile" aria-label="编辑客户身份"><svg><use href="#i-edit"/></svg></button></div>
+              <div class="content-card-header"><svg class="icon"><use href="#i-user"/></svg><h3>客户身份</h3></div>
               <div class="customer-identity-grid" id="customerIdentityFields"></div>
             </article>
 
@@ -2320,7 +2355,7 @@
           <label><span class="field-label">线索状态<span class="required-mark">*</span></span><select class="control" id="createLeadStatus"></select></label>
           <label><span class="field-label">跟进人</span><select class="control" id="createLeadOwner"></select></label>
           <label><span class="field-label">来源渠道<span class="required-mark">*</span></span><select class="control" id="createLeadSource"></select></label>
-          <select id="createLeadVersion" hidden aria-label="线索表单配置"></select>
+          <input id="createLeadVersion" type="hidden" aria-label="线索表单配置">
           <div class="full" id="dynamicLeadFields"></div>
           <div class="full validation-error" id="createLeadErrors" role="alert" hidden></div>
         </div>
@@ -2340,6 +2375,20 @@
         </div>
       </div>
       <div class="dialog-footer"><button class="btn" type="button" id="cancelMemberCreate">取消</button><button class="btn btn-primary" type="submit" id="saveMemberRegistration">创建会员</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="profileEditDialog" class="lead-create-dialog">
+    <form id="profileEditForm" novalidate>
+      <div class="dialog-header"><div><h2 id="profileEditTitle">编辑品牌资料</h2></div><span class="spacer"></span><button class="dialog-close" type="button" id="closeProfileEdit" aria-label="关闭"><svg><use href="#i-x"/></svg></button></div>
+      <div class="dialog-body">
+        <div class="canonical-form-grid">
+          <div class="full form-context-bar" id="profileEditContext"></div>
+          <div class="full" id="dynamicProfileFields"></div>
+          <div class="full validation-error" id="profileEditErrors" role="alert" hidden></div>
+        </div>
+      </div>
+      <div class="dialog-footer"><button class="btn" type="button" id="cancelProfileEdit">取消</button><button class="btn btn-primary" type="submit">保存品牌资料</button></div>
     </form>
   </dialog>
 

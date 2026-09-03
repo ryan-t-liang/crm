@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { redactAuditDetails } from "../src/common/audit.js";
 import { normalizePermissionDependencies } from "../src/common/permissions.js";
 import { leadInputSchema } from "../src/leads/routes.js";
+import { customerNumber } from "../src/common/ids.js";
 
 describe("production readiness shared contracts", () => {
   it("removes child permissions whenever their parent view permission is absent", () => {
@@ -30,5 +31,11 @@ describe("production readiness shared contracts", () => {
     });
     expect(result.birthday).toBeUndefined();
     expect(result.phone).toBeUndefined();
+  });
+
+  it("formats Customer numbers as SW followed by exactly eight digits", () => {
+    expect(customerNumber(1n)).toBe("SW00000001");
+    expect(customerNumber(99_999_999n)).toBe("SW99999999");
+    expect(() => customerNumber(100_000_000n)).toThrow(/out of range/);
   });
 });

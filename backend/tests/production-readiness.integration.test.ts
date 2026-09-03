@@ -8,6 +8,7 @@ import { buildApp } from "../src/app.js";
 import { appendAuditRecord } from "../src/common/audit.js";
 import { SESSION_COOKIE, sessionTokenHash } from "../src/common/auth.js";
 import type { AppConfig } from "../src/common/config.js";
+import { customerNumber } from "../src/common/ids.js";
 import { SowindGatewayClient } from "../src/integrations/sowind/sowind.gateway-client.js";
 import { SowindOutboxWorker } from "../src/integrations/sowind/sowind.worker.js";
 import { createCanonicalLead } from "../src/leads/service.js";
@@ -38,6 +39,7 @@ describe.skipIf(!enabled)("Remediation Round 4 production readiness", () => {
   let gpId: string;
   let unId: string;
   let customerId: string;
+  const customerIds: string[] = [];
   const scopedUserIds: string[] = [];
   const gatewayRequests: Array<Record<string, unknown>> = [];
 
@@ -128,6 +130,25 @@ describe.skipIf(!enabled)("Remediation Round 4 production readiness", () => {
     if (app) await app.close();
     if (prisma) {
       const userIds = [actorUserId, ...scopedUserIds];
+      const leads = await prisma.lead.findMany({ where: { idempotencyKey: { startsWith: `${runKey}:` } }, select: { id: true } });
+      const leadIds = leads.map((lead) => lead.id);
+      if (leadIds.length) {
+        await prisma.integrationAttempt.deleteMany({ where: { leadId: { in: leadIds } } });
+        await prisma.integrationOutbox.deleteMany({ where: { aggregateId: { in: leadIds } } });
+        await prisma.consentRecord.deleteMany({ where: { leadId: { in: leadIds } } });
+        await prisma.lead.deleteMany({ where: { id: { in: leadIds } } });
+      }
+      if (customerIds.length) {
+        await prisma.wechatIdentityContext.deleteMany({ where: { customerId: { in: customerIds } } });
+        await prisma.consentRecord.deleteMany({ where: { customerId: { in: customerIds } } });
+        await prisma.customerJourneyEvent.deleteMany({ where: { customerId: { in: customerIds } } });
+        await prisma.customer.deleteMany({ where: { id: { in: customerIds } } });
+      }
+      await prisma.integrationNonce.deleteMany({ where: { clientId: config.integrationClientId } });
+      await prisma.auditLog.deleteMany({ where: { OR: [
+        { targetId: { in: [runKey, ...leadIds, ...customerIds, ...userIds] } },
+        { actorUserId: { in: userIds } },
+      ] } });
       await prisma.session.deleteMany({ where: { userId: { in: userIds } } });
       await prisma.userBrandAccess.deleteMany({ where: { userId: { in: userIds } } });
       await prisma.user.deleteMany({ where: { id: { in: userIds } } });
@@ -208,13 +229,21 @@ describe.skipIf(!enabled)("Remediation Round 4 production readiness", () => {
   });
 
   it("computes full filtered member and lead metrics on the server without single-brand leakage", async () => {
-    const customer = await prisma.customer.create({ data: { customerNo: `${runKey}-MEMBER`, displayName: `${runKey} Member`, mobile: "+8613900000001", mobileNormalized: `+86139${Date.now().toString().slice(-8)}` } });
+    const customer = await prisma.$transaction(async (tx) => {
+      const sequence = await tx.customerNumberSequence.create({ data: {} });
+      return tx.customer.create({ data: { customerNo: customerNumber(sequence.id), displayName: `${runKey} Member`, mobile: "+8613900000001", mobileNormalized: `+86139${Date.now().toString().slice(-8)}` } });
+    });
     customerId = customer.id;
+    customerIds.push(customer.id);
     for (const [brandId, granted] of [[gpId, true], [unId, false]] as const) {
       const profile = await prisma.customerBrandProfile.create({ data: { customerId: customer.id, brandId, displayName: customer.displayName, lastName: "Round", firstName: "Four" } });
       await prisma.consentRecord.create({ data: { customerId: customer.id, customerBrandProfileId: profile.id, brandId, purpose: "MARKETING_COMMUNICATION", channel: "EMAIL", status: granted ? "GRANTED" : "DENIED", policyVersion: "R4", source: "TEST", capturedAt: new Date() } });
     }
-    const gpOnlyCustomer = await prisma.customer.create({ data: { customerNo: `${runKey}-MEMBER-GP`, displayName: `${runKey} GP Member`, mobile: "+8613900000002", mobileNormalized: `+86138${Date.now().toString().slice(-8)}` } });
+    const gpOnlyCustomer = await prisma.$transaction(async (tx) => {
+      const sequence = await tx.customerNumberSequence.create({ data: {} });
+      return tx.customer.create({ data: { customerNo: customerNumber(sequence.id), displayName: `${runKey} GP Member`, mobile: "+8613900000002", mobileNormalized: `+86138${Date.now().toString().slice(-8)}` } });
+    });
+    customerIds.push(gpOnlyCustomer.id);
     const gpOnlyProfile = await prisma.customerBrandProfile.create({ data: { customerId: gpOnlyCustomer.id, brandId: gpId, displayName: gpOnlyCustomer.displayName, lastName: "GP", firstName: "Only" } });
     await prisma.consentRecord.create({ data: { customerId: gpOnlyCustomer.id, customerBrandProfileId: gpOnlyProfile.id, brandId: gpId, purpose: "MARKETING_COMMUNICATION", channel: "EMAIL", status: "DENIED", policyVersion: "R4", source: "TEST", capturedAt: new Date() } });
     const superMemberMetrics = (await app.inject({ method: "GET", url: `/api/v1/customers?keyword=${encodeURIComponent(runKey)}&pageSize=1`, headers: { cookie: superCookie } })).json().metrics;

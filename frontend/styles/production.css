@@ -11,4 +11,11 @@
 .lead-table td:last-child .table-actions { width: 100%; justify-content: flex-end; flex-wrap: nowrap; }
 .lead-table td:last-child .btn { white-space: nowrap; }
 .member-table th,
-.member-table td { align-items: center; vertical-align: middle; }
+.member-table td {
+  display: flex;
+  align-items: center;
+  vertical-align: middle;
+}
+.member-table .brand-stack,
+.member-table .interest-stack,
+.member-table .activity-time { width: 100%; }

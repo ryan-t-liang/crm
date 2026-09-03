@@ -1,8 +1,8 @@
 export const COUNTRY_OPTIONS = Object.freeze([
   { value: "China", label: "中国大陆" },
-  { value: "Hong Kong", label: "香港" },
-  { value: "Macau", label: "澳门" },
-  { value: "Taiwan", label: "台湾" },
+  { value: "Hong Kong", label: "中国香港" },
+  { value: "Macau", label: "中国澳门" },
+  { value: "Taiwan", label: "中国台湾" },
 ]);
 
 const mainland = {
@@ -73,4 +73,3 @@ export function countryLabel(value) {
   const canonical = canonicalCountry(value);
   return COUNTRY_OPTIONS.find((item) => item.value === canonical)?.label || value || "-";
 }
-

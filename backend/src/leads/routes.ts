@@ -106,7 +106,7 @@ export async function leadRoutes(app: FastifyInstance): Promise<void> {
     const body = leadInputSchema.omit({ brandCode: true, processingConsent: true, submissionMode: true, source: true }).partial().parse(request.body);
     const lead = await app.prisma.lead.findFirst({ where: { id: request.params.id, ...leadScope(request) }, include: { brand: true } });
     if (!lead) throw new ApiError(404, "RESOURCE_NOT_FOUND", "线索不存在或超出品牌范围");
-    if (["SYNC_PENDING", "SYNCING", "GATEWAY_ACCEPTED"].includes(lead.syncStatus)) throw new ApiError(409, "CONFLICT", "待提交或 Gateway 已受理的线索不可直接修改");
+    if (["SYNC_PENDING", "SYNCING", "GATEWAY_ACCEPTED"].includes(lead.syncStatus)) throw new ApiError(409, "CONFLICT", "待提交或 HQ 已受理的线索不可直接修改");
     const updated = await app.prisma.$transaction(async (tx) => {
       const data: Prisma.LeadUpdateInput = {
         customer: body.customerId === undefined ? undefined : body.customerId ? { connect: { id: body.customerId } } : { disconnect: true },
@@ -128,9 +128,9 @@ export async function leadRoutes(app: FastifyInstance): Promise<void> {
   app.post<{ Params: { id: string } }>("/api/v1/leads/:id/sync", { preHandler: guard("lead.sync") }, async (request) => {
     const lead = await app.prisma.lead.findFirst({ where: { id: request.params.id, ...leadScope(request) }, include: { brand: true } });
     if (!lead) throw new ApiError(404, "RESOURCE_NOT_FOUND", "线索不存在或超出品牌范围");
-    if (lead.leadType !== "PURCHASE_INTENT") throw new ApiError(400, "VALIDATION_ERROR", "只有购买意向线索支持 Sowind Gateway 同步");
+    if (lead.leadType !== "PURCHASE_INTENT") throw new ApiError(400, "VALIDATION_ERROR", "只有购买意向线索支持向 HQ 同步");
     if (["SYNC_PENDING", "SYNCING"].includes(lead.syncStatus)) throw new ApiError(409, "ALREADY_QUEUED", "该线索已进入待同步队列");
-    if (lead.syncStatus === "GATEWAY_ACCEPTED") throw new ApiError(409, "ALREADY_DELIVERED", "该线索已被 Gateway 受理，不会重复提交");
+    if (lead.syncStatus === "GATEWAY_ACCEPTED") throw new ApiError(409, "ALREADY_DELIVERED", "该线索已被 HQ 受理，不会重复提交");
     await app.prisma.$transaction(async (tx) => {
       await enqueueLeadForSowind(tx, app.config, dbLeadToSowindInput(lead), "ADMIN");
       await reactivateLeadOutbox(tx, lead.id, "ADMIN");

@@ -1,4 +1,4 @@
-# Sowind CRM 技术交接说明
+# Kivisense CRM 技术交接说明
 
 本文是公司开发、部署与运维人员接手 Sowind CRM 的正式入口。它说明当前交付边界、正式运行合同和接手顺序；具体部署命令、运维排障、API 与 Gateway Payload 细节继续以文末链接的专项文档为准。
 
@@ -8,11 +8,13 @@
 |---|---|
 | Repository | `https://github.com/ryan-t-liang/crm.git` |
 | Branch | `main` |
-| V3 Audited Baseline SHA | `e02f5c50d91dfda162afcef6a8aa2f3372e43647` |
+| Frozen Release / Git Tag | `Kivisense_CRM_v1` |
+| Internal SemVer | `1.15.0` |
+| Historical V3 Audited Baseline SHA | `e02f5c50d91dfda162afcef6a8aa2f3372e43647` |
 | Final Verdict | `B — HANDOFF READY WITH SETUP` |
-| Hosted CI | PASS，Run `33531995506` |
+| Hosted CI | 以冻结 Tag 对应的 GitHub Actions 结果为准 |
 
-V3 最终审计结论是：GitHub Repository 可以正式交接给公司开发。上述 SHA 是 V3 已审计的 Release Baseline，不代表此后产生的文档 Commit 已经包含在该次审计中；公司部署时应记录实际批准的 Deployment Commit 和镜像 Digest。
+V3 最终审计结论是：GitHub Repository 可以正式交接给公司开发。上述 SHA 是历史 V3 已审计基线；冻结 Tag 在该基线上追加了已确认的界面、交互、校验和会员编号修复。公司部署必须固定 `Kivisense_CRM_v1`，并记录 Tag 解析出的 Commit SHA 和镜像 Digest。
 
 Verdict 为 B 的原因是 Production 环境、真实外部凭据和获授权 Live UAT 尚待公司完成，不是因为 Repository 存在待修复的 Code Gap 或 Documentation Gap。
 
@@ -22,18 +24,19 @@ Verdict 为 B 的原因是 Production 环境、真实外部凭据和获授权 Li
 |---|---|
 | Fresh Remote Clone | PASS |
 | MySQL 8.4 | PASS |
-| Migration | 5/5 PASS |
+| Migration | Fresh MySQL 8.4 6/6 PASS；现有数据库 Upgrade PASS |
 | Seed（`SEED_DEMO_DATA=false`） | PASS |
-| Unit | 39 passed / 49 skipped |
+| Unit | 40 passed / 50 skipped（本地，无数据库与 Live Test） |
 | Documentation Contract | 6/6 PASS |
-| Integration | 45/45 PASS |
-| Hosted CI | PASS |
+| Frontend Interaction Contract | PASS |
+| Integration | 46/46 PASS（本地隔离 Gateway） |
+| Hosted CI | 以冻结 Tag 对应的 GitHub Actions 结果为准 |
 | Docker Compose / no-cache image build | PASS |
 | `/api/health` / `/api/ready` | PASS |
 | Remaining Code Gaps | `NONE` |
 | Remaining Documentation Gaps | `NONE` |
 
-Unit 中跳过的 49 项为显式隔离的 Integration / Live Test；数据库 Integration Suite 已单独通过 45/45。审计只使用 Fake / Local Integration，没有向真实 Sowind Gateway 或 GP / UN WeChat 发起请求。
+Unit 中跳过的 50 项为显式隔离的 Integration / Live Test；数据库 Integration Suite 已单独通过 46/46。验证只使用 Fake / Local Integration，没有向真实 Sowind Gateway 或 GP / UN WeChat 发起请求。
 
 ## 3. 公司开发接手范围
 
@@ -67,6 +70,9 @@ Unit 中跳过的 49 项为显式隔离的 Integration / Live Test；数据库 I
 3. `20260901020000_member_wechat_identity`
 4. `20260901030000_import_export_v2`
 5. `20260901040000_production_readiness`
+6. `20260902010000_customer_number_format`
+
+第 6 条 Migration 新增并发安全的会员编号序列，并将既有 `customers.customer_no` 更新为 `SW` + 8 位数字。它不删除 Customer 或关联业务记录，内部 `customers.id` 及所有外键关系保持不变；升级前仍必须按标准流程完成数据库备份。
 
 部署使用：
 
@@ -214,12 +220,12 @@ Frontend 隐藏菜单或按钮只改善体验，不能作为安全机制。跨�
 ## 14. Go-live Checklist
 
 - [ ] 1. Clone Repository。
-- [ ] 2. Pin V3 Release Baseline 或经批准的 Deployment Commit。
+- [ ] 2. Checkout 并校验冻结 Tag `Kivisense_CRM_v1`，记录其 Commit SHA。
 - [ ] 3. Provision MySQL 8.4 与 Least Privilege DB User。
 - [ ] 4. Configure Secret Manager。
 - [ ] 5. 从 `.env.example` 创建并评审 Production Environment。
 - [ ] 6. Backup Target DB / Storage。
-- [ ] 7. Run 5 Migrations。
+- [ ] 7. Run 6 Migrations。
 - [ ] 8. First Deployment Seed。
 - [ ] 9. Configure Domain / TLS / Nginx / Base Path / CORS / Proxy。
 - [ ] 10. Configure Persistent Private Storage。

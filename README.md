@@ -1,6 +1,6 @@
-# Sowind CRM v1.15.0 · Production Readiness Closure
+# Kivisense CRM · Kivisense_CRM_v1
 
-Sowind 中国区多品牌会员与线索 CRM。当前版本保留 v1.14.0 已确认的页面结构和视觉语言，并将前端 Mock 替换为 MySQL、Fastify API、服务端 Session、RBAC、品牌数据权限、导入导出和 Sowind Gateway Outbox。
+Sowind 中国区多品牌会员与线索 CRM。冻结发布名为 `Kivisense_CRM_v1`，内部 SemVer 保留为 `1.15.0`。当前版本保留 v1.14.0 已确认的页面结构和视觉语言，并将前端 Mock 替换为 MySQL、Fastify API、服务端 Session、RBAC、品牌数据权限、导入导出和 Sowind Gateway Outbox。
 
 ## 当前状态
 
@@ -13,25 +13,28 @@ Sowind 中国区多品牌会员与线索 CRM。当前版本保留 v1.14.0 已确
 - Role 权限依赖由服务端强制归一化；列表指标由服务端按完整 Brand Scope 计算。
 - API 字段校验统一为 HTTP 422 + `fieldErrors`，错误响应与日志通过 `traceId` 关联。
 - Outbox 使用 lease 与原子 claim 支持崩溃恢复；`/api/ready` 提供数据库与集成运行摘要。
+- 会员业务编号统一为 `SW` + 8 位数字；数据库内部 CUID 继续只用于关系关联，不作为对外会员编号。
+- 本轮冻结包含会员/线索表单中文化、字段级中文校验、品牌资料编辑、列表选择、侧边栏交互与 v1.14.0 视觉一致性修复。
 
 ## 正式交付状态
 
-当前版本已完成开发、自动化测试及最终交付审计。
+`Kivisense_CRM_v1` 是本次开发交接的冻结版本标识；交接、部署和回滚均应固定到该 Git Tag，不应仅跟随可继续变化的 `main` 分支。
 
 - Repository：`https://github.com/ryan-t-liang/crm.git`
 - Branch：`main`
-- V3 最终审计基线 SHA：`e02f5c50d91dfda162afcef6a8aa2f3372e43647`
+- Frozen Release / Git Tag：`Kivisense_CRM_v1`
+- Internal SemVer：`1.15.0`
+- 历史 V3 最终审计基线 SHA：`e02f5c50d91dfda162afcef6a8aa2f3372e43647`
 - Final Verdict：`B — HANDOFF READY WITH SETUP`
-- Hosted CI：PASS（Run `33531995506`）
-- Fresh MySQL 8.4：5/5 Migration PASS
-- Unit：39 passed / 49 skipped
+- Hosted CI：以 `Kivisense_CRM_v1` Tag 对应的 GitHub Actions 结果为准
+- Migration：Fresh MySQL 8.4 6/6 PASS；现有数据库 Upgrade PASS
+- Unit：40 passed / 50 skipped（本地，无数据库与 Live Test）
 - Documentation Contract：6/6 PASS
-- Integration：45/45 PASS
+- Integration：46/46 PASS（本地隔离 Gateway）
+- Frontend Interaction Contract：PASS
 - Docker：PASS
-- Remaining Code Gaps：`NONE`
-- Remaining Documentation Gaps：`NONE`
 
-V3 审计结论为：GitHub Repository 可以正式交接给公司开发。上述 SHA 是已审计的 Release Baseline；本轮或未来的文档提交不应被表述为已经包含在该次 V3 审计中。
+V3 审计结论为：GitHub Repository 可以正式交接给公司开发。上述 SHA 是历史已审计基线；`Kivisense_CRM_v1` 在该基线上追加了已确认的界面、交互、校验和会员编号修复，因此最终交付代码应以冻结 Tag 为准。Production 环境、真实 Gateway / WeChat 凭据及获授权 Live UAT 仍由接手团队完成。
 
 当前 Repository 的核心 CRM 实现已经完成。公司开发接手后不需要继续修改 Customer / Member、Brand Profile、WeChat Identity、Lead、Gateway / Outbox / Retry、Import / Export、RBAC / Brand Scope、Authentication / Session、Audit / Metrics / Error Contract，以及 Database Schema / Migration。后续工作属于：Production Setup → Credentials → Deploy → Authorized Live UAT → Go-live。
 
@@ -49,7 +52,7 @@ V3 审计结论为：GitHub Repository 可以正式交接给公司开发。上�
 ## 目录
 
 ```text
-frontend/                  v1.14 UI + 真实 API 接入
+frontend/                  v1.14 视觉语言 + 真实 API 接入
 backend/src/              API、认证、RBAC、业务与 Gateway 模块
 backend/prisma/           Schema、迁移和 Seed
 backend/tests/            Gateway 契约测试与显式 Live Test

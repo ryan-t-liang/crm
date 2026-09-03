@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 import type { AppConfig } from "../src/common/config.js";
 import type { WechatClient, WechatPhoneResolution } from "../src/wechat/wechat.types.js";
+import { registerCanonicalMember } from "../src/customers/service.js";
 
 const integrationEnabled = process.env.RUN_DB_INTEGRATION_TESTS === "true";
 const runKey = `${Date.now()}-${randomUUID().slice(0, 8)}`;
@@ -213,6 +214,7 @@ describe.skipIf(!integrationEnabled)("Remediation Round 2 Member/WeChat identity
     customerId = payload.data.customerId;
     expect(payload.data).toMatchObject({ registered: true, registrationStatus: "CREATED_CUSTOMER_AND_PROFILE" });
     expect(await prisma.customer.count({ where: { mobileNormalized: primaryMobile } })).toBe(1);
+    expect((await prisma.customer.findUniqueOrThrow({ where: { id: customerId } })).customerNo).toMatch(/^SW\d{8}$/);
     expect(await prisma.customerBrandProfile.count({ where: { customerId, brandId: gpBrandId } })).toBe(1);
     expect(await prisma.customerJourneyEvent.count({ where: { customerId, brandId: gpBrandId, eventType: "REGISTER" } })).toBe(1);
   });
@@ -234,6 +236,25 @@ describe.skipIf(!integrationEnabled)("Remediation Round 2 Member/WeChat identity
     expect(response.json<{ data: { registrationStatus: string } }>().data.registrationStatus).toBe("EXISTING_BRAND_PROFILE");
     expect(await prisma.customerBrandProfile.count({ where: { customerId, brandId: gpBrandId } })).toBe(1);
     expect(await prisma.customerJourneyEvent.count({ where: { customerId, brandId: gpBrandId, eventType: "REGISTER" } })).toBe(1);
+  });
+
+  it("C2: an admin-style duplicate brand registration returns a specific conflict", async () => {
+    await expect(prisma.$transaction((tx) => registerCanonicalMember(tx, {
+      brand: { id: gpBrandId, code: "GP", name: "GP 芝柏表" },
+      mobile: primaryMobile,
+      profile: {
+        ...memberProfile("GP").profile,
+        brandCode: "GP",
+        registrationSource: "ADMIN_MANUAL",
+        processingConsent: true as const,
+      },
+      audit: { actorName: "Round 2 Test Admin" },
+      duplicateProfilePolicy: "REJECT",
+    }))).rejects.toMatchObject({
+      statusCode: 409,
+      code: "DUPLICATE_BRAND_MEMBER",
+      message: "该手机号已是GP 芝柏表会员，不能重复创建同品牌会员",
+    });
   });
 
   it("D: GP Profile update writes PROFILE_UPDATE without changing the UN Profile", async () => {
