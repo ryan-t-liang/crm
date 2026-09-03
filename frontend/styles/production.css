@@ -229,6 +229,59 @@
 .crm-change-contact { margin: -10px 0 20px; }
 .btn.is-busy { cursor: wait; opacity: .75; }
 
+/* CRM Import / Export extends the shared job framework without changing Legacy views. */
+.crm-page-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.crm-job-dialog .import-shell { height: min(720px, calc(100vh - 40px)); }
+.crm-job-header { flex: 0 0 auto; }
+.crm-job-steps { overflow-x: auto; justify-content: flex-start; }
+.crm-job-steps .import-step { min-width: 150px; }
+.crm-job-body { min-height: 0; }
+.crm-job-stage { min-height: 330px; max-width: 760px; margin: 0 auto; display: grid; place-items: center; align-content: center; text-align: center; }
+.crm-job-stage > h3 { margin: 13px 0 5px; font: 650 18px/1.3 Inter, ui-sans-serif, sans-serif; letter-spacing: 0; }
+.crm-job-stage > p { margin: 0; color: #69706b; font-size: 11px; }
+.crm-job-stage-icon { width: 42px; height: 42px; display: grid; place-items: center; color: #fff; background: #202522; border-radius: 7px; }
+.crm-job-stage-icon.is-error { background: #984f50; }
+.crm-job-stage-icon svg { width: 19px; height: 19px; }
+.crm-job-stage-actions { margin-top: 20px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px; }
+.crm-job-upload { width: min(720px, 100%); min-height: 235px; border-radius: 8px; }
+.crm-job-review { min-width: 0; }
+.crm-job-review > h3 { margin: 0 0 13px; font: 650 16px/1.3 Inter, ui-sans-serif, sans-serif; letter-spacing: 0; }
+.crm-job-summary { margin-bottom: 16px; padding: 12px 0; }
+.crm-job-summary .result-stat { min-width: 118px; }
+.crm-job-summary .is-warning strong { color: #87631f; }
+.crm-job-summary .is-error strong { color: #984f50; }
+.crm-job-table-wrap { width: 100%; max-height: 350px; overflow-y: auto; overflow-x: hidden; border-radius: 8px; }
+.crm-job-table { width: 100%; table-layout: fixed; }
+.crm-job-table th:nth-child(1),
+.crm-job-table td:nth-child(1) { width: 64px; }
+.crm-job-table th:nth-child(2),
+.crm-job-table td:nth-child(2) { width: 27%; }
+.crm-job-table th:nth-child(3),
+.crm-job-table td:nth-child(3) { width: 92px; }
+.crm-job-table th,
+.crm-job-table td { min-width: 0; padding: 9px 10px; }
+.crm-job-identifier { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.crm-job-message { max-height: 2.9em; overflow: hidden; color: #59605c; font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; }
+.crm-job-history-table th:nth-child(1),
+.crm-job-history-table td:nth-child(1) { width: 21%; }
+.crm-job-history-table th:nth-child(2),
+.crm-job-history-table td:nth-child(2) { width: 12%; }
+.crm-job-history-table th:nth-child(3),
+.crm-job-history-table td:nth-child(3) { width: 14%; }
+.crm-job-history-table th:nth-child(4),
+.crm-job-history-table td:nth-child(4) { width: 17%; }
+.crm-job-history-table th:nth-child(5),
+.crm-job-history-table td:nth-child(5) { width: 13%; }
+.crm-job-history-table th:nth-child(n+6),
+.crm-job-history-table td:nth-child(n+6) { width: 7.66%; text-align: center; }
+.crm-job-error { display: flex; align-items: center; justify-content: space-between; gap: 12px; text-align: left; }
+.crm-job-warning { border-color: #e4d4b2; background: #fbf5e8; color: #725b2c; }
+.crm-job-confirm .crm-job-summary { width: min(620px, 100%); margin-top: 18px; }
+.crm-job-confirm .inline-alert { width: min(620px, 100%); text-align: left; }
+.crm-job-result .btn { margin-top: 16px; }
+.crm-job-spinner { width: 32px; height: 32px; border: 3px solid #dce3de; border-top-color: #078f4d; border-radius: 50%; animation: crm-job-spin .7s linear infinite; }
+@keyframes crm-job-spin { to { transform: rotate(360deg); } }
+
 @media (max-width: 1280px) {
   .crm-lead-filters { grid-template-columns: minmax(210px, 1.2fr) repeat(3, minmax(110px, .6fr)) 40px auto; }
   .crm-lead-filters > label:nth-of-type(1) { grid-column: 1 / span 2; }
@@ -264,6 +317,8 @@
   body { min-width: 0 !important; }
   .crm-page { padding: 17px 13px 28px; }
   .crm-page-header { align-items: flex-start; }
+  .crm-page-header { flex-wrap: wrap; }
+  .crm-page-actions { width: 100%; justify-content: flex-start; flex-wrap: wrap; }
   .crm-page-header h1 { font-size: 22px; }
   .crm-filter-bar,
   .crm-lead-filters { grid-template-columns: minmax(0, 1fr) 40px; }
@@ -284,4 +339,10 @@
   .crm-form-grid,
   .crm-readonly-grid { grid-template-columns: 1fr; }
   .crm-field-wide { grid-column: auto; }
+  .crm-job-dialog .import-shell { height: calc(100vh - 32px); }
+  .crm-job-body { padding: 18px 14px; }
+  .crm-job-history-table th:nth-child(3),
+  .crm-job-history-table td:nth-child(3),
+  .crm-job-history-table th:nth-child(4),
+  .crm-job-history-table td:nth-child(4) { display: none; }
 }

@@ -30,11 +30,15 @@ const permissionCatalog = [
   ["crm.contact.view", "查看 CRM 联系人", "crm"],
   ["crm.contact.create", "新增 CRM 联系人", "crm"],
   ["crm.contact.edit", "编辑 CRM 联系人", "crm"],
+  ["crm.contact.import", "导入 CRM 联系人", "crm"],
+  ["crm.contact.export", "导出 CRM 联系人", "crm"],
   ["crm.contact_followup.view", "查看联系人跟进", "crm"],
   ["crm.contact_followup.create", "新增联系人跟进", "crm"],
   ["crm.lead.view", "查看 CRM Lead", "crm"],
   ["crm.lead.create", "新增 CRM Lead", "crm"],
   ["crm.lead.edit", "编辑 CRM Lead", "crm"],
+  ["crm.lead.import", "导入 CRM Lead", "crm"],
+  ["crm.lead.export", "导出 CRM Lead", "crm"],
   ["crm.lead_followup.view", "查看 Lead 跟进", "crm"],
   ["crm.lead_followup.create", "新增 Lead 跟进", "crm"],
 ] as const;
@@ -52,7 +56,7 @@ const rolePermissionKeys: Record<string, string[]> = {
   BRAND_ADMIN: permissionCatalog.map(([key]) => key).filter((key) => key.startsWith("customer.") || key.startsWith("lead.")),
   OPERATOR: ["customer.view", "customer.create", "customer.edit", "lead.view", "lead.create", "lead.edit", "lead.sync"],
   VIEWER: ["customer.view", "lead.view", "crm.contact.view", "crm.contact_followup.view", "crm.lead.view", "crm.lead_followup.view"],
-  SALES: permissionCatalog.map(([key]) => key).filter((key) => key.startsWith("crm.")),
+  SALES: permissionCatalog.map(([key]) => key).filter((key) => key.startsWith("crm.") && !key.endsWith(".import") && !key.endsWith(".export")),
 };
 
 const salutations = ["博士", "先生", "太太", "女士", "不愿透露"];

@@ -181,6 +181,8 @@ let emptyLeads;
 let nextId;
 let requestLog;
 let failNext;
+let crmImportJobs;
+let crmExportJobs;
 
 function resetFixture() {
   contacts = clone(initialContacts);
@@ -193,6 +195,8 @@ function resetFixture() {
   nextId = 1;
   requestLog = [];
   failNext = null;
+  crmImportJobs = [];
+  crmExportJobs = [];
 }
 resetFixture();
 
@@ -202,6 +206,7 @@ const rolePermissions = {
   SUPER_ADMIN: [
     "crm.contact.view", "crm.contact.create", "crm.contact.edit", "crm.contact_followup.view", "crm.contact_followup.create",
     "crm.lead.view", "crm.lead.create", "crm.lead.edit", "crm.lead_followup.view", "crm.lead_followup.create",
+    "crm.contact.import", "crm.contact.export", "crm.lead.import", "crm.lead.export",
     "customer.view", "customer.create", "customer.edit", "customer.import", "customer.export",
     "lead.view", "lead.create", "lead.edit", "lead.import", "lead.export",
     "account.view", "account.create", "account.edit", "account.disable", "account.reset", "roles.view", "roles.configure", "audit.view",
@@ -295,11 +300,13 @@ function sendError(response, status, code, message) {
   sendJson(response, { error: { code, message }, traceId: `fixture-${status}` }, status);
 }
 
-async function readJson(request) {
+async function readRequestBody(request) {
   const chunks = [];
   for await (const chunk of request) chunks.push(chunk);
   if (!chunks.length) return {};
-  return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  const buffer = Buffer.concat(chunks);
+  if (String(request.headers["content-type"] || "").includes("multipart/form-data")) return { multipart: true, size: buffer.length };
+  return JSON.parse(buffer.toString("utf8"));
 }
 
 function applyDefaults(input, defaults) {
@@ -308,7 +315,7 @@ function applyDefaults(input, defaults) {
 
 async function apiResponse(request, response, url) {
   const method = request.method || "GET";
-  const body = ["POST", "PATCH", "PUT"].includes(method) ? await readJson(request) : null;
+  const body = ["POST", "PATCH", "PUT"].includes(method) ? await readRequestBody(request) : null;
   requestLog.push({ method, path: url.pathname, query: Object.fromEntries(url.searchParams), body, at: new Date().toISOString() });
 
   if (url.pathname === "/__fixture/reset" && method === "POST") {
@@ -344,6 +351,65 @@ async function apiResponse(request, response, url) {
   }
   if (url.pathname === "/api/v1/brands" && method === "GET") return sendJson(response, { data: brands });
   if (url.pathname === "/api/v1/crm/users" && method === "GET") return sendJson(response, { data: crmUsers });
+
+  const templateMatch = url.pathname.match(/^\/api\/v1\/crm\/templates\/(contacts|leads)$/);
+  if (templateMatch && method === "GET") {
+    response.writeHead(200, { "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "content-disposition": `attachment; filename="fixture-${templateMatch[1]}.xlsx"` });
+    return response.end(Buffer.from("fixture-xlsx"));
+  }
+
+  const crmImportMatch = url.pathname.match(/^\/api\/v1\/crm\/imports\/(contacts|leads)$/);
+  if (crmImportMatch && method === "POST") {
+    const objectType = crmImportMatch[1] === "contacts" ? "CONTACT" : "CRM_LEAD";
+    const primary = objectType === "CONTACT" ? "Naderi / Dena" : "AR application service / contact-naderi";
+    const job = {
+      id: `crm-import-${nextId++}`, jobNo: `IMP-FIXTURE-${nextId}`, objectType, fileName: `fixture-${crmImportMatch[1]}.xlsx`,
+      createdBy: "qa-user", createdAt: new Date().toISOString(), status: "PREFLIGHT_READY", totalCount: 3,
+      importableCount: 2, successCount: 0, failedCount: 0,
+      preflight: { totalRows: 3, validRows: 1, warningRows: 1, errorRows: 1, importableRows: 2 },
+      rows: [
+        { rowNumber: 2, identity: primary, status: "VALID", errors: [], warnings: [] },
+        { rowNumber: 3, identity: objectType === "CONTACT" ? "Naderi Duplicate / Dena" : "OEM cooperation / contact-naderi", status: "WARNING", errors: [], warnings: [{ code: "POTENTIAL_DUPLICATE", message: "Potential duplicate email: naderi@dena.example.test" }] },
+        { rowNumber: 4, identity: objectType === "CONTACT" ? "Missing Name" : "Unknown Contact / missing-contact", status: "ERROR", errors: [{ code: objectType === "CONTACT" ? "REQUIRED" : "CONTACT_NOT_FOUND", message: objectType === "CONTACT" ? "contactName is required" : "Contact ID not found: missing-contact" }], warnings: [] },
+      ],
+    };
+    crmImportJobs.unshift(job);
+    return sendJson(response, { data: job }, 201);
+  }
+
+  if (url.pathname === "/api/v1/crm/imports" && method === "GET") {
+    const objectType = url.searchParams.get("objectType");
+    const rows = crmImportJobs.filter((job) => !objectType || job.objectType === objectType).map((job) => ({ ...job, operatorName: "交互测试管理员" }));
+    return sendJson(response, { data: rows, meta: { page: 1, pageSize: 100, total: rows.length, pageCount: 1 } });
+  }
+
+  const crmImportExecuteMatch = url.pathname.match(/^\/api\/v1\/crm\/imports\/([^/]+)\/execute$/);
+  if (crmImportExecuteMatch && method === "POST") {
+    const job = crmImportJobs.find((item) => item.id === crmImportExecuteMatch[1]);
+    if (!job) return sendError(response, 404, "RESOURCE_NOT_FOUND", "CRM 导入任务不存在");
+    Object.assign(job, { status: "COMPLETED_WITH_ERRORS", successCount: 2, failedCount: 1, failureFilePath: `/fixture/${job.id}-failures.csv` });
+    return sendJson(response, { data: { job, result: { imported: 2, failed: 1, skipped: 0, warnings: 1 } } });
+  }
+
+  const crmImportFailureMatch = url.pathname.match(/^\/api\/v1\/crm\/imports\/([^/]+)\/failures$/);
+  if (crmImportFailureMatch && method === "GET") {
+    response.writeHead(200, { "content-type": "text/csv; charset=utf-8", "content-disposition": "attachment; filename=fixture-failures.csv" });
+    return response.end("original_row_number,error_code,error_message\r\n4,PREFLIGHT_ERROR,Contact ID not found");
+  }
+
+  const crmExportMatch = url.pathname.match(/^\/api\/v1\/crm\/exports\/(contacts|leads)$/);
+  if (crmExportMatch && method === "POST") {
+    const objectType = crmExportMatch[1] === "contacts" ? "CONTACT" : "CRM_LEAD";
+    const job = { id: `crm-export-${nextId++}`, jobNo: `EXP-FIXTURE-${nextId}`, objectType, status: "COMPLETED", rowCount: objectType === "CONTACT" ? contacts.length : crmLeads.length, fileName: `fixture-${crmExportMatch[1]}.xlsx`, downloadUrl: `/api/v1/crm/exports/crm-export-${nextId - 1}/download`, createdAt: new Date().toISOString() };
+    crmExportJobs.unshift(job);
+    return sendJson(response, { data: job }, 201);
+  }
+
+  const crmExportDownloadMatch = url.pathname.match(/^\/api\/v1\/crm\/exports\/([^/]+)\/download$/);
+  if (crmExportDownloadMatch && method === "GET") {
+    response.writeHead(200, { "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "content-disposition": "attachment; filename=fixture-export.xlsx" });
+    return response.end(Buffer.from("fixture-export-xlsx"));
+  }
 
   if (url.pathname === "/api/v1/customers" && method === "GET") return sendJson(response, { ...paged(legacyCustomers, url), metrics: { memberTotal: legacyCustomers.length, dualBrandMembers: 0, marketingCoverage: { percentage: 0 } } });
   if (url.pathname === "/api/v1/leads" && method === "GET") return sendJson(response, { ...paged(legacyLeads, url), metrics: { leadTotal: legacyLeads.length, pending: 0, gatewayAccepted: 0, syncExceptions: 0, statuses: {} } });

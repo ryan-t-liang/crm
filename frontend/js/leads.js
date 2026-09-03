@@ -33,7 +33,7 @@ export function readonlyContactMarkup(contact, compact = false) {
 export function initializeLeads(options) {
   context = options;
   $("crmLeadsView").innerHTML = `<div class="crm-page">
-    <header class="crm-page-header"><div><span class="crm-eyebrow">LEADS</span><h1>Leads</h1></div><button class="btn btn-primary" id="crmNewLead" type="button" data-crm-permission="crm.lead.create"><svg><use href="#i-plus"/></svg>New Lead</button></header>
+    <header class="crm-page-header"><div><span class="crm-eyebrow">LEADS</span><h1>Leads</h1></div><div class="crm-page-actions"><button class="btn btn-quiet" id="crmImportLeads" type="button" data-crm-permission="crm.lead.import"><svg><use href="#i-upload"/></svg>Import</button><button class="btn btn-quiet" id="crmExportLeads" type="button" data-crm-permission="crm.lead.export"><svg><use href="#i-download"/></svg>Export</button><button class="btn btn-primary" id="crmNewLead" type="button" data-crm-permission="crm.lead.create"><svg><use href="#i-plus"/></svg>New Lead</button></div></header>
     <section class="crm-filter-bar crm-lead-filters" aria-label="Lead 筛选">
       <label class="crm-search"><svg><use href="#i-search"/></svg><input id="crmLeadKeyword" type="search" placeholder="搜索项目需求、联系人或公司"></label>
       <label><span class="sr-only">状态</span><select id="crmLeadStatus"><option value="">全部状态</option>${LEAD_STATUSES.map((item) => `<option value="${item.value}">${esc(item.label)}</option>`).join("")}</select></label>
@@ -68,6 +68,8 @@ export function initializeLeads(options) {
   </aside>`);
 
   $("crmNewLead").addEventListener("click", () => openLeadForm());
+  $("crmImportLeads").addEventListener("click", () => context.openImport("CRM_LEAD"));
+  $("crmExportLeads").addEventListener("click", () => context.openExport("CRM_LEAD"));
   $("crmEmptyNewLead").addEventListener("click", () => openLeadForm());
   $("crmSearchLeads").addEventListener("click", () => loadLeads(1));
   $("crmLeadKeyword").addEventListener("keydown", (event) => { if (event.key === "Enter") loadLeads(1); });

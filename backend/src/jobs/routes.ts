@@ -11,6 +11,7 @@ import { ApiError } from "../common/errors.js";
 import { jobNumber } from "../common/ids.js";
 import { customerExportFields, formalImportFields, formalTemplateFilename, leadExportFields, type BrandCode, type ImportObjectType } from "./formal-schema.js";
 import { executeImportJob, fileSha256, prepareImport, templateWorkbook, type LeadConflictStrategy, type LeadUnmatchedStrategy, type MemberConflictStrategy } from "./import-export.service.js";
+import { assertJobBrandInvariant, isLegacyJobObjectType, jobPermission } from "./job-types.js";
 
 const uploadQuerySchema = z.object({
   brandCode: z.enum(["GP", "UN"]), conflictStrategy: z.string().optional(),
@@ -33,9 +34,8 @@ function assertImportStrategy(objectType: ImportObjectType, value?: string): Mem
   if (!["SKIP", "UPDATE_EXISTING"].includes(strategy)) throw new ApiError(400, "INVALID_CONFLICT_STRATEGY", "线索冲突策略必须为 SKIP 或 UPDATE_EXISTING");
   return strategy as LeadConflictStrategy;
 }
-function requiredPermission(objectType: string, action: "import" | "export"): string { return `${objectType === "CUSTOMER" ? "customer" : "lead"}.${action}`; }
 function assertJobPermission(request: FastifyRequest, objectType: string, action: "import" | "export"): void {
-  if (!request.auth?.permissions.has(requiredPermission(objectType, action))) throw new ApiError(403, "PERMISSION_DENIED", "当前账户没有此操作权限");
+  if (!request.auth?.permissions.has(jobPermission(objectType, action))) throw new ApiError(403, "PERMISSION_DENIED", "当前账户没有此操作权限");
 }
 async function activeForm(app: FastifyInstance, brandId: string, objectType: ImportObjectType) {
   const form = await app.prisma.formDefinition.findFirst({ where: { brandId, objectType, active: true }, orderBy: { effectiveAt: "desc" } });
@@ -126,6 +126,7 @@ export async function importExportRoutes(app: FastifyInstance): Promise<void> {
       const buffer = await upload.toBuffer(); const hash = fileSha256(buffer);
       if (!query.allowDuplicate) { const duplicate = await app.prisma.importJob.findFirst({ where: { brandId: brand.id, objectType, fileHash: hash, status: { not: "FAILED" } }, orderBy: { createdAt: "desc" } }); if (duplicate) throw new ApiError(409, "IMPORT_FILE_DUPLICATE", "相同文件已上传。如需重新执行，请明确确认重新上传。", { existingJobId: duplicate.id }); }
       const form = await activeForm(app, brand.id, objectType); const prepared = await prepareImport(app, { objectType, brand, buffer, conflictStrategy, unmatchedStrategy }); const summary = { ...prepared.summary, importable: importableCount(objectType, prepared.rows, conflictStrategy) };
+      assertJobBrandInvariant(objectType, brand.id);
       await mkdir(join(app.config.storageDir, "imports"), { recursive: true }); const jobNo = jobNumber("IMP"); const storedName = `${jobNo}-${basename(upload.filename).replace(/[^A-Za-z0-9._-]/g, "_")}`; const storagePath = join(app.config.storageDir, "imports", storedName); await writeFile(storagePath, buffer);
       const job = await app.prisma.$transaction(async (tx) => {
         const created = await tx.importJob.create({ data: { jobNo, objectType, brandId: brand.id, subtype: objectType === "LEAD" ? "PURCHASE_INTENT" : "REGISTRATION", fileName: upload.filename, storagePath, fileHash: hash, mappingJson: { schemaVersion: form.version, headers: prepared.parsed.headers, fields: formalImportFields(objectType, brand.code as BrandCode), mapping: prepared.mapping, preflightSummary: summary }, conflictStrategy, unmatchedStrategy, status: "UPLOADED", totalCount: prepared.rows.length, importableCount: summary.importable, createdBy: request.auth!.userId } });
@@ -138,23 +139,23 @@ export async function importExportRoutes(app: FastifyInstance): Promise<void> {
     });
   }
   app.post<{ Params: { id: string } }>("/api/v1/imports/:id/execute", { preHandler: guard() }, async (request) => {
-    const job = await app.prisma.importJob.findUnique({ where: { id: request.params.id }, include: { brand: true } }); if (!job) throw new ApiError(404, "RESOURCE_NOT_FOUND", "导入任务不存在"); assertJobPermission(request, job.objectType, "import");
+    const job = await app.prisma.importJob.findUnique({ where: { id: request.params.id }, include: { brand: true } }); if (!job || !isLegacyJobObjectType(job.objectType)) throw new ApiError(404, "RESOURCE_NOT_FOUND", "导入任务不存在"); assertJobPermission(request, job.objectType, "import"); assertJobBrandInvariant(job.objectType, job.brandId); if (!job.brand) throw new ApiError(409, "JOB_BRAND_INVARIANT_VIOLATION", "Legacy Import 任务缺少品牌");
     const brand = await resolveBrand(app, request, job.brand.code); const body = executeSchema.parse(request.body ?? {}); const conflictStrategy = assertImportStrategy(job.objectType as ImportObjectType, body.conflictStrategy ?? job.conflictStrategy ?? undefined); const unmatchedStrategy = job.objectType === "LEAD" ? body.unmatchedStrategy ?? (job.unmatchedStrategy as LeadUnmatchedStrategy | null) ?? "IMPORT_LEAD_ONLY" : undefined;
     return { data: await executeImportJob(app, request, { jobId: job.id, brand, objectType: job.objectType as ImportObjectType, conflictStrategy, unmatchedStrategy }) };
   });
   app.get("/api/v1/imports/history", { preHandler: guard() }, async (request) => {
     const query = z.object({ objectType: z.enum(["CUSTOMER", "LEAD"]).optional(), brandCode: z.enum(["GP", "UN"]).optional(), page: z.coerce.number().int().min(1).default(1), pageSize: z.coerce.number().int().min(1).max(100).default(20) }).parse(request.query); if (query.objectType) assertJobPermission(request, query.objectType, "import");
-    const brand = query.brandCode ? await resolveBrand(app, request, query.brandCode) : null; const ids = visibleBrandIds(request); const where: Prisma.ImportJobWhereInput = { ...(query.objectType ? { objectType: query.objectType } : {}), ...(brand ? { brandId: brand.id } : ids ? { brandId: { in: ids } } : {}) };
-    const [total, rows] = await app.prisma.$transaction([app.prisma.importJob.count({ where }), app.prisma.importJob.findMany({ where, include: { brand: true }, orderBy: { createdAt: "desc" }, skip: (query.page - 1) * query.pageSize, take: query.pageSize })]); const allowedRows = rows.filter((row) => request.auth!.permissions.has(requiredPermission(row.objectType, "import")));
+    const brand = query.brandCode ? await resolveBrand(app, request, query.brandCode) : null; const ids = visibleBrandIds(request); const where: Prisma.ImportJobWhereInput = { objectType: query.objectType ?? { in: ["CUSTOMER", "LEAD"] }, ...(brand ? { brandId: brand.id } : ids ? { brandId: { in: ids } } : {}) };
+    const [total, rows] = await app.prisma.$transaction([app.prisma.importJob.count({ where }), app.prisma.importJob.findMany({ where, include: { brand: true }, orderBy: { createdAt: "desc" }, skip: (query.page - 1) * query.pageSize, take: query.pageSize })]); const allowedRows = rows.filter((row) => request.auth!.permissions.has(jobPermission(row.objectType, "import")));
     const operators = await app.prisma.user.findMany({ where: { id: { in: [...new Set(allowedRows.map((row) => row.createdBy))] } }, select: { id: true, name: true } }); const operatorNames = new Map(operators.map((operator) => [operator.id, operator.name]));
     return { data: allowedRows.map((row) => ({ ...row, operatorName: operatorNames.get(row.createdBy) ?? "已删除账号" })), meta: { page: query.page, pageSize: query.pageSize, total: query.objectType ? total : allowedRows.length } };
   });
   app.get<{ Params: { id: string } }>("/api/v1/imports/:id", { preHandler: guard() }, async (request) => {
-    const ids = visibleBrandIds(request); const job = await app.prisma.importJob.findFirst({ where: { id: request.params.id, ...(ids ? { brandId: { in: ids } } : {}) }, include: { brand: true, rows: { orderBy: { rowNumber: "asc" }, take: 1000 } } });
+    const ids = visibleBrandIds(request); const job = await app.prisma.importJob.findFirst({ where: { id: request.params.id, objectType: { in: ["CUSTOMER", "LEAD"] }, ...(ids ? { brandId: { in: ids } } : {}) }, include: { brand: true, rows: { orderBy: { rowNumber: "asc" }, take: 1000 } } });
     if (!job) throw new ApiError(404, "RESOURCE_NOT_FOUND", "导入任务不存在或超出品牌范围"); assertJobPermission(request, job.objectType, "import"); return { data: job };
   });
   app.get<{ Params: { id: string } }>("/api/v1/imports/:id/failures", { preHandler: guard() }, async (request, reply) => {
-    const ids = visibleBrandIds(request); const job = await app.prisma.importJob.findFirst({ where: { id: request.params.id, ...(ids ? { brandId: { in: ids } } : {}) } }); if (!job) throw new ApiError(404, "RESOURCE_NOT_FOUND", "导入任务不存在或超出品牌范围"); assertJobPermission(request, job.objectType, "import"); if (!job.failureFilePath) throw new ApiError(404, "RESOURCE_NOT_FOUND", "该任务没有失败明细文件");
+    const ids = visibleBrandIds(request); const job = await app.prisma.importJob.findFirst({ where: { id: request.params.id, objectType: { in: ["CUSTOMER", "LEAD"] }, ...(ids ? { brandId: { in: ids } } : {}) } }); if (!job) throw new ApiError(404, "RESOURCE_NOT_FOUND", "导入任务不存在或超出品牌范围"); assertJobPermission(request, job.objectType, "import"); if (!job.failureFilePath) throw new ApiError(404, "RESOURCE_NOT_FOUND", "该任务没有失败明细文件");
     const buffer = await readFile(job.failureFilePath); await appendAudit(app.prisma, request, { action: "IMPORT_FAILURE_DOWNLOAD", module: "import", targetType: "import_job", targetId: job.id, brandId: job.brandId, details: { fileName: `${job.jobNo}-failures.csv` } });
     return reply.header("content-type", "text/csv; charset=utf-8").header("content-disposition", filenameHeader(`${job.jobNo}-failures.csv`)).send(buffer);
   });
@@ -169,7 +170,7 @@ export async function importExportRoutes(app: FastifyInstance): Promise<void> {
     });
   }
   app.get<{ Params: { id: string } }>("/api/v1/exports/:id/download", { preHandler: guard() }, async (request, reply) => {
-    const ids = visibleBrandIds(request); const job = await app.prisma.exportJob.findFirst({ where: { id: request.params.id, createdBy: request.auth!.userId, ...(ids ? { OR: [{ brandId: null }, { brandId: { in: ids } }] } : {}) } }); if (!job) throw new ApiError(404, "RESOURCE_NOT_FOUND", "导出文件不存在或无权下载"); assertJobPermission(request, job.objectType, "export");
+    const ids = visibleBrandIds(request); const job = await app.prisma.exportJob.findFirst({ where: { id: request.params.id, objectType: { in: ["CUSTOMER", "LEAD"] }, createdBy: request.auth!.userId, ...(ids ? { OR: [{ brandId: null }, { brandId: { in: ids } }] } : {}) } }); if (!job) throw new ApiError(404, "RESOURCE_NOT_FOUND", "导出文件不存在或无权下载"); assertJobPermission(request, job.objectType, "export");
     if (!job.storagePath || !job.fileName || (job.expiresAt && job.expiresAt <= new Date())) throw new ApiError(404, "EXPORT_EXPIRED", "导出文件不存在或已过期"); const buffer = await readFile(job.storagePath); await appendAudit(app.prisma, request, { action: "EXPORT_DOWNLOAD", module: "export", targetType: "export_job", targetId: job.id, brandId: job.brandId, details: { fileName: job.fileName, rowCount: job.rowCount } });
     return reply.header("content-type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet").header("content-disposition", filenameHeader(job.fileName)).send(buffer);
   });

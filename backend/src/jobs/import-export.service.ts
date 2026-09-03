@@ -11,6 +11,7 @@ import { bindCustomerIdentity } from "../customers/identity.service.js";
 import { registerCanonicalMember } from "../customers/service.js";
 import { createCanonicalLead } from "../leads/service.js";
 import { formalImportFields, formalSheetName, type BrandCode, type FormalField, type ImportObjectType } from "./formal-schema.js";
+import { assertJobBrandInvariant } from "./job-types.js";
 
 export type MemberConflictStrategy = "SKIP" | "FILL_EMPTY" | "OVERWRITE";
 export type LeadConflictStrategy = "SKIP" | "UPDATE_EXISTING";
@@ -414,7 +415,7 @@ function csvCell(value: unknown): string {
   return `"${text.replace(/"/g, '""')}"`;
 }
 
-async function writeFailureCsv(app: FastifyInstance, jobId: string, rows: Array<{ row: ImportJobRow; errorCode: string; errorMessage: string }>) {
+export async function writeFailureCsv(app: FastifyInstance, jobId: string, rows: Array<{ row: ImportJobRow; errorCode: string; errorMessage: string }>) {
   if (!rows.length) return null;
   const allHeaders = [...new Set(rows.flatMap((item) => Object.keys(item.row.rawData as Record<string, unknown>)))];
   const lines = [
@@ -436,13 +437,18 @@ export async function executeImportJob(
   request: FastifyRequest,
   input: { jobId: string; brand: Brand; objectType: ImportObjectType; conflictStrategy: MemberConflictStrategy | LeadConflictStrategy; unmatchedStrategy?: LeadUnmatchedStrategy },
 ) {
+  assertJobBrandInvariant(input.objectType, input.brand.id);
   const job = await app.prisma.importJob.findFirst({ where: { id: input.jobId, brandId: input.brand.id, objectType: input.objectType, createdBy: request.auth!.userId }, include: { rows: { orderBy: { rowNumber: "asc" } } } });
   if (!job) throw new ApiError(404, "RESOURCE_NOT_FOUND", "导入任务不存在、不是当前用户创建或超出品牌范围");
   if (!job.storagePath || !job.fileHash || !job.mappingJson) throw new ApiError(409, "IMPORT_NOT_READY", "导入文件或映射缺失");
   if (!(["PREFLIGHT_READY", "READY_TO_EXECUTE"] as string[]).includes(job.status)) throw new ApiError(409, "IMPORT_NOT_READY", "导入任务未处于可执行状态");
   const actualHash = fileSha256(await readFile(job.storagePath));
   if (actualHash !== job.fileHash) throw new ApiError(409, "IMPORT_FILE_CHANGED", "导入文件已被修改，请重新上传");
-  await app.prisma.importJob.update({ where: { id: job.id }, data: { status: "PROCESSING", processingStartedAt: new Date(), conflictStrategy: input.conflictStrategy, unmatchedStrategy: input.unmatchedStrategy } });
+  const claim = await app.prisma.importJob.updateMany({
+    where: { id: job.id, status: { in: ["PREFLIGHT_READY", "READY_TO_EXECUTE"] } },
+    data: { status: "PROCESSING", processingStartedAt: new Date(), conflictStrategy: input.conflictStrategy, unmatchedStrategy: input.unmatchedStrategy },
+  });
+  if (claim.count !== 1) throw new ApiError(409, "IMPORT_ALREADY_CLAIMED", "导入任务已被执行或正在处理中");
   let success = 0; let failed = 0; let skipped = 0; let created = 0; let updated = 0;
   const breakdown = { newCustomers: 0, newBrandProfiles: 0, updatedProfiles: 0, newLeads: 0, updatedLeads: 0, matchedMembers: 0, createdMembers: 0 };
   const failures: Array<{ row: ImportJobRow; errorCode: string; errorMessage: string }> = [];

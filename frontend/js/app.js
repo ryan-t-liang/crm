@@ -3,6 +3,7 @@
 import { ADDRESS_TREE, COUNTRY_OPTIONS, canonicalCountry, countryLabel } from "./address-data.js";
 import { initializeContacts, loadContacts as loadCrmContacts, openContact as openCrmContact, syncContactUsers } from "./contacts.js";
 import { initializeFollowups } from "./followups.js";
+import { initializeCrmJobs, openCrmExport, openCrmImport } from "./crm-jobs.js";
 import { initializeLeads, loadLeads as loadCrmLeads, openLead as openCrmLead, openLeadForm as openCrmLeadForm, syncLeadUsers } from "./leads.js";
 
 const APP_BASE_PATH = (() => {
@@ -33,9 +34,9 @@ const permissionDependencies = {
   "lead.view": ["lead.edit", "lead.import", "lead.export"],
   "account.view": ["account.create", "account.edit", "account.disable", "account.reset"],
   "roles.view": ["roles.configure"],
-  "crm.contact.view": ["crm.contact.create", "crm.contact.edit", "crm.contact_followup.view", "crm.contact_followup.create"],
+  "crm.contact.view": ["crm.contact.create", "crm.contact.edit", "crm.contact.import", "crm.contact.export", "crm.contact_followup.view", "crm.contact_followup.create"],
   "crm.contact_followup.view": ["crm.contact_followup.create"],
-  "crm.lead.view": ["crm.lead.create", "crm.lead.edit", "crm.lead_followup.view", "crm.lead_followup.create"],
+  "crm.lead.view": ["crm.lead.create", "crm.lead.edit", "crm.lead.import", "crm.lead.export", "crm.lead_followup.view", "crm.lead_followup.create"],
   "crm.lead_followup.view": ["crm.lead_followup.create"],
 };
 const sourceLabel = (source) => ({ ADMIN_MANUAL: "后台手动新增", BATCH_IMPORT: "批量导入", MINI_PROGRAM: "微信小程序", WECHAT_MINIPROGRAM: "微信小程序", USER_SUBMITTED: "用户提交" })[source] || source || "-";
@@ -1036,7 +1037,11 @@ async function init() {
     applyCrmPermissions,
     setNavCount: setCrmNavCount,
     openLeadForm: (...args) => openCrmLeadForm(...args),
+    openImport: openCrmImport,
+    openExport: openCrmExport,
+    reload: (objectType) => objectType === "CONTACT" ? loadCrmContacts(1) : loadCrmLeads(1),
   };
+  initializeCrmJobs(crmContext);
   initializeFollowups(crmContext);
   initializeContacts(crmContext);
   initializeLeads(crmContext);

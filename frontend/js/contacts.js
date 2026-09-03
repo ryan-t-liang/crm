@@ -21,7 +21,7 @@ export function buildContactQuery(filters, page = 1, now = new Date()) {
 export function initializeContacts(options) {
   context = options;
   $("crmContactsView").innerHTML = `<div class="crm-page">
-    <header class="crm-page-header"><div><span class="crm-eyebrow">CONTACTS</span><h1>客户联系人</h1></div><button class="btn btn-primary" id="crmNewContact" type="button" data-crm-permission="crm.contact.create"><svg><use href="#i-plus"/></svg>New Contact</button></header>
+    <header class="crm-page-header"><div><span class="crm-eyebrow">CONTACTS</span><h1>客户联系人</h1></div><div class="crm-page-actions"><button class="btn btn-quiet" id="crmImportContacts" type="button" data-crm-permission="crm.contact.import"><svg><use href="#i-upload"/></svg>Import</button><button class="btn btn-quiet" id="crmExportContacts" type="button" data-crm-permission="crm.contact.export"><svg><use href="#i-download"/></svg>Export</button><button class="btn btn-primary" id="crmNewContact" type="button" data-crm-permission="crm.contact.create"><svg><use href="#i-plus"/></svg>New Contact</button></div></header>
     <section class="crm-filter-bar" aria-label="联系人筛选">
       <label class="crm-search"><svg><use href="#i-search"/></svg><input id="crmContactKeyword" type="search" placeholder="搜索联系人、公司、Email 或手机号"></label>
       <label><span class="sr-only">触达阶段</span><select id="crmContactStage"><option value="">全部阶段</option>${CONTACT_STAGES.map((item) => `<option value="${item.value}">${esc(item.label)}</option>`).join("")}</select></label>
@@ -52,6 +52,8 @@ export function initializeContacts(options) {
   </aside>`);
 
   $("crmNewContact").addEventListener("click", () => openContactForm());
+  $("crmImportContacts").addEventListener("click", () => context.openImport("CONTACT"));
+  $("crmExportContacts").addEventListener("click", () => context.openExport("CONTACT"));
   $("crmEmptyNewContact").addEventListener("click", () => openContactForm());
   $("crmSearchContacts").addEventListener("click", () => loadContacts(1));
   $("crmContactKeyword").addEventListener("keydown", (event) => { if (event.key === "Enter") loadContacts(1); });

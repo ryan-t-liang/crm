@@ -6,9 +6,13 @@ import { buildContactQuery } from "../frontend/js/contacts.js";
 import { LEAD_FIELDS, validateContactPayload, validateLeadPayload } from "../frontend/js/field-definitions.js";
 import { renderTimelineMarkup } from "../frontend/js/followups.js";
 import { buildLeadQuery, quoteDisplay, readonlyContactMarkup } from "../frontend/js/leads.js";
+import { preflightMessage, preflightStatusLabel } from "../frontend/js/crm-jobs.js";
 
 const source = await readFile(new URL("../frontend/js/app.js", import.meta.url), "utf8");
 const markup = await readFile(new URL("../frontend/index.html", import.meta.url), "utf8");
+const contactSource = await readFile(new URL("../frontend/js/contacts.js", import.meta.url), "utf8");
+const leadSource = await readFile(new URL("../frontend/js/leads.js", import.meta.url), "utf8");
+const crmJobsSource = await readFile(new URL("../frontend/js/crm-jobs.js", import.meta.url), "utf8");
 
 // Legacy navigation and list-selection behavior remains available after the CRM routes are added.
 assert.match(source, /function initializeSidebar\(\)/, "sidebar initializer must exist");
@@ -114,6 +118,18 @@ assert.doesNotMatch(timeline, /(?:编辑|删除|Edit|Delete|data-followup-edit|d
 
 assert.equal(quoteDisplay({ estimatedQuote: "63000.50", currency: "USD" }), "USD 63000.50", "Decimal strings must be displayed without floating-point conversion");
 assert.equal(quoteDisplay({ estimatedQuote: null, currency: null }), "-");
+assert.match(contactSource, /data-crm-permission="crm\.contact\.import"/, "Contact Import must be permission-gated");
+assert.match(contactSource, /data-crm-permission="crm\.contact\.export"/, "Contact Export must be permission-gated");
+assert.match(leadSource, /data-crm-permission="crm\.lead\.import"/, "CRM Lead Import must be permission-gated");
+assert.match(leadSource, /data-crm-permission="crm\.lead\.export"/, "CRM Lead Export must be permission-gated");
+assert.match(crmJobsSource, /\/api\/v1\/crm\/imports\//, "CRM Import must call the CRM Job API");
+assert.match(crmJobsSource, /Import \$\{jobState\.job\.preflight\.importableRows\} Valid Rows/, "confirmation must state the executable row count");
+assert.match(crmJobsSource, /Download Failure CSV/, "failed imports must expose the protected failure CSV");
+assert.match(crmJobsSource, /Preparing Export\.\.\./, "CRM Export must expose its preparing state");
+assert.equal(preflightStatusLabel("WARNING"), "Warning");
+assert.equal(preflightStatusLabel("ERROR"), "Error");
+assert.equal(preflightMessage({ errors: [], warnings: [{ message: "Potential duplicate email" }] }), "Potential duplicate email");
+assert.equal(preflightMessage({ errors: [], warnings: [] }), "Ready to import");
 assert.deepEqual(friendlyError({ status: 403 }), { title: "没有操作权限", message: "你没有执行此操作的权限。" });
 assert.deepEqual(friendlyError({ status: 404 }), { title: "记录不存在", message: "该记录不存在或已无法访问。" });
 assert.deepEqual(friendlyError({ status: 422, message: "字段校验失败" }), { title: "提交内容有误", message: "字段校验失败" });

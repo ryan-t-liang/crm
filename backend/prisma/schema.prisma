@@ -669,7 +669,7 @@ model ImportJob {
   id                  String         @id @default(cuid()) @db.VarChar(32)
   jobNo               String         @unique @map("job_no") @db.VarChar(80)
   objectType          String         @map("object_type") @db.VarChar(40)
-  brandId             String         @map("brand_id") @db.VarChar(32)
+  brandId             String?        @map("brand_id") @db.VarChar(32)
   subtype             String?        @db.VarChar(80)
   fileName            String         @map("file_name") @db.VarChar(255)
   storagePath         String?        @map("storage_path") @db.VarChar(500)
@@ -692,7 +692,7 @@ model ImportJob {
   preflightedAt       DateTime?      @map("preflighted_at") @db.DateTime(3)
   processingStartedAt DateTime?      @map("processing_started_at") @db.DateTime(3)
   completedAt         DateTime?      @map("completed_at") @db.DateTime(3)
-  brand               Brand          @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  brand               Brand?         @relation(fields: [brandId], references: [id], onDelete: Restrict)
   rows                ImportJobRow[]
 
   @@index([brandId, objectType, createdAt])
