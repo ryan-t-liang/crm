@@ -1,6 +1,4 @@
-# Kivisense CRM · Kivisense_CRM_v1
-
-Sowind 中国区多品牌会员与线索 CRM。冻结发布名为 `Kivisense_CRM_v1`，内部 SemVer 保留为 `1.15.0`。当前版本保留 v1.14.0 已确认的页面结构和视觉语言，并将前端 Mock 替换为 MySQL、Fastify API、服务端 Session、RBAC、品牌数据权限、导入导出和 Sowind Gateway Outbox。
+# CRM_v1
 
 ## 当前状态
 
