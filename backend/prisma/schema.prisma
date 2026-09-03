@@ -42,6 +42,38 @@ enum JobStatus {
   FAILED
 }
 
+enum CrmContactStage {
+  INITIAL
+  ONE_TO_ONE
+  SOLUTION
+  CONVENTION
+}
+
+enum CrmLeadPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum CrmLeadStatus {
+  NEW
+  QUALIFIED
+  SOLUTION
+  QUOTATION
+  WON
+  LOST
+}
+
+enum CrmFollowupType {
+  GENERAL
+  MEETING
+  CALL
+  EMAIL
+  WECHAT
+  OTHER
+}
+
 model Brand {
   id             String                  @id @default(cuid()) @db.VarChar(32)
   code           String                  @unique @db.VarChar(32)
@@ -107,22 +139,31 @@ model RolePermission {
 }
 
 model User {
-  id                 String            @id @default(cuid()) @db.VarChar(32)
-  name               String            @db.VarChar(120)
-  loginAccount       String            @unique @map("login_account") @db.VarChar(191)
-  passwordHash       String            @map("password_hash") @db.VarChar(255)
-  status             UserStatus        @default(ACTIVE)
-  mustChangePassword Boolean           @default(true) @map("must_change_password")
-  passwordChangedAt  DateTime?         @map("password_changed_at") @db.DateTime(3)
-  lastLoginAt        DateTime?         @map("last_login_at") @db.DateTime(3)
-  failedLoginCount   Int               @default(0) @map("failed_login_count")
-  lockedUntil        DateTime?         @map("locked_until") @db.DateTime(3)
-  roleId             String            @map("role_id") @db.VarChar(32)
-  createdAt          DateTime          @default(now()) @map("created_at") @db.DateTime(3)
-  updatedAt          DateTime          @updatedAt @map("updated_at") @db.DateTime(3)
-  role               Role              @relation(fields: [roleId], references: [id], onDelete: Restrict)
-  brandAccess        UserBrandAccess[]
-  sessions           Session[]
+  id                      String            @id @default(cuid()) @db.VarChar(32)
+  name                    String            @db.VarChar(120)
+  loginAccount            String            @unique @map("login_account") @db.VarChar(191)
+  passwordHash            String            @map("password_hash") @db.VarChar(255)
+  status                  UserStatus        @default(ACTIVE)
+  mustChangePassword      Boolean           @default(true) @map("must_change_password")
+  passwordChangedAt       DateTime?         @map("password_changed_at") @db.DateTime(3)
+  lastLoginAt             DateTime?         @map("last_login_at") @db.DateTime(3)
+  failedLoginCount        Int               @default(0) @map("failed_login_count")
+  lockedUntil             DateTime?         @map("locked_until") @db.DateTime(3)
+  roleId                  String            @map("role_id") @db.VarChar(32)
+  createdAt               DateTime          @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt               DateTime          @updatedAt @map("updated_at") @db.DateTime(3)
+  role                    Role              @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  brandAccess             UserBrandAccess[]
+  sessions                Session[]
+  ownedContacts           Contact[]         @relation("ContactOwner")
+  createdContacts         Contact[]         @relation("ContactCreatedBy")
+  ownedContactFollowups   ContactFollowup[] @relation("ContactFollowupOwner")
+  createdContactFollowups ContactFollowup[] @relation("ContactFollowupCreatedBy")
+  salesOwnedCrmLeads      CrmLead[]         @relation("CrmLeadSalesOwner")
+  followupOwnedCrmLeads   CrmLead[]         @relation("CrmLeadFollowupOwner")
+  createdCrmLeads         CrmLead[]         @relation("CrmLeadCreatedBy")
+  ownedLeadFollowups      LeadFollowup[]    @relation("LeadFollowupOwner")
+  createdLeadFollowups    LeadFollowup[]    @relation("LeadFollowupCreatedBy")
 
   @@index([status])
   @@map("users")
@@ -487,6 +528,118 @@ model IntegrationAttempt {
   @@map("integration_attempts")
 }
 
+model Contact {
+  id               String            @id @default(cuid()) @db.VarChar(32)
+  contactName      String            @map("contact_name") @db.VarChar(160)
+  companyShortName String?           @map("company_short_name") @db.VarChar(120)
+  companyName      String?           @map("company_name") @db.VarChar(240)
+  department       String?           @db.VarChar(160)
+  title            String?           @db.VarChar(160)
+  email            String?           @db.VarChar(191)
+  phone            String?           @db.VarChar(64)
+  wechat           String?           @db.VarChar(191)
+  linkedin         String?           @db.VarChar(500)
+  website          String?           @db.VarChar(500)
+  industry         String?           @db.VarChar(160)
+  source           String?           @db.VarChar(160)
+  country          String?           @db.VarChar(120)
+  city             String?           @db.VarChar(120)
+  region           String?           @db.VarChar(120)
+  stage            CrmContactStage   @default(INITIAL)
+  ownerUserId      String?           @map("owner_user_id") @db.VarChar(32)
+  nextFollowupAt   DateTime?         @map("next_followup_at") @db.DateTime(3)
+  initialContext   String?           @map("initial_context") @db.Text
+  remark           String?           @db.Text
+  createdAt        DateTime          @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt        DateTime          @updatedAt @map("updated_at") @db.DateTime(3)
+  createdByUserId  String            @map("created_by_user_id") @db.VarChar(32)
+  owner            User?             @relation("ContactOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdBy        User              @relation("ContactCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  followups        ContactFollowup[]
+  leads            CrmLead[]
+
+  @@index([stage, updatedAt])
+  @@index([ownerUserId, updatedAt])
+  @@index([nextFollowupAt])
+  @@map("contacts")
+}
+
+model ContactFollowup {
+  id              String          @id @default(cuid()) @db.VarChar(32)
+  contactId       String          @map("contact_id") @db.VarChar(32)
+  occurredAt      DateTime        @map("occurred_at") @db.DateTime(3)
+  ownerUserId     String          @map("owner_user_id") @db.VarChar(32)
+  type            CrmFollowupType @default(GENERAL)
+  content         String          @db.Text
+  createdAt       DateTime        @default(now()) @map("created_at") @db.DateTime(3)
+  createdByUserId String          @map("created_by_user_id") @db.VarChar(32)
+  contact         Contact         @relation(fields: [contactId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  owner           User            @relation("ContactFollowupOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdBy       User            @relation("ContactFollowupCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([contactId, occurredAt])
+  @@map("contact_followups")
+}
+
+model CrmLead {
+  id                  String          @id @default(cuid()) @db.VarChar(32)
+  contactId           String          @map("contact_id") @db.VarChar(32)
+  requirementSummary  String          @map("requirement_summary") @db.VarChar(200)
+  requirementDetail   String?         @map("requirement_detail") @db.Text
+  latestProgress      String?         @map("latest_progress") @db.Text
+  priority            CrmLeadPriority @default(MEDIUM)
+  estimatedQuote      Decimal?        @map("estimated_quote") @db.Decimal(18, 2)
+  currency            String?         @db.Char(3)
+  projectDomain       String?         @map("project_domain") @db.VarChar(160)
+  projectType         String?         @map("project_type") @db.VarChar(160)
+  technologyType      String?         @map("technology_type") @db.VarChar(160)
+  productType         String?         @map("product_type") @db.VarChar(160)
+  productName         String?         @map("product_name") @db.VarChar(240)
+  resourceRequirement String?         @map("resource_requirement") @db.Text
+  solution            String?         @db.Text
+  remark              String?         @db.Text
+  status              CrmLeadStatus   @default(NEW)
+  salesOwnerUserId    String?         @map("sales_owner_user_id") @db.VarChar(32)
+  followupOwnerUserId String?         @map("followup_owner_user_id") @db.VarChar(32)
+  nextFollowupAt      DateTime?       @map("next_followup_at") @db.DateTime(3)
+  lastFollowupAt      DateTime?       @map("last_followup_at") @db.DateTime(3)
+  createdAt           DateTime        @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt           DateTime        @updatedAt @map("updated_at") @db.DateTime(3)
+  createdByUserId     String          @map("created_by_user_id") @db.VarChar(32)
+  contact             Contact         @relation(fields: [contactId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  salesOwner          User?           @relation("CrmLeadSalesOwner", fields: [salesOwnerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  followupOwner       User?           @relation("CrmLeadFollowupOwner", fields: [followupOwnerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdBy           User            @relation("CrmLeadCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  followups           LeadFollowup[]
+
+  @@index([contactId, updatedAt])
+  @@index([status, updatedAt])
+  @@index([priority, updatedAt])
+  @@index([salesOwnerUserId, updatedAt])
+  @@index([followupOwnerUserId, updatedAt])
+  @@index([nextFollowupAt])
+  @@index([lastFollowupAt])
+  @@map("crm_leads")
+}
+
+model LeadFollowup {
+  id              String          @id @default(cuid()) @db.VarChar(32)
+  leadId          String          @map("lead_id") @db.VarChar(32)
+  occurredAt      DateTime        @map("occurred_at") @db.DateTime(3)
+  ownerUserId     String          @map("owner_user_id") @db.VarChar(32)
+  type            CrmFollowupType @default(GENERAL)
+  content         String          @db.Text
+  important       Boolean         @default(false)
+  createdAt       DateTime        @default(now()) @map("created_at") @db.DateTime(3)
+  createdByUserId String          @map("created_by_user_id") @db.VarChar(32)
+  lead            CrmLead         @relation(fields: [leadId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  owner           User            @relation("LeadFollowupOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdBy       User            @relation("LeadFollowupCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([leadId, occurredAt])
+  @@map("lead_followups")
+}
+
 model AuditLog {
   id          String   @id @default(cuid()) @db.VarChar(32)
   actorUserId String?  @map("actor_user_id") @db.VarChar(32)
@@ -513,34 +666,34 @@ model AuditLog {
 }
 
 model ImportJob {
-  id               String         @id @default(cuid()) @db.VarChar(32)
-  jobNo            String         @unique @map("job_no") @db.VarChar(80)
-  objectType       String         @map("object_type") @db.VarChar(40)
-  brandId          String         @map("brand_id") @db.VarChar(32)
-  subtype          String?        @db.VarChar(80)
-  fileName         String         @map("file_name") @db.VarChar(255)
-  storagePath      String?        @map("storage_path") @db.VarChar(500)
-  fileHash         String?        @map("file_hash") @db.Char(64)
-  mappingJson      Json?          @map("mapping_json")
-  resultJson       Json?          @map("result_json")
-  conflictStrategy String?        @map("conflict_strategy") @db.VarChar(40)
-  unmatchedStrategy String?       @map("unmatched_strategy") @db.VarChar(40)
-  status           JobStatus      @default(PENDING)
-  totalCount       Int            @default(0) @map("total_count")
-  importableCount  Int            @default(0) @map("importable_count")
-  successCount     Int            @default(0) @map("success_count")
-  failedCount      Int            @default(0) @map("failed_count")
-  skippedCount     Int            @default(0) @map("skipped_count")
-  createdCount     Int            @default(0) @map("created_count")
-  updatedCount     Int            @default(0) @map("updated_count")
-  failureFilePath  String?        @map("failure_file_path") @db.VarChar(500)
-  createdBy        String         @map("created_by") @db.VarChar(32)
-  createdAt        DateTime       @default(now()) @map("created_at") @db.DateTime(3)
-  preflightedAt    DateTime?      @map("preflighted_at") @db.DateTime(3)
-  processingStartedAt DateTime?   @map("processing_started_at") @db.DateTime(3)
-  completedAt      DateTime?      @map("completed_at") @db.DateTime(3)
-  brand            Brand          @relation(fields: [brandId], references: [id], onDelete: Restrict)
-  rows             ImportJobRow[]
+  id                  String         @id @default(cuid()) @db.VarChar(32)
+  jobNo               String         @unique @map("job_no") @db.VarChar(80)
+  objectType          String         @map("object_type") @db.VarChar(40)
+  brandId             String         @map("brand_id") @db.VarChar(32)
+  subtype             String?        @db.VarChar(80)
+  fileName            String         @map("file_name") @db.VarChar(255)
+  storagePath         String?        @map("storage_path") @db.VarChar(500)
+  fileHash            String?        @map("file_hash") @db.Char(64)
+  mappingJson         Json?          @map("mapping_json")
+  resultJson          Json?          @map("result_json")
+  conflictStrategy    String?        @map("conflict_strategy") @db.VarChar(40)
+  unmatchedStrategy   String?        @map("unmatched_strategy") @db.VarChar(40)
+  status              JobStatus      @default(PENDING)
+  totalCount          Int            @default(0) @map("total_count")
+  importableCount     Int            @default(0) @map("importable_count")
+  successCount        Int            @default(0) @map("success_count")
+  failedCount         Int            @default(0) @map("failed_count")
+  skippedCount        Int            @default(0) @map("skipped_count")
+  createdCount        Int            @default(0) @map("created_count")
+  updatedCount        Int            @default(0) @map("updated_count")
+  failureFilePath     String?        @map("failure_file_path") @db.VarChar(500)
+  createdBy           String         @map("created_by") @db.VarChar(32)
+  createdAt           DateTime       @default(now()) @map("created_at") @db.DateTime(3)
+  preflightedAt       DateTime?      @map("preflighted_at") @db.DateTime(3)
+  processingStartedAt DateTime?      @map("processing_started_at") @db.DateTime(3)
+  completedAt         DateTime?      @map("completed_at") @db.DateTime(3)
+  brand               Brand          @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  rows                ImportJobRow[]
 
   @@index([brandId, objectType, createdAt])
   @@index([createdBy, createdAt])
@@ -549,22 +702,22 @@ model ImportJob {
 }
 
 model ImportJobRow {
-  id          String    @id @default(cuid()) @db.VarChar(32)
-  importJobId String    @map("import_job_id") @db.VarChar(32)
-  rowNumber   Int       @map("row_number")
-  status      String    @db.VarChar(32)
-  conflictType String?  @map("conflict_type") @db.VarChar(64)
-  identity    String?   @db.VarChar(191)
-  rawData     Json      @map("raw_data")
-  normalizedData Json?  @map("normalized_data")
-  errors      Json?
-  warnings    Json?
-  resolvedCustomerId String? @map("resolved_customer_id") @db.VarChar(32)
-  resolvedProfileId String?  @map("resolved_profile_id") @db.VarChar(32)
-  resolvedLeadId String?     @map("resolved_lead_id") @db.VarChar(32)
-  createdId   String?   @map("created_id") @db.VarChar(32)
-  createdAt   DateTime  @default(now()) @map("created_at") @db.DateTime(3)
-  importJob   ImportJob @relation(fields: [importJobId], references: [id], onDelete: Cascade)
+  id                 String    @id @default(cuid()) @db.VarChar(32)
+  importJobId        String    @map("import_job_id") @db.VarChar(32)
+  rowNumber          Int       @map("row_number")
+  status             String    @db.VarChar(32)
+  conflictType       String?   @map("conflict_type") @db.VarChar(64)
+  identity           String?   @db.VarChar(191)
+  rawData            Json      @map("raw_data")
+  normalizedData     Json?     @map("normalized_data")
+  errors             Json?
+  warnings           Json?
+  resolvedCustomerId String?   @map("resolved_customer_id") @db.VarChar(32)
+  resolvedProfileId  String?   @map("resolved_profile_id") @db.VarChar(32)
+  resolvedLeadId     String?   @map("resolved_lead_id") @db.VarChar(32)
+  createdId          String?   @map("created_id") @db.VarChar(32)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+  importJob          ImportJob @relation(fields: [importJobId], references: [id], onDelete: Cascade)
 
   @@unique([importJobId, rowNumber])
   @@index([status])
@@ -572,27 +725,27 @@ model ImportJobRow {
 }
 
 model ExportJob {
-  id          String    @id @default(cuid()) @db.VarChar(32)
-  jobNo       String    @unique @map("job_no") @db.VarChar(80)
-  objectType  String    @map("object_type") @db.VarChar(40)
-  brandId     String?   @map("brand_id") @db.VarChar(32)
-  status      JobStatus @default(PENDING)
-  requestJson Json      @map("request_json")
-  scope       String    @default("ALL") @db.VarChar(32)
-  filterJson  Json?     @map("filter_json")
-  selectedCount Int     @default(0) @map("selected_count")
-  requestedFields Json? @map("requested_fields")
-  effectiveFields Json? @map("effective_fields")
-  brandScope Json?      @map("brand_scope")
-  fileName    String?   @map("file_name") @db.VarChar(255)
-  storagePath String?   @map("storage_path") @db.VarChar(500)
-  rowCount    Int       @default(0) @map("row_count")
-  error       String?   @db.VarChar(1000)
-  createdBy   String    @map("created_by") @db.VarChar(32)
-  createdAt   DateTime  @default(now()) @map("created_at") @db.DateTime(3)
-  completedAt DateTime? @map("completed_at") @db.DateTime(3)
-  expiresAt   DateTime? @map("expires_at") @db.DateTime(3)
-  brand       Brand?    @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  id              String    @id @default(cuid()) @db.VarChar(32)
+  jobNo           String    @unique @map("job_no") @db.VarChar(80)
+  objectType      String    @map("object_type") @db.VarChar(40)
+  brandId         String?   @map("brand_id") @db.VarChar(32)
+  status          JobStatus @default(PENDING)
+  requestJson     Json      @map("request_json")
+  scope           String    @default("ALL") @db.VarChar(32)
+  filterJson      Json?     @map("filter_json")
+  selectedCount   Int       @default(0) @map("selected_count")
+  requestedFields Json?     @map("requested_fields")
+  effectiveFields Json?     @map("effective_fields")
+  brandScope      Json?     @map("brand_scope")
+  fileName        String?   @map("file_name") @db.VarChar(255)
+  storagePath     String?   @map("storage_path") @db.VarChar(500)
+  rowCount        Int       @default(0) @map("row_count")
+  error           String?   @db.VarChar(1000)
+  createdBy       String    @map("created_by") @db.VarChar(32)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+  completedAt     DateTime? @map("completed_at") @db.DateTime(3)
+  expiresAt       DateTime? @map("expires_at") @db.DateTime(3)
+  brand           Brand?    @relation(fields: [brandId], references: [id], onDelete: Restrict)
 
   @@index([createdBy, createdAt])
   @@index([brandId, objectType, createdAt])

@@ -11,7 +11,7 @@
     "build": "tsc -p tsconfig.json",
     "start": "node dist/src/server.js",
     "test": "vitest run",
-    "test:integration": "vitest run tests/lead.remediation.integration.test.ts tests/member.remediation.integration.test.ts tests/import-export.integration.test.ts tests/production-readiness.integration.test.ts --no-file-parallelism --maxWorkers=1",
+    "test:integration": "vitest run tests/crm-core.integration.test.ts tests/lead.remediation.integration.test.ts tests/member.remediation.integration.test.ts tests/import-export.integration.test.ts tests/production-readiness.integration.test.ts --no-file-parallelism --maxWorkers=1",
     "lint": "tsc -p tsconfig.json --noEmit",
     "prisma:generate": "prisma generate",
     "prisma:validate": "prisma validate",

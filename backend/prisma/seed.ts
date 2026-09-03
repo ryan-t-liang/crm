@@ -27,6 +27,16 @@ const permissionCatalog = [
   ["roles.view", "查看角色", "role"],
   ["roles.configure", "配置角色", "role"],
   ["audit.view", "查看审计", "audit"],
+  ["crm.contact.view", "查看 CRM 联系人", "crm"],
+  ["crm.contact.create", "新增 CRM 联系人", "crm"],
+  ["crm.contact.edit", "编辑 CRM 联系人", "crm"],
+  ["crm.contact_followup.view", "查看联系人跟进", "crm"],
+  ["crm.contact_followup.create", "新增联系人跟进", "crm"],
+  ["crm.lead.view", "查看 CRM Lead", "crm"],
+  ["crm.lead.create", "新增 CRM Lead", "crm"],
+  ["crm.lead.edit", "编辑 CRM Lead", "crm"],
+  ["crm.lead_followup.view", "查看 Lead 跟进", "crm"],
+  ["crm.lead_followup.create", "新增 Lead 跟进", "crm"],
 ] as const;
 
 const roleCatalog = [
@@ -34,13 +44,15 @@ const roleCatalog = [
   { key: "BRAND_ADMIN", name: "品牌管理员", system: false, description: "管理授权品牌内会员与线索" },
   { key: "OPERATOR", name: "运营人员", system: false, description: "维护授权品牌内会员与线索" },
   { key: "VIEWER", name: "只读用户", system: false, description: "查看授权品牌数据" },
+  { key: "SALES", name: "销售人员", system: false, description: "维护 Kivisense CRM 联系人、Lead 与跟进记录" },
 ] as const;
 
 const rolePermissionKeys: Record<string, string[]> = {
   SUPER_ADMIN: permissionCatalog.map(([key]) => key),
   BRAND_ADMIN: permissionCatalog.map(([key]) => key).filter((key) => key.startsWith("customer.") || key.startsWith("lead.")),
   OPERATOR: ["customer.view", "customer.create", "customer.edit", "lead.view", "lead.create", "lead.edit", "lead.sync"],
-  VIEWER: ["customer.view", "lead.view"],
+  VIEWER: ["customer.view", "lead.view", "crm.contact.view", "crm.contact_followup.view", "crm.lead.view", "crm.lead_followup.view"],
+  SALES: permissionCatalog.map(([key]) => key).filter((key) => key.startsWith("crm.")),
 };
 
 const salutations = ["博士", "先生", "太太", "女士", "不愿透露"];
@@ -133,9 +145,9 @@ async function seed(): Promise<void> {
   for (const item of roleCatalog) {
     const role = await prisma.role.upsert({ where: { key: item.key }, update: item, create: item });
     roles.set(item.key, role.id);
-    await prisma.rolePermission.deleteMany({ where: { roleId: role.id } });
     await prisma.rolePermission.createMany({
       data: rolePermissionKeys[item.key]!.map((key) => ({ roleId: role.id, permissionId: permissions.get(key)! })),
+      skipDuplicates: true,
     });
   }
 

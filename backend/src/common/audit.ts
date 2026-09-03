@@ -12,6 +12,17 @@ export type AuditActorContext = {
   traceId?: string | null;
 };
 
+export function auditActorContext(request: FastifyRequest): AuditActorContext {
+  return {
+    actorUserId: request.auth?.userId ?? null,
+    actorName: request.auth?.name ?? "Integration Client",
+    ipAddress: request.ip,
+    requestId: request.id,
+    userAgent: request.headers["user-agent"]?.slice(0, 500) ?? null,
+    traceId: request.id,
+  };
+}
+
 type AuditRecord = {
   action: string;
   module: string;
@@ -63,12 +74,5 @@ export async function appendAudit(
   request: FastifyRequest,
   record: AuditRecord,
 ): Promise<void> {
-  await appendAuditRecord(db, {
-    actorUserId: request.auth?.userId ?? null,
-    actorName: request.auth?.name ?? "Integration Client",
-    ipAddress: request.ip,
-    requestId: request.id,
-    userAgent: request.headers["user-agent"]?.slice(0, 500) ?? null,
-    traceId: request.id,
-  }, record);
+  await appendAuditRecord(db, auditActorContext(request), record);
 }

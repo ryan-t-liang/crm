@@ -27,6 +27,8 @@ import { integrationRoutes } from "./integrations/routes.js";
 import { WechatApiClient } from "./wechat/wechat.client.js";
 import { wechatRoutes } from "./wechat/routes.js";
 import type { WechatClient } from "./wechat/wechat.types.js";
+import { contactRoutes } from "./contacts/routes.js";
+import { crmLeadRoutes } from "./crm-leads/routes.js";
 
 export type BuildAppOptions = {
   config?: AppConfig;
@@ -102,6 +104,8 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   await app.register(roleRoutes);
   await app.register(customerRoutes);
   await app.register(leadRoutes);
+  await app.register(contactRoutes);
+  await app.register(crmLeadRoutes);
   await app.register(formRoutes);
   await app.register(auditRoutes);
   await app.register(importExportRoutes);

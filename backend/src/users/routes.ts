@@ -20,7 +20,8 @@ async function assertRoleAndBrands(app: FastifyInstance, roleId: string, brandId
     app.prisma.brand.findMany({ where: { id: { in: brandIds }, active: true } }),
   ]);
   if (!role) throw new ApiError(400, "VALIDATION_ERROR", "角色不存在");
-  if (role.key !== "SUPER_ADMIN" && (brandIds.length === 0 || brands.length !== new Set(brandIds).size)) throw new ApiError(400, "VALIDATION_ERROR", "品牌范围无效");
+  if (role.key === "SALES" && brandIds.length > 0) throw new ApiError(400, "VALIDATION_ERROR", "销售角色不绑定 GP / UN 品牌");
+  if (!["SUPER_ADMIN", "SALES"].includes(role.key) && (brandIds.length === 0 || brands.length !== new Set(brandIds).size)) throw new ApiError(400, "VALIDATION_ERROR", "品牌范围无效");
   return role;
 }
 
@@ -52,7 +53,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     try {
       const user = await app.prisma.$transaction(async (tx) => {
         const created = await tx.user.create({ data: { name: body.name, loginAccount: body.loginAccount.toLowerCase(), roleId: body.roleId, passwordHash, status: body.status, mustChangePassword: true } });
-        if (role.key !== "SUPER_ADMIN") await tx.userBrandAccess.createMany({ data: [...new Set(body.brandIds)].map((brandId) => ({ userId: created.id, brandId })) });
+        if (!["SUPER_ADMIN", "SALES"].includes(role.key)) await tx.userBrandAccess.createMany({ data: [...new Set(body.brandIds)].map((brandId) => ({ userId: created.id, brandId })) });
         await appendAudit(tx, request, { action: "CREATE_USER", module: "account", targetType: "user", targetId: created.id, details: { roleId: body.roleId, brandIds: body.brandIds, status: body.status } });
         return created;
       });
@@ -74,7 +75,7 @@ export async function userRoutes(app: FastifyInstance): Promise<void> {
     const user = await app.prisma.$transaction(async (tx) => {
       const updated = await tx.user.update({ where: { id: existing.id }, data: { name: body.name, loginAccount: body.loginAccount?.toLowerCase(), roleId, status: body.status } });
       await tx.userBrandAccess.deleteMany({ where: { userId: existing.id } });
-      if (role.key !== "SUPER_ADMIN") await tx.userBrandAccess.createMany({ data: [...new Set(brandIds)].map((brandId) => ({ userId: existing.id, brandId })) });
+      if (!["SUPER_ADMIN", "SALES"].includes(role.key)) await tx.userBrandAccess.createMany({ data: [...new Set(brandIds)].map((brandId) => ({ userId: existing.id, brandId })) });
       if (body.status === "DISABLED") await tx.session.updateMany({ where: { userId: existing.id, revokedAt: null }, data: { revokedAt: new Date() } });
       await appendAudit(tx, request, { action: "UPDATE_USER", module: "account", targetType: "user", targetId: existing.id, details: { roleId, brandIds, status: body.status ?? existing.status } });
       return updated;
