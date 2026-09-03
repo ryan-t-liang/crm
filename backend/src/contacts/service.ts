@@ -82,7 +82,6 @@ export class ContactService {
         module: "crm",
         targetType: "contact",
         targetId: row.id,
-        brandId: null,
         details: { fields: Object.keys(input) },
       });
       return row;
@@ -105,7 +104,6 @@ export class ContactService {
         module: "crm",
         targetType: "contact",
         targetId: row.id,
-        brandId: null,
         details: { changedFields: Object.keys(input) },
       });
       return row;
@@ -156,7 +154,6 @@ export class ContactFollowupService {
         module: "crm",
         targetType: "contact_followup",
         targetId: row.id,
-        brandId: null,
         details: { contactId, type: row.type, occurredAt: row.occurredAt.toISOString(), ownerUserId },
       });
       return row;

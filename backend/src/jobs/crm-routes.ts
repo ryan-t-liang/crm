@@ -9,8 +9,8 @@ import { ApiError } from "../common/errors.js";
 import { jobNumber } from "../common/ids.js";
 import { executeCrmImportJob, persistCrmExport, prepareCrmImport } from "./crm-import-export.service.js";
 import { crmImportFields, crmTemplateFilename, crmTemplateWorkbook } from "./crm-schema.js";
-import { fileSha256 } from "./import-export.service.js";
-import { assertJobBrandInvariant, jobPermission, type CrmJobObjectType } from "./job-types.js";
+import { jobPermission, type CrmJobObjectType } from "./job-types.js";
+import { fileSha256 } from "./workbook.js";
 
 const crmObjectTypeSchema = z.enum(["CONTACT", "CRM_LEAD"]);
 const importQuerySchema = z.object({ allowDuplicate: z.coerce.boolean().default(false) });
@@ -54,7 +54,6 @@ export async function crmImportExportRoutes(app: FastifyInstance): Promise<void>
 
     app.post(`/api/v1/crm/imports/${routeObject}`, { preHandler: guard(importPermission) }, async (request, reply) => {
       const query = importQuerySchema.parse(request.query);
-      assertJobBrandInvariant(objectType, null);
       const upload = await request.file();
       if (!upload || !upload.filename.toLowerCase().endsWith(".xlsx")) throw new ApiError(400, "INVALID_FILE", "请上传 .xlsx 文件");
       const allowedMime = new Set(["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "application/octet-stream"]);
@@ -63,7 +62,7 @@ export async function crmImportExportRoutes(app: FastifyInstance): Promise<void>
       const hash = fileSha256(buffer);
       if (!query.allowDuplicate) {
         const duplicate = await app.prisma.importJob.findFirst({
-          where: { brandId: null, objectType, fileHash: hash, status: { not: "FAILED" } },
+          where: { objectType, fileHash: hash, status: { not: "FAILED" } },
           orderBy: { createdAt: "desc" },
         });
         if (duplicate) throw new ApiError(409, "IMPORT_FILE_DUPLICATE", "相同文件已上传。如需重新执行，请明确确认重新上传。", { existingJobId: duplicate.id });
@@ -78,7 +77,7 @@ export async function crmImportExportRoutes(app: FastifyInstance): Promise<void>
       const job = await app.prisma.$transaction(async (tx) => {
         const created = await tx.importJob.create({
           data: {
-            jobNo, objectType, brandId: null, subtype: objectType === "CONTACT" ? "CRM_CONTACT" : "CRM_LEAD",
+            jobNo, objectType, subtype: objectType === "CONTACT" ? "CRM_CONTACT" : "CRM_LEAD",
             fileName: originalName, storagePath, fileHash: hash,
             mappingJson: {
               schemaVersion: "CRM_2.0", headers: prepared.parsed.headers,
@@ -89,7 +88,7 @@ export async function crmImportExportRoutes(app: FastifyInstance): Promise<void>
           },
         });
         await appendAudit(tx, request, {
-          action: "IMPORT_UPLOAD", module: "crm_import", targetType: "import_job", targetId: created.id, brandId: null,
+          action: "IMPORT_UPLOAD", module: "crm_import", targetType: "import_job", targetId: created.id,
           details: { objectType, fileName: originalName, fileHash: hash, rowCount: prepared.summary.totalRows },
         });
         await tx.importJobRow.createMany({
@@ -101,7 +100,7 @@ export async function crmImportExportRoutes(app: FastifyInstance): Promise<void>
         });
         const ready = await tx.importJob.update({ where: { id: created.id }, data: { status: "PREFLIGHT_READY", preflightedAt: new Date() } });
         await appendAudit(tx, request, {
-          action: "IMPORT_PREFLIGHT", module: "crm_import", targetType: "import_job", targetId: created.id, brandId: null,
+          action: "IMPORT_PREFLIGHT", module: "crm_import", targetType: "import_job", targetId: created.id,
           details: { objectType, ...prepared.summary },
         });
         return ready;
@@ -117,7 +116,7 @@ export async function crmImportExportRoutes(app: FastifyInstance): Promise<void>
   }
 
   app.post<{ Params: { id: string } }>("/api/v1/crm/imports/:id/execute", { preHandler: guard() }, async (request) => {
-    const job = await app.prisma.importJob.findFirst({ where: { id: request.params.id, brandId: null, objectType: { in: ["CONTACT", "CRM_LEAD"] } } });
+    const job = await app.prisma.importJob.findFirst({ where: { id: request.params.id, objectType: { in: ["CONTACT", "CRM_LEAD"] } } });
     if (!job) throw new ApiError(404, "RESOURCE_NOT_FOUND", "CRM 导入任务不存在");
     assertPermission(request, job.objectType, "import");
     return { data: await executeCrmImportJob(app, request, job.id) };
@@ -128,7 +127,7 @@ export async function crmImportExportRoutes(app: FastifyInstance): Promise<void>
     if (query.objectType) assertPermission(request, query.objectType, "import");
     const objectTypes = query.objectType ? [query.objectType] : allowedCrmObjectTypes(request, "import");
     if (!objectTypes.length) throw new ApiError(403, "PERMISSION_DENIED", "当前账户没有 CRM Import 权限");
-    const where = { brandId: null, objectType: { in: objectTypes } } satisfies Prisma.ImportJobWhereInput;
+    const where = { objectType: { in: objectTypes } } satisfies Prisma.ImportJobWhereInput;
     const [total, rows] = await app.prisma.$transaction([
       app.prisma.importJob.count({ where }),
       app.prisma.importJob.findMany({ where, orderBy: { createdAt: "desc" }, skip: (query.page - 1) * query.pageSize, take: query.pageSize }),
@@ -143,7 +142,7 @@ export async function crmImportExportRoutes(app: FastifyInstance): Promise<void>
 
   app.get<{ Params: { id: string } }>("/api/v1/crm/imports/:id", { preHandler: guard() }, async (request) => {
     const job = await app.prisma.importJob.findFirst({
-      where: { id: request.params.id, brandId: null, objectType: { in: ["CONTACT", "CRM_LEAD"] } },
+      where: { id: request.params.id, objectType: { in: ["CONTACT", "CRM_LEAD"] } },
       include: { rows: { orderBy: { rowNumber: "asc" }, take: 1000 } },
     });
     if (!job) throw new ApiError(404, "RESOURCE_NOT_FOUND", "CRM 导入任务不存在");
@@ -152,12 +151,12 @@ export async function crmImportExportRoutes(app: FastifyInstance): Promise<void>
   });
 
   app.get<{ Params: { id: string } }>("/api/v1/crm/imports/:id/failures", { preHandler: guard() }, async (request, reply) => {
-    const job = await app.prisma.importJob.findFirst({ where: { id: request.params.id, brandId: null, objectType: { in: ["CONTACT", "CRM_LEAD"] } } });
+    const job = await app.prisma.importJob.findFirst({ where: { id: request.params.id, objectType: { in: ["CONTACT", "CRM_LEAD"] } } });
     if (!job) throw new ApiError(404, "RESOURCE_NOT_FOUND", "CRM 导入任务不存在");
     assertPermission(request, job.objectType, "import");
     if (!job.failureFilePath) throw new ApiError(404, "RESOURCE_NOT_FOUND", "该任务没有失败明细文件");
     const buffer = await readFile(job.failureFilePath);
-    await appendAudit(app.prisma, request, { action: "IMPORT_FAILURE_DOWNLOAD", module: "crm_import", targetType: "import_job", targetId: job.id, brandId: null, details: { objectType: job.objectType } });
+    await appendAudit(app.prisma, request, { action: "IMPORT_FAILURE_DOWNLOAD", module: "crm_import", targetType: "import_job", targetId: job.id, details: { objectType: job.objectType } });
     return reply.header("content-type", "text/csv; charset=utf-8").header("content-disposition", filenameHeader(`${job.jobNo}-failures.csv`)).send(buffer);
   });
 
@@ -166,7 +165,7 @@ export async function crmImportExportRoutes(app: FastifyInstance): Promise<void>
     if (query.objectType) assertPermission(request, query.objectType, "export");
     const objectTypes = query.objectType ? [query.objectType] : allowedCrmObjectTypes(request, "export");
     if (!objectTypes.length) throw new ApiError(403, "PERMISSION_DENIED", "当前账户没有 CRM Export 权限");
-    const where = { brandId: null, objectType: { in: objectTypes } } satisfies Prisma.ExportJobWhereInput;
+    const where = { objectType: { in: objectTypes } } satisfies Prisma.ExportJobWhereInput;
     const [total, rows] = await app.prisma.$transaction([
       app.prisma.exportJob.count({ where }),
       app.prisma.exportJob.findMany({ where, orderBy: { createdAt: "desc" }, skip: (query.page - 1) * query.pageSize, take: query.pageSize }),
@@ -175,7 +174,7 @@ export async function crmImportExportRoutes(app: FastifyInstance): Promise<void>
   });
 
   app.get<{ Params: { id: string } }>("/api/v1/crm/exports/:id", { preHandler: guard() }, async (request) => {
-    const job = await app.prisma.exportJob.findFirst({ where: { id: request.params.id, brandId: null, objectType: { in: ["CONTACT", "CRM_LEAD"] } } });
+    const job = await app.prisma.exportJob.findFirst({ where: { id: request.params.id, objectType: { in: ["CONTACT", "CRM_LEAD"] } } });
     if (!job) throw new ApiError(404, "RESOURCE_NOT_FOUND", "CRM 导出任务不存在");
     assertPermission(request, job.objectType, "export");
     return { data: { ...job, downloadUrl: job.status === "COMPLETED" ? `/api/v1/crm/exports/${job.id}/download` : null } };
@@ -183,7 +182,7 @@ export async function crmImportExportRoutes(app: FastifyInstance): Promise<void>
 
   app.get<{ Params: { id: string } }>("/api/v1/crm/exports/:id/download", { preHandler: guard() }, async (request, reply) => {
     const job = await app.prisma.exportJob.findFirst({
-      where: { id: request.params.id, brandId: null, objectType: { in: ["CONTACT", "CRM_LEAD"] }, createdBy: request.auth!.userId },
+      where: { id: request.params.id, objectType: { in: ["CONTACT", "CRM_LEAD"] }, createdBy: request.auth!.userId },
     });
     if (!job) throw new ApiError(404, "RESOURCE_NOT_FOUND", "CRM 导出文件不存在或无权下载");
     assertPermission(request, job.objectType, "export");
@@ -191,7 +190,7 @@ export async function crmImportExportRoutes(app: FastifyInstance): Promise<void>
       throw new ApiError(404, "EXPORT_EXPIRED", "CRM 导出文件不存在或已过期");
     }
     const buffer = await readFile(job.storagePath);
-    await appendAudit(app.prisma, request, { action: "EXPORT_DOWNLOAD", module: "crm_export", targetType: "export_job", targetId: job.id, brandId: null, details: { objectType: job.objectType, fileName: job.fileName, rowCount: job.rowCount } });
+    await appendAudit(app.prisma, request, { action: "EXPORT_DOWNLOAD", module: "crm_export", targetType: "export_job", targetId: job.id, details: { objectType: job.objectType, fileName: job.fileName, rowCount: job.rowCount } });
     return reply.header("content-type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet").header("content-disposition", filenameHeader(job.fileName)).send(buffer);
   });
 }

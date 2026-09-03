@@ -4,9 +4,9 @@ import { esc, localDateTimeToIso, toDateTimeInput } from "./api.js";
 
 export const CONTACT_STAGES = [
   { value: "INITIAL", label: "初筛" },
-  { value: "ONE_TO_ONE", label: "1v1" },
-  { value: "SOLUTION", label: "Solution" },
-  { value: "CONVENTION", label: "Convention" },
+  { value: "ONE_TO_ONE", label: "一对一" },
+  { value: "SOLUTION", label: "方案" },
+  { value: "CONVENTION", label: "展会" },
 ];
 
 export const LEAD_STATUSES = [
@@ -29,7 +29,7 @@ export const FOLLOWUP_TYPES = [
   { value: "GENERAL", label: "一般沟通" },
   { value: "MEETING", label: "会议" },
   { value: "CALL", label: "电话" },
-  { value: "EMAIL", label: "Email" },
+  { value: "EMAIL", label: "电子邮件" },
   { value: "WECHAT", label: "微信" },
   { value: "OTHER", label: "其他" },
 ];
@@ -43,11 +43,11 @@ export const CONTACT_FIELDS = [
   field("companyShortName", "公司简称", "company", "text", { maxLength: 120 }),
   field("companyName", "公司完整名称", "company", "text", { maxLength: 240, wide: true }),
   field("industry", "行业", "company", "text", { maxLength: 160 }),
-  field("website", "Website", "company", "url", { maxLength: 500 }),
-  field("email", "Email", "contact", "email", { maxLength: 191 }),
-  field("phone", "Phone", "contact", "tel", { maxLength: 64 }),
+  field("website", "网站", "company", "url", { maxLength: 500 }),
+  field("email", "电子邮箱", "contact", "email", { maxLength: 191 }),
+  field("phone", "电话", "contact", "tel", { maxLength: 64 }),
   field("wechat", "微信", "contact", "text", { maxLength: 191 }),
-  field("linkedin", "LinkedIn", "contact", "url", { maxLength: 500 }),
+  field("linkedin", "领英", "contact", "url", { maxLength: 500 }),
   field("country", "国家", "contact", "text", { maxLength: 120 }),
   field("city", "城市", "contact", "text", { maxLength: 120 }),
   field("region", "区域", "contact", "text", { maxLength: 120 }),
@@ -129,7 +129,7 @@ function isUrl(value) {
 export function validateContactPayload(payload) {
   const errors = {};
   if (!String(payload.contactName || "").trim()) errors.contactName = "请输入客户联系人";
-  if (payload.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) errors.email = "请输入有效的 Email 地址";
+  if (payload.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) errors.email = "请输入有效的电子邮箱地址";
   if (!isUrl(payload.website)) errors.website = "请输入以 http:// 或 https:// 开头的 URL";
   if (!isUrl(payload.linkedin)) errors.linkedin = "请输入以 http:// 或 https:// 开头的 URL";
   return errors;

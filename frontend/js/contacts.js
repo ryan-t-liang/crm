@@ -21,9 +21,9 @@ export function buildContactQuery(filters, page = 1, now = new Date()) {
 export function initializeContacts(options) {
   context = options;
   $("crmContactsView").innerHTML = `<div class="crm-page">
-    <header class="crm-page-header"><div><span class="crm-eyebrow">CONTACTS</span><h1>客户联系人</h1></div><div class="crm-page-actions"><button class="btn btn-quiet" id="crmImportContacts" type="button" data-crm-permission="crm.contact.import"><svg><use href="#i-upload"/></svg>Import</button><button class="btn btn-quiet" id="crmExportContacts" type="button" data-crm-permission="crm.contact.export"><svg><use href="#i-download"/></svg>Export</button><button class="btn btn-primary" id="crmNewContact" type="button" data-crm-permission="crm.contact.create"><svg><use href="#i-plus"/></svg>New Contact</button></div></header>
+    <header class="crm-page-header"><div><span class="crm-eyebrow">客户管理</span><h1>客户联系人</h1></div><div class="crm-page-actions"><button class="btn btn-quiet" id="crmImportContacts" type="button" data-crm-permission="crm.contact.import"><svg><use href="#i-upload"/></svg>导入</button><button class="btn btn-quiet" id="crmExportContacts" type="button" data-crm-permission="crm.contact.export"><svg><use href="#i-download"/></svg>导出</button><button class="btn btn-primary" id="crmNewContact" type="button" data-crm-permission="crm.contact.create"><svg><use href="#i-plus"/></svg>新建联系人</button></div></header>
     <section class="crm-filter-bar" aria-label="联系人筛选">
-      <label class="crm-search"><svg><use href="#i-search"/></svg><input id="crmContactKeyword" type="search" placeholder="搜索联系人、公司、Email 或手机号"></label>
+      <label class="crm-search"><svg><use href="#i-search"/></svg><input id="crmContactKeyword" type="search" placeholder="搜索联系人、公司、电子邮箱或电话"></label>
       <label><span class="sr-only">触达阶段</span><select id="crmContactStage"><option value="">全部阶段</option>${CONTACT_STAGES.map((item) => `<option value="${item.value}">${esc(item.label)}</option>`).join("")}</select></label>
       <label><span class="sr-only">负责人</span><select id="crmContactOwner"><option value="">全部负责人</option></select></label>
       <label><span class="sr-only">下次跟进</span><select id="crmContactNext"><option value="">全部跟进日期</option><option value="overdue">已逾期</option><option value="today">今天</option><option value="next7">未来 7 天</option></select></label>
@@ -34,9 +34,9 @@ export function initializeContacts(options) {
       <header><div><h2 id="crmContactTableTitle">联系人目录</h2><span id="crmContactResultCount">0 条</span></div></header>
       <div id="crmContactListState" class="crm-list-state"></div>
       <div class="crm-table-scroll" id="crmContactTableWrap">
-        <table class="crm-data-table crm-contact-table"><thead><tr><th>客户联系人</th><th>公司</th><th>职位</th><th>触达阶段</th><th>负责人</th><th>下次跟进</th><th>Leads</th><th>更新时间</th></tr></thead><tbody id="crmContactRows"></tbody></table>
+        <table class="crm-data-table crm-contact-table"><thead><tr><th>客户联系人</th><th>公司</th><th>职位</th><th>触达阶段</th><th>负责人</th><th>下次跟进</th><th>线索数量</th><th>更新时间</th></tr></thead><tbody id="crmContactRows"></tbody></table>
       </div>
-      <div class="crm-empty" id="crmContactEmpty" hidden><svg><use href="#i-users"/></svg><h3>暂无客户联系人</h3><p>创建第一个 Contact 后，即可关联 Leads 并记录跟进。</p><button class="btn btn-primary" id="crmEmptyNewContact" type="button" data-crm-permission="crm.contact.create"><svg><use href="#i-plus"/></svg>New Contact</button></div>
+      <div class="crm-empty" id="crmContactEmpty" hidden><svg><use href="#i-users"/></svg><h3>暂无客户联系人</h3><p>创建第一个联系人后，即可关联线索并记录跟进。</p><button class="btn btn-primary" id="crmEmptyNewContact" type="button" data-crm-permission="crm.contact.create"><svg><use href="#i-plus"/></svg>新建联系人</button></div>
       <footer class="crm-pagination" id="crmContactPagination"><span id="crmContactPageSummary">共 0 条</span><div><button class="crm-icon-button" id="crmContactPrev" type="button" title="上一页" aria-label="上一页"><svg><use href="#i-arrow"/></svg></button><span id="crmContactPageNumber">1 / 1</span><button class="crm-icon-button crm-next-button" id="crmContactNextPage" type="button" title="下一页" aria-label="下一页"><svg><use href="#i-arrow"/></svg></button></div></footer>
     </section>
   </div>`;
@@ -45,7 +45,7 @@ export function initializeContacts(options) {
   document.body.insertAdjacentHTML("beforeend", `<aside class="crm-drawer" id="crmContactDrawer" aria-hidden="true">
     <button class="crm-drawer-backdrop" type="button" data-close-contact-form aria-label="关闭联系人表单"></button>
     <form class="crm-drawer-panel" id="crmContactForm" novalidate>
-      <header class="crm-drawer-header"><div><span class="crm-eyebrow">CONTACT</span><h2 id="crmContactFormTitle">New Contact</h2></div><button class="crm-icon-button" type="button" data-close-contact-form aria-label="关闭"><svg><use href="#i-x"/></svg></button></header>
+      <header class="crm-drawer-header"><div><span class="crm-eyebrow">客户联系人</span><h2 id="crmContactFormTitle">新建联系人</h2></div><button class="crm-icon-button" type="button" data-close-contact-form aria-label="关闭"><svg><use href="#i-x"/></svg></button></header>
       <div class="crm-drawer-body"><div id="crmContactFormFields"></div><div class="crm-form-message" id="crmContactFormError" role="alert" hidden></div></div>
       <footer class="crm-drawer-footer"><button class="btn" type="button" data-close-contact-form>取消</button><button class="btn btn-primary" id="crmSaveContact" type="submit">保存联系人</button></footer>
     </form>
@@ -161,15 +161,15 @@ function renderContactInformation(contact) {
   return [
     detailField("客户联系人", contact.contactName), detailField("职位", contact.title), detailField("部门", contact.department),
     detailField("公司简称", contact.companyShortName), detailField("公司完整名称", contact.companyName), detailField("行业", contact.industry),
-    detailField("Email", contact.email), detailField("Phone", contact.phone), detailField("微信", contact.wechat),
-    detailField("Website", contact.website), detailField("LinkedIn", contact.linkedin), detailField("国家", contact.country),
+    detailField("电子邮箱", contact.email), detailField("电话", contact.phone), detailField("微信", contact.wechat),
+    detailField("网站", contact.website), detailField("领英", contact.linkedin), detailField("国家", contact.country),
     detailField("城市", contact.city), detailField("区域", contact.region), detailField("来源", contact.source),
     detailField("下一次跟进", formatLocalDateTime(contact.nextFollowupAt)), detailField("初始信息", contact.initialContext, true), detailField("备注", contact.remark, true),
   ].join("");
 }
 
 function renderRelatedLeads(items) {
-  if (!items.length) return '<div class="crm-inline-empty">暂无关联 Leads</div>';
+  if (!items.length) return '<div class="crm-inline-empty">暂无关联线索</div>';
   return items.map((lead) => `<button class="crm-related-row" type="button" data-related-lead="${esc(lead.id)}">
     <span><strong>${esc(lead.requirementSummary)}</strong><small>${esc(formatLocalDateTime(lead.updatedAt))}</small></span>
     <span class="crm-badge crm-status-${esc(lead.status.toLowerCase())}">${esc(leadStatusLabel(lead.status))}</span>
@@ -193,10 +193,10 @@ export async function openContact(id) {
     relatedState.total = relatedResult.meta.total;
     relatedState.pageCount = Math.max(1, relatedResult.meta.pageCount || 1);
     container.innerHTML = `<div class="crm-record">
-      <header class="crm-record-header"><button class="crm-icon-button" id="crmBackToContacts" type="button" title="返回联系人" aria-label="返回联系人"><svg><use href="#i-arrow"/></svg></button><div class="crm-record-title"><span class="crm-eyebrow">CONTACT</span><h1>${esc(contact.contactName)}</h1><p>${esc([contact.companyShortName || contact.companyName, contact.title, contact.email || contact.phone].filter(Boolean).join(" · ") || "-")}</p></div><span class="crm-badge crm-stage-${esc(contact.stage.toLowerCase())}">${esc(stageLabel(contact.stage))}</span><div class="crm-record-actions"><span class="crm-owner-chip"><svg><use href="#i-user"/></svg>${esc(contact.owner?.name || "未分配")}</span><button class="btn" id="crmEditContact" type="button" data-crm-permission="crm.contact.edit"><svg><use href="#i-edit"/></svg>编辑</button></div></header>
-      <section class="crm-record-band"><header><div><span class="crm-section-index">C</span><h2>Contact</h2></div></header><div class="crm-description-grid">${renderContactInformation(contact)}</div></section>
-      <section class="crm-record-band"><header><div><span class="crm-section-index">F</span><h2>Followup</h2><small>${followupResult.meta.total} 条记录</small></div><button class="btn btn-small" id="crmAddContactFollowup" type="button" data-crm-permission="crm.contact_followup.create"><svg><use href="#i-plus"/></svg>Add Followup</button></header><div class="crm-timeline">${renderTimelineMarkup(followupResult.data, "contact")}</div></section>
-      <section class="crm-record-band"><header><div><span class="crm-section-index">A</span><h2>Related Leads</h2><small>${contact.relatedLeadCount} 条关联</small></div><button class="btn btn-small" id="crmContactNewLead" type="button" data-crm-permission="crm.lead.create"><svg><use href="#i-plus"/></svg>New Lead</button></header><div class="crm-related-list">${renderRelatedLeads(relatedResult.data)}</div>${relatedResult.meta.total > relatedState.pageSize ? `<footer class="crm-related-pagination"><button class="btn btn-small" id="crmRelatedPrev" type="button"${relatedState.page <= 1 ? " disabled" : ""}>上一页</button><span>${relatedState.page} / ${relatedState.pageCount}</span><button class="btn btn-small" id="crmRelatedNext" type="button"${relatedState.page >= relatedState.pageCount ? " disabled" : ""}>下一页</button></footer>` : ""}</section>
+      <header class="crm-record-header"><button class="crm-icon-button" id="crmBackToContacts" type="button" title="返回联系人" aria-label="返回联系人"><svg><use href="#i-arrow"/></svg></button><div class="crm-record-title"><span class="crm-eyebrow">客户联系人</span><h1>${esc(contact.contactName)}</h1><p>${esc([contact.companyShortName || contact.companyName, contact.title, contact.email || contact.phone].filter(Boolean).join(" · ") || "-")}</p></div><span class="crm-badge crm-stage-${esc(contact.stage.toLowerCase())}">${esc(stageLabel(contact.stage))}</span><div class="crm-record-actions"><span class="crm-owner-chip"><svg><use href="#i-user"/></svg>${esc(contact.owner?.name || "未分配")}</span><button class="btn" id="crmEditContact" type="button" data-crm-permission="crm.contact.edit"><svg><use href="#i-edit"/></svg>编辑</button></div></header>
+      <section class="crm-record-band"><header><div><h2>联系人信息</h2></div></header><div class="crm-description-grid">${renderContactInformation(contact)}</div></section>
+      <section class="crm-record-band"><header><div><h2>跟进记录</h2><small>${followupResult.meta.total} 条记录</small></div><button class="btn btn-small" id="crmAddContactFollowup" type="button" data-crm-permission="crm.contact_followup.create"><svg><use href="#i-plus"/></svg>新增跟进</button></header><div class="crm-timeline">${renderTimelineMarkup(followupResult.data, "contact")}</div></section>
+      <section class="crm-record-band"><header><div><h2>关联线索</h2><small>${contact.relatedLeadCount} 条关联</small></div><button class="btn btn-small" id="crmContactNewLead" type="button" data-crm-permission="crm.lead.create"><svg><use href="#i-plus"/></svg>新建线索</button></header><div class="crm-related-list">${renderRelatedLeads(relatedResult.data)}</div>${relatedResult.meta.total > relatedState.pageSize ? `<footer class="crm-related-pagination"><button class="btn btn-small" id="crmRelatedPrev" type="button"${relatedState.page <= 1 ? " disabled" : ""}>上一页</button><span>${relatedState.page} / ${relatedState.pageCount}</span><button class="btn btn-small" id="crmRelatedNext" type="button"${relatedState.page >= relatedState.pageCount ? " disabled" : ""}>下一页</button></footer>` : ""}</section>
     </div>`;
     $("crmBackToContacts").addEventListener("click", () => context.navigate("contacts"));
     $("crmEditContact").addEventListener("click", () => openContactForm(contact));
@@ -208,7 +208,7 @@ export async function openContact(id) {
     context.applyCrmPermissions();
     return contact;
   } catch (error) {
-    container.innerHTML = `<div class="crm-detail-error">${renderErrorMarkup(error, "crmRetryContactDetail")}<button class="btn" id="crmErrorBackContacts" type="button"><svg><use href="#i-arrow"/></svg>返回 Contacts</button></div>`;
+    container.innerHTML = `<div class="crm-detail-error">${renderErrorMarkup(error, "crmRetryContactDetail")}<button class="btn" id="crmErrorBackContacts" type="button"><svg><use href="#i-arrow"/></svg>返回联系人</button></div>`;
     $("crmRetryContactDetail")?.addEventListener("click", () => openContact(id));
     $("crmErrorBackContacts")?.addEventListener("click", () => context.navigate("contacts"));
     throw error;
@@ -217,7 +217,7 @@ export async function openContact(id) {
 
 export function openContactForm(contact = null) {
   editingContact = contact;
-  $("crmContactFormTitle").textContent = contact ? "编辑联系人" : "New Contact";
+  $("crmContactFormTitle").textContent = contact ? "编辑联系人" : "新建联系人";
   $("crmContactFormFields").innerHTML = renderFormSections(CONTACT_FIELDS, contact || { stage: "INITIAL", ownerUserId: context.currentUserId() }, context.getUsers(), {
     basic: "基础信息",
     company: "公司信息",

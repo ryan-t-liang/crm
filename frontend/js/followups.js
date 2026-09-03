@@ -24,7 +24,7 @@ export function initializeFollowups(options) {
     document.body.insertAdjacentHTML("beforeend", `<aside class="crm-drawer" id="crmFollowupDrawer" aria-hidden="true">
       <button class="crm-drawer-backdrop" type="button" data-close-followup aria-label="关闭跟进表单"></button>
       <form class="crm-drawer-panel crm-drawer-narrow" id="crmFollowupForm" novalidate>
-        <header class="crm-drawer-header"><div><span class="crm-eyebrow">FOLLOWUP</span><h2 id="crmFollowupTitle">新增跟进</h2></div><button class="crm-icon-button" type="button" data-close-followup aria-label="关闭"><svg><use href="#i-x"/></svg></button></header>
+        <header class="crm-drawer-header"><div><span class="crm-eyebrow">沟通记录</span><h2 id="crmFollowupTitle">新增跟进</h2></div><button class="crm-icon-button" type="button" data-close-followup aria-label="关闭"><svg><use href="#i-x"/></svg></button></header>
         <div class="crm-drawer-body">
           <div class="crm-form-grid crm-form-grid-single">
             <label class="crm-field"><span>沟通时间<b aria-hidden="true">*</b></span><input name="occurredAt" type="datetime-local" required><small class="crm-field-error"></small></label>

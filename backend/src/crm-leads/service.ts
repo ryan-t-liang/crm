@@ -55,7 +55,7 @@ export const crmLeadDetailInclude = {
 
 async function requireCrmLead(db: CrmDbClient, id: string) {
   const lead = await db.crmLead.findUnique({ where: { id } });
-  if (!lead) throw new ApiError(404, "RESOURCE_NOT_FOUND", "CRM Lead 不存在");
+  if (!lead) throw new ApiError(404, "RESOURCE_NOT_FOUND", "线索不存在");
   return lead;
 }
 
@@ -154,7 +154,6 @@ export class CrmLeadService {
         module: "crm",
         targetType: "crm_lead",
         targetId: row.id,
-        brandId: null,
         details: { contactId: input.contactId, status: row.status, priority: row.priority, fields: Object.keys(input) },
       });
       return row;
@@ -163,7 +162,7 @@ export class CrmLeadService {
 
   async detail(id: string) {
     const row = await this.prisma.crmLead.findUnique({ where: { id }, include: crmLeadDetailInclude });
-    if (!row) throw new ApiError(404, "RESOURCE_NOT_FOUND", "CRM Lead 不存在");
+    if (!row) throw new ApiError(404, "RESOURCE_NOT_FOUND", "线索不存在");
     return row;
   }
 
@@ -198,7 +197,6 @@ export class CrmLeadService {
         module: "crm",
         targetType: "crm_lead",
         targetId: row.id,
-        brandId: null,
         details: {
           changedFields: Object.keys(input),
           ...(input.status === undefined ? {} : { statusChange: { from: existing.status, to: row.status } }),
@@ -259,7 +257,6 @@ export class LeadFollowupService {
         module: "crm",
         targetType: "lead_followup",
         targetId: row.id,
-        brandId: null,
         details: { leadId, type: row.type, important: row.important, occurredAt: row.occurredAt.toISOString(), ownerUserId },
       });
       return row;

@@ -10,8 +10,6 @@ export type AuthContext = {
   roleKey: string;
   roleName: string;
   permissions: Set<string>;
-  brandIds: string[];
-  allBrands: boolean;
   mustChangePassword: boolean;
   sessionId: string;
 };

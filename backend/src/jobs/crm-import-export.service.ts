@@ -11,8 +11,8 @@ import { ContactService } from "../contacts/service.js";
 import { crmLeadCreateSchema, type CrmLeadCreateInput } from "../crm-leads/schemas.js";
 import { CrmLeadService } from "../crm-leads/service.js";
 import { crmImportFields, contactExportFields, crmLeadExportFields } from "./crm-schema.js";
-import { fileSha256, parseWorkbook, writeFailureCsv } from "./import-export.service.js";
-import { assertJobBrandInvariant, type CrmJobObjectType } from "./job-types.js";
+import type { CrmJobObjectType } from "./job-types.js";
+import { fileSha256, parseWorkbook, writeFailureCsv } from "./workbook.js";
 
 type ValidationMessage = { code: string; field?: string; message: string };
 export type CrmPreflightRow = {
@@ -99,7 +99,7 @@ async function userResolver(app: FastifyInstance) {
     if (!identifier) return null;
     const user = byId.get(identifier) ?? byLogin.get(identifier);
     if (!user || user.status !== "ACTIVE") {
-      errors.push({ code: user ? "OWNER_DISABLED" : "OWNER_NOT_FOUND", field, message: `${field} 必须精确匹配 ACTIVE User 的 loginAccount 或 User ID` });
+      errors.push({ code: user ? "OWNER_DISABLED" : "OWNER_NOT_FOUND", field, message: `${field} 必须精确匹配启用账号的登录账号或用户编号` });
       return null;
     }
     return user.id;
@@ -167,15 +167,15 @@ async function preflightContacts(app: FastifyInstance, rows: Array<{ rowNumber: 
       if (!warnings.some((warning) => warning.field === field && warning.message === message)) warnings.push({ code: "POTENTIAL_DUPLICATE", field, message });
     };
     if (email) {
-      for (const contact of emailMatches.get(email) ?? []) addDuplicate("email", `Potential duplicate email: ${email}; Existing Contact: ${contact.contactName} / ${contact.companyShortName || contact.companyName || "-"}`);
+      for (const contact of emailMatches.get(email) ?? []) addDuplicate("email", `电子邮箱可能重复：${email}；现有客户联系人：${contact.contactName} / ${contact.companyShortName || contact.companyName || "-"}`);
       const previous = workbookEmails.get(email);
-      if (previous) addDuplicate("email", `Potential duplicate email: ${email}; also appears in workbook row ${previous}`);
+      if (previous) addDuplicate("email", `电子邮箱可能重复：${email}；同时出现在工作簿第 ${previous} 行`);
       else workbookEmails.set(email, row.rowNumber);
     }
     if (phoneKey) {
-      for (const contact of phoneMatches.get(phoneKey) ?? []) addDuplicate("phone", `Potential duplicate phone: ${phone}; Existing Contact: ${contact.contactName} / ${contact.companyShortName || contact.companyName || "-"}`);
+      for (const contact of phoneMatches.get(phoneKey) ?? []) addDuplicate("phone", `电话可能重复：${phone}；现有客户联系人：${contact.contactName} / ${contact.companyShortName || contact.companyName || "-"}`);
       const previous = workbookPhones.get(phoneKey);
-      if (previous) addDuplicate("phone", `Potential duplicate phone: ${phone}; also appears in workbook row ${previous}`);
+      if (previous) addDuplicate("phone", `电话可能重复：${phone}；同时出现在工作簿第 ${previous} 行`);
       else workbookPhones.set(phoneKey, row.rowNumber);
     }
     const normalizedData = parsed.success ? serializable(parsed.data) : serializable(candidate);
@@ -198,16 +198,16 @@ async function preflightLeads(app: FastifyInstance, rows: Array<{ rowNumber: num
     const raw = row.values;
     const errors: ValidationMessage[] = [];
     const contactId = String(raw.contactId ?? "").trim();
-    if (contactId && !existingContacts.has(contactId)) errors.push({ code: "CONTACT_NOT_FOUND", field: "contactId", message: `Contact ID not found: ${contactId}` });
+    if (contactId && !existingContacts.has(contactId)) errors.push({ code: "CONTACT_NOT_FOUND", field: "contactId", message: `未找到客户联系人编号：${contactId}` });
     const priority = enumValue(raw.priority, priorityAliases, "priority", "MEDIUM", errors);
     const status = enumValue(raw.status, statusAliases, "status", "NEW", errors);
     const salesOwnerUserId = resolveUser(raw.salesOwner, "salesOwner", errors);
     const followupOwnerUserId = resolveUser(raw.followupOwner, "followupOwner", errors);
     const quote = trimOrNull(raw.estimatedQuote);
     const currency = trimOrNull(raw.currency);
-    if (quote && !/^\d{1,16}(?:\.\d{1,2})?$/.test(quote)) errors.push({ code: "INVALID_QUOTE", field: "estimatedQuote", message: "estimatedQuote 必须是大于等于 0 且最多保留 2 位小数的金额" });
-    if (quote && !currency) errors.push({ code: "CURRENCY_REQUIRED", field: "currency", message: "填写 estimatedQuote 时 currency 必填" });
-    if (currency && !/^[A-Z]{3}$/.test(currency)) errors.push({ code: "INVALID_CURRENCY", field: "currency", message: "currency 必须是 3 位大写代码" });
+    if (quote && !/^\d{1,16}(?:\.\d{1,2})?$/.test(quote)) errors.push({ code: "INVALID_QUOTE", field: "estimatedQuote", message: "预计报价必须大于等于 0，且最多保留 2 位小数" });
+    if (quote && !currency) errors.push({ code: "CURRENCY_REQUIRED", field: "currency", message: "填写预计报价时必须填写币种" });
+    if (currency && !/^[A-Z]{3}$/.test(currency)) errors.push({ code: "INVALID_CURRENCY", field: "currency", message: "币种必须是 3 位大写代码" });
     const candidate = {
       contactId,
       requirementSummary: String(raw.requirementSummary ?? "").trim(),
@@ -240,7 +240,6 @@ export function crmPreflightSummary(rows: CrmPreflightRow[]) {
 }
 
 export async function prepareCrmImport(app: FastifyInstance, objectType: CrmJobObjectType, buffer: Buffer) {
-  assertJobBrandInvariant(objectType, null);
   const parsed = await parseWorkbook(buffer);
   if (parsed.rows.length > 5000) throw new ApiError(400, "IMPORT_LIMIT_EXCEEDED", "单次导入最多 5000 行");
   const mapping = assertHeaders(objectType, parsed.headers);
@@ -258,11 +257,10 @@ function leadInput(data: Record<string, unknown>): CrmLeadCreateInput {
 
 export async function executeCrmImportJob(app: FastifyInstance, request: FastifyRequest, jobId: string) {
   const job = await app.prisma.importJob.findFirst({
-    where: { id: jobId, brandId: null, objectType: { in: ["CONTACT", "CRM_LEAD"] }, createdBy: request.auth!.userId },
+    where: { id: jobId, objectType: { in: ["CONTACT", "CRM_LEAD"] }, createdBy: request.auth!.userId },
     include: { rows: { orderBy: { rowNumber: "asc" } } },
   });
   if (!job) throw new ApiError(404, "RESOURCE_NOT_FOUND", "CRM 导入任务不存在或不是当前用户创建");
-  assertJobBrandInvariant(job.objectType, job.brandId);
   if (!job.storagePath || !job.fileHash || !job.mappingJson) throw new ApiError(409, "IMPORT_NOT_READY", "导入文件或预检结果缺失");
   if (!(["PREFLIGHT_READY", "READY_TO_EXECUTE"] as string[]).includes(job.status)) throw new ApiError(409, "IMPORT_NOT_READY", "导入任务未处于可执行状态");
   if (fileSha256(await readFile(job.storagePath)) !== job.fileHash) throw new ApiError(409, "IMPORT_FILE_CHANGED", "导入文件已被修改，请重新上传");
@@ -306,7 +304,7 @@ export async function executeCrmImportJob(app: FastifyInstance, request: Fastify
       data: { status, successCount: success, failedCount: failed, skippedCount: 0, createdCount: success, updatedCount: 0, failureFilePath, resultJson: result, completedAt: new Date() },
     });
     await appendAuditRecord(tx, auditContext(request), {
-      action: "IMPORT_EXECUTE", module: "crm_import", targetType: "import_job", targetId: job.id, brandId: null,
+      action: "IMPORT_EXECUTE", module: "crm_import", targetType: "import_job", targetId: job.id,
       details: { objectType: job.objectType, status, ...result },
     });
     return updated;
@@ -331,7 +329,6 @@ function styleExportSheet(sheet: ExcelJS.Worksheet, textColumns: string[]) {
 }
 
 export async function buildCrmExportWorkbook(app: FastifyInstance, objectType: CrmJobObjectType) {
-  assertJobBrandInvariant(objectType, null);
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Kivisense CRM";
   if (objectType === "CONTACT") {
@@ -372,14 +369,13 @@ export async function buildCrmExportWorkbook(app: FastifyInstance, objectType: C
 }
 
 export async function persistCrmExport(app: FastifyInstance, request: FastifyRequest, objectType: CrmJobObjectType) {
-  assertJobBrandInvariant(objectType, null);
   const jobNo = jobNumber("EXP");
   const job = await app.prisma.$transaction(async (tx) => {
     const created = await tx.exportJob.create({
-      data: { jobNo, objectType, brandId: null, status: "PROCESSING", requestJson: { scope: "ALL" }, scope: "ALL", selectedCount: 0, brandScope: [], createdBy: request.auth!.userId },
+      data: { jobNo, objectType, status: "PROCESSING", requestJson: { scope: "ALL" }, scope: "ALL", selectedCount: 0, createdBy: request.auth!.userId },
     });
     await appendAuditRecord(tx, auditContext(request), {
-      action: "EXPORT_CREATE", module: "crm_export", targetType: "export_job", targetId: created.id, brandId: null,
+      action: "EXPORT_CREATE", module: "crm_export", targetType: "export_job", targetId: created.id,
       details: { objectType, scope: "ALL" },
     });
     return created;

@@ -1,109 +1,61 @@
-# Sowind CRM API v1.15.0
+# Kivisense CRM 2.0 内部 API
 
-冻结发布名为 `Kivisense_CRM_v1`。`GET /api/health` 与 `GET /api/ready` 同时返回 `release: "Kivisense_CRM_v1"` 和内部 SemVer `version: "1.15.0"`，部署与回滚应以 Git Tag / `release` 为准。
-
-## 通用约定
-
-- 同源 Web API 使用 HttpOnly Session Cookie。
-- 成功响应：`{ "data": ..., "meta": ... }`。
-- 失败响应：`{ "error": { "code", "message", "fieldErrors?" }, "traceId": "..." }`。
-- 字段校验失败使用 HTTP 422；`fieldErrors` 每项包含稳定字段路径 `field`、错误码 `code` 与中文/可展示 `message`。
-- HTTP 400 仅用于 malformed request 或非字段型请求错误；401 未认证；403 无权限/品牌范围；404 不存在；409 明确业务冲突；422 字段不符合业务 Schema。
-- 列表接口由服务端强制加入账号的品牌范围；无权查看的单条资源返回 404，避免枚举泄露。
-- 首次登录待改密账号除 `/auth/me`、`/auth/change-password`、`/auth/logout` 外均返回 `403 PASSWORD_CHANGE_REQUIRED`。
+所有业务接口均为 CRM 前端使用的内部接口。除登录和健康检查外，接口需要有效 Session；写操作同时校验 Origin 与 RBAC 权限。
 
 ## 认证
 
 | 方法 | 路径 | 说明 |
-|---|---|---|
-| POST | `/api/v1/auth/login` | 登录，限流 5 次/分钟 |
-| GET | `/api/v1/auth/me` | 当前账号、角色、权限、品牌范围 |
+| --- | --- | --- |
+| POST | `/api/v1/auth/login` | 登录 |
+| GET | `/api/v1/auth/me` | 当前账号、角色与权限 |
 | POST | `/api/v1/auth/change-password` | 修改密码 |
-| POST | `/api/v1/auth/logout` | 撤销当前 Session |
+| POST | `/api/v1/auth/logout` | 退出登录 |
 
-## 会员与品牌画像
+## 客户联系人
 
-| 方法 | 路径 | 权限 |
-|---|---|---|
-| GET/POST | `/api/v1/customers` | `customer.view` / `customer.create` |
-| GET/PATCH | `/api/v1/customers/:id` | `customer.view` / `customer.edit` |
-| GET/POST/PATCH | `/api/v1/customers/:id/brands/:brandCode` | 相应 customer 权限 |
-| PATCH | `/api/v1/customers/:id/profiles/:brandCode` | `customer.edit` |
-| GET | `/api/v1/customers/:id/notes` | `customer.view` |
-| POST | `/api/v1/customers/:id/notes` | `customer.edit` |
-| GET | `/api/v1/customers/:id/journey` | `customer.view` |
-| GET | `/api/v1/customers/:id/activity` | `customer.view` |
-
-会员主档以已验证手机号规范值唯一；各品牌 Email、注册姓名、地址、偏好、OpenID/UnionID 保存在 Brand Profile/Identity 中。Email 不作为自动合并依据。
-
-会员列表响应的 `metrics` 由服务端基于完整可见数据集计算，包含 `memberTotal`、`dualBrandMembers`、`marketingCoverage.numerator/denominator/percentage`。单品牌账号的双品牌数固定为 0，避免泄露另一品牌关系。
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET/POST | `/api/v1/crm/contacts` | 列表、创建 |
+| GET/PATCH | `/api/v1/crm/contacts/:id` | 详情、编辑 |
+| GET/POST | `/api/v1/crm/contacts/:id/followups` | 跟进列表、追加跟进 |
+| GET | `/api/v1/crm/contacts/:id/leads` | 关联线索 |
 
 ## 线索
 
-| 方法 | 路径 | 权限 |
-|---|---|---|
-| GET/POST | `/api/v1/leads` | `lead.view` / `lead.create` |
-| GET/PATCH | `/api/v1/leads/:id` | `lead.view` / `lead.edit` |
-| PATCH | `/api/v1/leads/:id/customer` | `lead.edit` |
-| POST | `/api/v1/leads/:id/sync` | `lead.sync` |
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET/POST | `/api/v1/crm/leads` | 列表、创建 |
+| GET/PATCH | `/api/v1/crm/leads/:id` | 详情、编辑 |
+| GET/POST | `/api/v1/crm/leads/:id/followups` | 跟进列表、追加跟进 |
 
-`POST /leads` 要求 `Idempotency-Key`。后台手动新增与外部提交进入同一个 Lead Service、Form Definition、Consent 与 Outbox 契约，仅通过 `source/submissionMode` 区分。
+线索创建时必须提交 `contactId`。联系人姓名、公司、邮箱和电话从关联联系人实时读取，不在线索中重复保存。
 
-手动同步只会创建或重新激活 Outbox，不会让浏览器直连 Gateway。
+## 导入导出
 
-线索列表响应的 `metrics` 由服务端按正式六种 `sync_status` 计算，包含 `leadTotal`、各状态计数、`pending`、`gatewayAccepted` 与 `syncExceptions`，不以当前分页推算。
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/api/v1/crm/templates/:object` | 下载标准模板 |
+| POST | `/api/v1/crm/imports/:object` | 上传并预检 |
+| POST | `/api/v1/crm/imports/:id/execute` | 执行导入 |
+| GET | `/api/v1/crm/imports` | 导入记录 |
+| GET | `/api/v1/crm/imports/:id/failures` | 失败明细 |
+| POST | `/api/v1/crm/exports/:object` | 创建导出文件 |
+| GET | `/api/v1/crm/exports/:id/download` | 下载导出文件 |
 
-## 账号、角色、审计
+`:object` 取值为 `contacts` 或 `leads`。
 
-| 方法 | 路径 | 权限 |
-|---|---|---|
-| GET/POST | `/api/v1/users` | `account.view` / `account.create` |
-| GET/PATCH | `/api/v1/users/:id` | `account.view` / `account.edit` |
-| POST | `/api/v1/users/:id/disable` | `account.disable` |
-| POST | `/api/v1/users/:id/enable` | `account.disable` |
-| POST | `/api/v1/users/:id/reset-password` | `account.reset` |
-| GET | `/api/v1/roles`, `/api/v1/roles/:id`, `/api/v1/permissions` | `roles.view` |
-| PATCH | `/api/v1/roles/:id/permissions` | `roles.configure` |
-| GET | `/api/v1/audit-logs` | `audit.view` |
+## 系统管理
 
-创建账号时密码只从服务端 `INITIAL_PASSWORD` 读取，响应不返回密码或哈希。
+- `/api/v1/users`：账号管理。
+- `/api/v1/roles` 与 `/api/v1/permissions`：角色和权限管理。
+- `/api/v1/audit-logs`：审计日志。
+- `/api/health` 与 `/api/ready`：健康和就绪检查。
 
-## 表单、导入、导出
+错误响应格式：
 
-- `GET /api/v1/forms?brandCode=GP&objectType=LEAD`
-- `GET /api/v1/templates/customers?brandCode=UN`
-- `GET /api/v1/templates/leads?brandCode=GP`
-- `POST /api/v1/imports/customers?brandCode=UN&conflictStrategy=SKIP`
-- `POST /api/v1/imports/leads?brandCode=GP&conflictStrategy=SKIP`
-- `GET /api/v1/imports/:id`
-- `POST /api/v1/exports/customers`
-- `POST /api/v1/exports/leads`
-- `GET /api/v1/exports/:id/download`
-
-模板字段来自当前品牌有效 Form Definition；必填列头带红色 `*`，手机号列使用文本格式，避免科学计数法和丢失 `+`/前导零。
-
-## 外部小程序接入
-
-`POST /api/integration/v1/leads`
-
-请求头：
-
-```text
-X-Client-Id
-X-Timestamp        Unix 毫秒时间戳，允许偏差 5 分钟
-X-Nonce            每次请求唯一，重复返回 409
-X-Signature        hex(HMAC-SHA256(secret, timestamp + "." + nonce + "." + bodyHash))
-Idempotency-Key
+```json
+{
+  "error": { "code": "PERMISSION_DENIED", "message": "当前账户没有此操作权限" },
+  "traceId": "..."
+}
 ```
-
-`bodyHash = hex(SHA-256(canonicalJson(body)))`。Canonical JSON 规则：对象键按 Unicode 字典序排序；数组保持原顺序；字符串/数字/布尔/null 使用 JSON 表示。
-
-本地成功落库返回 HTTP 202；这只表示本地 Lead 和 Outbox 已接受，不表示 Gateway 已接受。
-
-## Security-safe 404 例外
-
-跨品牌访问单条客户、线索、Import Failure File 或其他私有资源时，服务端可返回 404 而不是 403，以避免暴露资源是否存在。该规则只适用于防枚举场景；普通缺少操作权限仍返回 403。
-
-## Trace 与审计
-
-每个请求都有 `x-trace-id`，错误响应正文包含相同 `traceId`。Audit 为应用层 append-only，仅提供创建与读取；记录 operator、action、module、target、IP、user agent、traceId 与脱敏 details，不提供 Update/Delete API。

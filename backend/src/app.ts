@@ -9,24 +9,13 @@ import staticPlugin from "@fastify/static";
 import { PrismaClient } from "@prisma/client";
 import Fastify, { type FastifyInstance } from "fastify";
 import { authRoutes } from "./auth/routes.js";
-import { brandRoutes } from "./brands/routes.js";
 import { installErrorHandler, ApiError } from "./common/errors.js";
 import { loadConfig, type AppConfig } from "./common/config.js";
 import "./common/types.js";
 import { healthRoutes } from "./health/routes.js";
-import { SowindGatewayClient } from "./integrations/sowind/sowind.gateway-client.js";
-import { SowindOutboxWorker, startSowindWorker } from "./integrations/sowind/sowind.worker.js";
 import { roleRoutes } from "./roles/routes.js";
 import { userRoutes } from "./users/routes.js";
-import { customerRoutes } from "./customers/routes.js";
-import { leadRoutes } from "./leads/routes.js";
-import { formRoutes } from "./forms/routes.js";
 import { auditRoutes } from "./audit/routes.js";
-import { importExportRoutes } from "./jobs/routes.js";
-import { integrationRoutes } from "./integrations/routes.js";
-import { WechatApiClient } from "./wechat/wechat.client.js";
-import { wechatRoutes } from "./wechat/routes.js";
-import type { WechatClient } from "./wechat/wechat.types.js";
 import { contactRoutes } from "./contacts/routes.js";
 import { crmLeadRoutes } from "./crm-leads/routes.js";
 import { crmImportExportRoutes } from "./jobs/crm-routes.js";
@@ -34,9 +23,7 @@ import { crmImportExportRoutes } from "./jobs/crm-routes.js";
 export type BuildAppOptions = {
   config?: AppConfig;
   prisma?: PrismaClient;
-  startWorker?: boolean;
   frontendRoot?: string;
-  wechatClient?: WechatClient;
 };
 
 function inferFrontendRoot(): string {
@@ -56,7 +43,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
     logger: {
       level: config.logLevel ?? (config.nodeEnv === "test" ? "silent" : "info"),
       redact: {
-        paths: ["req.headers.cookie", "req.headers.authorization", "req.headers.x-wechat-context-token", "req.body.code", "req.body.password", "req.body.currentPassword", "req.body.newPassword", "req.body.confirmPassword", "req.body.accessKey", "*.accessKey", "config.sessionSecret", "config.initialPassword", "config.sowindGatewayAccessKey", "config.wechatGpAppSecret", "config.wechatUnAppSecret"],
+        paths: ["req.headers.cookie", "req.headers.authorization", "req.body.password", "req.body.currentPassword", "req.body.newPassword", "req.body.confirmPassword", "config.sessionSecret", "config.initialPassword"],
         censor: "[REDACTED]",
       },
     },
@@ -100,33 +87,19 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
 
   await app.register(healthRoutes);
   await app.register(authRoutes);
-  await app.register(brandRoutes);
   await app.register(userRoutes);
   await app.register(roleRoutes);
-  await app.register(customerRoutes);
-  await app.register(leadRoutes);
   await app.register(contactRoutes);
   await app.register(crmLeadRoutes);
-  await app.register(formRoutes);
   await app.register(auditRoutes);
-  await app.register(importExportRoutes);
   await app.register(crmImportExportRoutes);
-  await app.register(integrationRoutes);
-  await app.register(async (instance) => wechatRoutes(instance, options.wechatClient ?? new WechatApiClient(config)));
 
   await app.register(staticPlugin, { root: options.frontendRoot ?? inferFrontendRoot(), prefix: "/" });
   app.setNotFoundHandler((request, reply) => {
     if (request.url.startsWith("/api/")) return reply.status(404).send({ error: { code: "RESOURCE_NOT_FOUND", message: "接口不存在" }, traceId: request.id });
     return reply.sendFile("index.html");
   });
-  let stopWorker: (() => void) | undefined;
-  if (options.startWorker !== false && config.nodeEnv !== "test" && config.sowindGatewayAccessKey) {
-    const client = new SowindGatewayClient(config);
-    const worker = new SowindOutboxWorker(prisma, config, client, app.log);
-    stopWorker = startSowindWorker(worker, config.outboxPollIntervalMs);
-  }
   app.addHook("onClose", async () => {
-    stopWorker?.();
     if (!options.prisma) await prisma.$disconnect();
   });
   return app;

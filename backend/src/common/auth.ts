@@ -3,7 +3,7 @@ import type { FastifyReply, FastifyRequest, preHandlerHookHandler } from "fastif
 import { ApiError } from "./errors.js";
 import type { AuthContext } from "./types.js";
 
-export const SESSION_COOKIE = "sowind_sid";
+export const SESSION_COOKIE = "kivisense_crm_sid";
 
 export function sessionToken(): string { return randomBytes(32).toString("base64url"); }
 export function sessionTokenHash(token: string, secret: string): string {
@@ -19,18 +19,11 @@ export async function resolveAuth(request: FastifyRequest): Promise<AuthContext 
     where: { tokenHash },
     include: {
       user: {
-        include: {
-          role: { include: { permissions: { include: { permission: true } } } },
-          brandAccess: true,
-        },
+        include: { role: { include: { permissions: { include: { permission: true } } } } },
       },
     },
   });
   if (!session || session.revokedAt || session.expiresAt <= new Date() || session.user.status !== "ACTIVE") return null;
-  const allBrands = session.user.role.key === "SUPER_ADMIN";
-  const brandIds = allBrands
-    ? (await request.server.prisma.brand.findMany({ where: { active: true }, select: { id: true } })).map((item) => item.id)
-    : session.user.brandAccess.map((item) => item.brandId);
   request.auth = {
     userId: session.user.id,
     name: session.user.name,
@@ -39,8 +32,6 @@ export async function resolveAuth(request: FastifyRequest): Promise<AuthContext 
     roleKey: session.user.role.key,
     roleName: session.user.role.name,
     permissions: new Set(session.user.role.permissions.map((item) => item.permission.key)),
-    brandIds,
-    allBrands,
     mustChangePassword: session.user.mustChangePassword,
     sessionId: session.id,
   };
@@ -60,17 +51,6 @@ export function guard(permission?: string): preHandlerHookHandler {
       throw new ApiError(403, "PERMISSION_DENIED", "当前账户没有此操作权限");
     }
   };
-}
-
-export function assertBrandAccess(request: FastifyRequest, brandId: string): void {
-  if (!request.auth || (!request.auth.allBrands && !request.auth.brandIds.includes(brandId))) {
-    throw new ApiError(403, "BRAND_SCOPE_DENIED", "当前账户无权访问该品牌数据");
-  }
-}
-
-export function brandWhere(request: FastifyRequest): { in: string[] } | undefined {
-  if (!request.auth || request.auth.allBrands) return undefined;
-  return { in: request.auth.brandIds };
 }
 
 export function setSessionCookie(reply: FastifyReply, token: string, expiresAt: Date): void {

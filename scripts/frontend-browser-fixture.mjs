@@ -9,19 +9,6 @@ const crmUsers = [
   { id: "qa-user", name: "交互测试管理员", loginAccount: "qa@example.test", status: "ACTIVE" },
   { id: "sales-user", name: "陈销售", loginAccount: "sales@example.test", status: "ACTIVE" },
 ];
-const brands = [
-  { id: "brand-un", code: "UN", name: "UN 雅典表", shortName: "UN", themeConfig: {} },
-  { id: "brand-gp", code: "GP", name: "GP 芝柏表", shortName: "GP", themeConfig: {} },
-];
-const legacyCustomers = [
-  { id: "customer-1", customerNo: "SW00000001", displayName: "测试会员一", mobile: "+8613800000001", createdAt: "2026-09-02T08:00:00.000Z", profiles: [{ brand: brands[0], favoriteCollection: "FREAK", ownsBrandWatch: true }] },
-  { id: "customer-2", customerNo: "SW00000002", displayName: "测试会员二", mobile: "+8613800000002", createdAt: "2026-09-02T09:00:00.000Z", profiles: [{ brand: brands[1], favoriteCollection: "Laureato", ownsBrandWatch: false }] },
-];
-const legacyLeads = [
-  { id: "legacy-lead-1", leadNo: "PI-UN-TEST-001", source: "ADMIN_MANUAL", brand: brands[0], lastname: "测", firstname: "试一", phone: "+8613800000001", sku: "TEST-UN", status: "NEW", syncStatus: "NOT_SYNCED", createdAt: "2026-09-02T08:00:00.000Z", ownerUserId: null },
-  { id: "legacy-lead-2", leadNo: "PI-GP-TEST-002", source: "ADMIN_MANUAL", brand: brands[1], lastname: "测", firstname: "试二", phone: "+8613800000002", sku: "TEST-GP", status: "NEW", syncStatus: "NOT_SYNCED", createdAt: "2026-09-02T09:00:00.000Z", ownerUserId: null },
-];
-
 const initialContacts = [
   {
     id: "contact-naderi",
@@ -189,7 +176,7 @@ function resetFixture() {
   crmLeads = clone(initialLeads);
   contactFollowups = clone(initialContactFollowups);
   leadFollowups = clone(initialLeadFollowups);
-  fixtureRole = "SUPER_ADMIN";
+  fixtureRole = "SALES";
   emptyContacts = false;
   emptyLeads = false;
   nextId = 1;
@@ -207,8 +194,6 @@ const rolePermissions = {
     "crm.contact.view", "crm.contact.create", "crm.contact.edit", "crm.contact_followup.view", "crm.contact_followup.create",
     "crm.lead.view", "crm.lead.create", "crm.lead.edit", "crm.lead_followup.view", "crm.lead_followup.create",
     "crm.contact.import", "crm.contact.export", "crm.lead.import", "crm.lead.export",
-    "customer.view", "customer.create", "customer.edit", "customer.import", "customer.export",
-    "lead.view", "lead.create", "lead.edit", "lead.import", "lead.export",
     "account.view", "account.create", "account.edit", "account.disable", "account.reset", "roles.view", "roles.configure", "audit.view",
   ],
 };
@@ -347,9 +332,8 @@ async function apiResponse(request, response, url) {
   }
 
   if (url.pathname === "/api/v1/auth/me" && method === "GET") {
-    return sendJson(response, { data: { id: "qa-user", name: "交互测试管理员", loginAccount: "qa@example.test", mustChangePassword: false, allBrands: fixtureRole === "SUPER_ADMIN", role: { key: fixtureRole, name: { VIEWER: "只读用户", SALES: "销售", SUPER_ADMIN: "超级管理员" }[fixtureRole] }, permissions: rolePermissions[fixtureRole] } });
+    return sendJson(response, { data: { id: "qa-user", name: "交互测试管理员", loginAccount: "qa@example.test", mustChangePassword: false, role: { key: fixtureRole, name: { VIEWER: "只读用户", SALES: "销售人员", SUPER_ADMIN: "超级管理员" }[fixtureRole] }, permissions: rolePermissions[fixtureRole] } });
   }
-  if (url.pathname === "/api/v1/brands" && method === "GET") return sendJson(response, { data: brands });
   if (url.pathname === "/api/v1/crm/users" && method === "GET") return sendJson(response, { data: crmUsers });
 
   const templateMatch = url.pathname.match(/^\/api\/v1\/crm\/templates\/(contacts|leads)$/);
@@ -410,9 +394,6 @@ async function apiResponse(request, response, url) {
     response.writeHead(200, { "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "content-disposition": "attachment; filename=fixture-export.xlsx" });
     return response.end(Buffer.from("fixture-export-xlsx"));
   }
-
-  if (url.pathname === "/api/v1/customers" && method === "GET") return sendJson(response, { ...paged(legacyCustomers, url), metrics: { memberTotal: legacyCustomers.length, dualBrandMembers: 0, marketingCoverage: { percentage: 0 } } });
-  if (url.pathname === "/api/v1/leads" && method === "GET") return sendJson(response, { ...paged(legacyLeads, url), metrics: { leadTotal: legacyLeads.length, pending: 0, gatewayAccepted: 0, syncExceptions: 0, statuses: {} } });
 
   if (url.pathname === "/api/v1/crm/contacts" && method === "GET") return sendJson(response, paged(filteredContacts(url), url));
   if (url.pathname === "/api/v1/crm/contacts" && method === "POST") {

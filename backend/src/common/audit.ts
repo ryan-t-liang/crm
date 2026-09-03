@@ -15,7 +15,7 @@ export type AuditActorContext = {
 export function auditActorContext(request: FastifyRequest): AuditActorContext {
   return {
     actorUserId: request.auth?.userId ?? null,
-    actorName: request.auth?.name ?? "Integration Client",
+    actorName: request.auth?.name ?? "系统任务",
     ipAddress: request.ip,
     requestId: request.id,
     userAgent: request.headers["user-agent"]?.slice(0, 500) ?? null,
@@ -28,13 +28,12 @@ type AuditRecord = {
   module: string;
   targetType: string;
   targetId?: string | null;
-  brandId?: string | null;
   details?: Prisma.InputJsonValue;
   actorUserId?: string | null;
   actorName?: string;
 };
 
-const sensitiveKey = /(password|passphrase|secret|access.?key|gateway.?key|app.?secret|token|authorization|cookie|auth.?code|hmac|signature)/i;
+const sensitiveKey = /(password|passphrase|secret|access.?key|app.?secret|token|authorization|cookie|auth.?code|hmac|signature)/i;
 
 export function redactAuditDetails(value: unknown): Prisma.InputJsonValue | undefined {
   if (value === undefined) return undefined;
@@ -59,7 +58,6 @@ export async function appendAuditRecord(db: DbClient, context: AuditActorContext
       module: record.module,
       targetType: record.targetType,
       targetId: record.targetId ?? null,
-      brandId: record.brandId ?? null,
       details: redactAuditDetails(record.details),
       ipAddress: context.ipAddress ?? null,
       requestId: context.requestId ?? null,

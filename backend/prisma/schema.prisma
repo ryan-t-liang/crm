@@ -12,24 +12,6 @@ enum UserStatus {
   DISABLED
 }
 
-enum LeadSyncStatus {
-  NOT_SYNCED
-  SYNC_PENDING
-  SYNCING
-  GATEWAY_ACCEPTED
-  SYNC_FAILED
-  DEAD_LETTER
-}
-
-enum OutboxStatus {
-  PENDING
-  PROCESSING
-  RETRY_WAITING
-  SUCCEEDED
-  FAILED
-  DEAD_LETTER
-}
-
 enum JobStatus {
   PENDING
   UPLOADED
@@ -72,32 +54,6 @@ enum CrmFollowupType {
   EMAIL
   WECHAT
   OTHER
-}
-
-model Brand {
-  id             String                  @id @default(cuid()) @db.VarChar(32)
-  code           String                  @unique @db.VarChar(32)
-  name           String                  @db.VarChar(120)
-  shortName      String?                 @map("short_name") @db.VarChar(64)
-  displayOrder   Int                     @default(0) @map("display_order")
-  active         Boolean                 @default(true)
-  themeConfig    Json?                   @map("theme_config")
-  createdAt      DateTime                @default(now()) @map("created_at") @db.DateTime(3)
-  updatedAt      DateTime                @updatedAt @map("updated_at") @db.DateTime(3)
-  profiles       CustomerBrandProfile[]
-  identities     CustomerIdentity[]
-  consents       ConsentRecord[]
-  leads          Lead[]
-  hqLinks        CustomerHqLink[]
-  outboxEvents   IntegrationOutbox[]
-  forms          FormDefinition[]
-  userAccess     UserBrandAccess[]
-  importJobs     ImportJob[]
-  exportJobs     ExportJob[]
-  journeyEvents  CustomerJourneyEvent[]
-  wechatContexts WechatIdentityContext[]
-
-  @@map("brands")
 }
 
 model Role {
@@ -153,7 +109,6 @@ model User {
   createdAt               DateTime          @default(now()) @map("created_at") @db.DateTime(3)
   updatedAt               DateTime          @updatedAt @map("updated_at") @db.DateTime(3)
   role                    Role              @relation(fields: [roleId], references: [id], onDelete: Restrict)
-  brandAccess             UserBrandAccess[]
   sessions                Session[]
   ownedContacts           Contact[]         @relation("ContactOwner")
   createdContacts         Contact[]         @relation("ContactCreatedBy")
@@ -167,18 +122,6 @@ model User {
 
   @@index([status])
   @@map("users")
-}
-
-model UserBrandAccess {
-  userId    String   @map("user_id") @db.VarChar(32)
-  brandId   String   @map("brand_id") @db.VarChar(32)
-  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  brand     Brand    @relation(fields: [brandId], references: [id], onDelete: Cascade)
-
-  @@id([userId, brandId])
-  @@index([brandId])
-  @@map("user_brand_access")
 }
 
 model Session {
@@ -198,334 +141,27 @@ model Session {
   @@map("auth_sessions")
 }
 
-model Customer {
-  id               String                  @id @default(cuid()) @db.VarChar(32)
-  customerNo       String                  @unique @map("customer_no") @db.VarChar(64)
-  displayName      String                  @map("display_name") @db.VarChar(160)
-  mobile           String                  @db.VarChar(40)
-  mobileNormalized String                  @unique @map("mobile_normalized") @db.VarChar(20)
-  status           String                  @default("ACTIVE") @db.VarChar(32)
-  createdBy        String?                 @map("created_by") @db.VarChar(32)
-  createdAt        DateTime                @default(now()) @map("created_at") @db.DateTime(3)
-  updatedAt        DateTime                @updatedAt @map("updated_at") @db.DateTime(3)
-  profiles         CustomerBrandProfile[]
-  identities       CustomerIdentity[]
-  consents         ConsentRecord[]
-  leads            Lead[]
-  notes            CustomerNote[]
-  journeyEvents    CustomerJourneyEvent[]
-  hqLinks          CustomerHqLink[]
-  wechatContexts   WechatIdentityContext[]
-
-  @@index([displayName])
-  @@index([createdAt])
-  @@map("customers")
-}
-
-model CustomerNumberSequence {
-  id        BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
-  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
-
-  @@map("customer_number_sequences")
-}
-
-model CustomerBrandProfile {
-  id                 String          @id @default(cuid()) @db.VarChar(32)
-  customerId         String          @map("customer_id") @db.VarChar(32)
-  brandId            String          @map("brand_id") @db.VarChar(32)
-  brandMemberNo      String?         @map("brand_member_no") @db.VarChar(64)
-  displayName        String?         @map("display_name") @db.VarChar(160)
-  salutation         String?         @db.VarChar(40)
-  lastName           String?         @map("last_name") @db.VarChar(100)
-  firstName          String?         @map("first_name") @db.VarChar(100)
-  birthday           DateTime?       @db.Date
-  email              String?         @db.VarChar(191)
-  mobile             String?         @db.VarChar(40)
-  country            String?         @db.VarChar(100)
-  region             String?         @db.VarChar(100)
-  city               String?         @db.VarChar(100)
-  postalCode         String?         @map("postal_code") @db.VarChar(32)
-  addressLine        String?         @map("address_line") @db.VarChar(500)
-  language           String?         @db.VarChar(64)
-  preferredContact   String?         @map("preferred_contact") @db.VarChar(64)
-  ownsBrandWatch     Boolean?        @map("owns_brand_watch")
-  purchaseChannel    String?         @map("purchase_channel") @db.VarChar(120)
-  interestCenter     String?         @map("interest_center") @db.VarChar(160)
-  favoriteCollection String?         @map("favorite_collection") @db.VarChar(160)
-  membershipStatus   String?         @default("REGISTERED") @map("membership_status") @db.VarChar(40)
-  registrationSource String?         @map("registration_source") @db.VarChar(120)
-  registeredAt       DateTime?       @map("registered_at") @db.DateTime(3)
-  registrationData   Json?           @map("registration_data")
-  openId             String?         @map("open_id") @db.VarChar(191)
-  unionId            String?         @map("union_id") @db.VarChar(191)
-  extraAttributes    Json?           @map("extra_attributes")
-  createdAt          DateTime        @default(now()) @map("created_at") @db.DateTime(3)
-  updatedAt          DateTime        @updatedAt @map("updated_at") @db.DateTime(3)
-  customer           Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  brand              Brand           @relation(fields: [brandId], references: [id], onDelete: Restrict)
-  consents           ConsentRecord[]
-
-  @@unique([customerId, brandId])
-  @@unique([brandId, brandMemberNo])
-  @@unique([brandId, openId])
-  @@unique([brandId, unionId])
-  @@index([brandId, registeredAt])
-  @@index([email])
-  @@map("customer_brand_profiles")
-}
-
-model CustomerIdentity {
-  id           String    @id @default(cuid()) @db.VarChar(32)
-  customerId   String    @map("customer_id") @db.VarChar(32)
-  brandId      String    @map("brand_id") @db.VarChar(32)
-  identityType String    @map("identity_type") @db.VarChar(40)
-  scope        String    @db.VarChar(120)
-  appId        String?   @map("app_id") @db.VarChar(120)
-  value        String    @db.VarChar(512)
-  verifiedAt   DateTime? @map("verified_at") @db.DateTime(3)
-  source       String    @default("LEGACY_IDENTITY_MIGRATION") @db.VarChar(80)
-  createdAt    DateTime  @default(now()) @map("created_at") @db.DateTime(3)
-  updatedAt    DateTime  @updatedAt @map("updated_at") @db.DateTime(3)
-  customer     Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  brand        Brand     @relation(fields: [brandId], references: [id], onDelete: Restrict)
-
-  @@unique([brandId, identityType, scope, value])
-  @@index([customerId, brandId])
-  @@map("customer_identities")
-}
-
-model WechatIdentityContext {
-  id               String    @id @default(cuid()) @db.VarChar(32)
-  tokenHash        String    @unique @map("token_hash") @db.Char(64)
-  brandId          String    @map("brand_id") @db.VarChar(32)
-  customerId       String?   @map("customer_id") @db.VarChar(32)
-  appId            String    @map("app_id") @db.VarChar(120)
-  appScope         String    @map("app_scope") @db.VarChar(160)
-  mobileNormalized String    @map("mobile_normalized") @db.VarChar(20)
-  openId           String?   @map("open_id") @db.VarChar(191)
-  unionId          String?   @map("union_id") @db.VarChar(191)
-  unionIdScope     String?   @map("union_id_scope") @db.VarChar(160)
-  verifiedAt       DateTime  @map("verified_at") @db.DateTime(3)
-  expiresAt        DateTime  @map("expires_at") @db.DateTime(3)
-  createdAt        DateTime  @default(now()) @map("created_at") @db.DateTime(3)
-  lastSeenAt       DateTime  @default(now()) @map("last_seen_at") @db.DateTime(3)
-  brand            Brand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
-  customer         Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
-
-  @@index([brandId, mobileNormalized])
-  @@index([customerId, brandId])
-  @@index([expiresAt])
-  @@map("wechat_identity_contexts")
-}
-
-model ConsentRecord {
-  id                     String                @id @default(cuid()) @db.VarChar(32)
-  customerId             String?               @map("customer_id") @db.VarChar(32)
-  leadId                 String?               @map("lead_id") @db.VarChar(32)
-  customerBrandProfileId String?               @map("customer_brand_profile_id") @db.VarChar(32)
-  brandId                String                @map("brand_id") @db.VarChar(32)
-  purpose                String                @db.VarChar(100)
-  channel                String                @db.VarChar(64)
-  status                 String                @db.VarChar(32)
-  policyVersion          String                @map("policy_version") @db.VarChar(120)
-  termsVersion           String?               @map("terms_version") @db.VarChar(120)
-  consentText            String?               @map("consent_text") @db.Text
-  source                 String                @db.VarChar(80)
-  capturedAt             DateTime              @map("captured_at") @db.DateTime(3)
-  capturedBy             String?               @map("captured_by") @db.VarChar(32)
-  evidence               Json?
-  createdAt              DateTime              @default(now()) @map("created_at") @db.DateTime(3)
-  customer               Customer?             @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  lead                   Lead?                 @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  customerBrandProfile   CustomerBrandProfile? @relation(fields: [customerBrandProfileId], references: [id], onDelete: Cascade)
-  brand                  Brand                 @relation(fields: [brandId], references: [id], onDelete: Restrict)
-
-  @@index([customerId, brandId, purpose, channel, capturedAt])
-  @@index([leadId])
-  @@index([customerBrandProfileId, purpose, channel, capturedAt])
-  @@map("consent_records")
-}
-
-model FormDefinition {
-  id            String   @id @default(cuid()) @db.VarChar(32)
-  brandId       String   @map("brand_id") @db.VarChar(32)
-  objectType    String   @map("object_type") @db.VarChar(40)
-  formKey       String   @map("form_key") @db.VarChar(80)
-  version       String   @db.VarChar(80)
-  active        Boolean  @default(true)
-  schemaJson    Json     @map("schema_json")
-  policyVersion String?  @map("policy_version") @db.VarChar(120)
-  termsVersion  String?  @map("terms_version") @db.VarChar(120)
-  effectiveAt   DateTime @map("effective_at") @db.DateTime(3)
-  createdAt     DateTime @default(now()) @map("created_at") @db.DateTime(3)
-  updatedAt     DateTime @updatedAt @map("updated_at") @db.DateTime(3)
-  brand         Brand    @relation(fields: [brandId], references: [id], onDelete: Restrict)
-  leads         Lead[]
-
-  @@unique([brandId, objectType, formKey, version])
-  @@index([brandId, objectType, active])
-  @@map("form_definitions")
-}
-
-model Lead {
-  id                String          @id @default(cuid()) @db.VarChar(32)
-  leadNo            String          @unique @map("lead_no") @db.VarChar(80)
-  brandId           String          @map("brand_id") @db.VarChar(32)
-  customerId        String?         @map("customer_id") @db.VarChar(32)
-  formDefinitionId  String?         @map("form_definition_id") @db.VarChar(32)
-  leadType          String          @default("PURCHASE_INTENT") @map("lead_type") @db.VarChar(80)
-  status            String          @default("NEW") @db.VarChar(40)
-  ownerUserId       String?         @map("owner_user_id") @db.VarChar(32)
-  source            String          @db.VarChar(80)
-  submissionMode    String          @map("submission_mode") @db.VarChar(40)
-  formVersion       String          @map("form_version") @db.VarChar(80)
-  sku               String?         @db.VarChar(160)
-  email             String          @db.VarChar(191)
-  salutation        String          @db.VarChar(40)
-  firstname         String          @db.VarChar(100)
-  lastname          String          @db.VarChar(100)
-  phone             String?         @db.VarChar(40)
-  language          String          @default("zh") @db.VarChar(32)
-  preferredContact  String          @map("preferred_contact") @db.VarChar(64)
-  country           String          @db.VarChar(100)
-  city              String?         @db.VarChar(100)
-  ownership         String?         @db.VarChar(8)
-  birthday          DateTime?       @db.Date
-  purchaseMethod    String?         @map("purchase_method") @db.VarChar(120)
-  retailer          String?         @db.VarChar(191)
-  processingConsent Boolean         @map("processing_consent")
-  marketingOptIn    Boolean         @default(false) @map("marketing_opt_in")
-  attributes        Json
-  originalSnapshot  Json?           @map("original_snapshot")
-  syncStatus        LeadSyncStatus  @default(NOT_SYNCED) @map("sync_status")
-  gatewayHttpStatus Int?            @map("gateway_http_status")
-  gatewayRef        String?         @map("gateway_ref") @db.VarChar(191)
-  retryCount        Int             @default(0) @map("retry_count")
-  lastSyncError     String?         @map("last_error") @db.VarChar(1000)
-  lastSyncedAt      DateTime?       @map("last_sync_at") @db.DateTime(3)
-  idempotencyKey    String?         @unique @map("idempotency_key") @db.VarChar(191)
-  createdBy         String?         @map("created_by_user_id") @db.VarChar(32)
-  createdByService  String?         @map("created_by_service") @db.VarChar(120)
-  createdAt         DateTime        @default(now()) @map("created_at") @db.DateTime(3)
-  updatedAt         DateTime        @updatedAt @map("updated_at") @db.DateTime(3)
-  brand             Brand           @relation(fields: [brandId], references: [id], onDelete: Restrict)
-  customer          Customer?       @relation(fields: [customerId], references: [id], onDelete: SetNull)
-  formDefinition    FormDefinition? @relation(fields: [formDefinitionId], references: [id], onDelete: SetNull)
-  consents          ConsentRecord[]
-
-  @@index([brandId, createdAt])
-  @@index([customerId])
-  @@index([status])
-  @@index([syncStatus])
-  @@index([gatewayRef])
-  @@map("leads")
-}
-
-model CustomerNote {
-  id         String   @id @default(cuid()) @db.VarChar(32)
-  customerId String   @map("customer_id") @db.VarChar(32)
-  body       String   @db.Text
-  createdBy  String   @map("created_by") @db.VarChar(32)
-  createdAt  DateTime @default(now()) @map("created_at") @db.DateTime(3)
-  updatedAt  DateTime @updatedAt @map("updated_at") @db.DateTime(3)
-  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-
-  @@index([customerId, createdAt])
-  @@map("customer_notes")
-}
-
-model CustomerJourneyEvent {
+model AuditLog {
   id          String   @id @default(cuid()) @db.VarChar(32)
-  customerId  String   @map("customer_id") @db.VarChar(32)
-  brandId     String?  @map("brand_id") @db.VarChar(32)
-  eventType   String   @map("event_type") @db.VarChar(80)
-  title       String   @db.VarChar(240)
-  description String?  @db.VarChar(1000)
-  eventAt     DateTime @map("event_at") @db.DateTime(3)
-  source      String?  @db.VarChar(80)
-  metadata    Json?
+  actorUserId String?  @map("actor_user_id") @db.VarChar(32)
+  actorName   String   @map("actor_name") @db.VarChar(120)
+  action      String   @db.VarChar(100)
+  module      String   @db.VarChar(64)
+  targetType  String   @map("target_type") @db.VarChar(64)
+  targetId    String?  @map("target_id") @db.VarChar(64)
+  details     Json?
+  ipAddress   String?  @map("ip_address") @db.VarChar(64)
+  requestId   String?  @map("request_id") @db.VarChar(64)
+  userAgent   String?  @map("user_agent") @db.VarChar(500)
+  traceId     String?  @map("trace_id") @db.VarChar(64)
   createdAt   DateTime @default(now()) @map("created_at") @db.DateTime(3)
-  customer    Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  brand       Brand?   @relation(fields: [brandId], references: [id], onDelete: SetNull)
 
-  @@index([customerId, eventAt])
-  @@index([brandId, eventAt])
-  @@map("customer_journey_events")
-}
-
-model CustomerHqLink {
-  id             String    @id @default(cuid()) @db.VarChar(32)
-  customerId     String    @map("customer_id") @db.VarChar(32)
-  brandId        String    @map("brand_id") @db.VarChar(32)
-  externalSystem String    @map("external_system") @db.VarChar(80)
-  externalId     String    @map("external_contact_id") @db.VarChar(191)
-  linkStatus     String    @default("NOT_SYNCED") @map("sync_status") @db.VarChar(32)
-  syncMethod     String?   @map("sync_method") @db.VarChar(80)
-  lastSyncedAt   DateTime? @map("last_synced_at") @db.DateTime(3)
-  lastError      String?   @map("last_error") @db.VarChar(1000)
-  metadata       Json?
-  createdAt      DateTime  @default(now()) @map("created_at") @db.DateTime(3)
-  updatedAt      DateTime  @updatedAt @map("updated_at") @db.DateTime(3)
-  customer       Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  brand          Brand     @relation(fields: [brandId], references: [id], onDelete: Restrict)
-
-  @@unique([customerId, brandId, externalSystem, externalId])
-  @@index([externalSystem, externalId])
-  @@map("customer_hq_links")
-}
-
-model IntegrationOutbox {
-  id             String       @id @default(cuid()) @db.VarChar(32)
-  aggregateType  String       @map("entity_type") @db.VarChar(64)
-  aggregateId    String       @map("entity_id") @db.VarChar(32)
-  brandId        String       @map("brand_id") @db.VarChar(32)
-  integration    String       @default("SOWIND_GATEWAY") @db.VarChar(80)
-  eventType      String       @map("event_type") @db.VarChar(100)
-  idempotencyKey String       @unique @map("idempotency_key") @db.VarChar(191)
-  payload        Json         @map("payload_snapshot_json")
-  status         OutboxStatus @default(PENDING)
-  attempts       Int          @default(0)
-  nextAttemptAt  DateTime     @default(now()) @map("next_retry_at") @db.DateTime(3)
-  lockedAt       DateTime?    @map("locked_at") @db.DateTime(3)
-  lockOwner      String?      @map("lock_owner") @db.VarChar(64)
-  leaseUntil     DateTime?    @map("lease_until") @db.DateTime(3)
-  lastHttpStatus Int?         @map("last_http_status")
-  lastResponse   Json?        @map("last_response_json")
-  lastError      String?      @map("last_error") @db.VarChar(1000)
-  triggeredBy    String       @default("AUTO") @map("triggered_by") @db.VarChar(32)
-  processedAt    DateTime?    @map("processed_at") @db.DateTime(3)
-  createdAt      DateTime     @default(now()) @map("created_at") @db.DateTime(3)
-  updatedAt      DateTime     @updatedAt @map("updated_at") @db.DateTime(3)
-  brand          Brand        @relation(fields: [brandId], references: [id], onDelete: Restrict)
-
-  @@index([status, nextAttemptAt])
-  @@index([status, leaseUntil])
-  @@index([aggregateType, aggregateId])
-  @@map("integration_outbox")
-}
-
-model IntegrationAttempt {
-  id              String   @id @default(cuid()) @db.VarChar(32)
-  outboxId        String   @map("outbox_id") @db.VarChar(32)
-  leadId          String   @map("lead_id") @db.VarChar(32)
-  attemptNumber   Int      @map("attempt_number")
-  endpoint        String   @db.VarChar(500)
-  brandCode       String   @map("brand") @db.VarChar(32)
-  httpStatus      Int?     @map("http_status")
-  gatewayRef      String?  @map("gateway_ref") @db.VarChar(191)
-  triggeredBy     String   @default("AUTO") @map("triggered_by") @db.VarChar(32)
-  requestSnapshot Json?    @map("request_snapshot_json")
-  responseJson    Json?    @map("response_json")
-  errorCode       String?  @map("error_code") @db.VarChar(120)
-  errorMessage    String?  @map("error_message") @db.VarChar(1000)
-  startedAt       DateTime @map("started_at") @db.DateTime(3)
-  completedAt     DateTime @map("completed_at") @db.DateTime(3)
-  durationMs      Int      @map("duration_ms")
-  createdAt       DateTime @default(now()) @map("created_at") @db.DateTime(3)
-
-  @@index([outboxId])
-  @@index([leadId])
-  @@map("integration_attempts")
+  @@index([createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([module, createdAt])
+  @@index([traceId])
+  @@index([targetType, targetId])
+  @@map("audit_logs")
 }
 
 model Contact {
@@ -640,36 +276,10 @@ model LeadFollowup {
   @@map("lead_followups")
 }
 
-model AuditLog {
-  id          String   @id @default(cuid()) @db.VarChar(32)
-  actorUserId String?  @map("actor_user_id") @db.VarChar(32)
-  actorName   String   @map("actor_name") @db.VarChar(120)
-  action      String   @db.VarChar(100)
-  module      String   @db.VarChar(64)
-  targetType  String   @map("target_type") @db.VarChar(64)
-  targetId    String?  @map("target_id") @db.VarChar(64)
-  brandId     String?  @map("brand_id") @db.VarChar(32)
-  details     Json?
-  ipAddress   String?  @map("ip_address") @db.VarChar(64)
-  requestId   String?  @map("request_id") @db.VarChar(64)
-  userAgent   String?  @map("user_agent") @db.VarChar(500)
-  traceId     String?  @map("trace_id") @db.VarChar(64)
-  createdAt   DateTime @default(now()) @map("created_at") @db.DateTime(3)
-
-  @@index([createdAt])
-  @@index([actorUserId, createdAt])
-  @@index([module, createdAt])
-  @@index([traceId])
-  @@index([targetType, targetId])
-  @@index([brandId, createdAt])
-  @@map("audit_logs")
-}
-
 model ImportJob {
   id                  String         @id @default(cuid()) @db.VarChar(32)
   jobNo               String         @unique @map("job_no") @db.VarChar(80)
   objectType          String         @map("object_type") @db.VarChar(40)
-  brandId             String?        @map("brand_id") @db.VarChar(32)
   subtype             String?        @db.VarChar(80)
   fileName            String         @map("file_name") @db.VarChar(255)
   storagePath         String?        @map("storage_path") @db.VarChar(500)
@@ -692,32 +302,28 @@ model ImportJob {
   preflightedAt       DateTime?      @map("preflighted_at") @db.DateTime(3)
   processingStartedAt DateTime?      @map("processing_started_at") @db.DateTime(3)
   completedAt         DateTime?      @map("completed_at") @db.DateTime(3)
-  brand               Brand?         @relation(fields: [brandId], references: [id], onDelete: Restrict)
   rows                ImportJobRow[]
 
-  @@index([brandId, objectType, createdAt])
+  @@index([objectType, createdAt])
   @@index([createdBy, createdAt])
-  @@index([brandId, objectType, fileHash])
+  @@index([objectType, fileHash])
   @@map("import_jobs")
 }
 
 model ImportJobRow {
-  id                 String    @id @default(cuid()) @db.VarChar(32)
-  importJobId        String    @map("import_job_id") @db.VarChar(32)
-  rowNumber          Int       @map("row_number")
-  status             String    @db.VarChar(32)
-  conflictType       String?   @map("conflict_type") @db.VarChar(64)
-  identity           String?   @db.VarChar(191)
-  rawData            Json      @map("raw_data")
-  normalizedData     Json?     @map("normalized_data")
-  errors             Json?
-  warnings           Json?
-  resolvedCustomerId String?   @map("resolved_customer_id") @db.VarChar(32)
-  resolvedProfileId  String?   @map("resolved_profile_id") @db.VarChar(32)
-  resolvedLeadId     String?   @map("resolved_lead_id") @db.VarChar(32)
-  createdId          String?   @map("created_id") @db.VarChar(32)
-  createdAt          DateTime  @default(now()) @map("created_at") @db.DateTime(3)
-  importJob          ImportJob @relation(fields: [importJobId], references: [id], onDelete: Cascade)
+  id             String    @id @default(cuid()) @db.VarChar(32)
+  importJobId    String    @map("import_job_id") @db.VarChar(32)
+  rowNumber      Int       @map("row_number")
+  status         String    @db.VarChar(32)
+  conflictType   String?   @map("conflict_type") @db.VarChar(64)
+  identity       String?   @db.VarChar(191)
+  rawData        Json      @map("raw_data")
+  normalizedData Json?     @map("normalized_data")
+  errors         Json?
+  warnings       Json?
+  createdId      String?   @map("created_id") @db.VarChar(32)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.DateTime(3)
+  importJob      ImportJob @relation(fields: [importJobId], references: [id], onDelete: Cascade)
 
   @@unique([importJobId, rowNumber])
   @@index([status])
@@ -728,7 +334,6 @@ model ExportJob {
   id              String    @id @default(cuid()) @db.VarChar(32)
   jobNo           String    @unique @map("job_no") @db.VarChar(80)
   objectType      String    @map("object_type") @db.VarChar(40)
-  brandId         String?   @map("brand_id") @db.VarChar(32)
   status          JobStatus @default(PENDING)
   requestJson     Json      @map("request_json")
   scope           String    @default("ALL") @db.VarChar(32)
@@ -736,7 +341,6 @@ model ExportJob {
   selectedCount   Int       @default(0) @map("selected_count")
   requestedFields Json?     @map("requested_fields")
   effectiveFields Json?     @map("effective_fields")
-  brandScope      Json?     @map("brand_scope")
   fileName        String?   @map("file_name") @db.VarChar(255)
   storagePath     String?   @map("storage_path") @db.VarChar(500)
   rowCount        Int       @default(0) @map("row_count")
@@ -745,21 +349,8 @@ model ExportJob {
   createdAt       DateTime  @default(now()) @map("created_at") @db.DateTime(3)
   completedAt     DateTime? @map("completed_at") @db.DateTime(3)
   expiresAt       DateTime? @map("expires_at") @db.DateTime(3)
-  brand           Brand?    @relation(fields: [brandId], references: [id], onDelete: Restrict)
 
   @@index([createdBy, createdAt])
-  @@index([brandId, objectType, createdAt])
+  @@index([objectType, createdAt])
   @@map("export_jobs")
-}
-
-model IntegrationNonce {
-  id        String   @id @default(cuid()) @db.VarChar(32)
-  clientId  String   @map("client_id") @db.VarChar(120)
-  nonce     String   @db.VarChar(191)
-  expiresAt DateTime @map("expires_at") @db.DateTime(3)
-  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
-
-  @@unique([clientId, nonce])
-  @@index([expiresAt])
-  @@map("integration_nonces")
 }

@@ -1,23 +1,19 @@
-# Sowind CRM v1.15.0 Release Manifest
+# Kivisense CRM 2.0 UAT Release Manifest
 
-- Release date: 2026-08-31
-- Runtime: Node.js 22, MySQL 8.4
-- Migration: `20260831000000_init`
-- Production UI: `frontend/index.html` + `frontend/js/app.js`
+- Runtime: Node.js 22 or newer、MySQL 8.4
+- Baseline migration: `20260904000000_kivisense_crm_v2_baseline`
+- Frontend entry: `frontend/index.html`
 - Application entry: `backend/dist/src/server.js`
-- Secrets included: none
-- Local database/storage included: none
+- Target base path: `/crm_kivisense`
+- Included secrets: none
+- Included local database or storage: none
 
-## Verified
+## Business Modules
 
-- TypeScript build: PASS
-- Prisma schema validate: PASS
-- Unit/contract tests: 19 PASS
-- Real Gateway live tests: 2 SKIPPED (`RUN_SOWIND_LIVE_TESTS=false`)
-- Production dependency audit: 0 known vulnerabilities
-- Docker image build: PASS
-- Docker image health + database smoke: PASS
-- Browser RBAC/brand-scope UAT: PASS
+- 客户联系人及追加式跟进
+- 一个客户联系人关联多个线索
+- 线索及追加式跟进
+- 客户联系人和线索导入导出
+- Session 登录、RBAC、账户、角色权限、审计日志
 
-See `docs/UAT_REPORT.md` for evidence boundaries and `docs/ISSUES.md` for production gates.
-
+测试与部署结果以本次 UAT Deployment Report 为准。

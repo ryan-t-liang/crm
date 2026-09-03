@@ -1,6 +1,4 @@
 export const permissionDependencies: Readonly<Record<string, readonly string[]>> = {
-  "customer.view": ["customer.edit", "customer.import", "customer.export"],
-  "lead.view": ["lead.edit", "lead.import", "lead.export"],
   "account.view": ["account.create", "account.edit", "account.disable", "account.reset"],
   "roles.view": ["roles.configure"],
   "crm.contact.view": ["crm.contact.create", "crm.contact.edit", "crm.contact.import", "crm.contact.export", "crm.contact_followup.view", "crm.contact_followup.create", "crm.lead.create"],

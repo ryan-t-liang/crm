@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { addHours } from "../common/date.js";
 import { appendAudit } from "../common/audit.js";
-import { clearSessionCookie, guard, resolveAuth, sessionToken, sessionTokenHash, setSessionCookie } from "../common/auth.js";
+import { clearSessionCookie, guard, resolveAuth, SESSION_COOKIE, sessionToken, sessionTokenHash, setSessionCookie } from "../common/auth.js";
 import { ApiError } from "../common/errors.js";
 import { assertStrongPassword, hashPassword, verifyPassword } from "../common/password.js";
 
@@ -16,8 +16,6 @@ function publicUser(auth: NonNullable<Awaited<ReturnType<typeof resolveAuth>>>) 
     loginAccount: auth.loginAccount,
     role: { id: auth.roleId, key: auth.roleKey, name: auth.roleName },
     permissions: [...auth.permissions].sort(),
-    brandIds: auth.brandIds,
-    allBrands: auth.allBrands,
     mustChangePassword: auth.mustChangePassword,
   };
 }
@@ -42,7 +40,7 @@ export async function authRoutes(app: FastifyInstance): Promise<void> {
       await appendAudit(tx, request, { action: "LOGIN", module: "auth", targetType: "user", targetId: account.id, actorUserId: account.id, actorName: account.name, details: { mustChangePassword: account.mustChangePassword } });
     });
     setSessionCookie(reply, token, expiresAt);
-    request.cookies.sowind_sid = token;
+    request.cookies[SESSION_COOKIE] = token;
     const auth = await resolveAuth(request);
     return reply.send({ data: publicUser(auth!) });
   });
