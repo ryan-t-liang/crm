@@ -1,6 +1,9 @@
 "use strict";
 
 import { ADDRESS_TREE, COUNTRY_OPTIONS, canonicalCountry, countryLabel } from "./address-data.js";
+import { initializeContacts, loadContacts as loadCrmContacts, openContact as openCrmContact, syncContactUsers } from "./contacts.js";
+import { initializeFollowups } from "./followups.js";
+import { initializeLeads, loadLeads as loadCrmLeads, openLead as openCrmLead, openLeadForm as openCrmLeadForm, syncLeadUsers } from "./leads.js";
 
 const APP_BASE_PATH = (() => {
   const modulePath = new URL(import.meta.url).pathname;
@@ -12,6 +15,7 @@ const SIDEBAR_STORAGE_KEY = "sowind.crm.sidebar.collapsed";
 const state = {
   me: null, brands: [], customers: [], leads: [], users: [], roles: [], permissions: [],
   currentCustomer: null, currentLead: null, currentBrand: "ALL", currentBrandProfile: "ALL", forms: new Map(),
+  crmUsers: [], currentCrmContact: null, currentCrmLead: null,
   importType: null, importBrand: null, importStep: 1, importJob: null, importResult: null, importFileName: "", importError: "", importing: false,
   importHistoryMode: false, importHistory: [], importPreflightFilter: "ALL", importConflictStrategy: "SKIP",
   importUnmatchedStrategy: "IMPORT_LEAD_ONLY", importDuplicateFile: null, exportType: null,
@@ -29,6 +33,10 @@ const permissionDependencies = {
   "lead.view": ["lead.edit", "lead.import", "lead.export"],
   "account.view": ["account.create", "account.edit", "account.disable", "account.reset"],
   "roles.view": ["roles.configure"],
+  "crm.contact.view": ["crm.contact.create", "crm.contact.edit", "crm.contact_followup.view", "crm.contact_followup.create"],
+  "crm.contact_followup.view": ["crm.contact_followup.create"],
+  "crm.lead.view": ["crm.lead.create", "crm.lead.edit", "crm.lead_followup.view", "crm.lead_followup.create"],
+  "crm.lead_followup.view": ["crm.lead_followup.create"],
 };
 const sourceLabel = (source) => ({ ADMIN_MANUAL: "后台手动新增", BATCH_IMPORT: "批量导入", MINI_PROGRAM: "微信小程序", WECHAT_MINIPROGRAM: "微信小程序", USER_SUBMITTED: "用户提交" })[source] || source || "-";
 const contactChannelLabel = (channel) => ({
@@ -201,15 +209,18 @@ function renderIdentity() {
   if (!state.me) return;
   $("currentUserName").textContent = state.me.name; $("accountMenuName").textContent = state.me.name;
   $("currentUserAvatar").textContent = state.me.name.slice(0, 2).toUpperCase();
-  const scope = state.me.allBrands ? "全部品牌" : state.brands.map((b) => b.shortName).join(" / ");
+  const scope = state.me.role?.key === "SALES" ? "Kivisense CRM" : state.me.allBrands ? "全部品牌" : state.brands.map((b) => b.shortName).join(" / ");
   const meta = `${state.me.role.name} · ${scope}`; $("currentUserMeta").textContent = meta; $("accountMenuMeta").textContent = meta;
 }
 
 function renderNavigation() {
   const nav = $("primaryNavigation");
   const items = [];
-  if (can("customer.view")) items.push({ key: "contacts", label: "会员", icon: "users", count: "memberNavCount" });
-  if (can("lead.view")) items.push({ key: "leads", label: "线索", icon: "lead", count: "leadNavCount" });
+  if (can("crm.contact.view")) items.push({ key: "contacts", label: "客户联系人", icon: "users", count: "crmContactNavCount" });
+  if (can("crm.lead.view")) items.push({ key: "leads", label: "Leads", icon: "lead", count: "crmLeadNavCount" });
+  if (can("customer.view") || can("lead.view")) items.push({ divider: true, label: "Legacy / Sowind" });
+  if (can("customer.view")) items.push({ key: "legacy-customers", label: "会员", icon: "users", count: "memberNavCount" });
+  if (can("lead.view")) items.push({ key: "legacy-leads", label: "旧线索", icon: "lead", count: "leadNavCount" });
   if (can("account.view") || can("roles.view") || can("audit.view")) items.push({ divider: true, label: "系统管理" });
   if (can("account.view")) items.push({ key: "accounts", label: "账户管理", icon: "user" });
   if (can("roles.view")) items.push({ key: "roles", label: "角色与权限", icon: "lock" });
@@ -231,6 +242,17 @@ function applyPermissionVisibility() {
     addAccountBtn: "account.create", addNoteBtn: "customer.edit",
   };
   Object.entries(controls).forEach(([id, permission]) => { if ($(id)) $(id).hidden = !can(permission); });
+}
+
+function applyCrmPermissions() {
+  document.querySelectorAll("[data-crm-permission]").forEach((element) => {
+    element.hidden = !can(element.dataset.crmPermission);
+  });
+}
+
+function setCrmNavCount(key, total) {
+  const target = $(key === "contacts" ? "crmContactNavCount" : "crmLeadNavCount");
+  if (target) target.textContent = total;
 }
 
 function applySidebarState(collapsed, persist = false) {
@@ -310,14 +332,63 @@ function bindListSelection(type) {
   updateListSelection(type);
 }
 
-function navigate(key) {
-  const map = { contacts: "listView", leads: "leadView", accounts: "accountManagementView", roles: "roleManagementView", audit: "auditLogView" };
-  document.querySelectorAll(".view").forEach((view) => view.classList.remove("is-active"));
-  $(map[key] || "listView").classList.add("is-active");
-  document.querySelectorAll("[data-nav]").forEach((item) => item.classList.toggle("is-active", item.dataset.nav === key));
-  $("breadcrumbText").textContent = ({ contacts: "会员", leads: "线索", accounts: "账户管理", roles: "角色与权限", audit: "审计日志" })[key] || "会员";
-  if (key === "contacts") loadCustomers(); if (key === "leads") loadLeads(); if (key === "accounts") loadAccounts(); if (key === "roles") loadRoles(); if (key === "audit") loadAudit();
-  location.hash = key;
+const routePermission = {
+  contacts: "crm.contact.view",
+  leads: "crm.lead.view",
+  "legacy-customers": "customer.view",
+  "legacy-leads": "lead.view",
+  accounts: "account.view",
+  roles: "roles.view",
+  audit: "audit.view",
+};
+
+function routeBase(route) {
+  return route.split("/")[0] || "contacts";
+}
+
+function routeAllowed(route) {
+  return can(routePermission[routeBase(route)]);
+}
+
+function defaultRoute() {
+  return ["contacts", "leads", "legacy-customers", "legacy-leads", "accounts", "roles", "audit"].find(routeAllowed) || "contacts";
+}
+
+async function renderRoute(route = location.hash.slice(1)) {
+  const normalized = route || defaultRoute();
+  if (!routeAllowed(normalized)) {
+    const fallback = defaultRoute();
+    if (normalized !== fallback) return navigate(fallback);
+  }
+  const [base, id] = normalized.split("/");
+  const viewId = id && base === "contacts" ? "crmContactDetailView"
+    : id && base === "leads" ? "crmLeadDetailView"
+      : ({ contacts: "crmContactsView", leads: "crmLeadsView", "legacy-customers": "listView", "legacy-leads": "leadView", accounts: "accountManagementView", roles: "roleManagementView", audit: "auditLogView" })[base];
+  document.querySelectorAll(".view").forEach((view) => view.classList.toggle("is-active", view.id === viewId));
+  document.querySelectorAll("[data-nav]").forEach((item) => item.classList.toggle("is-active", item.dataset.nav === base));
+  $("breadcrumbText").textContent = id && base === "contacts" ? "联系人详情"
+    : id && base === "leads" ? "Lead 详情"
+      : ({ contacts: "客户联系人", leads: "Leads", "legacy-customers": "Legacy 会员", "legacy-leads": "Legacy 线索", accounts: "账户管理", roles: "角色与权限", audit: "审计日志" })[base] || "客户联系人";
+  try {
+    if (base === "contacts" && id) await openCrmContact(id);
+    else if (base === "contacts") await loadCrmContacts(1);
+    else if (base === "leads" && id) await openCrmLead(id);
+    else if (base === "leads") await loadCrmLeads(1);
+    else if (base === "legacy-customers") await loadCustomers();
+    else if (base === "legacy-leads") await loadLeads();
+    else if (base === "accounts") await loadAccounts();
+    else if (base === "roles") await loadRoles();
+    else if (base === "audit") await loadAudit();
+  } catch {
+    // Each view owns its contextual error state.
+  }
+}
+
+function navigate(route) {
+  const current = location.hash.slice(1);
+  if (current === route) return renderRoute(route);
+  location.hash = route;
+  return Promise.resolve();
 }
 
 function memberQueryParams() {
@@ -899,7 +970,7 @@ function openPersonalSettings() {
 function bindEvents() {
   $("loginForm").addEventListener("submit", async (event) => { event.preventDefault(); $("loginError").hidden = true; try { const result = await api("/api/v1/auth/login", { method: "POST", body: JSON.stringify({ loginAccount: $("loginAccountInput").value, password: $("loginPasswordInput").value }) }); state.me = result.data; await afterAuth(); } catch (error) { showError($("loginError"), error); } });
   $("forcePasswordForm").addEventListener("submit", async (event) => { event.preventDefault(); $("forcePasswordError").hidden = true; const password = $("forcedNewPasswordInput").value; const confirm = $("forcedConfirmPasswordInput").value; try { await api("/api/v1/auth/change-password", { method: "POST", body: JSON.stringify({ currentPassword: $("loginPasswordInput").value, newPassword: password, confirmPassword: confirm }) }); state.me.mustChangePassword = false; hideForcePassword(); notify("密码已更新"); await afterAuth(); } catch (error) { showError($("forcePasswordError"), error); } });
-  $("backToList").onclick = () => navigate("contacts"); $("searchMembers").onclick = loadCustomers; $("resetMemberFilters").onclick = () => { $("memberSearch").value = ""; $("memberBrandFilter").value = "ALL"; loadCustomers(); }; $("emptyReset").onclick = $("resetMemberFilters").onclick; $("searchLeads").onclick = loadLeads; $("resetLeadFilters").onclick = () => { $("leadKeyword").value = ""; $("leadBrandFilter").value = "ALL"; loadLeads(); }; $("emptyLeadReset").onclick = $("resetLeadFilters").onclick; $("reloadLeads").onclick = $("retryLeadLoad").onclick = loadLeads;
+  $("backToList").onclick = () => navigate("legacy-customers"); $("searchMembers").onclick = loadCustomers; $("resetMemberFilters").onclick = () => { $("memberSearch").value = ""; $("memberBrandFilter").value = "ALL"; loadCustomers(); }; $("emptyReset").onclick = $("resetMemberFilters").onclick; $("searchLeads").onclick = loadLeads; $("resetLeadFilters").onclick = () => { $("leadKeyword").value = ""; $("leadBrandFilter").value = "ALL"; loadLeads(); }; $("emptyLeadReset").onclick = $("resetLeadFilters").onclick; $("reloadLeads").onclick = $("retryLeadLoad").onclick = loadLeads;
   $("newMemberBtn").onclick = openCreateMember; $("closeMemberCreate").onclick = () => $("memberCreateDialog").close(); $("cancelMemberCreate").onclick = () => $("memberCreateDialog").close(); $("createMemberBrand").onchange = renderMemberFields; $("memberRegistrationForm").onsubmit = saveMember;
   $("openLeadCreate").onclick = () => openCreateLead(); $("newLeadBtn").onclick = () => openCreateLead(state.currentCustomer?.id); $("panelNewLead").onclick = () => openCreateLead(state.currentCustomer?.id); $("closeLeadCreate").onclick = () => $("leadCreateDialog").close(); $("cancelLeadCreate").onclick = () => $("leadCreateDialog").close(); $("createLeadBrand").onchange = renderLeadFields; $("canonicalLeadForm").onsubmit = saveLead; $("closeLeadDrawer").onclick = () => $("leadDrawer").classList.remove("is-open");
   $("closeProfileEdit").onclick = $("cancelProfileEdit").onclick = () => $("profileEditDialog").close(); $("profileEditForm").onsubmit = saveProfile;
@@ -922,21 +993,53 @@ function bindEvents() {
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !$("accountMenu").hidden) { closeAccountMenu(); $("accountMenuTrigger").focus(); }
   });
+  window.addEventListener("hashchange", () => { if (state.me && !state.me.mustChangePassword) renderRoute(); });
+  window.addEventListener("crm:unauthenticated", () => showLogin());
+  window.addEventListener("crm:password-required", () => showForcePassword());
+  document.querySelector("[data-go-list]")?.addEventListener("click", () => navigate(defaultRoute()));
 }
 
 async function afterAuth() {
   hideLogin(); if (state.me.mustChangePassword) { renderIdentity(); return showForcePassword(); }
-  state.brands = (await api("/api/v1/brands")).data; state.roles = []; state.permissions = [];
+  state.brands = can("customer.view") || can("lead.view") ? (await api("/api/v1/brands")).data : [];
+  if (can("crm.contact.view") || can("crm.lead.view")) {
+    try {
+      state.crmUsers = (await api("/api/v1/crm/users")).data;
+    } catch (error) {
+      state.crmUsers = [{ id: state.me.id, name: state.me.name, loginAccount: state.me.loginAccount, status: "ACTIVE" }];
+      notify(`负责人目录加载失败：${error.message}`);
+    }
+  } else {
+    state.crmUsers = [];
+  }
+  state.roles = []; state.permissions = [];
   renderIdentity(); renderNavigation(); renderBrandFilters(); applyPermissionVisibility();
+  syncContactUsers(); syncLeadUsers(); applyCrmPermissions();
+  if (can("crm.contact.view")) api("/api/v1/crm/contacts?page=1&pageSize=1").then((result) => setCrmNavCount("contacts", result.meta.total)).catch(() => {});
+  if (can("crm.lead.view")) api("/api/v1/crm/leads?page=1&pageSize=1").then((result) => setCrmNavCount("leads", result.meta.total)).catch(() => {});
   if (can("customer.view")) api("/api/v1/customers?pageSize=1").then((result) => { if ($("memberNavCount")) $("memberNavCount").textContent = result.meta.total; }).catch(() => {});
   if (can("lead.view")) api("/api/v1/leads?pageSize=1").then((result) => { if ($("leadNavCount")) $("leadNavCount").textContent = result.meta.total; }).catch(() => {});
-  const requested = location.hash.slice(1); const allowed = { contacts: can("customer.view"), leads: can("lead.view"), accounts: can("account.view"), roles: can("roles.view"), audit: can("audit.view") };
-  navigate(allowed[requested] ? requested : can("customer.view") ? "contacts" : can("lead.view") ? "leads" : can("account.view") ? "accounts" : can("roles.view") ? "roles" : "audit");
+  const requested = location.hash.slice(1);
+  navigate(routeAllowed(requested) ? requested : defaultRoute());
 }
 async function init() {
   initializeSidebar();
   bindListSelection("customers");
   bindListSelection("leads");
+  const crmContext = {
+    state,
+    can,
+    navigate,
+    notify,
+    getUsers: () => state.crmUsers,
+    currentUserId: () => state.me?.id || "",
+    applyCrmPermissions,
+    setNavCount: setCrmNavCount,
+    openLeadForm: (...args) => openCrmLeadForm(...args),
+  };
+  initializeFollowups(crmContext);
+  initializeContacts(crmContext);
+  initializeLeads(crmContext);
   bindEvents();
   try { state.me = (await api("/api/v1/auth/me")).data; await afterAuth(); } catch (error) { if (error.status !== 401) notify(error.message); showLogin(); }
 }

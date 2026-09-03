@@ -380,6 +380,15 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core backend", () => {
     expect(timeline.json<{ data: Array<{ owner: { id: string; status: string } }> }>().data[0]?.owner).toMatchObject({ id: disabledOwnerUserId, status: "DISABLED" });
   });
 
+  it("exposes an ACTIVE-only CRM user directory to SALES without account management permission", async () => {
+    const response = await app.inject({ method: "GET", url: "/api/v1/crm/users", headers: { cookie: salesCookie } });
+    expect(response.statusCode).toBe(200);
+    const users = response.json<{ data: Array<Record<string, unknown>> }>().data;
+    expect(users.some((user) => user.id === disabledOwnerUserId)).toBe(false);
+    expect(users.some((user) => user.id === apiCreatedSalesUserId)).toBe(true);
+    expect(Object.keys(users[0] ?? {}).sort()).toEqual(["id", "loginAccount", "name", "status"]);
+  });
+
   it("rejects ambiguous timezone-free Followup timestamps", async () => {
     const response = await app.inject({ method: "POST", url: `/api/v1/crm/contacts/${primaryContactId}/followups`, headers: { cookie: salesCookie }, payload: { occurredAt: "2026-09-03T14:30:00", content: `Ambiguous ${runKey}` } });
     expect(response.statusCode).toBe(422);

@@ -25,3 +25,15 @@ export async function assertAssignableCrmUser(
     }]);
   }
 }
+
+export class CrmUserDirectoryService {
+  constructor(private readonly prisma: PrismaClient) {}
+
+  async listActive() {
+    return this.prisma.user.findMany({
+      where: { status: "ACTIVE" },
+      select: crmUserSummarySelect,
+      orderBy: [{ name: "asc" }, { id: "asc" }],
+    });
+  }
+}

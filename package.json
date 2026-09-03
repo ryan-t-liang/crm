@@ -12,7 +12,7 @@
     "start": "npm --workspace backend run start",
     "test": "npm --workspace backend run test",
     "test:integration": "npm --workspace backend run test:integration",
-    "test:frontend": "node --check frontend/js/app.js && node --check frontend/js/address-data.js && node scripts/test-frontend-interactions.mjs",
+    "test:frontend": "node --check frontend/js/app.js && node --check frontend/js/api.js && node --check frontend/js/contacts.js && node --check frontend/js/leads.js && node --check frontend/js/followups.js && node --check frontend/js/field-definitions.js && node --check frontend/js/address-data.js && node --check scripts/frontend-browser-fixture.mjs && node scripts/test-frontend-interactions.mjs",
     "lint": "npm --workspace backend run lint",
     "prisma:generate": "npm --workspace backend run prisma:generate",
     "prisma:validate": "node scripts/with-env.mjs npm --workspace backend run prisma:validate",

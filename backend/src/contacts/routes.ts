@@ -2,6 +2,8 @@ import type { FastifyInstance } from "fastify";
 import { z } from "zod";
 import { auditActorContext } from "../common/audit.js";
 import { guard } from "../common/auth.js";
+import { CrmUserDirectoryService } from "../common/crm-users.js";
+import { ApiError } from "../common/errors.js";
 import { paginationMeta, paginationSchema } from "../common/pagination.js";
 import { CrmLeadService } from "../crm-leads/service.js";
 import { crmLeadResponse } from "../crm-leads/response.js";
@@ -35,6 +37,14 @@ export async function contactRoutes(app: FastifyInstance): Promise<void> {
   const contacts = new ContactService(app.prisma);
   const followups = new ContactFollowupService(app.prisma);
   const leads = new CrmLeadService(app.prisma);
+  const users = new CrmUserDirectoryService(app.prisma);
+
+  app.get("/api/v1/crm/users", { preHandler: guard() }, async (request) => {
+    if (!request.auth!.permissions.has("crm.contact.view") && !request.auth!.permissions.has("crm.lead.view")) {
+      throw new ApiError(403, "PERMISSION_DENIED", "当前账户没有此操作权限");
+    }
+    return { data: await users.listActive() };
+  });
 
   app.get("/api/v1/crm/contacts", { preHandler: guard("crm.contact.view") }, async (request) => {
     const query = contactListQuery.parse(request.query);

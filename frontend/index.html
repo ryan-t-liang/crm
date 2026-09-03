@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Sowind 会员与线索 CRM</title>
-  <link rel="icon" href="assets/sowind-sidebar-logo.png">
+  <title>Kivisense CRM</title>
+  <link rel="icon" href="assets/kivisense-logo.svg">
   <link rel="stylesheet" href="styles/production.css">
   <style>
     :root {
@@ -2061,9 +2061,9 @@
 
   <div class="app-shell">
     <aside class="sidebar" id="primarySidebar">
-      <button class="brand-lockup" data-go-list aria-label="返回会员列表">
-        <span class="app-brand-logo-shell"><img class="app-brand-logo" id="appBrandLogo" src="assets/sowind-sidebar-logo.png" alt="Sowind Group Logo"></span>
-        <span class="app-brand-wordmark"><strong id="appBrandWordmark">SOWIND GROUP</strong><span id="appBrandSubtitle">CHINA CRM</span></span>
+      <button class="brand-lockup" data-go-list aria-label="返回客户联系人列表">
+        <span class="app-brand-logo-shell"><img class="app-brand-logo" id="appBrandLogo" src="assets/kivisense-logo.svg" alt="Kivisense Logo"></span>
+        <span class="app-brand-wordmark"><strong id="appBrandWordmark">KIVISENSE CRM</strong><span id="appBrandSubtitle">2.0</span></span>
       </button>
 
       <nav class="nav-list" id="primaryNavigation" aria-label="主导航"></nav>
@@ -2086,10 +2086,15 @@
 
     <main class="workspace">
       <header class="topbar">
-        <div class="breadcrumb">Sowind China&nbsp;&nbsp;/&nbsp;&nbsp;<strong id="breadcrumbText">会员</strong></div>
+        <div class="breadcrumb">Kivisense CRM&nbsp;&nbsp;/&nbsp;&nbsp;<strong id="breadcrumbText">客户联系人</strong></div>
       </header>
 
-      <section id="listView" class="view is-active">
+      <section id="crmContactsView" class="view is-active"></section>
+      <section id="crmContactDetailView" class="view"></section>
+      <section id="crmLeadsView" class="view"></section>
+      <section id="crmLeadDetailView" class="view"></section>
+
+      <section id="listView" class="view">
         <div class="page">
           <div class="page-heading">
             <div>
@@ -2484,8 +2489,8 @@
 
   <div class="auth-overlay" id="loginOverlay" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
     <section class="auth-card" aria-labelledby="loginTitle">
-      <div class="auth-brand"><img src="assets/sowind-sidebar-logo.png" alt="Sowind Group Logo"><div><strong>SOWIND GROUP</strong><span>CHINA CRM</span></div></div>
-      <h1 id="loginTitle">登录 Sowind CRM</h1><p>请输入管理员为你创建的登录账号和密码。</p>
+      <div class="auth-brand"><img src="assets/kivisense-logo.svg" alt="Kivisense Logo"><div><strong>KIVISENSE</strong><span>CRM 2.0</span></div></div>
+      <h1 id="loginTitle">登录 Kivisense CRM</h1><p>请输入管理员为你创建的登录账号和密码。</p>
       <form class="auth-form" id="loginForm" novalidate>
         <label><span class="field-label">登录账号<span class="required-mark">*</span></span><input class="control" id="loginAccountInput" type="email" autocomplete="username"></label>
         <label class="password-control"><span class="field-label">密码<span class="required-mark">*</span></span><input class="control" id="loginPasswordInput" type="password" autocomplete="current-password"><button class="password-toggle" type="button" data-password-toggle="loginPasswordInput">显示</button></label>
@@ -2497,8 +2502,8 @@
 
   <div class="auth-overlay force-password" id="forcePasswordOverlay" role="dialog" aria-modal="true" aria-labelledby="forcePasswordTitle" hidden>
     <section class="auth-card forced-password-card" aria-labelledby="forcePasswordTitle">
-      <div class="auth-brand"><img src="assets/sowind-sidebar-logo.png" alt="Sowind Group Logo"><div><strong>SOWIND GROUP</strong><span>CHINA CRM</span></div></div>
-      <h1 id="forcePasswordTitle">设置你的密码</h1><p>为保障账号安全，请先设置新密码，然后继续使用 Sowind CRM。此步骤不能跳过。</p>
+      <div class="auth-brand"><img src="assets/kivisense-logo.svg" alt="Kivisense Logo"><div><strong>KIVISENSE</strong><span>CRM 2.0</span></div></div>
+      <h1 id="forcePasswordTitle">设置你的密码</h1><p>为保障账号安全，请先设置新密码，然后继续使用 Kivisense CRM。此步骤不能跳过。</p>
       <form class="auth-form" id="forcePasswordForm" novalidate>
         <label class="password-control"><span class="field-label">新密码<span class="required-mark">*</span></span><input class="control" id="forcedNewPasswordInput" type="password" autocomplete="new-password"><button class="password-toggle" type="button" data-password-toggle="forcedNewPasswordInput">显示</button></label>
         <div class="password-strength" id="forcePasswordStrength"><div class="password-strength-track"><div class="password-strength-fill"></div></div><span class="password-strength-label">密码强度：—</span></div>
