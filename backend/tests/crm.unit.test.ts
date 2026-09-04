@@ -29,6 +29,21 @@ describe("Kivisense CRM 2.0 core unit contracts", () => {
     expect(crmLeadCreateSchema.parse({ contactId: "contact-1", requirementSummary: "AR 应用服务" })).toMatchObject({ priority: "MEDIUM", status: "NEW" });
   });
 
+  it("normalizes multi-participant and field-alignment inputs", () => {
+    const lead = crmLeadCreateSchema.parse({
+      contactId: "contact-1",
+      requirementSummary: "AR 应用服务",
+      participantUserIds: ["sales-1", "admin-1", "sales-1"],
+      leadSource: " Kiviman ",
+      technologyType: "Kivicube Engine\nWebAR",
+      wonAt: "2026-09-04T10:00:00+08:00",
+    });
+    expect(lead.participantUserIds).toEqual(["sales-1", "admin-1"]);
+    expect(lead.leadSource).toBe("Kiviman");
+    expect(lead.wonAt).toBeInstanceOf(Date);
+    expect(contactCreateSchema.parse({ contactName: "Naderi", followupAttention: " 会前确认资料 " }).followupAttention).toBe("会前确认资料");
+  });
+
   it("does not allow a lead patch to change contactId", () => {
     expect(crmLeadPatchSchema.safeParse({ contactId: "contact-2" }).success).toBe(false);
     expect(crmLeadPatchSchema.safeParse({ status: "SOLUTION" }).success).toBe(true);

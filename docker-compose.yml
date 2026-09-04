@@ -27,6 +27,7 @@ services:
       DATABASE_URL: mysql://kivisense:${MYSQL_PASSWORD:-kivisense_dev_only}@mysql:3306/kivisense_crm
       PORT: 3000
       STORAGE_DIR: /app/storage
+      CRM_ATTACHMENT_MAX_BYTES: ${CRM_ATTACHMENT_MAX_BYTES:-52428800}
     depends_on:
       mysql:
         condition: service_healthy

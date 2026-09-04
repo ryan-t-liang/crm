@@ -10,6 +10,7 @@ import { contactCreateSchema, type ContactCreateInput } from "../contacts/schema
 import { ContactService } from "../contacts/service.js";
 import { crmLeadCreateSchema, type CrmLeadCreateInput } from "../crm-leads/schemas.js";
 import { CrmLeadService } from "../crm-leads/service.js";
+import { CrmAttachmentService } from "../crm-leads/attachments.js";
 import { crmImportFields, contactExportFields, crmLeadExportFields } from "./crm-schema.js";
 import type { CrmJobObjectType } from "./job-types.js";
 import { fileSha256, parseWorkbook, writeFailureCsv } from "./workbook.js";
@@ -53,6 +54,24 @@ function auditContext(request: FastifyRequest): AuditActorContext {
 function trimOrNull(value: string | undefined): string | null {
   const trimmed = String(value ?? "").trim();
   return trimmed || null;
+}
+
+function splitMultiValue(value: string | undefined): string[] {
+  return [...new Set(String(value ?? "").split(/\r?\n|;/).map((item) => item.trim()).filter(Boolean))];
+}
+
+function attachmentUrls(value: string | undefined, field: string, warnings: ValidationMessage[]): string[] {
+  const urls: string[] = [];
+  for (const item of splitMultiValue(value)) {
+    try {
+      const parsed = new URL(item);
+      if (!["http:", "https:"].includes(parsed.protocol)) throw new Error("unsupported protocol");
+      urls.push(parsed.toString());
+    } catch {
+      warnings.push({ code: "ATTACHMENT_FILE_NOT_AVAILABLE", field, message: `${field} 中的“${item}”没有可访问的 HTTP/HTTPS 文件实体，将不会创建附件` });
+    }
+  }
+  return urls;
 }
 
 function normalizedPhone(value: string | null): string | null {
@@ -159,7 +178,7 @@ async function preflightContacts(app: FastifyInstance, rows: Array<{ rowNumber: 
       industry: trimOrNull(raw.industry), source: trimOrNull(raw.source), country: trimOrNull(raw.country),
       city: trimOrNull(raw.city), region: trimOrNull(raw.region), stage,
       ownerUserId, nextFollowupAt: parseDate(raw.nextFollowupAt, "nextFollowupAt", errors),
-      initialContext: trimOrNull(raw.initialContext), remark: trimOrNull(raw.remark),
+      initialContext: trimOrNull(raw.initialContext), followupAttention: trimOrNull(raw.followupAttention), remark: trimOrNull(raw.remark),
     };
     const parsed = contactCreateSchema.safeParse(candidate);
     if (!parsed.success) errors.push(...schemaErrors(parsed.error));
@@ -178,7 +197,8 @@ async function preflightContacts(app: FastifyInstance, rows: Array<{ rowNumber: 
       if (previous) addDuplicate("phone", `电话可能重复：${phone}；同时出现在工作簿第 ${previous} 行`);
       else workbookPhones.set(phoneKey, row.rowNumber);
     }
-    const normalizedData = parsed.success ? serializable(parsed.data) : serializable(candidate);
+    const fileUrls = attachmentUrls(raw.meetingMinutesFiles, "meetingMinutesFiles", warnings);
+    const normalizedData = { ...(parsed.success ? serializable(parsed.data) : serializable(candidate)), attachmentUrls: { meetingMinutesFiles: fileUrls } };
     output.push({
       rowNumber: row.rowNumber,
       status: errors.length ? "ERROR" : warnings.length ? "WARNING" : "VALID",
@@ -197,12 +217,14 @@ async function preflightLeads(app: FastifyInstance, rows: Array<{ rowNumber: num
   for (const row of rows) {
     const raw = row.values;
     const errors: ValidationMessage[] = [];
+    const warnings: ValidationMessage[] = [];
     const contactId = String(raw.contactId ?? "").trim();
     if (contactId && !existingContacts.has(contactId)) errors.push({ code: "CONTACT_NOT_FOUND", field: "contactId", message: `未找到客户联系人编号：${contactId}` });
     const priority = enumValue(raw.priority, priorityAliases, "priority", "MEDIUM", errors);
     const status = enumValue(raw.status, statusAliases, "status", "NEW", errors);
     const salesOwnerUserId = resolveUser(raw.salesOwner, "salesOwner", errors);
     const followupOwnerUserId = resolveUser(raw.followupOwner, "followupOwner", errors);
+    const participantUserIds = splitMultiValue(raw.participantUsers).map((value) => resolveUser(value, "participantUsers", errors)).filter((value): value is string => Boolean(value));
     const quote = trimOrNull(raw.estimatedQuote);
     const currency = trimOrNull(raw.currency);
     if (quote && !/^\d{1,16}(?:\.\d{1,2})?$/.test(quote)) errors.push({ code: "INVALID_QUOTE", field: "estimatedQuote", message: "预计报价必须大于等于 0，且最多保留 2 位小数" });
@@ -211,22 +233,27 @@ async function preflightLeads(app: FastifyInstance, rows: Array<{ rowNumber: num
     const candidate = {
       contactId,
       requirementSummary: String(raw.requirementSummary ?? "").trim(),
-      requirementDetail: trimOrNull(raw.requirementDetail), latestProgress: trimOrNull(raw.latestProgress),
+      requirementDetail: trimOrNull(raw.requirementDetail), latestProgress: trimOrNull(raw.latestProgress), leadSource: trimOrNull(raw.leadSource),
       priority, estimatedQuote: quote, currency, projectDomain: trimOrNull(raw.projectDomain),
       projectType: trimOrNull(raw.projectType), technologyType: trimOrNull(raw.technologyType),
       productType: trimOrNull(raw.productType), productName: trimOrNull(raw.productName),
-      resourceRequirement: trimOrNull(raw.resourceRequirement), solution: trimOrNull(raw.solution),
+      resourceRequirement: trimOrNull(raw.resourceRequirement), collaborationGroups: splitMultiValue(raw.collaborationGroups).join("\n") || null,
+      followMode: trimOrNull(raw.followMode), solution: trimOrNull(raw.solution),
       remark: trimOrNull(raw.remark), status, salesOwnerUserId, followupOwnerUserId,
       nextFollowupAt: parseDate(raw.nextFollowupAt, "nextFollowupAt", errors),
+      wonAt: parseDate(raw.wonAt, "wonAt", errors), deliveryFollowupAt: parseDate(raw.deliveryFollowupAt, "deliveryFollowupAt", errors),
+      contractRenewalAt: parseDate(raw.contractRenewalAt, "contractRenewalAt", errors), paymentReceivedAt: parseDate(raw.paymentReceivedAt, "paymentReceivedAt", errors),
+      participantUserIds,
     };
     const parsed = crmLeadCreateSchema.safeParse(candidate);
     if (!parsed.success) errors.push(...schemaErrors(parsed.error));
-    const normalizedData = parsed.success ? serializable(parsed.data) : serializable(candidate);
+    const fileUrls = Object.fromEntries(["requirementFiles", "requirementImages", "proposalFiles", "quotationFiles"].map((field) => [field, attachmentUrls(raw[field], field, warnings)]));
+    const normalizedData = { ...(parsed.success ? serializable(parsed.data) : serializable(candidate)), attachmentUrls: fileUrls };
     output.push({
       rowNumber: row.rowNumber,
-      status: errors.length ? "ERROR" : "VALID",
+      status: errors.length ? "ERROR" : warnings.length ? "WARNING" : "VALID",
       identity: [candidate.requirementSummary, contactId].filter(Boolean).join(" / "),
-      rawData: raw, normalizedData, errors, warnings: [],
+      rawData: raw, normalizedData, errors, warnings,
     });
   }
   return output;
@@ -272,6 +299,7 @@ export async function executeCrmImportJob(app: FastifyInstance, request: Fastify
 
   const contacts = new ContactService(app.prisma);
   const leads = new CrmLeadService(app.prisma);
+  const attachments = new CrmAttachmentService(app.prisma, app.config.storageDir, app.config.maxAttachmentBytes);
   let success = 0;
   let failed = 0;
   let warnings = 0;
@@ -282,9 +310,14 @@ export async function executeCrmImportJob(app: FastifyInstance, request: Fastify
       warnings += rowWarnings;
       if (row.status === "ERROR") throw new ApiError(400, "PREFLIGHT_ERROR", "该行未通过预检");
       const data = (row.normalizedData ?? {}) as Record<string, unknown>;
+      const { attachmentUrls: importedAttachmentUrls, ...entityData } = data;
       const created = job.objectType === "CONTACT"
-        ? await contacts.create(contactInput(data), request.auth!.userId, auditContext(request))
-        : await leads.create(leadInput(data), request.auth!.userId, auditContext(request));
+        ? await contacts.create(contactInput(entityData), request.auth!.userId, auditContext(request))
+        : await leads.create(leadInput(entityData), request.auth!.userId, auditContext(request));
+      const urlsByField = (importedAttachmentUrls ?? {}) as Record<string, string[]>;
+      for (const [fieldKey, urls] of Object.entries(urlsByField)) {
+        for (const url of urls) await attachments.createExternal(job.objectType === "CONTACT" ? "CONTACT" : "LEAD", created.id, fieldKey, url, request.auth!.userId, auditContext(request));
+      }
       success += 1;
       await app.prisma.importJobRow.update({ where: { id: row.id }, data: { status: "SUCCEEDED", createdId: created.id } });
     } catch (error) {
@@ -316,6 +349,18 @@ function formatDate(value: Date | null | undefined): string | null {
   return value ? value.toISOString().replace("T", " ").slice(0, 19) : null;
 }
 
+type ExportAttachment = { id: string; entityId: string; fieldKey: string; storageType: "LOCAL" | "EXTERNAL_URL"; originalName: string; externalUrl: string | null };
+
+function attachmentExportValue(app: FastifyInstance, entityType: "CONTACT" | "LEAD", entityId: string, fieldKey: string, rows: ExportAttachment[]): string | null {
+  const value = rows.filter((item) => item.entityId === entityId && item.fieldKey === fieldKey).map((item) => {
+    const url = item.storageType === "EXTERNAL_URL"
+      ? item.externalUrl
+      : `${app.config.appBasePath}/api/v1/crm/${entityType === "CONTACT" ? "contacts" : "leads"}/${encodeURIComponent(entityId)}/attachments/${encodeURIComponent(item.id)}/download`;
+    return `${item.originalName} | ${url || "-"}`;
+  });
+  return value.length ? value.join("\n") : null;
+}
+
 function styleExportSheet(sheet: ExcelJS.Worksheet, textColumns: string[]) {
   sheet.getRow(1).font = { bold: true, color: { argb: "FF202322" } };
   sheet.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFE8F0ED" } };
@@ -334,37 +379,50 @@ export async function buildCrmExportWorkbook(app: FastifyInstance, objectType: C
   if (objectType === "CONTACT") {
     const sheet = workbook.addWorksheet("Contacts", { views: [{ state: "frozen", ySplit: 1 }] });
     sheet.columns = contactExportFields.map(([key, header]) => ({ key, header, width: Math.max(14, Math.min(32, header.length + 6)) }));
-    const rows = await app.prisma.contact.findMany({ include: { owner: { select: { loginAccount: true } }, _count: { select: { leads: true } } }, orderBy: [{ updatedAt: "desc" }, { id: "desc" }] });
+    const [rows, attachmentRows] = await Promise.all([
+      app.prisma.contact.findMany({ include: { owner: { select: { loginAccount: true } }, createdBy: { select: { loginAccount: true } }, _count: { select: { leads: true } } }, orderBy: [{ updatedAt: "desc" }, { id: "desc" }] }),
+      app.prisma.crmAttachment.findMany({ where: { entityType: "CONTACT" }, select: { id: true, entityId: true, fieldKey: true, storageType: true, originalName: true, externalUrl: true } }),
+    ]);
     for (const contact of rows) sheet.addRow({
       ...contact,
       owner: contact.owner?.loginAccount ?? null,
+      createdBy: contact.createdBy.loginAccount,
       nextFollowupAt: formatDate(contact.nextFollowupAt),
+      meetingMinutesFiles: attachmentExportValue(app, "CONTACT", contact.id, "meetingMinutesFiles", attachmentRows),
       relatedLeadCount: contact._count.leads,
       createdAt: formatDate(contact.createdAt), updatedAt: formatDate(contact.updatedAt),
     });
-    styleExportSheet(sheet, ["id", "phone"]);
+    styleExportSheet(sheet, ["id", "phone", "meetingMinutesFiles"]);
     return { buffer: Buffer.from(await workbook.xlsx.writeBuffer()), rowCount: rows.length, fields: contactExportFields.map(([key]) => key) };
   }
   const sheet = workbook.addWorksheet("CRM Leads", { views: [{ state: "frozen", ySplit: 1 }] });
   sheet.columns = crmLeadExportFields.map(([key, header]) => ({ key, header, width: Math.max(14, Math.min(32, header.length + 6)) }));
-  const rows = await app.prisma.crmLead.findMany({
+  const [rows, attachmentRows] = await Promise.all([app.prisma.crmLead.findMany({
     include: {
-      contact: { select: { contactName: true, companyShortName: true, companyName: true, email: true, phone: true } },
+      contact: { select: { contactName: true, companyShortName: true, companyName: true, email: true, phone: true, wechat: true } },
       salesOwner: { select: { loginAccount: true } }, followupOwner: { select: { loginAccount: true } },
+      createdBy: { select: { loginAccount: true } }, participants: { include: { user: { select: { loginAccount: true } } } },
     },
     orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
-  });
+  }), app.prisma.crmAttachment.findMany({ where: { entityType: "LEAD" }, select: { id: true, entityId: true, fieldKey: true, storageType: true, originalName: true, externalUrl: true } })]);
   for (const lead of rows) sheet.addRow({
     ...lead,
     estimatedQuote: lead.estimatedQuote?.toString() ?? null,
     salesOwner: lead.salesOwner?.loginAccount ?? null, followupOwner: lead.followupOwner?.loginAccount ?? null,
+    participantUsers: lead.participants.map((item) => item.user.loginAccount).join("\n") || null,
     nextFollowupAt: formatDate(lead.nextFollowupAt), lastFollowupAt: formatDate(lead.lastFollowupAt),
+    wonAt: formatDate(lead.wonAt), deliveryFollowupAt: formatDate(lead.deliveryFollowupAt), contractRenewalAt: formatDate(lead.contractRenewalAt), paymentReceivedAt: formatDate(lead.paymentReceivedAt),
+    requirementFiles: attachmentExportValue(app, "LEAD", lead.id, "requirementFiles", attachmentRows),
+    requirementImages: attachmentExportValue(app, "LEAD", lead.id, "requirementImages", attachmentRows),
+    proposalFiles: attachmentExportValue(app, "LEAD", lead.id, "proposalFiles", attachmentRows),
+    quotationFiles: attachmentExportValue(app, "LEAD", lead.id, "quotationFiles", attachmentRows),
     contactName: lead.contact.contactName,
     company: lead.contact.companyShortName || lead.contact.companyName || null,
-    contactEmail: lead.contact.email ?? null, contactPhone: lead.contact.phone ?? null,
+    contactEmail: lead.contact.email ?? null, contactPhone: lead.contact.phone ?? null, contactWechat: lead.contact.wechat ?? null,
+    createdBy: lead.createdBy.loginAccount,
     createdAt: formatDate(lead.createdAt), updatedAt: formatDate(lead.updatedAt),
   });
-  styleExportSheet(sheet, ["id", "contactId", "contactPhone"]);
+  styleExportSheet(sheet, ["id", "contactId", "contactPhone", "participantUsers", "requirementFiles", "requirementImages", "proposalFiles", "quotationFiles"]);
   return { buffer: Buffer.from(await workbook.xlsx.writeBuffer()), rowCount: rows.length, fields: crmLeadExportFields.map(([key]) => key) };
 }
 

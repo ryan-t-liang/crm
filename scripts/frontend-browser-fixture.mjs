@@ -31,6 +31,7 @@ const initialContacts = [
     stage: "SOLUTION",
     ownerUserId: "qa-user",
     nextFollowupAt: "2026-09-08T02:00:00.000Z",
+    followupAttention: "技术会前确认 CAD 文件权限与参会名单。",
     initialContext: "Met at an industry convention and discussed AR product presentation.",
     remark: "Decision maker for digital cooperation.",
     createdByUserId: "qa-user",
@@ -57,6 +58,7 @@ const initialContacts = [
     stage: "ONE_TO_ONE",
     ownerUserId: "sales-user",
     nextFollowupAt: "2026-09-03T04:30:00.000Z",
+    followupAttention: "优先通过微信联系。",
     initialContext: "Referred by an existing project partner.",
     remark: null,
     createdByUserId: "sales-user",
@@ -72,22 +74,30 @@ const initialLeads = [
     requirementSummary: "AR application and service cooperation for our products",
     requirementDetail: "Build an AR product presentation experience for the new product line.",
     latestProgress: "Product samples and API documentation received.",
+    leadSource: "Kiviman",
     priority: "HIGH",
     status: "SOLUTION",
     estimatedQuote: "63000.50",
     currency: "USD",
     projectDomain: "AR commerce",
     projectType: "Application service",
-    technologyType: "WebAR",
+    technologyType: "Kivicube Engine\nWebAR",
     productType: "Consumer electronics",
     productName: "Dena Vision Series",
     resourceRequirement: "3D assets and product data API access.",
+    collaborationGroups: "Dena AR 项目群\nKivisense 交付群",
+    followMode: "联合跟单",
     solution: "Browser-based AR viewer with CMS integration.",
     remark: "Target launch in Q4.",
     salesOwnerUserId: "qa-user",
     followupOwnerUserId: "sales-user",
     nextFollowupAt: "2026-09-08T02:00:00.000Z",
     lastFollowupAt: "2026-09-02T07:30:00.000Z",
+    wonAt: null,
+    deliveryFollowupAt: "2026-10-02T02:00:00.000Z",
+    contractRenewalAt: null,
+    paymentReceivedAt: null,
+    participantUserIds: ["qa-user", "sales-user"],
     createdByUserId: "qa-user",
     createdAt: "2026-08-22T04:00:00.000Z",
     updatedAt: "2026-09-03T08:45:00.000Z",
@@ -98,6 +108,7 @@ const initialLeads = [
     requirementSummary: "OEM cooperation for interactive product displays",
     requirementDetail: "Explore embedded visualization capabilities for OEM distribution.",
     latestProgress: "Commercial model under review.",
+    leadSource: "Kiviman",
     priority: "MEDIUM",
     status: "QUALIFIED",
     estimatedQuote: null,
@@ -114,6 +125,11 @@ const initialLeads = [
     followupOwnerUserId: "qa-user",
     nextFollowupAt: "2026-09-11T03:00:00.000Z",
     lastFollowupAt: null,
+    wonAt: null,
+    deliveryFollowupAt: null,
+    contractRenewalAt: null,
+    paymentReceivedAt: null,
+    participantUserIds: ["qa-user"],
     createdByUserId: "qa-user",
     createdAt: "2026-08-30T03:00:00.000Z",
     updatedAt: "2026-09-01T05:00:00.000Z",
@@ -124,6 +140,7 @@ const initialLeads = [
     requirementSummary: "Digital solution for flagship retail experience",
     requirementDetail: "Interactive product storytelling for the Shanghai flagship store.",
     latestProgress: null,
+    leadSource: "展会转介",
     priority: "URGENT",
     status: "QUOTATION",
     estimatedQuote: "280000.00",
@@ -140,6 +157,11 @@ const initialLeads = [
     followupOwnerUserId: "sales-user",
     nextFollowupAt: "2026-09-04T07:00:00.000Z",
     lastFollowupAt: "2026-09-02T09:10:00.000Z",
+    wonAt: null,
+    deliveryFollowupAt: null,
+    contractRenewalAt: null,
+    paymentReceivedAt: null,
+    participantUserIds: ["sales-user"],
     createdByUserId: "sales-user",
     createdAt: "2026-08-31T03:00:00.000Z",
     updatedAt: "2026-09-02T09:15:00.000Z",
@@ -157,18 +179,20 @@ const initialLeadFollowups = {
     { id: "lead-followup-1", occurredAt: "2026-09-02T07:30:00.000Z", type: "CALL", ownerUserId: "sales-user", important: true, content: "Confirmed technical workshop participants and requested CAD source files.", createdByUserId: "qa-user", createdAt: "2026-09-02T07:42:00.000Z" },
   ],
 };
-const initialLeadAttachments = {
-  "lead-ar-service": [
-    { id: "attachment-requirement", originalName: "AR-需求说明.pdf", mimeType: "application/pdf", kind: "DOCUMENT", sizeBytes: 428560, createdAt: "2026-09-02T08:00:00.000Z", uploadedBy: crmUsers[0] },
-  ],
-};
+const initialCrmAttachments = [
+  { id: "attachment-requirement", entityType: "LEAD", entityId: "lead-ar-service", fieldKey: "requirementFiles", storageType: "LOCAL", originalName: "AR-需求说明.pdf", mimeType: "application/pdf", kind: "DOCUMENT", fileSize: 428560, createdAt: "2026-09-02T08:00:00.000Z", uploadedBy: crmUsers[0] },
+  { id: "attachment-image", entityType: "LEAD", entityId: "lead-ar-service", fieldKey: "requirementImages", storageType: "LOCAL", originalName: "AR-交互参考图.png", mimeType: "image/png", kind: "IMAGE", fileSize: 186240, createdAt: "2026-09-02T08:10:00.000Z", uploadedBy: crmUsers[1] },
+  { id: "attachment-proposal", entityType: "LEAD", entityId: "lead-ar-service", fieldKey: "proposalFiles", storageType: "EXTERNAL_URL", originalName: "AR-正式方案.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", kind: "DOCUMENT", fileSize: null, externalUrl: "https://example.test/ar-proposal.docx", createdAt: "2026-09-02T08:20:00.000Z", uploadedBy: crmUsers[0] },
+  { id: "attachment-quotation", entityType: "LEAD", entityId: "lead-ar-service", fieldKey: "quotationFiles", storageType: "LOCAL", originalName: "AR-报价单.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", kind: "DOCUMENT", fileSize: 96540, createdAt: "2026-09-02T08:30:00.000Z", uploadedBy: crmUsers[0] },
+  { id: "attachment-minutes", entityType: "CONTACT", entityId: "contact-naderi", fieldKey: "meetingMinutesFiles", storageType: "LOCAL", originalName: "Dena-会议纪要.pdf", mimeType: "application/pdf", kind: "DOCUMENT", fileSize: 118820, createdAt: "2026-09-02T07:50:00.000Z", uploadedBy: crmUsers[0] },
+];
 
 const clone = (value) => structuredClone(value);
 let contacts;
 let crmLeads;
 let contactFollowups;
 let leadFollowups;
-let leadAttachments;
+let crmAttachments;
 let fixtureRole;
 let emptyContacts;
 let emptyLeads;
@@ -183,7 +207,7 @@ function resetFixture() {
   crmLeads = clone(initialLeads);
   contactFollowups = clone(initialContactFollowups);
   leadFollowups = clone(initialLeadFollowups);
-  leadAttachments = clone(initialLeadAttachments);
+  crmAttachments = clone(initialCrmAttachments);
   fixtureRole = "SUPER_ADMIN";
   emptyContacts = false;
   emptyLeads = false;
@@ -216,6 +240,7 @@ function decorateContact(contact) {
     owner: userSummary(contact.ownerUserId),
     createdBy: userSummary(contact.createdByUserId),
     relatedLeadCount: crmLeads.filter((lead) => lead.contactId === contact.id).length,
+    attachments: clone(crmAttachments.filter((attachment) => attachment.entityType === "CONTACT" && attachment.entityId === contact.id)),
   };
 }
 
@@ -224,14 +249,16 @@ function decorateFollowup(followup) {
 }
 
 function decorateLead(lead) {
+  const attachments = crmAttachments.filter((attachment) => attachment.entityType === "LEAD" && attachment.entityId === lead.id);
   return {
     ...lead,
     contact: decorateContact(contacts.find((contact) => contact.id === lead.contactId)),
     salesOwner: userSummary(lead.salesOwnerUserId),
     followupOwner: userSummary(lead.followupOwnerUserId),
     createdBy: userSummary(lead.createdByUserId),
-    attachments: clone(leadAttachments[lead.id] || []),
-    _count: { followups: (leadFollowups[lead.id] || []).length, attachments: (leadAttachments[lead.id] || []).length },
+    participants: (lead.participantUserIds || []).map((userId) => ({ user: userSummary(userId) })).filter((item) => item.user),
+    attachments: clone(attachments),
+    _count: { followups: (leadFollowups[lead.id] || []).length, participants: (lead.participantUserIds || []).length },
   };
 }
 
@@ -447,7 +474,56 @@ async function apiResponse(request, response, url) {
       if (relatedLeadCount) return sendJson(response, { error: { code: "CONTACT_HAS_LEADS", message: "该联系人仍有关联线索，请先删除关联线索", details: { relatedLeadCount } }, traceId: "fixture-409" }, 409);
       contacts = contacts.filter((item) => item.id !== contact.id);
       delete contactFollowups[contact.id];
+      crmAttachments = crmAttachments.filter((attachment) => !(attachment.entityType === "CONTACT" && attachment.entityId === contact.id));
       return sendJson(response, { data: { id: contact.id } });
+    }
+  }
+
+  const attachmentMatch = url.pathname.match(/^\/api\/v1\/crm\/(contacts|leads)\/([^/]+)\/attachments\/([^/]+)(\/download)?$/);
+  if (attachmentMatch) {
+    const [, collection, entityId, fieldOrAttachmentId, downloadSuffix] = attachmentMatch;
+    const entityType = collection === "contacts" ? "CONTACT" : "LEAD";
+    const entityExists = entityType === "CONTACT"
+      ? contacts.some((item) => item.id === entityId)
+      : crmLeads.some((item) => item.id === entityId);
+    if (!entityExists) return sendError(response, 404, "RESOURCE_NOT_FOUND", entityType === "CONTACT" ? "CRM 联系人不存在" : "CRM Lead 不存在");
+    if (method === "POST" && !downloadSuffix) {
+      const fieldKey = fieldOrAttachmentId;
+      const allowedFields = entityType === "CONTACT"
+        ? new Set(["meetingMinutesFiles"])
+        : new Set(["requirementFiles", "requirementImages", "proposalFiles", "quotationFiles"]);
+      if (!allowedFields.has(fieldKey)) return sendError(response, 422, "VALIDATION_ERROR", "附件字段不存在");
+      const image = fieldKey === "requirementImages";
+      const attachment = {
+        id: `attachment-created-${nextId++}`,
+        entityType,
+        entityId,
+        fieldKey,
+        storageType: "LOCAL",
+        originalName: image ? "fixture-upload.jpg" : "fixture-upload.txt",
+        mimeType: image ? "image/jpeg" : "text/plain",
+        kind: image ? "IMAGE" : "DOCUMENT",
+        fileSize: body.size || 32,
+        createdAt: new Date().toISOString(),
+        uploadedBy: crmUsers[0],
+      };
+      crmAttachments.unshift(attachment);
+      return sendJson(response, { data: attachment }, 201);
+    }
+    const attachment = crmAttachments.find((item) => item.id === fieldOrAttachmentId && item.entityType === entityType && item.entityId === entityId);
+    if (!attachment) return sendError(response, 404, "RESOURCE_NOT_FOUND", "附件不存在");
+    if (method === "GET" && downloadSuffix) {
+      if (attachment.externalUrl) {
+        response.writeHead(302, { location: attachment.externalUrl });
+        return response.end();
+      }
+      response.writeHead(200, { "content-type": attachment.mimeType || "application/octet-stream", "content-disposition": `inline; filename="fixture-attachment"; filename*=UTF-8''${encodeURIComponent(attachment.originalName)}` });
+      if (attachment.kind === "IMAGE") return response.end(Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64"));
+      return response.end(Buffer.from("fixture attachment"));
+    }
+    if (method === "DELETE") {
+      crmAttachments = crmAttachments.filter((item) => item.id !== attachment.id);
+      return sendJson(response, { data: { id: attachment.id } });
     }
   }
 
@@ -477,33 +553,12 @@ async function apiResponse(request, response, url) {
     const lead = applyDefaults(body, {
       id: `lead-created-${nextId++}`, status: "NEW", priority: "MEDIUM", estimatedQuote: null, currency: null,
       salesOwnerUserId: null, followupOwnerUserId: null, nextFollowupAt: null, lastFollowupAt: null,
+      participantUserIds: [], wonAt: null, deliveryFollowupAt: null, contractRenewalAt: null, paymentReceivedAt: null,
       createdByUserId: "qa-user", createdAt: now, updatedAt: now,
     });
+    if (lead.status === "WON" && !lead.wonAt) lead.wonAt = new Date().toISOString();
     crmLeads.unshift(lead);
     return sendJson(response, { data: decorateLead(lead) }, 201);
-  }
-
-  const attachmentMatch = url.pathname.match(/^\/api\/v1\/crm\/leads\/([^/]+)\/attachments(?:\/([^/]+)(?:\/download)?)?$/);
-  if (attachmentMatch) {
-    const lead = crmLeads.find((item) => item.id === attachmentMatch[1]);
-    if (!lead) return sendError(response, 404, "RESOURCE_NOT_FOUND", "线索不存在");
-    const attachmentId = attachmentMatch[2];
-    const rows = leadAttachments[lead.id] || [];
-    if (method === "POST" && !attachmentId) {
-      const attachment = { id: `attachment-created-${nextId++}`, originalName: "fixture-upload.txt", mimeType: "text/plain", kind: "DOCUMENT", sizeBytes: body.size || 32, createdAt: new Date().toISOString(), uploadedBy: crmUsers[0] };
-      leadAttachments[lead.id] = [attachment, ...rows];
-      return sendJson(response, { data: attachment }, 201);
-    }
-    const attachment = rows.find((item) => item.id === attachmentId);
-    if (!attachment) return sendError(response, 404, "RESOURCE_NOT_FOUND", "附件不存在");
-    if (method === "GET" && url.pathname.endsWith("/download")) {
-      response.writeHead(200, { "content-type": attachment.mimeType, "content-disposition": `inline; filename="${attachment.originalName}"` });
-      return response.end(Buffer.from("fixture attachment"));
-    }
-    if (method === "DELETE") {
-      leadAttachments[lead.id] = rows.filter((item) => item.id !== attachment.id);
-      return sendJson(response, { data: { id: attachment.id } });
-    }
   }
 
   const leadMatch = url.pathname.match(/^\/api\/v1\/crm\/leads\/([^/]+)$/);
@@ -513,13 +568,14 @@ async function apiResponse(request, response, url) {
     if (method === "GET") return sendJson(response, { data: decorateLead(lead) });
     if (method === "PATCH") {
       const { contactId: _ignoredContactId, ...patch } = body;
+      if (lead.status !== "WON" && patch.status === "WON" && !lead.wonAt) patch.wonAt = new Date().toISOString();
       Object.assign(lead, patch, { updatedAt: new Date().toISOString() });
       return sendJson(response, { data: decorateLead(lead) });
     }
     if (method === "DELETE") {
       crmLeads = crmLeads.filter((item) => item.id !== lead.id);
       delete leadFollowups[lead.id];
-      delete leadAttachments[lead.id];
+      crmAttachments = crmAttachments.filter((attachment) => !(attachment.entityType === "LEAD" && attachment.entityId === lead.id));
       return sendJson(response, { data: { id: lead.id } });
     }
   }

@@ -56,10 +56,22 @@ enum CrmFollowupType {
   OTHER
 }
 
-enum LeadAttachmentKind {
+enum CrmAttachmentKind {
   IMAGE
   VIDEO
   DOCUMENT
+}
+
+enum CrmAttachmentEntityType {
+  CONTACT
+  CONTACT_FOLLOWUP
+  LEAD
+  LEAD_FOLLOWUP
+}
+
+enum CrmAttachmentStorageType {
+  LOCAL
+  EXTERNAL_URL
 }
 
 model Role {
@@ -125,7 +137,8 @@ model User {
   createdCrmLeads         CrmLead[]         @relation("CrmLeadCreatedBy")
   ownedLeadFollowups      LeadFollowup[]    @relation("LeadFollowupOwner")
   createdLeadFollowups    LeadFollowup[]    @relation("LeadFollowupCreatedBy")
-  uploadedLeadAttachments LeadAttachment[]  @relation("LeadAttachmentUploadedBy")
+  leadParticipations       CrmLeadParticipant[] @relation("CrmLeadParticipantUser")
+  uploadedCrmAttachments   CrmAttachment[]      @relation("CrmAttachmentUploadedBy")
 
   @@index([status])
   @@map("users")
@@ -192,6 +205,7 @@ model Contact {
   ownerUserId      String?           @map("owner_user_id") @db.VarChar(32)
   nextFollowupAt   DateTime?         @map("next_followup_at") @db.DateTime(3)
   initialContext   String?           @map("initial_context") @db.Text
+  followupAttention String?          @map("followup_attention") @db.Text
   remark           String?           @db.Text
   createdAt        DateTime          @default(now()) @map("created_at") @db.DateTime(3)
   updatedAt        DateTime          @updatedAt @map("updated_at") @db.DateTime(3)
@@ -230,15 +244,18 @@ model CrmLead {
   requirementSummary  String          @map("requirement_summary") @db.VarChar(200)
   requirementDetail   String?         @map("requirement_detail") @db.Text
   latestProgress      String?         @map("latest_progress") @db.Text
+  leadSource          String?         @map("lead_source") @db.VarChar(160)
   priority            CrmLeadPriority @default(MEDIUM)
   estimatedQuote      Decimal?        @map("estimated_quote") @db.Decimal(18, 2)
   currency            String?         @db.Char(3)
   projectDomain       String?         @map("project_domain") @db.VarChar(160)
   projectType         String?         @map("project_type") @db.VarChar(160)
-  technologyType      String?         @map("technology_type") @db.VarChar(160)
+  technologyType      String?         @map("technology_type") @db.Text
   productType         String?         @map("product_type") @db.VarChar(160)
   productName         String?         @map("product_name") @db.VarChar(240)
   resourceRequirement String?         @map("resource_requirement") @db.Text
+  collaborationGroups String?         @map("collaboration_groups") @db.Text
+  followMode          String?         @map("follow_mode") @db.VarChar(160)
   solution            String?         @db.Text
   remark              String?         @db.Text
   status              CrmLeadStatus   @default(NEW)
@@ -246,6 +263,10 @@ model CrmLead {
   followupOwnerUserId String?         @map("followup_owner_user_id") @db.VarChar(32)
   nextFollowupAt      DateTime?       @map("next_followup_at") @db.DateTime(3)
   lastFollowupAt      DateTime?       @map("last_followup_at") @db.DateTime(3)
+  wonAt               DateTime?       @map("won_at") @db.DateTime(3)
+  deliveryFollowupAt  DateTime?       @map("delivery_followup_at") @db.DateTime(3)
+  contractRenewalAt   DateTime?       @map("contract_renewal_at") @db.DateTime(3)
+  paymentReceivedAt   DateTime?       @map("payment_received_at") @db.DateTime(3)
   createdAt           DateTime        @default(now()) @map("created_at") @db.DateTime(3)
   updatedAt           DateTime        @updatedAt @map("updated_at") @db.DateTime(3)
   createdByUserId     String          @map("created_by_user_id") @db.VarChar(32)
@@ -254,7 +275,7 @@ model CrmLead {
   followupOwner       User?           @relation("CrmLeadFollowupOwner", fields: [followupOwnerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   createdBy           User            @relation("CrmLeadCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   followups           LeadFollowup[]
-  attachments         LeadAttachment[]
+  participants        CrmLeadParticipant[]
 
   @@index([contactId, updatedAt])
   @@index([status, updatedAt])
@@ -263,6 +284,7 @@ model CrmLead {
   @@index([followupOwnerUserId, updatedAt])
   @@index([nextFollowupAt])
   @@index([lastFollowupAt])
+  @@index([wonAt])
   @@map("crm_leads")
 }
 
@@ -284,23 +306,39 @@ model LeadFollowup {
   @@map("lead_followups")
 }
 
-model LeadAttachment {
-  id               String             @id @db.VarChar(32)
-  leadId           String             @map("lead_id") @db.VarChar(32)
-  originalName     String             @map("original_name") @db.VarChar(255)
-  mimeType         String             @map("mime_type") @db.VarChar(191)
-  kind             LeadAttachmentKind
-  sizeBytes        Int                @map("size_bytes") @db.UnsignedInt
-  fileHash         String             @map("file_hash") @db.Char(64)
-  storagePath      String             @map("storage_path") @db.VarChar(500)
-  uploadedByUserId String             @map("uploaded_by_user_id") @db.VarChar(32)
-  createdAt        DateTime           @default(now()) @map("created_at") @db.DateTime(3)
-  lead             CrmLead            @relation(fields: [leadId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  uploadedBy       User               @relation("LeadAttachmentUploadedBy", fields: [uploadedByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+model CrmLeadParticipant {
+  leadId    String   @map("lead_id") @db.VarChar(32)
+  userId    String   @map("user_id") @db.VarChar(32)
+  createdAt DateTime @default(now()) @map("created_at") @db.DateTime(3)
+  lead      CrmLead  @relation(fields: [leadId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  user      User     @relation("CrmLeadParticipantUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
-  @@index([leadId, createdAt])
+  @@id([leadId, userId])
+  @@index([userId, createdAt])
+  @@map("crm_lead_participants")
+}
+
+model CrmAttachment {
+  id               String                   @id @db.VarChar(32)
+  entityType       CrmAttachmentEntityType  @map("entity_type")
+  entityId         String                   @map("entity_id") @db.VarChar(32)
+  fieldKey         String                   @map("field_key") @db.VarChar(80)
+  storageType      CrmAttachmentStorageType @default(LOCAL) @map("storage_type")
+  originalName     String                   @map("original_name") @db.VarChar(255)
+  mimeType         String?                  @map("mime_type") @db.VarChar(191)
+  kind             CrmAttachmentKind?
+  fileSize         Int?                     @map("file_size") @db.UnsignedInt
+  fileHash         String?                  @map("file_hash") @db.Char(64)
+  storageKey       String?                  @map("storage_key") @db.VarChar(500)
+  externalUrl      String?                  @map("external_url") @db.VarChar(2048)
+  uploadedByUserId String                   @map("uploaded_by_user_id") @db.VarChar(32)
+  createdAt        DateTime                 @default(now()) @map("created_at") @db.DateTime(3)
+  uploadedBy       User                     @relation("CrmAttachmentUploadedBy", fields: [uploadedByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([entityType, entityId, fieldKey, createdAt])
   @@index([uploadedByUserId, createdAt])
-  @@map("lead_attachments")
+  @@index([createdAt])
+  @@map("crm_attachments")
 }
 
 model ImportJob {

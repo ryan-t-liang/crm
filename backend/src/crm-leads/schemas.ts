@@ -18,29 +18,39 @@ const optionalCurrency = z.preprocess(
   emptyToNull,
   z.string().trim().length(3).regex(/^[A-Z]{3}$/, "币种必须是 3 位大写代码").nullable().optional(),
 );
+const participantUserIdsSchema = z.array(z.string().trim().min(1).max(32)).max(50)
+  .transform((values) => [...new Set(values)]);
 
 const leadFields = {
   requirementDetail: optionalText(16_000),
   latestProgress: optionalText(16_000),
+  leadSource: optionalText(160),
   estimatedQuote: optionalQuote,
   currency: optionalCurrency,
   projectDomain: optionalText(160),
   projectType: optionalText(160),
-  technologyType: optionalText(160),
+  technologyType: optionalText(4_000),
   productType: optionalText(160),
   productName: optionalText(240),
   resourceRequirement: optionalText(16_000),
+  collaborationGroups: optionalText(8_000),
+  followMode: optionalText(160),
   solution: optionalText(16_000),
   remark: optionalText(16_000),
   salesOwnerUserId: optionalId,
   followupOwnerUserId: optionalId,
   nextFollowupAt: optionalDateTime,
+  wonAt: optionalDateTime,
+  deliveryFollowupAt: optionalDateTime,
+  contractRenewalAt: optionalDateTime,
+  paymentReceivedAt: optionalDateTime,
 } as const;
 
 export const crmLeadCreateSchema = z.object({
   contactId: z.string().trim().min(1).max(32),
   requirementSummary: z.string().trim().min(1).max(200),
   ...leadFields,
+  participantUserIds: participantUserIdsSchema.default([]),
   priority: prioritySchema.default("MEDIUM"),
   status: statusSchema.default("NEW"),
 }).strict().superRefine((value, context) => {
@@ -52,6 +62,7 @@ export const crmLeadCreateSchema = z.object({
 export const crmLeadPatchSchema = z.object({
   requirementSummary: z.string().trim().min(1).max(200).optional(),
   ...leadFields,
+  participantUserIds: participantUserIdsSchema.optional(),
   priority: prioritySchema.optional(),
   status: statusSchema.optional(),
 }).strict().refine((value) => Object.keys(value).length > 0, {

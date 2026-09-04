@@ -104,6 +104,7 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
     if (prisma) {
       const users = await prisma.user.findMany({ where: { loginAccount: { contains: runKey } }, select: { id: true } });
       const userIds = users.map((item) => item.id);
+      await prisma.crmAttachment.deleteMany({ where: { uploadedByUserId: { in: userIds } } });
       await prisma.importJob.deleteMany({ where: { createdBy: { in: userIds } } });
       await prisma.exportJob.deleteMany({ where: { createdBy: { in: userIds } } });
       await prisma.leadFollowup.deleteMany({ where: { lead: { createdByUserId: { in: userIds } } } });
@@ -120,8 +121,8 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
 
   it("下载联系人和线索导入模板", async () => {
     for (const [route, expected, forbidden] of [
-      ["contacts", ["contactName", "companyName", "owner"], ["brandId", "customerId"]],
-      ["leads", ["contactId", "requirementSummary", "salesOwner"], ["contactName", "email", "brandId"]],
+      ["contacts", ["contactName", "companyName", "owner", "followupAttention", "meetingMinutesFiles"], ["brandId", "customerId"]],
+      ["leads", ["contactId", "requirementSummary", "salesOwner", "participantUsers", "proposalFiles", "wonAt"], ["contactName", "email", "brandId"]],
     ] as const) {
       const response = await inject({ method: "GET", url: `/api/v1/crm/templates/${route}` });
       expect(response.statusCode).toBe(200);
@@ -135,23 +136,25 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
 
   it("联系人导入执行预检并生成失败明细", async () => {
     const response = await upload("contacts", [
-      { contactName: `导入联系人 ${runKey}`, email: `imported-${runKey}@example.test`, stage: "1v1", owner: adminId },
+      { contactName: `导入联系人 ${runKey}`, email: `imported-${runKey}@example.test`, stage: "1v1", owner: adminId, followupAttention: "持续确认素材", meetingMinutesFiles: "保密协议.pdf" },
       { contactName: "", email: `invalid-${runKey}@example.test` },
     ]);
     expect(response.statusCode).toBe(201);
     const job = response.json().data;
     expect(job).not.toHaveProperty("brandId");
-    expect(job.preflight).toMatchObject({ totalRows: 2, importableRows: 1, errorRows: 1 });
+    expect(job.preflight).toMatchObject({ totalRows: 2, importableRows: 1, warningRows: 1, errorRows: 1 });
+    expect(job.rows[0].warnings[0].code).toBe("ATTACHMENT_FILE_NOT_AVAILABLE");
     const executed = await inject({ method: "POST", url: `/api/v1/crm/imports/${job.id}/execute`, payload: {} });
     expect(executed.statusCode).toBe(200);
     expect(executed.json().data.job).toMatchObject({ status: "COMPLETED_WITH_ERRORS", successCount: 1, failedCount: 1 });
-    expect(await prisma.contact.count({ where: { email: `imported-${runKey}@example.test`, stage: "ONE_TO_ONE" } })).toBe(1);
+    const importedContact = await prisma.contact.findFirstOrThrow({ where: { email: `imported-${runKey}@example.test`, stage: "ONE_TO_ONE" } });
+    expect(importedContact).toMatchObject({ createdByUserId: adminId, followupAttention: "持续确认素材" });
     expect((await inject({ method: "GET", url: `/api/v1/crm/imports/${job.id}/failures` })).statusCode).toBe(200);
   });
 
   it("线索导入必须关联现有联系人", async () => {
     const response = await upload("leads", [
-      { contactId, requirementSummary: `AR 服务合作 ${runKey}`, status: "方案", priority: "高", estimatedQuote: "120000.50", currency: "CNY", salesOwner: adminId },
+      { contactId, requirementSummary: `AR 服务合作 ${runKey}`, status: "方案", priority: "高", estimatedQuote: "120000.50", currency: "CNY", salesOwner: adminId, participantUsers: adminId, leadSource: "Kiviman", proposalFiles: "https://files.example.com/proposal.pptx" },
       { contactId: "missing-contact", requirementSummary: `无效线索 ${runKey}` },
     ]);
     expect(response.statusCode).toBe(201);
@@ -159,8 +162,10 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
     const executed = await inject({ method: "POST", url: `/api/v1/crm/imports/${response.json().data.id}/execute`, payload: {} });
     expect(executed.statusCode).toBe(200);
     const lead = await prisma.crmLead.findFirstOrThrow({ where: { requirementSummary: `AR 服务合作 ${runKey}` } });
-    expect(lead).toMatchObject({ contactId, status: "SOLUTION", priority: "HIGH", salesOwnerUserId: adminId });
+    expect(lead).toMatchObject({ contactId, status: "SOLUTION", priority: "HIGH", salesOwnerUserId: adminId, createdByUserId: adminId, leadSource: "Kiviman" });
     expect(lead.estimatedQuote?.toString()).toBe("120000.5");
+    expect(await prisma.crmLeadParticipant.count({ where: { leadId: lead.id, userId: adminId } })).toBe(1);
+    expect(await prisma.crmAttachment.count({ where: { entityType: "LEAD", entityId: lead.id, fieldKey: "proposalFiles", storageType: "EXTERNAL_URL" } })).toBe(1);
   });
 
   it("联系人和线索导出包含实时关联信息", async () => {
@@ -178,6 +183,7 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
     await book.xlsx.load(download.rawPayload as never);
     const sheet = book.worksheets[0]!;
     const header = headers(sheet);
+    expect(header).toEqual(expect.arrayContaining(["客户来源", "正式方案文件", "Leads 参与人员", "创建人", "成交日期"]));
     const contactColumn = header.indexOf("客户联系人编号") + 1;
     const emailColumn = header.indexOf("联系人电子邮箱") + 1;
     const row = Array.from({ length: sheet.rowCount - 1 }, (_, index) => index + 2).find((number) => String(sheet.getCell(number, contactColumn).value) === contactId);

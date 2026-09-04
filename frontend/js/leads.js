@@ -17,8 +17,16 @@ let removedAttachmentIds = new Set();
 let existingAttachments = [];
 let formLeadId = null;
 const listState = { page: 1, pageSize: 20, pageCount: 1, total: 0 };
-const attachmentExtensions = new Set(["jpg", "jpeg", "png", "gif", "webp", "mp4", "webm", "mov", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt", "csv", "rtf"]);
-const maxAttachmentBytes = 100 * 1024 * 1024;
+const attachmentExtensions = new Set(["jpg", "jpeg", "png", "gif", "webp", "mp4", "webm", "mov", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt"]);
+const imageExtensions = new Set(["jpg", "jpeg", "png", "gif", "webp"]);
+const videoExtensions = new Set(["mp4", "webm", "mov"]);
+const maxAttachmentBytes = 50 * 1024 * 1024;
+const leadAttachmentFields = [
+  { key: "requirementFiles", label: "需求 / 签署文件", accept: ".jpg,.jpeg,.png,.gif,.webp,.mp4,.webm,.mov,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt", kinds: ["IMAGE", "VIDEO", "DOCUMENT"] },
+  { key: "requirementImages", label: "图片需求", accept: ".jpg,.jpeg,.png,.gif,.webp", kinds: ["IMAGE"] },
+  { key: "proposalFiles", label: "正式方案文件", accept: ".jpg,.jpeg,.png,.gif,.webp,.mp4,.webm,.mov,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt", kinds: ["IMAGE", "VIDEO", "DOCUMENT"] },
+  { key: "quotationFiles", label: "报价单", accept: ".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt", kinds: ["IMAGE", "DOCUMENT"] },
+];
 
 export function buildLeadQuery(filters, page = 1, now = new Date()) {
   const params = new URLSearchParams({ page: String(page), pageSize: String(filters.pageSize || 20), orderBy: "updatedAt_desc" });
@@ -208,6 +216,7 @@ function fieldTile(label, value, wide = false) {
 }
 
 function formatFileSize(bytes) {
+  if (bytes === null || bytes === undefined) return "大小未知";
   const value = Number(bytes || 0);
   if (value < 1024) return `${value} B`;
   if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
@@ -222,33 +231,46 @@ function attachmentUrl(leadId, attachmentId) {
   return appUrl(`/api/v1/crm/leads/${encodeURIComponent(leadId)}/attachments/${encodeURIComponent(attachmentId)}/download`);
 }
 
-function attachmentDetailMarkup(lead) {
-  const attachments = lead.attachments || [];
-  if (!attachments.length) return '<div class="crm-attachment-empty"><svg><use href="#i-paperclip"/></svg><span>暂无需求附件</span></div>';
+function attachmentDetailMarkup(lead, fieldKey, emptyLabel) {
+  const attachments = (lead.attachments || []).filter((attachment) => attachment.fieldKey === fieldKey);
+  if (!attachments.length) return `<div class="crm-attachment-empty"><svg><use href="#i-paperclip"/></svg><span>${esc(emptyLabel)}</span></div>`;
   return `<div class="crm-detail-attachments">${attachments.map((attachment) => {
     const url = attachmentUrl(lead.id, attachment.id);
-    return `<a class="crm-detail-attachment" href="${esc(url)}" target="_blank" rel="noopener"><span class="crm-detail-attachment-preview">${attachment.kind === "IMAGE" ? `<img src="${esc(url)}" alt="" loading="lazy">` : `<svg><use href="#${attachmentIcon(attachment.kind)}"/></svg>`}</span><span><strong>${esc(attachment.originalName)}</strong><small>${esc(formatFileSize(attachment.sizeBytes))} · ${esc(formatLocalDateTime(attachment.createdAt))}</small></span><svg class="crm-forward-icon"><use href="#i-chevron"/></svg></a>`;
+    const preview = attachment.kind === "IMAGE"
+      ? `<img src="${esc(url)}" alt="${esc(attachment.originalName)}" loading="lazy">`
+      : attachment.kind === "VIDEO"
+        ? `<video src="${esc(url)}" controls preload="metadata"></video>`
+        : `<svg><use href="#${attachmentIcon(attachment.kind)}"/></svg>`;
+    return `<article class="crm-detail-attachment"><span class="crm-detail-attachment-preview">${preview}</span><span><strong>${esc(attachment.originalName)}</strong><small>${esc(formatFileSize(attachment.fileSize))} · ${esc(attachment.uploadedBy?.name || "-")} · ${esc(formatLocalDateTime(attachment.createdAt))}</small></span><a class="btn btn-small" href="${esc(url)}" target="_blank" rel="noopener">查看</a><a class="btn btn-small" href="${esc(url)}" download>下载</a></article>`;
   }).join("")}</div>`;
 }
 
 function overviewMarkup(lead) {
   return [
-    identityField("状态", leadStatusLabel(lead.status)), identityField("优先级", leadPriorityLabel(lead.priority)),
-    identityField("销售负责人", lead.salesOwner?.name), identityField("跟进负责人", lead.followupOwner?.name),
-    identityField("下次跟进", formatLocalDateTime(lead.nextFollowupAt)), identityField("最近跟进", formatLocalDateTime(lead.lastFollowupAt)),
-    identityField("预计报价", quoteDisplay(lead), true),
+    identityField("线索阶段", leadStatusLabel(lead.status)), identityField("优先级", leadPriorityLabel(lead.priority)),
+    identityField("销售对接人", lead.salesOwner?.name), identityField("跟进对接人", lead.followupOwner?.name),
+    identityField("Leads 参与人员", (lead.participants || []).map((item) => item.user?.name).filter(Boolean).join("、"), true),
+    identityField("跟单模式", lead.followMode), identityField("对接群", lead.collaborationGroups, true),
+    identityField("下次跟进", formatLocalDateTime(lead.nextFollowupAt)), identityField("最近沟通", formatLocalDateTime(lead.lastFollowupAt)),
+    identityField("预计报价", quoteDisplay(lead)), identityField("成交日期", formatLocalDateTime(lead.wonAt)),
+    identityField("交付跟进日期", formatLocalDateTime(lead.deliveryFollowupAt)), identityField("合同续约日期", formatLocalDateTime(lead.contractRenewalAt)),
+    identityField("收款日期", formatLocalDateTime(lead.paymentReceivedAt), true),
   ].join("");
 }
 
 function contactMarkup(contact) {
   return [
     identityField("客户联系人", contact.contactName), identityField("公司", contact.companyShortName || contact.companyName),
-    identityField("职位", contact.title), identityField("Email", contact.email), identityField("Phone", contact.phone, true),
+    identityField("职位", contact.title), identityField("Email", contact.email), identityField("Phone", contact.phone), identityField("微信", contact.wechat, true),
   ].join("");
 }
 
 function requirementMarkup(lead) {
-  return `<div class="field-groups"><section><div class="subgroup-title">A. 基本需求</div><div class="field-grid">${fieldTile("项目需求简述", lead.requirementSummary, true)}${fieldTile("需求详情", lead.requirementDetail, true)}</div></section><section><div class="subgroup-title">B. 需求附件</div>${attachmentDetailMarkup(lead)}</section><section><div class="subgroup-title">C. 项目信息</div><div class="field-grid">${fieldTile("项目领域", lead.projectDomain)}${fieldTile("项目类型", lead.projectType)}${fieldTile("技术类型", lead.technologyType)}${fieldTile("产品类型", lead.productType)}${fieldTile("产品名称", lead.productName)}${fieldTile("资源需求", lead.resourceRequirement, true)}</div></section><section><div class="subgroup-title">D. 方案与进展</div><div class="field-grid">${fieldTile("方案", lead.solution, true)}${fieldTile("最近进展", lead.latestProgress, true)}</div></section></div>`;
+  return `<div class="field-groups"><section><div class="subgroup-title">A. 需求内容</div><div class="field-grid">${fieldTile("项目需求简述", lead.requirementSummary, true)}${fieldTile("需求整理", lead.requirementDetail, true)}${fieldTile("客户来源", lead.leadSource, true)}</div><div class="crm-inline-attachment-section"><h4>需求 / 签署文件</h4>${attachmentDetailMarkup(lead, "requirementFiles", "暂无需求 / 签署文件")}</div><div class="crm-inline-attachment-section"><h4>图片需求</h4>${attachmentDetailMarkup(lead, "requirementImages", "暂无图片需求")}</div></section><section><div class="subgroup-title">B. 项目分类</div><div class="field-grid">${fieldTile("项目领域", lead.projectDomain)}${fieldTile("项目类型", lead.projectType)}${fieldTile("技术类型", lead.technologyType)}${fieldTile("产品类型", lead.productType)}${fieldTile("产品名称", lead.productName)}${fieldTile("资源需求", lead.resourceRequirement, true)}</div></section><section><div class="subgroup-title">C. 方案与商务</div><div class="crm-inline-attachment-section"><h4>正式方案文件</h4>${attachmentDetailMarkup(lead, "proposalFiles", "暂无正式方案文件")}</div><div class="field-grid">${fieldTile("方案说明", lead.solution, true)}${fieldTile("最新进度", lead.latestProgress, true)}${fieldTile("预计报价", quoteDisplay(lead), true)}</div><div class="crm-inline-attachment-section"><h4>报价单</h4>${attachmentDetailMarkup(lead, "quotationFiles", "暂无报价单")}</div></section></div>`;
+}
+
+function leadSystemInformationMarkup(lead) {
+  return [identityField("创建人", lead.createdBy?.name), identityField("创建时间", formatLocalDateTime(lead.createdAt)), identityField("最后编辑时间", formatLocalDateTime(lead.updatedAt), true)].join("");
 }
 
 function renderLeadNote(lead) {
@@ -256,7 +278,7 @@ function renderLeadNote(lead) {
   return `<div class="notes-list"><article class="note-item"><div class="note-head"><span class="mini-avatar">${esc((lead.createdBy?.name || "系").slice(0, 1))}</span><span class="note-author"><strong>${esc(lead.createdBy?.name || "系统记录")}</strong><time>${esc(formatLocalDateTime(lead.updatedAt))}</time></span></div><p>${esc(lead.remark)}</p></article></div>`;
 }
 
-const leadAuditLabel = (action) => ({ CREATE_CRM_LEAD: "创建线索", UPDATE_CRM_LEAD: "编辑线索", DELETE_CRM_LEAD: "删除线索", CREATE_LEAD_FOLLOWUP: "新增线索跟进", UPLOAD_LEAD_ATTACHMENT: "上传需求附件", DELETE_LEAD_ATTACHMENT: "删除需求附件" })[action] || action;
+const leadAuditLabel = (action) => ({ CREATE_CRM_LEAD: "创建线索", UPDATE_CRM_LEAD: "编辑线索", DELETE_CRM_LEAD: "删除线索", CREATE_LEAD_FOLLOWUP: "新增线索跟进", UPLOAD_ATTACHMENT: "上传附件", DELETE_ATTACHMENT: "删除附件", DOWNLOAD_ATTACHMENT: "下载附件" })[action] || action;
 
 function renderLeadAudit(items, lead, allowed) {
   if (!allowed) return '<div class="empty-state crm-compact-empty"><div><div class="empty-illustration"><svg><use href="#i-lock"/></svg></div><h3>当前角色无权查看操作记录</h3></div></div>';
@@ -288,7 +310,7 @@ export async function openLead(id) {
     context.state.currentCrmLead = lead;
     container.innerHTML = `<div class="crm-record v1-detail">
       <header class="detail-top"><button class="back-button" id="crmBackToLeads" type="button" aria-label="返回线索列表"><svg><use href="#i-arrow"/></svg></button><div class="detail-identity"><div class="detail-avatar">${esc(lead.contact.contactName.trim().slice(0, 1).toUpperCase() || "线")}</div><div><div class="detail-name-line"><h1>${esc(lead.requirementSummary)}</h1><span class="crm-badge crm-status-${esc(lead.status.toLowerCase())}">${esc(leadStatusLabel(lead.status))}</span><span class="crm-badge crm-priority-${esc(lead.priority.toLowerCase())}">${esc(leadPriorityLabel(lead.priority))}</span></div><div class="detail-contact-row"><span>${esc(lead.contact.contactName)}</span><span>${esc(lead.contact.companyShortName || lead.contact.companyName || "-")}</span></div></div></div><div class="detail-top-actions"><button class="btn" id="crmEditLead" type="button" data-crm-permission="crm.lead.edit"><svg><use href="#i-edit"/></svg>编辑线索</button><button class="btn btn-primary" id="crmAddLeadFollowup" type="button" data-crm-permission="crm.lead_followup.create"><svg><use href="#i-plus"/></svg>新增跟进</button></div></header>
-      <div class="detail-grid"><aside class="detail-column detail-side"><article class="content-card customer-identity-card"><div class="content-card-header"><svg class="icon"><use href="#i-lead"/></svg><h3>线索概览</h3></div><div class="customer-identity-grid">${overviewMarkup(lead)}</div></article><article class="content-card customer-identity-card"><div class="content-card-header"><svg class="icon"><use href="#i-user"/></svg><h3>关联联系人</h3><span class="spacer"></span><button class="btn btn-small" id="crmViewLeadContact" type="button">查看联系人</button></div><div class="customer-identity-grid">${contactMarkup(lead.contact)}</div></article></aside>
+      <div class="detail-grid"><aside class="detail-column detail-side"><article class="content-card customer-identity-card"><div class="content-card-header"><svg class="icon"><use href="#i-lead"/></svg><h3>线索概览</h3></div><div class="customer-identity-grid">${overviewMarkup(lead)}</div></article><article class="content-card customer-identity-card"><div class="content-card-header"><svg class="icon"><use href="#i-user"/></svg><h3>关联联系人</h3><span class="spacer"></span><button class="btn btn-small" id="crmViewLeadContact" type="button">查看联系人</button></div><div class="customer-identity-grid">${contactMarkup(lead.contact)}</div></article><article class="content-card customer-identity-card crm-system-card"><div class="content-card-header"><svg class="icon"><use href="#i-file"/></svg><h3>系统信息</h3></div><div class="customer-identity-grid">${leadSystemInformationMarkup(lead)}</div></article></aside>
       <section class="detail-column operations-main"><nav class="detail-tabs" aria-label="线索详情业务模块"><button class="detail-tab is-active" type="button" data-detail-tab="requirement">需求信息</button><button class="detail-tab" type="button" data-detail-tab="followups">跟进记录 ${followupResult.meta.total}</button><button class="detail-tab" type="button" data-detail-tab="notes">备注 ${lead.remark ? 1 : 0}</button><button class="detail-tab" type="button" data-detail-tab="activity">操作记录</button></nav>
         <div class="tab-panel is-active" data-detail-panel="requirement"><section class="content-card"><div class="list-card-header"><div><h2>需求信息</h2></div></div>${requirementMarkup(lead)}</section></div>
         <div class="tab-panel" data-detail-panel="followups"><section class="content-card"><div class="list-card-header"><div><h2>跟进记录</h2></div><span class="spacer"></span><button class="btn btn-primary btn-small" id="crmPanelAddLeadFollowup" type="button" data-crm-permission="crm.lead_followup.create"><svg><use href="#i-plus"/></svg>新增跟进</button></div><div class="timeline">${renderTimelineMarkup(followupResult.data, "lead")}</div></section></div>
@@ -336,7 +358,7 @@ function attachmentKindForFile(file) {
 
 function attachmentEditorMarkup() {
   const canEdit = context.can("crm.lead.edit");
-  return `<section class="crm-form-section crm-attachment-section" id="crmLeadAttachmentSection"><header><h3>需求附件</h3><span>选填 · 最多 20 个</span></header><p class="crm-attachment-guidance">可在上方补充文字需求，也可上传图片、视频或文档。单个附件不超过 100 MB。</p>${canEdit ? '<label class="crm-attachment-dropzone" id="crmLeadAttachmentDropzone"><input id="crmLeadAttachmentInput" type="file" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.mp4,.webm,.mov,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf"><svg><use href="#i-paperclip"/></svg><span><strong>选择附件</strong><small>或将文件拖放到这里</small></span></label>' : '<div class="crm-attachment-disabled">当前角色无权修改附件</div>'}<div class="crm-attachment-list" id="crmLeadAttachmentList"></div><div class="crm-attachment-error" id="crmLeadAttachmentError" role="alert" hidden></div></section>`;
+  return `<section class="crm-form-section crm-attachment-section" id="crmLeadAttachmentSection"><header><h3>附件字段</h3><span>每个字段最多 20 个</span></header><p class="crm-attachment-guidance">每个文件会保存到明确的业务字段。支持图片、视频和文档，单个文件不超过 50 MB。</p><div class="crm-attachment-field-grid">${leadAttachmentFields.map((field) => `<section class="crm-attachment-field" data-attachment-field="${esc(field.key)}"><h4>${esc(field.label)}</h4>${canEdit ? `<label class="crm-attachment-dropzone" data-attachment-dropzone="${esc(field.key)}"><input id="crmLeadAttachmentInput-${esc(field.key)}" data-attachment-input="${esc(field.key)}" type="file" multiple accept="${esc(field.accept)}"><svg><use href="#i-paperclip"/></svg><span><strong>选择文件</strong><small>或拖放到这里</small></span></label>` : '<div class="crm-attachment-disabled">当前角色无权修改附件</div>'}<div class="crm-attachment-list" data-attachment-list="${esc(field.key)}"></div></section>`).join("")}</div><div class="crm-attachment-error" id="crmLeadAttachmentError" role="alert" hidden></div></section>`;
 }
 
 function showAttachmentError(message = "") {
@@ -347,54 +369,48 @@ function showAttachmentError(message = "") {
 }
 
 function renderAttachmentEditor() {
-  const list = $("crmLeadAttachmentList");
-  if (!list) return;
-  const existing = existingAttachments.filter((attachment) => !removedAttachmentIds.has(attachment.id));
-  const rows = [
-    ...existing.map((attachment) => `<div class="crm-attachment-row"><span class="crm-attachment-type"><svg><use href="#${attachmentIcon(attachment.kind)}"/></svg></span><span><strong>${esc(attachment.originalName)}</strong><small>已上传 · ${esc(formatFileSize(attachment.sizeBytes))}</small></span>${formLeadId ? `<a class="crm-attachment-open" href="${esc(attachmentUrl(formLeadId, attachment.id))}" target="_blank" rel="noopener">查看</a>` : ""}<button class="crm-attachment-remove" type="button" data-remove-existing="${esc(attachment.id)}" aria-label="移除附件 ${esc(attachment.originalName)}"><svg><use href="#i-trash"/></svg></button></div>`),
-    ...pendingAttachments.map((file, index) => `<div class="crm-attachment-row is-pending"><span class="crm-attachment-type"><svg><use href="#${attachmentIcon(attachmentKindForFile(file))}"/></svg></span><span><strong>${esc(file.name)}</strong><small>待上传 · ${esc(formatFileSize(file.size))}</small></span><span class="crm-attachment-pending">待保存</span><button class="crm-attachment-remove" type="button" data-remove-pending="${index}" aria-label="移除待上传附件 ${esc(file.name)}"><svg><use href="#i-x"/></svg></button></div>`),
-  ];
-  list.innerHTML = rows.length ? rows.join("") : '<div class="crm-attachment-empty"><svg><use href="#i-paperclip"/></svg><span>尚未添加附件</span></div>';
-  list.querySelectorAll("[data-remove-existing]").forEach((button) => button.addEventListener("click", () => {
-    removedAttachmentIds.add(button.dataset.removeExisting);
-    renderAttachmentEditor();
-  }));
-  list.querySelectorAll("[data-remove-pending]").forEach((button) => button.addEventListener("click", () => {
-    pendingAttachments.splice(Number(button.dataset.removePending), 1);
-    renderAttachmentEditor();
-  }));
+  for (const field of leadAttachmentFields) {
+    const list = document.querySelector(`[data-attachment-list="${field.key}"]`);
+    if (!list) continue;
+    const existing = existingAttachments.filter((attachment) => attachment.fieldKey === field.key && !removedAttachmentIds.has(attachment.id));
+    const pending = pendingAttachments.map((item, index) => ({ ...item, index })).filter((item) => item.fieldKey === field.key);
+    const rows = [
+      ...existing.map((attachment) => `<div class="crm-attachment-row"><span class="crm-attachment-type"><svg><use href="#${attachmentIcon(attachment.kind)}"/></svg></span><span><strong>${esc(attachment.originalName)}</strong><small>${esc(attachment.uploadedBy?.name || "已上传")} · ${esc(formatFileSize(attachment.fileSize))} · ${esc(formatLocalDateTime(attachment.createdAt))}</small></span>${formLeadId ? `<a class="crm-attachment-open" href="${esc(attachmentUrl(formLeadId, attachment.id))}" target="_blank" rel="noopener">查看</a>` : ""}<button class="crm-attachment-remove" type="button" data-remove-existing="${esc(attachment.id)}" aria-label="移除附件 ${esc(attachment.originalName)}"><svg><use href="#i-trash"/></svg></button></div>`),
+      ...pending.map((item) => `<div class="crm-attachment-row is-pending"><span class="crm-attachment-type"><svg><use href="#${attachmentIcon(attachmentKindForFile(item.file))}"/></svg></span><span><strong>${esc(item.file.name)}</strong><small>待上传 · ${esc(formatFileSize(item.file.size))}</small></span><span class="crm-attachment-pending">待保存</span><button class="crm-attachment-remove" type="button" data-remove-pending="${item.index}" aria-label="移除待上传附件 ${esc(item.file.name)}"><svg><use href="#i-x"/></svg></button></div>`),
+    ];
+    list.innerHTML = rows.length ? rows.join("") : '<div class="crm-attachment-empty"><svg><use href="#i-paperclip"/></svg><span>尚未添加文件</span></div>';
+  }
+  document.querySelectorAll("[data-remove-existing]").forEach((button) => button.addEventListener("click", () => { removedAttachmentIds.add(button.dataset.removeExisting); renderAttachmentEditor(); }));
+  document.querySelectorAll("[data-remove-pending]").forEach((button) => button.addEventListener("click", () => { pendingAttachments.splice(Number(button.dataset.removePending), 1); renderAttachmentEditor(); }));
 }
 
-function addAttachmentFiles(files) {
+function addAttachmentFiles(fieldKey, files) {
   showAttachmentError();
   const rejected = [];
+  const field = leadAttachmentFields.find((item) => item.key === fieldKey);
+  if (!field) return;
   for (const file of Array.from(files || [])) {
     const extension = file.name.split(".").pop()?.toLowerCase() || "";
-    if (!attachmentExtensions.has(extension)) rejected.push(`${file.name}：格式不支持`);
+    const kind = imageExtensions.has(extension) ? "IMAGE" : videoExtensions.has(extension) ? "VIDEO" : "DOCUMENT";
+    if (!attachmentExtensions.has(extension) || !field.kinds.includes(kind)) rejected.push(`${file.name}：格式不适用于${field.label}`);
     else if (file.size <= 0) rejected.push(`${file.name}：文件为空`);
-    else if (file.size > maxAttachmentBytes) rejected.push(`${file.name}：超过 100 MB`);
-    else if (existingAttachments.length - removedAttachmentIds.size + pendingAttachments.length >= 20) rejected.push(`${file.name}：已达到 20 个附件上限`);
-    else if (!pendingAttachments.some((item) => item.name === file.name && item.size === file.size && item.lastModified === file.lastModified)) pendingAttachments.push(file);
+    else if (file.size > maxAttachmentBytes) rejected.push(`${file.name}：超过 50 MB`);
+    else if (existingAttachments.filter((item) => item.fieldKey === fieldKey && !removedAttachmentIds.has(item.id)).length + pendingAttachments.filter((item) => item.fieldKey === fieldKey).length >= 20) rejected.push(`${file.name}：该字段已达到 20 个文件上限`);
+    else if (!pendingAttachments.some((item) => item.fieldKey === fieldKey && item.file.name === file.name && item.file.size === file.size && item.file.lastModified === file.lastModified)) pendingAttachments.push({ fieldKey, file });
   }
   renderAttachmentEditor();
   if (rejected.length) showAttachmentError(rejected.join("；"));
-  const input = $("crmLeadAttachmentInput");
+  const input = $(`crmLeadAttachmentInput-${fieldKey}`);
   if (input) input.value = "";
 }
 
 function bindAttachmentEditor() {
-  $("crmLeadAttachmentInput")?.addEventListener("change", (event) => addAttachmentFiles(event.target.files));
-  const dropzone = $("crmLeadAttachmentDropzone");
-  if (!dropzone) return;
-  for (const eventName of ["dragenter", "dragover"]) dropzone.addEventListener(eventName, (event) => {
-    event.preventDefault();
-    dropzone.classList.add("is-dragging");
+  document.querySelectorAll("[data-attachment-input]").forEach((input) => input.addEventListener("change", (event) => addAttachmentFiles(input.dataset.attachmentInput, event.target.files)));
+  document.querySelectorAll("[data-attachment-dropzone]").forEach((dropzone) => {
+    for (const eventName of ["dragenter", "dragover"]) dropzone.addEventListener(eventName, (event) => { event.preventDefault(); dropzone.classList.add("is-dragging"); });
+    for (const eventName of ["dragleave", "drop"]) dropzone.addEventListener(eventName, (event) => { event.preventDefault(); dropzone.classList.remove("is-dragging"); });
+    dropzone.addEventListener("drop", (event) => addAttachmentFiles(dropzone.dataset.attachmentDropzone, event.dataTransfer.files));
   });
-  for (const eventName of ["dragleave", "drop"]) dropzone.addEventListener(eventName, (event) => {
-    event.preventDefault();
-    dropzone.classList.remove("is-dragging");
-  });
-  dropzone.addEventListener("drop", (event) => addAttachmentFiles(event.dataTransfer.files));
 }
 
 export async function openLeadForm(contact = null, lead = null) {
@@ -410,14 +426,17 @@ export async function openLeadForm(contact = null, lead = null) {
   $("crmLeadContactPicker").hidden = Boolean(selectedContact);
   closeContactDropdown();
   renderSelectedContact();
-  $("crmLeadFormFields").innerHTML = renderFormSections(LEAD_FIELDS, lead || { priority: "MEDIUM", status: "NEW", currency: "CNY", salesOwnerUserId: context.currentUserId(), followupOwnerUserId: context.currentUserId() }, context.getUsers(), {
-    basic: "基本信息",
-    requirement: "需求信息",
-    commercial: "商务信息",
-    solution: "方案与跟进",
+  const formValues = lead
+    ? { ...lead, participantUserIds: (lead.participants || []).map((item) => item.user?.id).filter(Boolean) }
+    : { priority: "MEDIUM", status: "NEW", currency: "CNY", salesOwnerUserId: context.currentUserId(), followupOwnerUserId: context.currentUserId(), participantUserIds: [] };
+  $("crmLeadFormFields").innerHTML = renderFormSections(LEAD_FIELDS, formValues, context.getUsers(), {
+    overview: "线索概览",
+    requirement: "需求内容",
+    classification: "项目分类",
+    commercial: "方案与商务",
     remark: "备注",
   });
-  $("crmLeadFormFields").querySelector('[data-form-section="requirement"]')?.insertAdjacentHTML("afterend", attachmentEditorMarkup());
+  $("crmLeadFormFields").insertAdjacentHTML("beforeend", attachmentEditorMarkup());
   bindAttachmentEditor();
   renderAttachmentEditor();
   $("crmLeadFormError").hidden = true;
@@ -520,15 +539,15 @@ async function syncLeadAttachments(leadId) {
       failures.push(`${attachment?.originalName || "附件"}：${friendlyError(error).message}`);
     }
   }
-  for (const file of [...pendingAttachments]) {
+  for (const item of [...pendingAttachments]) {
     const body = new FormData();
-    body.append("file", file, file.name);
+    body.append("file", item.file, item.file.name);
     try {
-      const result = await crmApi(`/api/v1/crm/leads/${leadId}/attachments`, { method: "POST", body });
+      const result = await crmApi(`/api/v1/crm/leads/${leadId}/attachments/${item.fieldKey}`, { method: "POST", body });
       existingAttachments.push(result.data);
-      pendingAttachments = pendingAttachments.filter((item) => item !== file);
+      pendingAttachments = pendingAttachments.filter((pending) => pending !== item);
     } catch (error) {
-      failures.push(`${file.name}：${friendlyError(error).message}`);
+      failures.push(`${item.file.name}：${friendlyError(error).message}`);
     }
   }
   renderAttachmentEditor();

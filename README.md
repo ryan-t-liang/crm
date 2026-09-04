@@ -54,8 +54,8 @@ Kivisense 公司内部客户关系管理系统。系统以“客户联系人一�
 | `COOKIE_SECURE` | HTTPS 环境应设为 `true` |
 | `CORS_ORIGIN` | 允许的浏览器 Origin |
 | `TRUST_PROXY` | 通过可信反向代理部署时设为 `true` |
-| `STORAGE_DIR` | 导入导出文件与线索附件存储目录 |
-| `MAX_ATTACHMENT_BYTES` | 单个线索附件大小上限，默认 `104857600`（100 MB） |
+| `STORAGE_DIR` | 导入导出文件与通用 CRM 附件存储目录 |
+| `CRM_ATTACHMENT_MAX_BYTES` | 单个 CRM 附件大小上限，默认 `52428800`（50 MB） |
 | `PORT` | 后端监听端口 |
 
 生产或 UAT Secret 不得提交到 Git。

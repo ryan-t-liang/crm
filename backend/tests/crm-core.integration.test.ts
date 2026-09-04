@@ -72,7 +72,7 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core", () => {
       appBasePath: "",
       trustProxy: false,
       maxBodyBytes: 10 * 1024 * 1024,
-      maxAttachmentBytes: 100 * 1024 * 1024,
+      maxAttachmentBytes: 1024 * 1024,
       storageDir,
     };
     const [adminRole, salesRole, viewerRole] = await Promise.all([
@@ -102,6 +102,7 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core", () => {
     const contactIds = contacts.map((item) => item.id);
     const leads = await prisma.crmLead.findMany({ where: { createdByUserId: { in: userIds } }, select: { id: true } });
     const leadIds = leads.map((item) => item.id);
+    await prisma.crmAttachment.deleteMany({ where: { uploadedByUserId: { in: userIds } } });
     await prisma.leadFollowup.deleteMany({ where: { leadId: { in: leadIds } } });
     await prisma.contactFollowup.deleteMany({ where: { contactId: { in: contactIds } } });
     await prisma.crmLead.deleteMany({ where: { id: { in: leadIds } } });
@@ -143,10 +144,11 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core", () => {
       },
     });
     expect(created.statusCode).toBe(201);
+    expect(created.json().data.createdBy.id).toBe(salesId);
     contactId = created.json().data.id;
-    const updated = await inject({ method: "PATCH", url: `/api/v1/crm/contacts/${contactId}`, payload: { stage: "ONE_TO_ONE", title: "业务发展总监" } });
+    const updated = await inject({ method: "PATCH", url: `/api/v1/crm/contacts/${contactId}`, payload: { stage: "ONE_TO_ONE", title: "业务发展总监", followupAttention: "持续关注交付时间" } });
     expect(updated.statusCode).toBe(200);
-    expect(updated.json().data).toMatchObject({ stage: "ONE_TO_ONE", title: "业务发展总监" });
+    expect(updated.json().data).toMatchObject({ stage: "ONE_TO_ONE", title: "业务发展总监", followupAttention: "持续关注交付时间" });
   });
 
   it("联系人跟进只能追加，不能编辑或删除", async () => {
@@ -197,56 +199,92 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core", () => {
     expect((await prisma.crmLead.findUniqueOrThrow({ where: { id: leadId } })).lastFollowupAt).not.toBeNull();
   });
 
-  it("线索支持图片、视频和文档附件，且响应不暴露存储路径", async () => {
+  it("线索支持多参与人员和成交日期只写一次", async () => {
+    const updated = await inject({ method: "PATCH", url: `/api/v1/crm/leads/${leadId}`, payload: { participantUserIds: [salesId, adminId, salesId], leadSource: "Kiviman", collaborationGroups: "客户项目群\n交付群", followMode: "顾问式跟进", status: "WON" } });
+    expect(updated.statusCode).toBe(200);
+    expect(updated.json().data.participants.map((item: { user: { id: string } }) => item.user.id).sort()).toEqual([adminId, salesId].sort());
+    const firstWonAt = updated.json().data.wonAt;
+    expect(firstWonAt).toBeTruthy();
+    const edited = await inject({ method: "PATCH", url: `/api/v1/crm/leads/${leadId}`, payload: { latestProgress: "成交后更新" } });
+    expect(edited.json().data.wonAt).toBe(firstWonAt);
+    await prisma.user.update({ where: { id: viewerId }, data: { status: "DISABLED" } });
+    expect((await inject({ method: "PATCH", url: `/api/v1/crm/leads/${leadId}`, payload: { participantUserIds: [viewerId] } })).statusCode).toBe(422);
+    await prisma.user.update({ where: { id: viewerId }, data: { status: "ACTIVE" } });
+  });
+
+  it("通用附件按业务字段保存，校验内容类型并保护下载", async () => {
     const png = Buffer.from("89504e470d0a1a0a0000000d49484452", "hex");
     const uploaded = await inject({
       method: "POST",
-      url: `/api/v1/crm/leads/${leadId}/attachments`,
+      url: `/api/v1/crm/leads/${leadId}/attachments/requirementImages`,
       ...multipart(png, "需求示意.png", "image/png"),
     });
     expect(uploaded.statusCode).toBe(201);
-    expect(uploaded.json().data).toMatchObject({ originalName: "需求示意.png", kind: "IMAGE", sizeBytes: png.length });
-    expect(uploaded.json().data).not.toHaveProperty("storagePath");
+    expect(uploaded.json().data).toMatchObject({ originalName: "需求示意.png", kind: "IMAGE", fieldKey: "requirementImages", fileSize: png.length });
+    expect(uploaded.json().data).not.toHaveProperty("storageKey");
     expect(uploaded.json().data).not.toHaveProperty("fileHash");
 
     const detail = await inject({ method: "GET", url: `/api/v1/crm/leads/${leadId}` });
     const attachment = detail.json().data.attachments[0];
     expect(attachment).toMatchObject({ id: uploaded.json().data.id, originalName: "需求示意.png" });
-    expect(attachment).not.toHaveProperty("storagePath");
+    expect(attachment).not.toHaveProperty("storageKey");
     const downloaded = await inject({ method: "GET", url: `/api/v1/crm/leads/${leadId}/attachments/${attachment.id}/download` });
     expect(downloaded.statusCode).toBe(200);
     expect(downloaded.rawPayload).toEqual(png);
     expect(downloaded.headers["content-disposition"]).toContain("filename*=UTF-8''");
+    expect((await inject({ method: "GET", url: `/api/v1/crm/leads/${secondLeadId}/attachments/${attachment.id}/download` })).statusCode).toBe(404);
 
     const removed = await inject({ method: "DELETE", url: `/api/v1/crm/leads/${leadId}/attachments/${attachment.id}` });
     expect(removed.statusCode).toBe(200);
-    expect(await prisma.leadAttachment.count({ where: { id: attachment.id } })).toBe(0);
+    expect(await prisma.crmAttachment.count({ where: { id: attachment.id } })).toBe(0);
 
+    const mp4 = Buffer.from("000000186674797069736f6d00000000", "hex");
     const video = await inject({
       method: "POST",
-      url: `/api/v1/crm/leads/${leadId}/attachments`,
-      ...multipart(Buffer.from("webm-test"), "演示视频.webm", "video/webm"),
+      url: `/api/v1/crm/leads/${leadId}/attachments/proposalFiles`,
+      ...multipart(mp4, "演示视频.mp4", "video/mp4"),
     });
     expect(video.statusCode).toBe(201);
     expect(video.json().data.kind).toBe("VIDEO");
     expect((await inject({ method: "DELETE", url: `/api/v1/crm/leads/${leadId}/attachments/${video.json().data.id}` })).statusCode).toBe(200);
 
+    const jpeg = Buffer.from("ffd8ffe000104a4649460001", "hex");
+    const jpegUpload = await inject({ method: "POST", url: `/api/v1/crm/leads/${leadId}/attachments/requirementImages`, ...multipart(jpeg, "需求照片.jpg", "image/jpeg") });
+    expect(jpegUpload.statusCode).toBe(201);
+    expect(jpegUpload.json().data.kind).toBe("IMAGE");
+
     const rejected = await inject({
       method: "POST",
-      url: `/api/v1/crm/leads/${leadId}/attachments`,
+      url: `/api/v1/crm/leads/${leadId}/attachments/requirementFiles`,
       ...multipart(Buffer.from("<html></html>"), "unsafe.html", "text/html"),
     });
     expect(rejected.statusCode).toBe(415);
     expect(rejected.json().error.code).toBe("ATTACHMENT_TYPE_NOT_ALLOWED");
 
+    const spoofed = await inject({ method: "POST", url: `/api/v1/crm/leads/${leadId}/attachments/requirementImages`, ...multipart(Buffer.from("not-a-jpeg"), "伪装.jpg", "image/jpeg") });
+    expect(spoofed.statusCode).toBe(415);
+    expect(spoofed.json().error.code).toBe("ATTACHMENT_MIME_MISMATCH");
+
+    const oversized = await inject({ method: "POST", url: `/api/v1/crm/leads/${leadId}/attachments/requirementFiles`, ...multipart(Buffer.alloc(1024 * 1024 + 1, 65), "超大.txt", "text/plain") });
+    expect(oversized.statusCode).toBe(413);
+
+    const docx = Buffer.concat([Buffer.from("504b0304", "hex"), Buffer.from("[Content_Types].xml word/document.xml")]);
+    const docxUpload = await inject({ method: "POST", url: `/api/v1/crm/leads/${leadId}/attachments/requirementFiles`, ...multipart(docx, "需求说明.docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document") });
+    expect(docxUpload.statusCode).toBe(201);
+
     const document = Buffer.from("Kivisense requirement document");
     const cascadeUpload = await inject({
       method: "POST",
-      url: `/api/v1/crm/leads/${leadId}/attachments`,
+      url: `/api/v1/crm/leads/${leadId}/attachments/requirementFiles`,
       ...multipart(document, "需求说明.txt", "text/plain"),
     });
     expect(cascadeUpload.statusCode).toBe(201);
-    cascadeAttachmentPath = (await prisma.leadAttachment.findUniqueOrThrow({ where: { id: cascadeUpload.json().data.id } })).storagePath;
+    cascadeAttachmentPath = join(storageDir, (await prisma.crmAttachment.findUniqueOrThrow({ where: { id: cascadeUpload.json().data.id } })).storageKey!);
+
+    const pdf = Buffer.from("%PDF-1.4\nKivisense meeting minutes");
+    const contactUpload = await inject({ method: "POST", url: `/api/v1/crm/contacts/${contactId}/attachments/meetingMinutesFiles`, ...multipart(pdf, "会议纪要.pdf", "application/pdf") });
+    expect(contactUpload.statusCode).toBe(201);
+    expect((await inject({ method: "GET", url: `/api/v1/crm/contacts/${contactId}` })).json().data.attachments[0]).toMatchObject({ fieldKey: "meetingMinutesFiles" });
   });
 
   it("VIEWER 只读，SALES 无导入导出权限", async () => {
@@ -265,7 +303,7 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core", () => {
     expect((await inject({ method: "DELETE", url: `/api/v1/crm/leads/${secondLeadId}` })).statusCode).toBe(200);
     expect((await inject({ method: "DELETE", url: `/api/v1/crm/leads/${leadId}` })).statusCode).toBe(200);
     expect(await prisma.leadFollowup.count({ where: { leadId } })).toBe(0);
-    expect(await prisma.leadAttachment.count({ where: { leadId } })).toBe(0);
+    expect(await prisma.crmAttachment.count({ where: { entityType: "LEAD", entityId: leadId } })).toBe(0);
     await expect(stat(cascadeAttachmentPath)).rejects.toMatchObject({ code: "ENOENT" });
 
     expect((await inject({ method: "DELETE", url: `/api/v1/crm/contacts/${contactId}` })).statusCode).toBe(200);
@@ -285,7 +323,8 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core", () => {
     expect(invalid.statusCode).toBe(422);
     const audit = await inject({ method: "GET", url: "/api/v1/audit-logs?module=crm" }, adminCookie);
     expect(audit.statusCode).toBe(200);
-    expect(audit.json().data.some((item: { action: string }) => item.action === "CREATE_CRM_LEAD")).toBe(true);
+    const auditActions = new Set(audit.json().data.map((item: { action: string }) => item.action));
+    for (const action of ["CREATE_CRM_LEAD", "UPLOAD_ATTACHMENT", "DOWNLOAD_ATTACHMENT", "DELETE_ATTACHMENT"]) expect(auditActions.has(action)).toBe(true);
     expect(audit.json().data[0]).not.toHaveProperty("brandId");
   });
 

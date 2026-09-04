@@ -31,10 +31,10 @@ APP_BASE_PATH=/crm_kivisense
 COOKIE_SECURE=true
 TRUST_PROXY=true
 CORS_ORIGIN=https://www.gridworks.cn
-MAX_ATTACHMENT_BYTES=104857600
+CRM_ATTACHMENT_MAX_BYTES=52428800
 ```
 
-应用内部仍以 `/api/...` 注册路由，由 Nginx 将外部 `/crm_kivisense/...` 前缀去除后代理。浏览器端根据 `js/api.js` 的真实加载路径自动拼接前缀；Cookie Path 使用 `/crm_kivisense`。
+应用内部仍以 `/api/...` 注册路由，由 Nginx 将外部 `/crm_kivisense/...` 前缀去除后代理。浏览器端根据 `js/api.js` 的真实加载路径自动拼接前缀；Cookie Path 使用 `/crm_kivisense`。Nginx 的 `client_max_body_size` 必须大于 `CRM_ATTACHMENT_MAX_BYTES`，建议 UAT 配置为 `55m`。
 
 ## 发布检查
 

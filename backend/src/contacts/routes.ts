@@ -7,6 +7,7 @@ import { ApiError } from "../common/errors.js";
 import { paginationMeta, paginationSchema } from "../common/pagination.js";
 import { CrmLeadService } from "../crm-leads/service.js";
 import { crmLeadResponse } from "../crm-leads/response.js";
+import { contentDispositionFilename, CrmAttachmentService } from "../crm-leads/attachments.js";
 import {
   contactCreateSchema,
   contactFollowupCreateSchema,
@@ -38,6 +39,7 @@ export async function contactRoutes(app: FastifyInstance): Promise<void> {
   const followups = new ContactFollowupService(app.prisma);
   const leads = new CrmLeadService(app.prisma);
   const users = new CrmUserDirectoryService(app.prisma);
+  const attachments = new CrmAttachmentService(app.prisma, app.config.storageDir, app.config.maxAttachmentBytes);
 
   app.get("/api/v1/crm/users", { preHandler: guard() }, async (request) => {
     if (!request.auth!.permissions.has("crm.contact.view") && !request.auth!.permissions.has("crm.lead.view")) {
@@ -67,8 +69,29 @@ export async function contactRoutes(app: FastifyInstance): Promise<void> {
     return { data: contactResponse(await contacts.update(request.params.id, body, auditActorContext(request))) };
   });
 
-  app.delete<{ Params: { id: string } }>("/api/v1/crm/contacts/:id", { preHandler: guard("crm.contact.delete") }, async (request) => ({
-    data: await contacts.remove(request.params.id, auditActorContext(request)),
+  app.delete<{ Params: { id: string } }>("/api/v1/crm/contacts/:id", { preHandler: guard("crm.contact.delete") }, async (request) => {
+    const result = await contacts.remove(request.params.id, auditActorContext(request));
+    await attachments.removeFiles(result.storageKeys);
+    return { data: { id: result.id } };
+  });
+
+  app.post<{ Params: { id: string; fieldKey: string } }>("/api/v1/crm/contacts/:id/attachments/:fieldKey", { preHandler: guard("crm.contact.edit") }, async (request, reply) => {
+    const upload = await request.file();
+    const row = await attachments.create("CONTACT", request.params.id, request.params.fieldKey, upload, request.auth!.userId, auditActorContext(request));
+    return reply.status(201).send({ data: row });
+  });
+
+  app.get<{ Params: { id: string; attachmentId: string } }>("/api/v1/crm/contacts/:id/attachments/:attachmentId/download", { preHandler: guard("crm.contact.view") }, async (request, reply) => {
+    const result = await attachments.findForDownload("CONTACT", request.params.id, request.params.attachmentId, auditActorContext(request));
+    if (result.externalUrl) return reply.redirect(result.externalUrl);
+    reply.type(result.row.mimeType || "application/octet-stream");
+    reply.header("content-disposition", contentDispositionFilename(result.row.originalName));
+    if (result.row.fileSize !== null) reply.header("content-length", result.row.fileSize);
+    return reply.send(result.stream);
+  });
+
+  app.delete<{ Params: { id: string; attachmentId: string } }>("/api/v1/crm/contacts/:id/attachments/:attachmentId", { preHandler: guard("crm.contact.edit") }, async (request) => ({
+    data: await attachments.remove("CONTACT", request.params.id, request.params.attachmentId, auditActorContext(request)),
   }));
 
   app.get<{ Params: { id: string } }>("/api/v1/crm/contacts/:id/followups", { preHandler: guard("crm.contact_followup.view") }, async (request) => {

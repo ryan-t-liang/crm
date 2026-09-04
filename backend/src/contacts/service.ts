@@ -3,6 +3,7 @@ import type { AuditActorContext } from "../common/audit.js";
 import { appendAuditRecord } from "../common/audit.js";
 import { assertAssignableCrmUser, crmUserSummarySelect, type CrmDbClient } from "../common/crm-users.js";
 import { ApiError } from "../common/errors.js";
+import { crmAttachmentSelect } from "../crm-leads/attachments.js";
 import type { ContactCreateInput, ContactFollowupCreateInput, ContactPatchInput } from "./schemas.js";
 
 export type ContactListInput = {
@@ -84,14 +85,17 @@ export class ContactService {
         targetId: row.id,
         details: { fields: Object.keys(input) },
       });
-      return row;
+      return { ...row, attachments: [] };
     });
   }
 
   async detail(id: string) {
-    const row = await this.prisma.contact.findUnique({ where: { id }, include: contactDetailInclude });
+    const [row, attachments] = await Promise.all([
+      this.prisma.contact.findUnique({ where: { id }, include: contactDetailInclude }),
+      this.prisma.crmAttachment.findMany({ where: { entityType: "CONTACT", entityId: id }, select: crmAttachmentSelect, orderBy: [{ createdAt: "desc" }, { id: "desc" }] }),
+    ]);
     if (!row) throw new ApiError(404, "RESOURCE_NOT_FOUND", "CRM 联系人不存在");
-    return row;
+    return { ...row, attachments };
   }
 
   async update(id: string, input: ContactPatchInput, audit: AuditActorContext) {
@@ -106,7 +110,8 @@ export class ContactService {
         targetId: row.id,
         details: { changedFields: Object.keys(input) },
       });
-      return row;
+      const attachments = await tx.crmAttachment.findMany({ where: { entityType: "CONTACT", entityId: id }, select: crmAttachmentSelect, orderBy: [{ createdAt: "desc" }, { id: "desc" }] });
+      return { ...row, attachments };
     });
   }
 
@@ -114,7 +119,7 @@ export class ContactService {
     return this.prisma.$transaction(async (tx) => {
       const contact = await tx.contact.findUnique({
         where: { id },
-        select: { id: true, contactName: true, companyName: true, companyShortName: true, _count: { select: { leads: true, followups: true } } },
+        select: { id: true, contactName: true, companyName: true, companyShortName: true, followups: { select: { id: true } }, _count: { select: { leads: true, followups: true } } },
       });
       if (!contact) throw new ApiError(404, "RESOURCE_NOT_FOUND", "CRM 联系人不存在");
       if (contact._count.leads > 0) {
@@ -122,6 +127,12 @@ export class ContactService {
           relatedLeadCount: contact._count.leads,
         });
       }
+      const attachmentEntityIds = [id, ...contact.followups.map((followup) => followup.id)];
+      const attachments = await tx.crmAttachment.findMany({
+        where: { OR: [{ entityType: "CONTACT", entityId: id }, { entityType: "CONTACT_FOLLOWUP", entityId: { in: attachmentEntityIds } }] },
+        select: { storageType: true, storageKey: true },
+      });
+      await tx.crmAttachment.deleteMany({ where: { OR: [{ entityType: "CONTACT", entityId: id }, { entityType: "CONTACT_FOLLOWUP", entityId: { in: attachmentEntityIds } }] } });
       await tx.contact.delete({ where: { id } });
       await appendAuditRecord(tx, audit, {
         action: "DELETE_CONTACT",
@@ -134,7 +145,7 @@ export class ContactService {
           deletedFollowupCount: contact._count.followups,
         },
       });
-      return { id };
+      return { id, storageKeys: attachments.filter((item) => item.storageType === "LOCAL" && item.storageKey).map((item) => item.storageKey as string) };
     });
   }
 

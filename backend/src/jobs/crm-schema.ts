@@ -4,7 +4,7 @@ import type { CrmJobObjectType } from "./job-types.js";
 export type CrmImportField = {
   key: string;
   label: string;
-  type: "text" | "email" | "url" | "datetime" | "enum" | "decimal" | "owner";
+  type: "text" | "email" | "url" | "datetime" | "enum" | "decimal" | "owner" | "multi-owner" | "multi-text" | "attachment-url";
   required: boolean;
   options?: string[];
   example: string;
@@ -29,7 +29,9 @@ const contactFields: CrmImportField[] = [
   { key: "stage", label: "当前跟进阶段", type: "enum", required: false, options: ["INITIAL", "ONE_TO_ONE", "SOLUTION", "CONVENTION"], example: "SOLUTION" },
   { key: "owner", label: "负责人账号或用户编号", type: "owner", required: false, example: "sales@example.com" },
   { key: "nextFollowupAt", label: "下一次跟进时间", type: "datetime", required: false, example: "2026-09-15 10:00:00" },
+  { key: "followupAttention", label: "跟进注意", type: "text", required: false, example: "长期跟进时需注意的事项" },
   { key: "initialContext", label: "初始沟通背景", type: "text", required: false, example: "Met at an industry convention." },
+  { key: "meetingMinutesFiles", label: "Meeting Minutes 外部 URL", type: "attachment-url", required: false, example: "https://files.example.com/meeting-minutes.pdf" },
   { key: "remark", label: "备注", type: "text", required: false, example: "Decision maker for digital cooperation." },
 ];
 
@@ -38,6 +40,7 @@ const leadFields: CrmImportField[] = [
   { key: "requirementSummary", label: "项目需求简述", type: "text", required: true, example: "AR application and service cooperation for our products" },
   { key: "requirementDetail", label: "需求详情", type: "text", required: false, example: "Build an AR product presentation experience." },
   { key: "latestProgress", label: "最近进展", type: "text", required: false, example: "Product samples received." },
+  { key: "leadSource", label: "客户来源", type: "text", required: false, example: "Kiviman" },
   { key: "priority", label: "优先级", type: "enum", required: false, options: ["LOW", "MEDIUM", "HIGH", "URGENT"], example: "HIGH" },
   { key: "estimatedQuote", label: "预计报价", type: "decimal", required: false, example: "120000.00" },
   { key: "currency", label: "币种", type: "text", required: false, example: "CNY" },
@@ -47,12 +50,23 @@ const leadFields: CrmImportField[] = [
   { key: "productType", label: "产品类型", type: "text", required: false, example: "Consumer electronics" },
   { key: "productName", label: "产品名称", type: "text", required: false, example: "Vision Series" },
   { key: "resourceRequirement", label: "资源需求", type: "text", required: false, example: "3D assets and product data API." },
+  { key: "collaborationGroups", label: "对接群（每行一项）", type: "multi-text", required: false, example: "客户项目群\n外部供应商群" },
+  { key: "followMode", label: "跟单模式", type: "text", required: false, example: "顾问式跟进" },
   { key: "solution", label: "解决方案", type: "text", required: false, example: "Browser-based AR viewer." },
   { key: "remark", label: "备注", type: "text", required: false, example: "Target launch in Q4." },
   { key: "status", label: "线索状态", type: "enum", required: false, options: ["NEW", "QUALIFIED", "SOLUTION", "QUOTATION", "WON", "LOST"], example: "NEW" },
   { key: "salesOwner", label: "销售负责人账号或用户编号", type: "owner", required: false, example: "sales@example.com" },
   { key: "followupOwner", label: "跟进负责人账号或用户编号", type: "owner", required: false, example: "sales@example.com" },
+  { key: "participantUsers", label: "参与人员账号或用户编号（每行一项）", type: "multi-owner", required: false, example: "sales@example.com\nproducer@example.com" },
   { key: "nextFollowupAt", label: "下一次跟进时间", type: "datetime", required: false, example: "2026-09-15 10:00:00" },
+  { key: "wonAt", label: "成交日期", type: "datetime", required: false, example: "2026-10-01 10:00:00" },
+  { key: "deliveryFollowupAt", label: "交付跟进日期", type: "datetime", required: false, example: "2026-10-15 10:00:00" },
+  { key: "contractRenewalAt", label: "合同续约日期", type: "datetime", required: false, example: "2027-10-01 10:00:00" },
+  { key: "paymentReceivedAt", label: "收款日期", type: "datetime", required: false, example: "2026-10-10 10:00:00" },
+  { key: "requirementFiles", label: "需求 / 签署文件外部 URL", type: "attachment-url", required: false, example: "https://files.example.com/requirement.pdf" },
+  { key: "requirementImages", label: "图片需求外部 URL", type: "attachment-url", required: false, example: "https://files.example.com/reference.jpg" },
+  { key: "proposalFiles", label: "正式方案文件外部 URL", type: "attachment-url", required: false, example: "https://files.example.com/proposal.pptx" },
+  { key: "quotationFiles", label: "报价单外部 URL", type: "attachment-url", required: false, example: "https://files.example.com/quotation.xlsx" },
 ];
 
 export function crmImportFields(objectType: CrmJobObjectType): CrmImportField[] {
@@ -102,10 +116,11 @@ export async function crmTemplateWorkbook(objectType: CrmJobObjectType): Promise
     ["项目", "填写规则"],
     ["模板行", "第 1 行是稳定字段 Key；第 2 行是中文说明和示例。导入前必须删除或替换第 2 行。"],
     ["必填字段", fields.filter((field) => field.required).map((field) => field.key).join("、")],
-    ["负责人", "只接受启用账号的登录账号或用户编号精确匹配；不按显示名匹配。"],
+    ["负责人", "只接受启用账号的登录账号或用户编号精确匹配；多人员字段每行填写一个账号或用户编号。"],
     ["枚举", "只接受模板下拉中的标准枚举；系统同时接受需求中明确列出的中文别名。"],
     ["时间", "建议使用 YYYY-MM-DD HH:mm:ss 或带时区的 ISO 8601 时间。"],
-    ["关联", objectType === "CONTACT" ? "线索、合同、项目、文件等关联字段由系统自动生成，不可导入。" : "只通过 contactId 关联现有客户联系人；不要添加联系人姓名、公司、电子邮箱或电话列。"],
+    ["关联", objectType === "CONTACT" ? "线索、合同和项目关联由系统管理；Meeting Minutes 只接受外部 HTTP/HTTPS URL，或留空后在 CRM 上传。" : "只通过 contactId 关联现有客户联系人；附件列只接受外部 HTTP/HTTPS URL，或留空后在 CRM 上传。"],
+    ["附件", "每行可填写多个外部 URL，以换行分隔。仅填写本地文件名会在预检中提示 ATTACHMENT_FILE_NOT_AVAILABLE，且不会伪造上传记录。"],
     ["跟进", "本模板不创建历史跟进时间线；仅导入当前字段和下一次跟进时间。"],
   ]);
   notes.getRow(1).font = { bold: true, color: { argb: "FF202322" } };
@@ -121,17 +136,20 @@ export const contactExportFields = [
   ["phone", "电话"], ["wechat", "微信"], ["linkedin", "领英"], ["website", "网站"],
   ["industry", "行业"], ["source", "来源"], ["country", "国家"], ["city", "城市"], ["region", "区域"],
   ["stage", "触达阶段"], ["owner", "负责人"], ["nextFollowupAt", "下一次跟进"], ["initialContext", "初始信息"],
-  ["remark", "备注"], ["relatedLeadCount", "关联线索数量"], ["createdAt", "创建时间"], ["updatedAt", "更新时间"],
+  ["followupAttention", "跟进注意"], ["meetingMinutesFiles", "Meeting Minutes 文件"], ["remark", "备注"], ["relatedLeadCount", "关联线索数量"],
+  ["createdBy", "创建人"], ["createdAt", "创建时间"], ["updatedAt", "更新时间"],
 ] as const;
 
 export const crmLeadExportFields = [
   ["id", "线索编号"], ["contactId", "客户联系人编号"], ["requirementSummary", "项目需求简述"],
-  ["requirementDetail", "需求详情"], ["latestProgress", "最近进展"], ["priority", "优先级"],
+  ["requirementDetail", "需求详情"], ["leadSource", "客户来源"], ["latestProgress", "最近进展"], ["priority", "优先级"],
   ["estimatedQuote", "预计报价"], ["currency", "币种"], ["projectDomain", "项目领域"],
   ["projectType", "项目类型"], ["technologyType", "技术类型"], ["productType", "产品类型"],
-  ["productName", "产品名称"], ["resourceRequirement", "资源需求"], ["solution", "解决方案"],
-  ["remark", "备注"], ["status", "状态"], ["salesOwner", "销售负责人"], ["followupOwner", "跟进负责人"],
-  ["nextFollowupAt", "下一次跟进"], ["lastFollowupAt", "最近跟进"], ["contactName", "联系人姓名"],
-  ["company", "公司"], ["contactEmail", "联系人电子邮箱"], ["contactPhone", "联系人电话"],
-  ["createdAt", "创建时间"], ["updatedAt", "更新时间"],
+  ["productName", "产品名称"], ["resourceRequirement", "资源需求"], ["collaborationGroups", "对接群"], ["followMode", "跟单模式"], ["solution", "方案说明"],
+  ["requirementFiles", "需求 / 签署文件"], ["requirementImages", "图片需求"], ["proposalFiles", "正式方案文件"], ["quotationFiles", "报价单"],
+  ["remark", "备注"], ["status", "状态"], ["salesOwner", "销售对接人"], ["followupOwner", "跟进对接人"], ["participantUsers", "Leads 参与人员"],
+  ["nextFollowupAt", "下一次跟进"], ["lastFollowupAt", "最近沟通"], ["wonAt", "成交日期"], ["deliveryFollowupAt", "交付跟进日期"],
+  ["contractRenewalAt", "合同续约日期"], ["paymentReceivedAt", "收款日期"], ["contactName", "联系人姓名"],
+  ["company", "公司"], ["contactEmail", "联系人电子邮箱"], ["contactPhone", "联系人电话"], ["contactWechat", "联系人微信"],
+  ["createdBy", "创建人"], ["createdAt", "创建时间"], ["updatedAt", "更新时间"],
 ] as const;

@@ -38,6 +38,7 @@ const contactFields = {
   ownerUserId: optionalId,
   nextFollowupAt: optionalDateTime,
   initialContext: optionalText(16_000),
+  followupAttention: optionalText(16_000),
   remark: optionalText(16_000),
 } as const;
 
