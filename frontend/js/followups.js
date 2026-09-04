@@ -7,26 +7,21 @@ let context;
 let pending;
 
 export function renderTimelineMarkup(items, kind) {
-  if (!items.length) return '<div class="crm-timeline-empty">暂无跟进记录</div>';
-  return items.map((item) => `<article class="crm-timeline-item" data-followup-id="${esc(item.id)}">
-    <div class="crm-timeline-marker" aria-hidden="true"></div>
-    <div class="crm-timeline-content">
-      <header><strong>${esc(followupTypeLabel(item.type))}</strong><time>${esc(formatLocalDateTime(item.occurredAt))}</time>${kind === "lead" && item.important ? '<span class="crm-important">重要</span>' : ""}</header>
-      <p>${esc(item.content)}</p>
-      <footer><span>负责人 ${esc(item.owner?.name || "-")}</span><span>创建人 ${esc(item.createdBy?.name || "-")}</span><span>录入 ${esc(formatLocalDateTime(item.createdAt))}</span></footer>
-    </div>
+  if (!items.length) return '<div class="empty-state crm-compact-empty"><div><div class="empty-illustration"><svg><use href="#i-clock"/></svg></div><h3>暂无跟进记录</h3></div></div>';
+  return items.map((item) => `<article class="timeline-item" data-followup-id="${esc(item.id)}">
+    <span class="timeline-dot" aria-hidden="true"></span>
+    <div class="timeline-card"><div class="timeline-meta"><span class="crm-badge">${esc(followupTypeLabel(item.type))}</span>${kind === "lead" && item.important ? '<span class="crm-important">重要</span>' : ""}<time>${esc(formatLocalDateTime(item.occurredAt))}</time></div><h3>负责人 ${esc(item.owner?.name || "-")} · 录入人 ${esc(item.createdBy?.name || "-")}</h3><p>${esc(item.content)}</p></div>
   </article>`).join("");
 }
 
 export function initializeFollowups(options) {
   context = options;
   if (!$('crmFollowupDrawer')) {
-    document.body.insertAdjacentHTML("beforeend", `<aside class="crm-drawer" id="crmFollowupDrawer" aria-hidden="true">
-      <button class="crm-drawer-backdrop" type="button" data-close-followup aria-label="关闭跟进表单"></button>
-      <form class="crm-drawer-panel crm-drawer-narrow" id="crmFollowupForm" novalidate>
-        <header class="crm-drawer-header"><div><span class="crm-eyebrow">沟通记录</span><h2 id="crmFollowupTitle">新增跟进</h2></div><button class="crm-icon-button" type="button" data-close-followup aria-label="关闭"><svg><use href="#i-x"/></svg></button></header>
-        <div class="crm-drawer-body">
-          <div class="crm-form-grid crm-form-grid-single">
+    document.body.insertAdjacentHTML("beforeend", `<dialog class="lead-create-dialog crm-form-dialog crm-followup-dialog" id="crmFollowupDrawer">
+      <form id="crmFollowupForm" novalidate>
+        <div class="dialog-header"><div><h2 id="crmFollowupTitle">新增跟进</h2></div><span class="spacer"></span><button class="dialog-close" type="button" data-close-followup aria-label="关闭"><svg><use href="#i-x"/></svg></button></div>
+        <div class="dialog-body">
+          <div class="canonical-form-grid crm-form-grid-single">
             <label class="crm-field"><span>沟通时间<b aria-hidden="true">*</b></span><input name="occurredAt" type="datetime-local" required><small class="crm-field-error"></small></label>
             <label class="crm-field"><span>沟通方式<b aria-hidden="true">*</b></span><select name="type" required>${FOLLOWUP_TYPES.map((item) => `<option value="${item.value}">${esc(item.label)}</option>`).join("")}</select><small class="crm-field-error"></small></label>
             <label class="crm-field"><span>负责人<b aria-hidden="true">*</b></span><select name="ownerUserId" required></select><small class="crm-field-error"></small></label>
@@ -35,9 +30,9 @@ export function initializeFollowups(options) {
           </div>
           <div class="crm-form-message" id="crmFollowupError" role="alert" hidden></div>
         </div>
-        <footer class="crm-drawer-footer"><button class="btn" type="button" data-close-followup>取消</button><button class="btn btn-primary" id="crmSaveFollowup" type="submit">保存跟进</button></footer>
+        <div class="dialog-footer"><button class="btn" type="button" data-close-followup>取消</button><span class="spacer"></span><button class="btn btn-primary" id="crmSaveFollowup" type="submit">保存跟进</button></div>
       </form>
-    </aside>`);
+    </dialog>`);
   }
   document.querySelectorAll("[data-close-followup]").forEach((button) => button.addEventListener("click", closeFollowup));
   $("crmFollowupForm").addEventListener("submit", saveFollowup);
@@ -54,14 +49,12 @@ export function openFollowup({ kind, id, title, onSaved }) {
   $("crmImportantField").hidden = kind !== "lead";
   $("crmFollowupTitle").textContent = title;
   $("crmFollowupError").hidden = true;
-  $("crmFollowupDrawer").classList.add("is-open");
-  $("crmFollowupDrawer").setAttribute("aria-hidden", "false");
+  $("crmFollowupDrawer").showModal();
   setTimeout(() => form.elements.occurredAt.focus(), 30);
 }
 
 export function closeFollowup() {
-  $("crmFollowupDrawer")?.classList.remove("is-open");
-  $("crmFollowupDrawer")?.setAttribute("aria-hidden", "true");
+  if ($("crmFollowupDrawer")?.open) $("crmFollowupDrawer").close();
   pending = null;
 }
 

@@ -39,8 +39,8 @@
       <nav>
         <div class="nav-label">客户管理</div>
         <div class="nav-list">
-          <button class="nav-item" type="button" data-route="leads" data-crm-permission="crm.lead.view"><svg class="icon"><use href="#i-lead"/></svg><span>线索</span><b class="nav-count" data-nav-count="leads">0</b></button>
           <button class="nav-item" type="button" data-route="contacts" data-crm-permission="crm.contact.view"><svg class="icon"><use href="#i-users"/></svg><span>客户联系人</span><b class="nav-count" data-nav-count="contacts">0</b></button>
+          <button class="nav-item" type="button" data-route="leads" data-crm-permission="crm.lead.view"><svg class="icon"><use href="#i-lead"/></svg><span>线索</span><b class="nav-count" data-nav-count="leads">0</b></button>
         </div>
         <div class="nav-label system-nav-label" data-crm-permission="account.view">系统管理</div>
         <div class="nav-list">
@@ -67,8 +67,7 @@
 
     <main class="workspace">
       <header class="topbar">
-        <div class="breadcrumb"><span>Kivisense CRM</span><svg><use href="#i-chevron"/></svg><strong id="breadcrumbCurrent">线索</strong></div>
-        <label class="global-search"><svg><use href="#i-search"/></svg><input id="globalSearchInput" type="search" placeholder="搜索客户联系人或线索" aria-label="全局搜索"></label>
+        <div class="breadcrumb">Kivisense CRM&nbsp;&nbsp;/&nbsp;&nbsp;<strong id="breadcrumbCurrent">客户联系人</strong></div>
       </header>
       <section id="crmLeadsView" class="view"></section>
       <section id="crmLeadDetailView" class="view"></section>

@@ -174,8 +174,8 @@ async function loadDirectories() {
 }
 
 function allowedDefaultRoute() {
-  if (can("crm.lead.view")) return "leads";
   if (can("crm.contact.view")) return "contacts";
+  if (can("crm.lead.view")) return "leads";
   if (can("account.view")) return "accounts";
   if (can("roles.view")) return "roles";
   return "audit";
@@ -415,15 +415,6 @@ $("closeConfirmation").addEventListener("click", () => resolveConfirmation(false
 $("cancelConfirmation").addEventListener("click", () => resolveConfirmation(false));
 $("confirmAction").addEventListener("click", () => resolveConfirmation(true));
 $("confirmationDialog").addEventListener("cancel", (event) => { event.preventDefault(); resolveConfirmation(false); });
-$("globalSearchInput").addEventListener("keydown", async (event) => {
-  if (event.key !== "Enter") return;
-  const keyword = event.currentTarget.value.trim();
-  const path = currentPath().startsWith("contacts") && can("crm.contact.view") ? "contacts" : "leads";
-  await navigate(path);
-  const input = $(path === "contacts" ? "crmContactKeyword" : "crmLeadKeyword");
-  input.value = keyword;
-  await (path === "contacts" ? loadContacts(1) : loadLeads(1));
-});
 window.addEventListener("hashchange", route);
 window.addEventListener("crm:unauthenticated", showLogin);
 window.addEventListener("crm:password-required", () => showPasswordDialog(true));

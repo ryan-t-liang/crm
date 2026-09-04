@@ -32,40 +32,39 @@ export function readonlyContactMarkup(contact, compact = false) {
 
 export function initializeLeads(options) {
   context = options;
-  $("crmLeadsView").innerHTML = `<div class="crm-page">
-    <header class="crm-page-header"><div><span class="crm-eyebrow">需求管理</span><h1>线索</h1></div><div class="crm-page-actions"><button class="btn btn-quiet" id="crmImportLeads" type="button" data-crm-permission="crm.lead.import"><svg><use href="#i-upload"/></svg>导入</button><button class="btn btn-quiet" id="crmExportLeads" type="button" data-crm-permission="crm.lead.export"><svg><use href="#i-download"/></svg>导出</button><button class="btn btn-primary" id="crmNewLead" type="button" data-crm-permission="crm.lead.create"><svg><use href="#i-plus"/></svg>新建线索</button></div></header>
-    <section class="crm-filter-bar crm-lead-filters" aria-label="线索筛选">
-      <label class="crm-search"><svg><use href="#i-search"/></svg><input id="crmLeadKeyword" type="search" placeholder="搜索项目需求、联系人或公司"></label>
-      <label><span class="sr-only">状态</span><select id="crmLeadStatus"><option value="">全部状态</option>${LEAD_STATUSES.map((item) => `<option value="${item.value}">${esc(item.label)}</option>`).join("")}</select></label>
-      <label><span class="sr-only">优先级</span><select id="crmLeadPriority"><option value="">全部优先级</option>${LEAD_PRIORITIES.map((item) => `<option value="${item.value}">${esc(item.label)}</option>`).join("")}</select></label>
-      <label><span class="sr-only">销售负责人</span><select id="crmLeadSalesOwner"><option value="">全部销售负责人</option></select></label>
-      <label><span class="sr-only">跟进负责人</span><select id="crmLeadFollowupOwner"><option value="">全部跟进负责人</option></select></label>
-      <label><span class="sr-only">下次跟进</span><select id="crmLeadNext"><option value="">全部跟进日期</option><option value="overdue">已逾期</option><option value="today">今天</option><option value="next7">未来 7 天</option></select></label>
-      <button class="crm-icon-button" id="crmSearchLeads" type="button" title="查询" aria-label="查询线索"><svg><use href="#i-search"/></svg></button>
-      <button class="btn btn-quiet btn-small" id="crmResetLeads" type="button">重置</button>
-    </section>
-    <section class="crm-table-section" aria-labelledby="crmLeadTableTitle">
-      <header><div><h2 id="crmLeadTableTitle">线索目录</h2><span id="crmLeadResultCount">0 条</span></div></header>
+  $("crmLeadsView").innerHTML = `<div class="page crm-page">
+    <div class="page-heading"><div><h1>线索</h1></div><div class="heading-actions crm-page-actions"><button class="btn btn-quiet" id="crmExportLeads" type="button" data-crm-permission="crm.lead.export"><svg><use href="#i-download"/></svg>导出</button><button class="btn" id="crmImportLeads" type="button" data-crm-permission="crm.lead.import"><svg><use href="#i-upload"/></svg>批量导入</button><button class="btn btn-primary" id="crmNewLead" type="button" data-crm-permission="crm.lead.create"><svg><use href="#i-plus"/></svg>新增线索</button></div></div>
+    <div class="metrics lead-metrics" aria-label="线索指标"><article class="metric-card"><div class="metric-label">线索总数</div><div class="metric-value" id="crmLeadMetricTotal">0</div></article><article class="metric-card"><div class="metric-label">本页进行中</div><div class="metric-value" id="crmLeadMetricActive">0</div></article><article class="metric-card"><div class="metric-label">本页高优先级</div><div class="metric-value" id="crmLeadMetricPriority">0</div></article><article class="metric-card"><div class="metric-label">本页待跟进</div><div class="metric-value" id="crmLeadMetricFollowup">0</div></article></div>
+    <section class="panel filter-panel crm-query-panel" aria-label="线索筛选"><div class="query-toolbar">
+      <label class="query-content"><span class="field-label">查询内容</span><span class="search-field"><svg><use href="#i-search"/></svg><input id="crmLeadKeyword" type="search" placeholder="搜索项目需求、联系人或公司"></span></label>
+      <label class="query-field"><span class="field-label">状态</span><select class="control" id="crmLeadStatus"><option value="">全部状态</option>${LEAD_STATUSES.map((item) => `<option value="${item.value}">${esc(item.label)}</option>`).join("")}</select></label>
+      <label class="query-field"><span class="field-label">优先级</span><select class="control" id="crmLeadPriority"><option value="">全部优先级</option>${LEAD_PRIORITIES.map((item) => `<option value="${item.value}">${esc(item.label)}</option>`).join("")}</select></label>
+      <label class="query-field"><span class="field-label">销售负责人</span><select class="control" id="crmLeadSalesOwner"><option value="">全部销售负责人</option></select></label>
+      <label class="query-field crm-secondary-filter"><span class="field-label">跟进负责人</span><select class="control" id="crmLeadFollowupOwner"><option value="">全部跟进负责人</option></select></label>
+      <label class="query-field crm-secondary-filter"><span class="field-label">下次跟进</span><select class="control" id="crmLeadNext"><option value="">全部跟进日期</option><option value="overdue">已逾期</option><option value="today">今天</option><option value="next7">未来 7 天</option></select></label>
+      <div class="query-actions"><button class="btn" id="crmResetLeads" type="button">重置</button><button class="btn btn-primary" id="crmSearchLeads" type="button"><svg><use href="#i-search"/></svg>查询</button></div>
+    </div></section>
+    <section class="panel table-panel crm-table-section" aria-labelledby="crmLeadTableTitle">
+      <div class="table-toolbar"><div class="table-title"><strong id="crmLeadTableTitle">线索目录</strong><span id="crmLeadResultCount">0 条结果</span></div><span class="spacer"></span></div>
       <div id="crmLeadListState" class="crm-list-state"></div>
-      <div class="crm-table-scroll" id="crmLeadTableWrap"><table class="crm-data-table crm-lead-table"><thead><tr><th>项目需求简述</th><th>客户联系人 / 公司</th><th>状态</th><th>优先级</th><th>销售负责人</th><th>跟进负责人</th><th>下次跟进</th><th>最近跟进</th><th>预计报价</th><th>更新时间</th></tr></thead><tbody id="crmLeadRows"></tbody></table></div>
-      <div class="crm-empty" id="crmLeadEmpty" hidden><svg><use href="#i-lead"/></svg><h3>暂无线索</h3><p>创建线索后，可集中维护需求、负责人和跟进记录。</p><button class="btn btn-primary" id="crmEmptyNewLead" type="button" data-crm-permission="crm.lead.create"><svg><use href="#i-plus"/></svg>新建线索</button></div>
-      <footer class="crm-pagination" id="crmLeadPagination"><span id="crmLeadPageSummary">共 0 条</span><div><button class="crm-icon-button" id="crmLeadPrev" type="button" title="上一页" aria-label="上一页"><svg><use href="#i-arrow"/></svg></button><span id="crmLeadPageNumber">1 / 1</span><button class="crm-icon-button crm-next-button" id="crmLeadNextPage" type="button" title="下一页" aria-label="下一页"><svg><use href="#i-arrow"/></svg></button></div></footer>
+      <div class="crm-table-scroll" id="crmLeadTableWrap"><table class="crm-data-table crm-lead-table"><thead><tr><th>项目需求简述</th><th>客户联系人 / 公司</th><th>状态</th><th>优先级</th><th>销售负责人</th><th>跟进负责人</th><th>下次跟进</th><th>更新时间</th></tr></thead><tbody id="crmLeadRows"></tbody></table></div>
+      <div class="empty-state" id="crmLeadEmpty" hidden><div><div class="empty-illustration"><svg><use href="#i-lead"/></svg></div><h3>暂无线索</h3><p>创建线索后，可集中维护需求、负责人和跟进记录。</p><button class="btn btn-primary" id="crmEmptyNewLead" type="button" data-crm-permission="crm.lead.create"><svg><use href="#i-plus"/></svg>新增线索</button></div></div>
+      <footer class="table-footer" id="crmLeadPagination"><span id="crmLeadPageSummary">共 0 条</span><div class="pagination"><button class="page-button" id="crmLeadPrev" type="button" aria-label="上一页">‹</button><button class="page-button is-active" id="crmLeadPageNumber" type="button" disabled>1 / 1</button><button class="page-button" id="crmLeadNextPage" type="button" aria-label="下一页">›</button></div></footer>
     </section>
   </div>`;
   $("crmLeadDetailView").innerHTML = '<div class="crm-detail-loading"><span class="crm-skeleton crm-skeleton-title"></span><span class="crm-skeleton crm-skeleton-line"></span></div>';
-  document.body.insertAdjacentHTML("beforeend", `<aside class="crm-drawer" id="crmLeadDrawer" aria-hidden="true">
-    <button class="crm-drawer-backdrop" type="button" data-close-lead-form aria-label="关闭线索表单"></button>
-    <form class="crm-drawer-panel" id="crmLeadForm" novalidate>
-      <header class="crm-drawer-header"><div><span class="crm-eyebrow">线索</span><h2 id="crmLeadFormTitle">新建线索</h2></div><button class="crm-icon-button" type="button" data-close-lead-form aria-label="关闭"><svg><use href="#i-x"/></svg></button></header>
-      <div class="crm-drawer-body">
-        <section class="crm-contact-picker" id="crmLeadContactPicker"><header><h3>选择客户联系人</h3><span>必选</span></header><label class="crm-search"><svg><use href="#i-search"/></svg><input id="crmLeadContactKeyword" type="search" placeholder="搜索联系人、公司、电子邮箱或电话"></label><div class="crm-contact-options" id="crmLeadContactOptions"></div></section>
+  document.body.insertAdjacentHTML("beforeend", `<dialog class="lead-create-dialog crm-form-dialog" id="crmLeadDrawer">
+    <form id="crmLeadForm" novalidate>
+      <div class="dialog-header"><div><h2 id="crmLeadFormTitle">新增线索</h2></div><span class="spacer"></span><button class="dialog-close" type="button" data-close-lead-form aria-label="关闭"><svg><use href="#i-x"/></svg></button></div>
+      <div class="dialog-body"><div class="canonical-form-grid">
+        <section class="crm-contact-picker crm-form-section" id="crmLeadContactPicker"><header><h3>关联联系人</h3><span>必选</span></header><label class="search-field"><svg><use href="#i-search"/></svg><input id="crmLeadContactKeyword" type="search" placeholder="搜索联系人、公司、Email 或 Phone"></label><div class="crm-contact-options" id="crmLeadContactOptions"></div></section>
         <div id="crmSelectedContact"></div>
         <div id="crmLeadFormFields"></div>
         <div class="crm-form-message" id="crmLeadFormError" role="alert" hidden></div>
-      </div>
-      <footer class="crm-drawer-footer"><button class="btn" type="button" data-close-lead-form>取消</button><button class="btn btn-primary" id="crmSaveLead" type="submit">保存线索</button></footer>
+      </div></div>
+      <div class="dialog-footer"><button class="btn" type="button" data-close-lead-form>取消</button><span class="spacer"></span><button class="btn btn-primary" id="crmSaveLead" type="submit">保存线索</button></div>
     </form>
-  </aside>`);
+  </dialog>`);
 
   $("crmNewLead").addEventListener("click", () => openLeadForm());
   $("crmImportLeads").addEventListener("click", () => context.openImport("CRM_LEAD"));
@@ -110,7 +109,7 @@ function setLeadListLoading() {
   $("crmLeadListState").innerHTML = "";
   $("crmLeadEmpty").hidden = true;
   $("crmLeadTableWrap").hidden = false;
-  $("crmLeadRows").innerHTML = Array.from({ length: 6 }, () => '<tr class="crm-skeleton-row"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>').join("");
+  $("crmLeadRows").innerHTML = Array.from({ length: 6 }, () => '<tr class="crm-skeleton-row"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>').join("");
   $("crmLeadTableWrap").setAttribute("aria-busy", "true");
 }
 
@@ -137,14 +136,18 @@ export async function loadLeads(page = listState.page) {
 }
 
 function renderLeadRows(rows) {
-  $("crmLeadResultCount").textContent = `${listState.total} 条`;
+  $("crmLeadResultCount").textContent = `${listState.total} 条结果`;
+  $("crmLeadMetricTotal").textContent = String(listState.total);
+  $("crmLeadMetricActive").textContent = String(rows.filter((lead) => !["WON", "LOST"].includes(lead.status)).length);
+  $("crmLeadMetricPriority").textContent = String(rows.filter((lead) => ["HIGH", "URGENT"].includes(lead.priority)).length);
+  $("crmLeadMetricFollowup").textContent = String(rows.filter((lead) => lead.nextFollowupAt).length);
   $("crmLeadRows").innerHTML = rows.map((lead) => `<tr data-crm-lead-id="${esc(lead.id)}" tabindex="0">
     <td><strong>${esc(lead.requirementSummary)}</strong><small>${esc(lead.projectType || lead.projectDomain || "-")}</small></td>
     <td><strong>${esc(lead.contact.contactName)}</strong><small>${esc(lead.contact.companyShortName || lead.contact.companyName || "-")}</small></td>
     <td><span class="crm-badge crm-status-${esc(lead.status.toLowerCase())}">${esc(leadStatusLabel(lead.status))}</span></td>
     <td><span class="crm-badge crm-priority-${esc(lead.priority.toLowerCase())}">${esc(leadPriorityLabel(lead.priority))}</span></td>
     <td>${esc(lead.salesOwner?.name || "-")}</td><td>${esc(lead.followupOwner?.name || "-")}</td>
-    <td>${esc(formatLocalDateTime(lead.nextFollowupAt))}</td><td>${esc(formatLocalDateTime(lead.lastFollowupAt))}</td><td>${esc(quoteDisplay(lead))}</td><td>${esc(formatLocalDateTime(lead.updatedAt))}</td>
+    <td>${esc(formatLocalDateTime(lead.nextFollowupAt))}</td><td>${esc(formatLocalDateTime(lead.updatedAt))}</td>
   </tr>`).join("");
   $("crmLeadTableWrap").hidden = rows.length === 0;
   $("crmLeadEmpty").hidden = rows.length > 0;
@@ -165,46 +168,85 @@ function renderLeadPagination() {
   $("crmLeadNextPage").disabled = listState.page >= listState.pageCount;
 }
 
-function detailField(label, value, wide = false) {
-  return `<div class="crm-description${wide ? " crm-description-wide" : ""}"><span>${esc(label)}</span><strong>${esc(displayValue(value))}</strong></div>`;
+function identityField(label, value, wide = false) {
+  return `<div class="customer-identity-item${wide ? " wide" : ""}"><label>${esc(label)}</label><strong>${esc(displayValue(value))}</strong></div>`;
+}
+
+function fieldTile(label, value, wide = false) {
+  return `<div class="field-tile${wide ? " wide" : ""}"><label>${esc(label)}</label><strong>${esc(displayValue(value))}</strong></div>`;
+}
+
+function overviewMarkup(lead) {
+  return [
+    identityField("状态", leadStatusLabel(lead.status)), identityField("优先级", leadPriorityLabel(lead.priority)),
+    identityField("销售负责人", lead.salesOwner?.name), identityField("跟进负责人", lead.followupOwner?.name),
+    identityField("下次跟进", formatLocalDateTime(lead.nextFollowupAt)), identityField("最近跟进", formatLocalDateTime(lead.lastFollowupAt)),
+    identityField("预计报价", quoteDisplay(lead), true),
+  ].join("");
+}
+
+function contactMarkup(contact) {
+  return [
+    identityField("客户联系人", contact.contactName), identityField("公司", contact.companyShortName || contact.companyName),
+    identityField("职位", contact.title), identityField("Email", contact.email), identityField("Phone", contact.phone, true),
+  ].join("");
 }
 
 function requirementMarkup(lead) {
-  return [
-    detailField("项目需求简述", lead.requirementSummary, true), detailField("需求整理 / 详细需求", lead.requirementDetail, true),
-    detailField("最近进展", lead.latestProgress, true), detailField("预计报价", quoteDisplay(lead)), detailField("项目领域", lead.projectDomain),
-    detailField("项目类型", lead.projectType), detailField("技术类型", lead.technologyType), detailField("产品类型", lead.productType),
-    detailField("产品名称", lead.productName), detailField("资源需求", lead.resourceRequirement, true), detailField("方案", lead.solution, true), detailField("备注", lead.remark, true),
-  ].join("");
+  return `<div class="field-groups"><section><div class="subgroup-title">A. 基本需求</div><div class="field-grid">${fieldTile("项目需求简述", lead.requirementSummary, true)}${fieldTile("需求详情", lead.requirementDetail, true)}</div></section><section><div class="subgroup-title">B. 项目信息</div><div class="field-grid">${fieldTile("项目领域", lead.projectDomain)}${fieldTile("项目类型", lead.projectType)}${fieldTile("技术类型", lead.technologyType)}${fieldTile("产品类型", lead.productType)}${fieldTile("产品名称", lead.productName)}${fieldTile("资源需求", lead.resourceRequirement, true)}</div></section><section><div class="subgroup-title">C. 方案与进展</div><div class="field-grid">${fieldTile("方案", lead.solution, true)}${fieldTile("最近进展", lead.latestProgress, true)}</div></section></div>`;
 }
 
-function followupSettingsMarkup(lead) {
-  return [
-    detailField("销售负责人", lead.salesOwner?.name), detailField("跟进负责人", lead.followupOwner?.name),
-    detailField("下一次跟进", formatLocalDateTime(lead.nextFollowupAt)), detailField("最近一次跟进", formatLocalDateTime(lead.lastFollowupAt)),
-  ].join("");
+function renderLeadNote(lead) {
+  if (!lead.remark) return '<div class="empty-state crm-compact-empty"><div><div class="empty-illustration"><svg><use href="#i-file"/></svg></div><h3>暂无备注</h3></div></div>';
+  return `<div class="notes-list"><article class="note-item"><div class="note-head"><span class="mini-avatar">${esc((lead.createdBy?.name || "系").slice(0, 1))}</span><span class="note-author"><strong>${esc(lead.createdBy?.name || "系统记录")}</strong><time>${esc(formatLocalDateTime(lead.updatedAt))}</time></span></div><p>${esc(lead.remark)}</p></article></div>`;
+}
+
+const leadAuditLabel = (action) => ({ CREATE_CRM_LEAD: "创建线索", UPDATE_CRM_LEAD: "编辑线索", CREATE_LEAD_FOLLOWUP: "新增线索跟进" })[action] || action;
+
+function renderLeadAudit(items, lead, allowed) {
+  if (!allowed) return '<div class="empty-state crm-compact-empty"><div><div class="empty-illustration"><svg><use href="#i-lock"/></svg></div><h3>当前角色无权查看操作记录</h3></div></div>';
+  if (!items.length) return `<div class="empty-state crm-compact-empty"><div><div class="empty-illustration"><svg><use href="#i-file"/></svg></div><h3>暂无操作记录</h3><p>线索创建于 ${esc(formatLocalDateTime(lead.createdAt))}</p></div></div>`;
+  return `<div class="activity-list">${items.map((item) => {
+    const actor = context.getUsers().find((user) => user.id === item.actorUserId);
+    return `<article class="activity-row"><span class="activity-icon"><svg><use href="#i-file"/></svg></span><span><strong>${esc(leadAuditLabel(item.action))}</strong><small>${esc(item.targetType || "crm_lead")}</small></span><span>${esc(actor?.name || item.actorUserId || "系统")}</span><time>${esc(formatLocalDateTime(item.createdAt))}</time></article>`;
+  }).join("")}</div>`;
+}
+
+function bindDetailTabs(container) {
+  container.querySelectorAll("[data-detail-tab]").forEach((button) => button.addEventListener("click", () => {
+    container.querySelectorAll("[data-detail-tab]").forEach((item) => item.classList.toggle("is-active", item === button));
+    container.querySelectorAll("[data-detail-panel]").forEach((panel) => panel.classList.toggle("is-active", panel.dataset.detailPanel === button.dataset.detailTab));
+  }));
 }
 
 export async function openLead(id) {
   const container = $("crmLeadDetailView");
   container.innerHTML = '<div class="crm-detail-loading"><span class="crm-skeleton crm-skeleton-title"></span><span class="crm-skeleton crm-skeleton-line"></span><span class="crm-skeleton crm-skeleton-block"></span></div>';
   try {
-    const [detailResult, followupResult] = await Promise.all([
+    const [detailResult, followupResult, auditResult] = await Promise.all([
       crmApi(`/api/v1/crm/leads/${id}`),
       context.can("crm.lead_followup.view") ? crmApi(`/api/v1/crm/leads/${id}/followups?page=1&pageSize=50`) : Promise.resolve({ data: [], meta: { total: 0 } }),
+      context.can("audit.view") ? crmApi("/api/v1/audit-logs?page=1&pageSize=100").catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
     ]);
     const lead = detailResult.data;
+    const auditItems = auditResult.data.filter((item) => item.targetId === lead.id || item.details?.leadId === lead.id);
     context.state.currentCrmLead = lead;
-    container.innerHTML = `<div class="crm-record">
-      <header class="crm-record-header"><button class="crm-icon-button" id="crmBackToLeads" type="button" title="返回线索" aria-label="返回线索"><svg><use href="#i-arrow"/></svg></button><div class="crm-record-title"><span class="crm-eyebrow">线索</span><h1>${esc(lead.requirementSummary)}</h1><p>${esc(lead.contact.contactName)} · ${esc(lead.contact.companyShortName || lead.contact.companyName || "-")}</p></div><span class="crm-badge crm-status-${esc(lead.status.toLowerCase())}">${esc(leadStatusLabel(lead.status))}</span><span class="crm-badge crm-priority-${esc(lead.priority.toLowerCase())}">${esc(leadPriorityLabel(lead.priority))}</span><div class="crm-record-actions"><button class="btn" id="crmEditLead" type="button" data-crm-permission="crm.lead.edit"><svg><use href="#i-edit"/></svg>编辑线索</button></div></header>
-      <section class="crm-record-band"><header><div><h2>需求信息</h2></div></header><div class="crm-description-grid">${requirementMarkup(lead)}</div></section>
-      <section class="crm-record-band"><header><div><h2>跟进信息</h2><small>${followupResult.meta.total} 条记录</small></div><button class="btn btn-small" id="crmAddLeadFollowup" type="button" data-crm-permission="crm.lead_followup.create"><svg><use href="#i-plus"/></svg>新增跟进</button></header><div class="crm-description-grid crm-followup-settings">${followupSettingsMarkup(lead)}</div><div class="crm-timeline">${renderTimelineMarkup(followupResult.data, "lead")}</div></section>
-      <section class="crm-record-band"><header><div><h2>所属客户联系人</h2><small>自动关联字段 · 只读</small></div><button class="btn btn-small" id="crmViewLeadContact" type="button">查看联系人<svg class="crm-forward-icon"><use href="#i-chevron"/></svg></button></header>${readonlyContactMarkup(lead.contact, true)}</section>
+    container.innerHTML = `<div class="crm-record v1-detail">
+      <header class="detail-top"><button class="back-button" id="crmBackToLeads" type="button" aria-label="返回线索列表"><svg><use href="#i-arrow"/></svg></button><div class="detail-identity"><div class="detail-avatar">${esc(lead.contact.contactName.trim().slice(0, 1).toUpperCase() || "线")}</div><div><div class="detail-name-line"><h1>${esc(lead.requirementSummary)}</h1><span class="crm-badge crm-status-${esc(lead.status.toLowerCase())}">${esc(leadStatusLabel(lead.status))}</span><span class="crm-badge crm-priority-${esc(lead.priority.toLowerCase())}">${esc(leadPriorityLabel(lead.priority))}</span></div><div class="detail-contact-row"><span>${esc(lead.contact.contactName)}</span><span>${esc(lead.contact.companyShortName || lead.contact.companyName || "-")}</span></div></div></div><div class="detail-top-actions"><button class="btn" id="crmEditLead" type="button" data-crm-permission="crm.lead.edit"><svg><use href="#i-edit"/></svg>编辑线索</button><button class="btn btn-primary" id="crmAddLeadFollowup" type="button" data-crm-permission="crm.lead_followup.create"><svg><use href="#i-plus"/></svg>新增跟进</button></div></header>
+      <div class="detail-grid"><aside class="detail-column detail-side"><article class="content-card customer-identity-card"><div class="content-card-header"><svg class="icon"><use href="#i-lead"/></svg><h3>线索概览</h3></div><div class="customer-identity-grid">${overviewMarkup(lead)}</div></article><article class="content-card customer-identity-card"><div class="content-card-header"><svg class="icon"><use href="#i-user"/></svg><h3>关联联系人</h3><span class="spacer"></span><button class="btn btn-small" id="crmViewLeadContact" type="button">查看联系人</button></div><div class="customer-identity-grid">${contactMarkup(lead.contact)}</div></article></aside>
+      <section class="detail-column operations-main"><nav class="detail-tabs" aria-label="线索详情业务模块"><button class="detail-tab is-active" type="button" data-detail-tab="requirement">需求信息</button><button class="detail-tab" type="button" data-detail-tab="followups">跟进记录 ${followupResult.meta.total}</button><button class="detail-tab" type="button" data-detail-tab="notes">备注 ${lead.remark ? 1 : 0}</button><button class="detail-tab" type="button" data-detail-tab="activity">操作记录</button></nav>
+        <div class="tab-panel is-active" data-detail-panel="requirement"><section class="content-card"><div class="list-card-header"><div><h2>需求信息</h2></div></div>${requirementMarkup(lead)}</section></div>
+        <div class="tab-panel" data-detail-panel="followups"><section class="content-card"><div class="list-card-header"><div><h2>跟进记录</h2></div><span class="spacer"></span><button class="btn btn-primary btn-small" id="crmPanelAddLeadFollowup" type="button" data-crm-permission="crm.lead_followup.create"><svg><use href="#i-plus"/></svg>新增跟进</button></div><div class="timeline">${renderTimelineMarkup(followupResult.data, "lead")}</div></section></div>
+        <div class="tab-panel" data-detail-panel="notes"><section class="content-card"><div class="list-card-header"><div><h2>备注</h2></div></div>${renderLeadNote(lead)}</section></div>
+        <div class="tab-panel" data-detail-panel="activity"><section class="content-card"><div class="list-card-header"><div><h2>操作记录</h2></div></div>${renderLeadAudit(auditItems, lead, context.can("audit.view"))}</section></div>
+      </section></div>
     </div>`;
     $("crmBackToLeads").addEventListener("click", () => context.navigate("leads"));
     $("crmEditLead").addEventListener("click", () => openLeadForm(lead.contact, lead));
     $("crmAddLeadFollowup").addEventListener("click", () => openFollowup({ kind: "lead", id: lead.id, title: "新增线索跟进", onSaved: () => openLead(lead.id) }));
+    $("crmPanelAddLeadFollowup").addEventListener("click", () => openFollowup({ kind: "lead", id: lead.id, title: "新增线索跟进", onSaved: () => openLead(lead.id) }));
     $("crmViewLeadContact").addEventListener("click", () => context.navigate(`contacts/${lead.contact.id}`));
+    bindDetailTabs(container);
     context.applyCrmPermissions();
     return lead;
   } catch (error) {
@@ -219,19 +261,19 @@ export async function openLeadForm(contact = null, lead = null) {
   editingLead = lead;
   selectedContact = contact || lead?.contact || null;
   lockedContact = Boolean(contact || lead);
-  $("crmLeadFormTitle").textContent = lead ? "编辑线索" : "新建线索";
+  $("crmLeadFormTitle").textContent = lead ? "编辑线索" : "新增线索";
   $("crmLeadContactKeyword").value = "";
   $("crmLeadContactPicker").hidden = Boolean(selectedContact);
   $("crmSelectedContact").innerHTML = selectedContact ? readonlyContactMarkup(selectedContact) : "";
   $("crmLeadFormFields").innerHTML = renderFormSections(LEAD_FIELDS, lead || { priority: "MEDIUM", status: "NEW", currency: "CNY", salesOwnerUserId: context.currentUserId(), followupOwnerUserId: context.currentUserId() }, context.getUsers(), {
+    basic: "基本信息",
     requirement: "需求信息",
-    project: "项目与报价",
-    solution: "需求与方案",
-    followup: "跟进设置",
+    commercial: "商务信息",
+    solution: "方案与跟进",
+    remark: "备注",
   });
   $("crmLeadFormError").hidden = true;
-  $("crmLeadDrawer").classList.add("is-open");
-  $("crmLeadDrawer").setAttribute("aria-hidden", "false");
+  $("crmLeadDrawer").showModal();
   if (!selectedContact) await searchContacts("");
   setTimeout(() => (selectedContact ? $("crmLeadForm").elements.requirementSummary : $("crmLeadContactKeyword")).focus(), 30);
 }
@@ -265,8 +307,7 @@ function selectContact(contact) {
 }
 
 function closeLeadForm() {
-  $("crmLeadDrawer")?.classList.remove("is-open");
-  $("crmLeadDrawer")?.setAttribute("aria-hidden", "true");
+  if ($("crmLeadDrawer")?.open) $("crmLeadDrawer").close();
   editingLead = null;
   selectedContact = null;
   lockedContact = false;

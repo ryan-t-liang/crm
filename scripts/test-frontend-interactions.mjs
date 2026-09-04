@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 
 import { friendlyError, localDateTimeToIso } from "../frontend/js/api.js";
 import { buildContactQuery } from "../frontend/js/contacts.js";
-import { LEAD_FIELDS, validateContactPayload, validateLeadPayload } from "../frontend/js/field-definitions.js";
+import { CONTACT_FIELDS, LEAD_FIELDS, validateContactPayload, validateLeadPayload } from "../frontend/js/field-definitions.js";
 import { renderTimelineMarkup } from "../frontend/js/followups.js";
 import { buildLeadQuery, quoteDisplay, readonlyContactMarkup } from "../frontend/js/leads.js";
 import { preflightMessage, preflightStatusLabel } from "../frontend/js/crm-jobs.js";
@@ -13,7 +13,7 @@ const [appSource, markup, styles, contactSource, leadSource, jobSource, followup
 ].map((file) => readFile(new URL(`../frontend/js/${file}`, import.meta.url), "utf8")));
 
 const navOrder = [...markup.matchAll(/class="nav-item"[^>]*data-route="([^"]+)"/g)].map((match) => match[1]);
-assert.deepEqual(navOrder, ["leads", "contacts", "accounts", "roles", "audit"], "线索必须是左侧第一项，且不得存在旧业务导航");
+assert.deepEqual(navOrder, ["contacts", "leads", "accounts", "roles", "audit"], "客户联系人必须是左侧第一项，且不得存在旧业务导航");
 assert.match(markup, /<html lang="zh-CN">/);
 assert.match(markup, /assets\/kivisense-logo\.svg/);
 assert.match(styles, /\.app-brand-logo-shell[^{]*\{[^}]*overflow:\s*visible/s, "Logo 容器不得裁剪");
@@ -54,6 +54,8 @@ assert.deepEqual(validateLeadPayload({ contactId: "contact-1", requirementSummar
   currency: "填写预计报价时必须选择币种",
 });
 assert.equal(LEAD_FIELDS.some((field) => ["email", "phone", "contactEmail", "contactPhone"].includes(field.key)), false, "线索表单不能重复编辑联系人通讯字段");
+assert.deepEqual([...new Set(CONTACT_FIELDS.map((field) => field.section))], ["person", "company", "contact", "region", "crm"], "联系人表单必须保持五个 V1 模块");
+assert.deepEqual([...new Set(LEAD_FIELDS.map((field) => field.section))], ["basic", "requirement", "commercial", "solution", "remark"], "线索字段必须保持五个业务模块，并与关联联系人组成六段式表单");
 
 const contactSummary = readonlyContactMarkup({
   id: "contact-1", contactName: "Naderi", companyShortName: "Dena", title: "总监", email: "naderi@example.test",
@@ -75,8 +77,23 @@ assert.equal(quoteDisplay({ estimatedQuote: "63000.50", currency: "USD" }), "USD
 assert.equal(quoteDisplay({ estimatedQuote: null, currency: null }), "-");
 assert.match(contactSource, /data-crm-permission="crm\.contact\.import"/);
 assert.match(contactSource, /data-crm-permission="crm\.contact\.export"/);
+assert.match(contactSource, /class="metrics member-metrics"/, "联系人列表必须保留 V1 指标卡布局");
+assert.match(contactSource, /class="detail-grid"/, "联系人详情必须复用 V1 双栏结构");
+assert.match(contactSource, /data-detail-tab="leads"/);
+assert.match(contactSource, /<dialog class="lead-create-dialog crm-form-dialog"/, "联系人表单必须使用 V1 dialog shell");
+for (const section of ["联系人信息", "公司信息", "联系方式", "地区信息", "CRM 信息"]) assert.match(contactSource, new RegExp(section), `联系人表单缺少模块：${section}`);
+assert.doesNotMatch(contactSource, /crm-description-grid/, "联系人详情不得继续使用大面积 Description Grid");
 assert.match(leadSource, /data-crm-permission="crm\.lead\.import"/);
 assert.match(leadSource, /data-crm-permission="crm\.lead\.export"/);
+assert.match(leadSource, /class="metrics lead-metrics"/, "线索列表必须保留 V1 指标卡布局");
+assert.match(leadSource, /class="detail-grid"/, "线索详情必须复用 V1 双栏结构");
+assert.match(leadSource, /data-detail-tab="requirement"/);
+assert.match(leadSource, /<dialog class="lead-create-dialog crm-form-dialog"/, "线索表单必须使用 V1 dialog shell");
+for (const section of ["关联联系人", "基本信息", "需求信息", "商务信息", "方案与跟进", "备注"]) assert.match(leadSource, new RegExp(section), `线索表单缺少模块：${section}`);
+assert.doesNotMatch(leadSource, /crm-description-grid/, "线索详情不得继续使用大面积 Description Grid");
+assert.match(jobSource, /class="data-management-dialog"/, "导入导出必须使用 V1 data management dialog");
+assert.match(jobSource, /下载\$\{esc\(item\.label\)\}模板/);
+assert.match(jobSource, /导入记录/);
 assert.match(jobSource, /确认导入 \$\{state\.job\.preflight\.importableRows\} 条/);
 assert.match(jobSource, /下载失败明细/);
 assert.match(jobSource, /正在生成导出文件/);
