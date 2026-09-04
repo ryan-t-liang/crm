@@ -12,6 +12,7 @@ const state = {
   users: [],
   roles: [],
   permissions: [],
+  activeRoleId: null,
   currentCrmContact: null,
   currentCrmLead: null,
 };
@@ -77,6 +78,7 @@ function showLogin() {
   $("loginOverlay").hidden = false;
   $("loginError").hidden = true;
   $("loginPasswordInput").value = "";
+  $("loginPasswordInput").type = "password";
   setTimeout(() => $("loginAccountInput").focus(), 20);
 }
 
@@ -91,6 +93,7 @@ function showPasswordDialog(required = false) {
   $("cancelChangePassword").hidden = required;
   $("changePasswordForm").reset();
   $("changePasswordError").hidden = true;
+  updatePasswordStrength("");
   $("changePasswordDialog").showModal();
   setTimeout(() => $("currentPasswordInput").focus(), 20);
 }
@@ -101,6 +104,58 @@ function updateIdentity() {
   $("adminAvatar").textContent = state.me.name.trim().slice(0, 1).toUpperCase();
   $("accountMenuName").textContent = state.me.name;
   $("accountMenuRole").textContent = state.me.role.name;
+}
+
+function passwordAssessment(value) {
+  const password = String(value || "");
+  if (!password) return { level: "", label: "-", width: 0 };
+  const obvious = ["123456789012", "password1234", "aaaaaaaaaaaa", "qwerty123456"].includes(password.toLowerCase()) || /^\d+$/.test(password) || /^(.)\1{11,}$/.test(password);
+  if (password.length < 12 || obvious) return { level: "weak", label: "弱", width: 28 };
+  const variety = [/[a-z]/.test(password), /[A-Z]/.test(password), /\d/.test(password), /[^A-Za-z0-9]/.test(password)].filter(Boolean).length;
+  if (password.length >= 16 || variety >= 3) return { level: "strong", label: "强", width: 100 };
+  return { level: "medium", label: "中", width: 62 };
+}
+
+function updatePasswordStrength(value) {
+  const assessment = passwordAssessment(value);
+  const container = $("changePasswordStrength");
+  container.className = `password-strength${assessment.level === "medium" ? " is-medium" : assessment.level === "strong" ? " is-strong" : ""}`;
+  container.querySelector(".password-strength-fill").style.width = `${assessment.width}%`;
+  container.querySelector(".password-strength-label").textContent = `密码强度：${assessment.label}`;
+}
+
+function setSecurityDrawer(id, open) {
+  const drawer = $(id);
+  drawer.classList.toggle("is-open", open);
+  drawer.setAttribute("aria-hidden", String(!open));
+}
+
+function openPersonalSettings() {
+  $("personalSettingsBody").innerHTML = `<section class="security-form-section"><h3>账号信息</h3><div class="security-form-grid"><div class="readonly-field"><span>姓名</span><strong>${esc(state.me.name)}</strong></div><div class="readonly-field"><span>登录账号</span><strong>${esc(state.me.loginAccount)}</strong></div><div class="readonly-field"><span>角色</span><strong>${esc(state.me.role.name)}</strong></div><div class="readonly-field"><span>账号状态</span><strong>${esc(statusLabel(state.me.status || "ACTIVE"))}</strong></div></div></section><section class="security-form-section"><h3>账号安全</h3><div class="password-summary"><div class="password-summary-copy"><strong>************</strong><span>密码不会在页面中显示</span></div><button class="btn" type="button" id="personalChangePassword">修改密码</button></div></section>`;
+  $("accountMenu").hidden = true;
+  $("accountMenuTrigger").setAttribute("aria-expanded", "false");
+  setSecurityDrawer("personalSettingsDrawer", true);
+  $("personalChangePassword").addEventListener("click", () => {
+    setSecurityDrawer("personalSettingsDrawer", false);
+    showPasswordDialog(false);
+  });
+}
+
+let confirmationResolver = null;
+function requestConfirmation(title, message, confirmText = "确认") {
+  if (confirmationResolver) confirmationResolver(false);
+  $("confirmationTitle").textContent = title;
+  $("confirmationMessage").textContent = message;
+  $("confirmAction").textContent = confirmText;
+  $("confirmationDialog").showModal();
+  return new Promise((resolve) => { confirmationResolver = resolve; });
+}
+
+function resolveConfirmation(confirmed) {
+  if ($("confirmationDialog").open) $("confirmationDialog").close();
+  const resolver = confirmationResolver;
+  confirmationResolver = null;
+  resolver?.(confirmed);
 }
 
 async function loadDirectories() {
@@ -186,6 +241,7 @@ async function logout() {
   try { await crmApi("/api/v1/auth/logout", { method: "POST", body: "{}" }); } catch {}
   state.me = null;
   $("accountMenu").hidden = true;
+  $("accountMenuTrigger").setAttribute("aria-expanded", "false");
   showLogin();
 }
 
@@ -231,7 +287,7 @@ async function route() {
 
 async function renderAccounts() {
   state.users = (await crmApi("/api/v1/users")).data;
-  $("accountsView").innerHTML = `<div class="page"><header class="page-heading"><div><span class="eyebrow">系统管理</span><h1>账户管理</h1></div><button class="btn btn-primary" id="newAccount" data-crm-permission="account.create"><svg><use href="#i-plus"/></svg>新建账号</button></header><section class="content-card"><div class="crm-table-scroll"><table class="crm-data-table"><thead><tr><th>姓名</th><th>登录账号</th><th>角色</th><th>状态</th><th>最近登录</th><th>操作</th></tr></thead><tbody>${state.users.map((user) => `<tr><td><strong>${esc(user.name)}</strong></td><td>${esc(user.loginAccount)}</td><td>${esc(user.role.name)}</td><td><span class="status-pill">${statusLabel(user.status)}</span></td><td>${esc(formatLocalDateTime(user.lastLoginAt))}</td><td><div class="table-actions"><button class="btn btn-small" data-edit-user="${esc(user.id)}" data-crm-permission="account.edit">编辑</button><button class="btn btn-small" data-toggle-user="${esc(user.id)}" data-crm-permission="account.disable">${user.status === "ACTIVE" ? "禁用" : "启用"}</button><button class="btn btn-small" data-reset-user="${esc(user.id)}" data-crm-permission="account.reset">重置密码</button></div></td></tr>`).join("") || '<tr><td colspan="6">暂无账号</td></tr>'}</tbody></table></div></section></div>`;
+  $("accountsView").innerHTML = `<div class="page system-page"><header class="page-heading"><div><span class="eyebrow">系统管理</span><h1>账户管理</h1><p>管理内部账号、角色与登录状态。</p></div><button class="btn btn-primary" id="newAccount" data-crm-permission="account.create"><svg><use href="#i-plus"/></svg>新建账号</button></header><section class="content-card"><div class="crm-table-scroll"><table class="system-table account-table"><thead><tr><th>姓名</th><th>登录账号</th><th>角色</th><th>状态</th><th>最近登录</th><th class="action-cell">操作</th></tr></thead><tbody>${state.users.map((user) => `<tr><td><strong>${esc(user.name)}</strong></td><td>${esc(user.loginAccount)}</td><td>${esc(user.role.name)}</td><td><span class="status-badge${user.status === "ACTIVE" ? "" : " disabled"}">${statusLabel(user.status)}</span></td><td>${esc(formatLocalDateTime(user.lastLoginAt))}</td><td class="action-cell"><div class="table-actions"><button class="btn btn-small" data-edit-user="${esc(user.id)}" data-crm-permission="account.edit">编辑</button><button class="btn btn-small" data-toggle-user="${esc(user.id)}" data-crm-permission="account.disable">${user.status === "ACTIVE" ? "禁用" : "启用"}</button><button class="btn btn-small" data-reset-user="${esc(user.id)}" data-crm-permission="account.reset">重置密码</button></div></td></tr>`).join("") || '<tr><td colspan="6">暂无账号</td></tr>'}</tbody></table></div></section></div>`;
   $("newAccount")?.addEventListener("click", () => openAccountForm());
   document.querySelectorAll("[data-edit-user]").forEach((button) => button.addEventListener("click", () => openAccountForm(state.users.find((user) => user.id === button.dataset.editUser))));
   document.querySelectorAll("[data-toggle-user]").forEach((button) => button.addEventListener("click", () => toggleUser(button.dataset.toggleUser)));
@@ -247,7 +303,8 @@ function openAccountForm(user = null) {
   $("accountRoleInput").innerHTML = state.roles.map((role) => `<option value="${esc(role.id)}"${user?.roleId === role.id ? " selected" : ""}>${esc(role.name)}</option>`).join("");
   $("accountStatusInput").value = user?.status || "ACTIVE";
   $("accountFormError").hidden = true;
-  $("accountDialog").showModal();
+  setSecurityDrawer("accountDialog", true);
+  setTimeout(() => $("accountNameInput").focus(), 20);
 }
 
 async function saveAccount(event) {
@@ -256,7 +313,7 @@ async function saveAccount(event) {
   const payload = { name: $("accountNameInput").value.trim(), loginAccount: $("accountLoginInput").value.trim(), roleId: $("accountRoleInput").value, status: $("accountStatusInput").value };
   try {
     await crmApi(id ? `/api/v1/users/${id}` : "/api/v1/users", { method: id ? "PATCH" : "POST", body: JSON.stringify(payload) });
-    $("accountDialog").close();
+    setSecurityDrawer("accountDialog", false);
     notify(id ? "账号已更新" : "账号已创建，初始密码由系统管理员提供");
     await loadDirectories();
     await renderAccounts();
@@ -265,7 +322,9 @@ async function saveAccount(event) {
 
 async function toggleUser(id) {
   const user = state.users.find((item) => item.id === id);
-  if (!user || !confirm(`确认${user.status === "ACTIVE" ? "禁用" : "启用"}账号“${user.name}”？`)) return;
+  if (!user) return;
+  const verb = user.status === "ACTIVE" ? "禁用" : "启用";
+  if (!await requestConfirmation(`${verb}账号`, `确认${verb}账号“${user.name}”？`, verb)) return;
   await crmApi(`/api/v1/users/${id}/${user.status === "ACTIVE" ? "disable" : "enable"}`, { method: "POST", body: "{}" });
   notify("账号状态已更新");
   await renderAccounts();
@@ -273,7 +332,7 @@ async function toggleUser(id) {
 
 async function resetUserPassword(id) {
   const user = state.users.find((item) => item.id === id);
-  if (!user || !confirm(`确认重置“${user.name}”的密码？`)) return;
+  if (!user || !await requestConfirmation("重置密码", `确认重置“${user.name}”的密码？该用户下次登录时必须设置新密码。`, "重置密码")) return;
   await crmApi(`/api/v1/users/${id}/reset-password`, { method: "POST", body: "{}" });
   notify("密码已重置，用户下次登录必须修改密码");
 }
@@ -283,7 +342,12 @@ function renderRoles() {
     (groups[permission.module] ||= []).push(permission);
     return groups;
   }, {});
-  $("rolesView").innerHTML = `<div class="page"><header class="page-heading"><div><span class="eyebrow">系统管理</span><h1>角色与权限</h1></div></header><div class="role-grid">${state.roles.map((role) => `<section class="content-card role-card" data-role-card="${esc(role.id)}"><header><div><h2>${esc(role.name)}</h2><p>${esc(role.description || "")}</p></div><span class="status-pill">${esc(roleLabel(role.key))}</span></header><div class="permission-groups">${Object.entries(grouped).map(([module, permissions]) => `<fieldset><legend>${esc(moduleLabel(module))}</legend>${permissions.map((permission) => `<label><input type="checkbox" value="${esc(permission.key)}"${role.permissions.some((item) => item.permission.key === permission.key) ? " checked" : ""}${role.system ? " disabled" : ""}><span>${esc(permission.name)}</span></label>`).join("")}</fieldset>`).join("")}</div>${role.system ? '<p class="form-note">超级管理员权限固定，不可修改。</p>' : `<button class="btn btn-primary btn-small" data-save-role="${esc(role.id)}" data-crm-permission="roles.configure">保存权限</button>`}</section>`).join("")}</div></div>`;
+  const selected = state.roles.find((role) => role.id === state.activeRoleId) || state.roles[0];
+  state.activeRoleId = selected?.id || null;
+  const rolePermissions = new Set((selected?.permissions || []).map((item) => item.permission.key));
+  const detail = selected ? `<section class="content-card role-detail" data-role-card="${esc(selected.id)}"><header class="role-detail-header"><div><h2>${esc(selected.name)}</h2><p>${esc(selected.description || "管理该角色可以访问的系统功能。")}</p></div><span class="spacer"></span>${selected.system ? '<span class="role-system-note">系统角色，权限固定</span>' : `<button class="btn btn-primary btn-small" data-save-role="${esc(selected.id)}" data-crm-permission="roles.configure">保存权限</button>`}</header><div class="role-detail-body">${Object.entries(grouped).map(([module, permissions]) => `<section class="permission-section"><h3>${esc(moduleLabel(module))}</h3>${permissions.map((permission) => `<div class="permission-row"><div class="permission-copy"><strong>${esc(permission.name)}</strong><span>允许此角色使用该功能</span></div><label class="permission-switch"><input type="checkbox" value="${esc(permission.key)}"${rolePermissions.has(permission.key) ? " checked" : ""}${selected.system || !can("roles.configure") ? " disabled" : ""}><span></span></label></div>`).join("")}</section>`).join("")}</div></section>` : '<section class="content-card role-detail"><div class="role-detail-body">暂无角色</div></section>';
+  $("rolesView").innerHTML = `<div class="page system-page"><header class="page-heading"><div><span class="eyebrow">系统管理</span><h1>角色与权限</h1><p>按角色配置 CRM 功能访问范围。</p></div></header><div class="role-layout"><aside class="content-card role-list"><header class="role-list-header"><strong>角色列表</strong></header>${state.roles.map((role) => `<button class="role-list-button${role.id === selected?.id ? " is-active" : ""}" type="button" data-select-role="${esc(role.id)}"><strong>${esc(role.name)}</strong><span>${esc(roleLabel(role.key))}${role.description ? ` · ${esc(role.description)}` : ""}</span></button>`).join("")}</aside>${detail}</div></div>`;
+  document.querySelectorAll("[data-select-role]").forEach((button) => button.addEventListener("click", () => { state.activeRoleId = button.dataset.selectRole; renderRoles(); }));
   document.querySelectorAll("[data-save-role]").forEach((button) => button.addEventListener("click", () => saveRole(button.dataset.saveRole)));
   applyCrmPermissions();
 }
@@ -302,7 +366,7 @@ async function renderAudit() {
   if ($("auditModuleFilter")?.value) params.set("module", $("auditModuleFilter").value);
   if ($("auditActionFilter")?.value.trim()) params.set("action", $("auditActionFilter").value.trim());
   const result = await crmApi(`/api/v1/audit-logs?${params}`);
-  $("auditView").innerHTML = `<div class="page"><header class="page-heading"><div><span class="eyebrow">系统管理</span><h1>审计日志</h1></div></header><section class="filter-bar"><label><span>模块</span><select id="auditModuleFilter"><option value="">全部模块</option><option value="crm">客户与线索</option><option value="crm_import">数据导入</option><option value="crm_export">数据导出</option><option value="account">账户</option><option value="role">角色权限</option><option value="auth">登录安全</option></select></label><label><span>操作</span><input id="auditActionFilter" placeholder="输入操作类型"></label><button class="btn" id="auditSearch" type="button"><svg><use href="#i-search"/></svg>查询</button></section><section class="content-card"><div class="crm-table-scroll"><table class="crm-data-table"><thead><tr><th>时间</th><th>操作人</th><th>模块</th><th>操作</th><th>对象</th><th>请求编号</th></tr></thead><tbody>${result.data.map((row) => `<tr><td>${esc(formatLocalDateTime(row.createdAt))}</td><td>${esc(row.actorName)}</td><td>${esc(moduleLabel(row.module))}</td><td>${esc(actionLabel(row.action))}</td><td>${esc(targetLabel(row.targetType))}${row.targetId ? `<small>${esc(row.targetId)}</small>` : ""}</td><td>${esc(row.requestId || "-")}</td></tr>`).join("") || '<tr><td colspan="6">暂无审计记录</td></tr>'}</tbody></table></div></section></div>`;
+  $("auditView").innerHTML = `<div class="page system-page"><header class="page-heading"><div><span class="eyebrow">系统管理</span><h1>审计日志</h1><p>查看关键业务和安全操作记录。</p></div></header><section class="filter-bar"><label><span class="field-label">模块</span><select class="control" id="auditModuleFilter"><option value="">全部模块</option><option value="crm">客户与线索</option><option value="crm_import">数据导入</option><option value="crm_export">数据导出</option><option value="account">账户</option><option value="role">角色权限</option><option value="auth">登录安全</option></select></label><label><span class="field-label">操作</span><input class="control" id="auditActionFilter" placeholder="输入操作类型"></label><button class="btn btn-primary" id="auditSearch" type="button"><svg><use href="#i-search"/></svg>查询</button></section><section class="content-card"><div class="crm-table-scroll"><table class="system-table audit-table"><thead><tr><th>时间</th><th>操作人</th><th>模块</th><th>操作</th><th>对象</th><th>请求编号</th></tr></thead><tbody>${result.data.map((row) => `<tr><td>${esc(formatLocalDateTime(row.createdAt))}</td><td><strong>${esc(row.actorName)}</strong></td><td>${esc(moduleLabel(row.module))}</td><td>${esc(actionLabel(row.action))}</td><td><span class="audit-detail">${esc(targetLabel(row.targetType))}${row.targetId ? `<span class="secondary">${esc(row.targetId)}</span>` : ""}</span></td><td>${esc(row.requestId || "-")}</td></tr>`).join("") || '<tr><td colspan="6">暂无审计记录</td></tr>'}</tbody></table></div></section></div>`;
   $("auditModuleFilter").value = params.get("module") || "";
   $("auditActionFilter").value = params.get("action") || "";
   $("auditSearch").addEventListener("click", renderAudit);
@@ -311,20 +375,46 @@ async function renderAudit() {
 document.querySelectorAll(".nav-item").forEach((button) => button.addEventListener("click", () => navigate(button.dataset.route)));
 $("brandLockup").addEventListener("click", () => navigate(allowedDefaultRoute()));
 $("sidebarToggle").addEventListener("click", () => {
+  document.body.classList.add("is-sidebar-transitioning");
   document.body.classList.toggle("is-sidebar-collapsed");
-  localStorage.setItem("kivisense.crm.sidebar.collapsed", String(document.body.classList.contains("is-sidebar-collapsed")));
+  const collapsed = document.body.classList.contains("is-sidebar-collapsed");
+  $("sidebarToggle").setAttribute("aria-expanded", String(!collapsed));
+  localStorage.setItem("kivisense.crm.sidebar.collapsed", String(collapsed));
+  setTimeout(() => document.body.classList.remove("is-sidebar-transitioning"), 240);
 });
-if (localStorage.getItem("kivisense.crm.sidebar.collapsed") === "true") document.body.classList.add("is-sidebar-collapsed");
-$("accountMenuTrigger").addEventListener("click", () => { $("accountMenu").hidden = !$("accountMenu").hidden; });
-$("changePasswordAction").addEventListener("click", () => { $("accountMenu").hidden = true; showPasswordDialog(false); });
+if (localStorage.getItem("kivisense.crm.sidebar.collapsed") === "true") {
+  document.body.classList.add("is-sidebar-collapsed");
+  $("sidebarToggle").setAttribute("aria-expanded", "false");
+}
+$("accountMenuTrigger").addEventListener("click", () => {
+  $("accountMenu").hidden = !$("accountMenu").hidden;
+  $("accountMenuTrigger").setAttribute("aria-expanded", String(!$("accountMenu").hidden));
+});
+$("personalSettingsAction").addEventListener("click", openPersonalSettings);
+$("changePasswordAction").addEventListener("click", () => { $("accountMenu").hidden = true; $("accountMenuTrigger").setAttribute("aria-expanded", "false"); showPasswordDialog(false); });
 $("logoutAction").addEventListener("click", logout);
 $("loginForm").addEventListener("submit", submitLogin);
 $("changePasswordForm").addEventListener("submit", submitPassword);
 $("closeChangePassword").addEventListener("click", () => $("changePasswordDialog").close());
 $("cancelChangePassword").addEventListener("click", () => $("changePasswordDialog").close());
+$("changePasswordDialog").addEventListener("cancel", (event) => {
+  if ($("changePasswordDialog").dataset.required === "true") event.preventDefault();
+});
+$("newPasswordInput").addEventListener("input", (event) => updatePasswordStrength(event.target.value));
 $("accountForm").addEventListener("submit", saveAccount);
-$("closeAccountDialog").addEventListener("click", () => $("accountDialog").close());
-$("cancelAccountDialog").addEventListener("click", () => $("accountDialog").close());
+$("closeAccountDialog").addEventListener("click", () => setSecurityDrawer("accountDialog", false));
+$("cancelAccountDialog").addEventListener("click", () => setSecurityDrawer("accountDialog", false));
+$("closeAccountBackdrop").addEventListener("click", () => setSecurityDrawer("accountDialog", false));
+$("closePersonalSettings").addEventListener("click", () => setSecurityDrawer("personalSettingsDrawer", false));
+$("closePersonalSettingsFooter").addEventListener("click", () => setSecurityDrawer("personalSettingsDrawer", false));
+$("closePersonalSettingsBackdrop").addEventListener("click", () => setSecurityDrawer("personalSettingsDrawer", false));
+$("forgotPasswordAction").addEventListener("click", () => $("forgotPasswordDialog").showModal());
+$("closeForgotPassword").addEventListener("click", () => $("forgotPasswordDialog").close());
+$("ackForgotPassword").addEventListener("click", () => $("forgotPasswordDialog").close());
+$("closeConfirmation").addEventListener("click", () => resolveConfirmation(false));
+$("cancelConfirmation").addEventListener("click", () => resolveConfirmation(false));
+$("confirmAction").addEventListener("click", () => resolveConfirmation(true));
+$("confirmationDialog").addEventListener("cancel", (event) => { event.preventDefault(); resolveConfirmation(false); });
 $("globalSearchInput").addEventListener("keydown", async (event) => {
   if (event.key !== "Enter") return;
   const keyword = event.currentTarget.value.trim();
@@ -338,7 +428,26 @@ window.addEventListener("hashchange", route);
 window.addEventListener("crm:unauthenticated", showLogin);
 window.addEventListener("crm:password-required", () => showPasswordDialog(true));
 document.addEventListener("click", (event) => {
-  if (!event.target.closest("#accountMenu") && !event.target.closest("#accountMenuTrigger")) $("accountMenu").hidden = true;
+  if (!event.target.closest("#accountMenu") && !event.target.closest("#accountMenuTrigger")) {
+    $("accountMenu").hidden = true;
+    $("accountMenuTrigger").setAttribute("aria-expanded", "false");
+  }
+  const passwordToggle = event.target.closest("[data-password-toggle]");
+  if (passwordToggle) {
+    const input = $(passwordToggle.dataset.passwordToggle);
+    input.type = input.type === "password" ? "text" : "password";
+    passwordToggle.textContent = input.type === "password" ? "显示" : "隐藏";
+  }
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  if (!$("accountMenu").hidden) {
+    $("accountMenu").hidden = true;
+    $("accountMenuTrigger").setAttribute("aria-expanded", "false");
+    $("accountMenuTrigger").focus();
+  }
+  setSecurityDrawer("accountDialog", false);
+  setSecurityDrawer("personalSettingsDrawer", false);
 });
 
 try {

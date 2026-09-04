@@ -45,12 +45,24 @@ function inlineError() {
   return state.error ? `<div class="inline-alert error" role="alert">${esc(state.error)}</div>` : "";
 }
 
+function renderSteps() {
+  if (state.mode !== "import" || state.history) return "";
+  const step = state.result ? 3 : state.job ? 2 : 1;
+  return `<div class="crm-job-steps" aria-label="导入进度">
+    ${["上传文件", "数据检查", "导入完成"].map((label, index) => {
+      const number = index + 1;
+      const status = number < step ? " is-complete" : number === step ? " is-active" : "";
+      return `<div class="crm-job-step${status}"><span>${number < step ? '<svg><use href="#i-check"/></svg>' : number}</span><strong>${label}</strong></div>`;
+    }).join("")}
+  </div>`;
+}
+
 function renderLanding() {
   const item = config();
-  return `<div class="crm-job-landing">
-    <div class="crm-job-note"><svg><use href="#i-file"/></svg><div><strong>使用标准模板导入${esc(item.label)}</strong><span>仅支持 XLSX，单次最多 5,000 行。系统会在写入前检查数据。</span></div></div>
+  return `<div class="crm-job-landing crm-job-stage">
+    <div class="crm-job-upload"><span class="crm-job-upload-icon"><svg><use href="#i-upload"/></svg></span><h3>上传${esc(item.label)}文件</h3><p>仅支持 XLSX，单次最多 5,000 行。系统会在写入前检查数据。</p><button class="btn btn-primary" id="crmChooseFile" type="button"><svg><use href="#i-upload"/></svg>选择文件</button></div>
     ${inlineError()}
-    <div class="crm-job-actions"><a class="btn" href="${appUrl(`/api/v1/crm/templates/${item.route}`)}" download><svg><use href="#i-download"/></svg>下载模板</a><button class="btn btn-primary" id="crmChooseFile" type="button"><svg><use href="#i-upload"/></svg>选择文件</button></div>
+    <div class="crm-job-template-note"><span>首次导入请先使用标准模板</span><a class="btn btn-small" href="${appUrl(`/api/v1/crm/templates/${item.route}`)}" download><svg><use href="#i-download"/></svg>下载模板</a></div>
   </div>`;
 }
 
@@ -61,23 +73,23 @@ function summaryMarkup(summary) {
 function renderPreflight() {
   const rows = state.job.rows || [];
   const body = rows.map((row) => `<tr><td>${row.rowNumber}</td><td>${esc(row.identity || "-")}</td><td><span class="row-status ${row.status === "ERROR" ? "error" : row.status === "WARNING" ? "warning" : "success"}">${esc(preflightStatusLabel(row.status))}</span></td><td>${esc(preflightMessage(row))}</td></tr>`).join("");
-  return `<div class="crm-job-review">${summaryMarkup(state.job.preflight)}${inlineError()}<div class="crm-table-scroll"><table class="crm-data-table"><thead><tr><th>行号</th><th>识别信息</th><th>状态</th><th>说明</th></tr></thead><tbody>${body || '<tr><td colspan="4">没有数据行</td></tr>'}</tbody></table></div></div>`;
+  return `<div class="crm-job-review"><header><h3>数据检查</h3><p>请核对预检结果，确认后才会写入业务数据。</p></header>${summaryMarkup(state.job.preflight)}${inlineError()}<div class="crm-job-table-wrap"><table class="crm-data-table crm-job-table"><thead><tr><th>行号</th><th>识别信息</th><th>状态</th><th>说明</th></tr></thead><tbody>${body || '<tr><td colspan="4">没有数据行</td></tr>'}</tbody></table></div></div>`;
 }
 
 function renderResult() {
   const result = state.result;
-  return `<div class="crm-job-result"><span class="crm-job-result-icon"><svg><use href="#i-check"/></svg></span><h3>${result.failed ? "导入完成，部分数据失败" : "导入完成"}</h3><p>成功 ${result.imported} 条，失败 ${result.failed} 条，需注意 ${result.warnings} 条。</p>${state.job.failureFilePath ? `<a class="btn" href="${appUrl(`/api/v1/crm/imports/${state.job.id}/failures`)}" download><svg><use href="#i-download"/></svg>下载失败明细</a>` : ""}</div>`;
+  return `<div class="crm-job-result"><span class="crm-job-result-icon"><svg><use href="#i-check"/></svg></span><h3>${result.failed ? "导入完成，部分数据失败" : "导入完成"}</h3><p>成功 ${result.imported} 条，失败 ${result.failed} 条，需注意 ${result.warnings} 条。</p><div class="crm-job-result-summary"><div><span>成功</span><strong>${result.imported}</strong></div><div><span>失败</span><strong>${result.failed}</strong></div><div><span>需注意</span><strong>${result.warnings}</strong></div></div>${state.job.failureFilePath ? `<a class="btn" href="${appUrl(`/api/v1/crm/imports/${state.job.id}/failures`)}" download><svg><use href="#i-download"/></svg>下载失败明细</a>` : ""}</div>`;
 }
 
 function renderHistory() {
   const rows = (state.history || []).map((job) => `<tr><td>${esc(job.fileName)}</td><td>${job.objectType === "CONTACT" ? "客户联系人" : "线索"}</td><td>${esc(job.operatorName || "-")}</td><td>${esc(formatLocalDateTime(job.createdAt))}</td><td>${esc(jobStatusLabel(job.status))}</td><td>${job.successCount}</td><td>${job.failedCount}</td></tr>`).join("");
-  return `<div class="crm-table-scroll"><table class="crm-data-table"><thead><tr><th>文件</th><th>对象</th><th>操作人</th><th>时间</th><th>状态</th><th>成功</th><th>失败</th></tr></thead><tbody>${rows || '<tr><td colspan="7">暂无导入记录</td></tr>'}</tbody></table></div>${inlineError()}`;
+  return `<div class="crm-job-review"><header><h3>导入记录</h3><p>查看最近的导入任务和处理结果。</p></header><div class="crm-job-table-wrap"><table class="crm-data-table crm-job-history-table"><thead><tr><th>文件</th><th>对象</th><th>操作人</th><th>时间</th><th>状态</th><th>成功</th><th>失败</th></tr></thead><tbody>${rows || '<tr><td colspan="7">暂无导入记录</td></tr>'}</tbody></table></div>${inlineError()}</div>`;
 }
 
 function renderExport() {
   if (state.loading) return '<div class="crm-job-result"><span class="crm-spinner"></span><h3>正在生成导出文件</h3><p>请稍候，不要关闭窗口。</p></div>';
   if (state.error) return `<div class="crm-job-result">${inlineError()}</div>`;
-  return `<div class="crm-job-result"><span class="crm-job-result-icon"><svg><use href="#i-check"/></svg></span><h3>导出文件已生成</h3><p>共 ${state.result.rowCount} 条记录，文件将在 24 小时后失效。</p><a class="btn btn-primary" href="${appUrl(state.result.downloadUrl)}" download><svg><use href="#i-download"/></svg>下载 XLSX</a></div>`;
+  return `<div class="crm-job-result crm-export-result"><span class="crm-job-result-icon"><svg><use href="#i-check"/></svg></span><h3>导出文件已生成</h3><p>共 ${state.result.rowCount} 条记录，文件将在 24 小时后失效。</p><div class="crm-export-file"><svg><use href="#i-file"/></svg><span><strong>${esc(config().label)}导出文件</strong><small>XLSX · ${state.result.rowCount} 条记录</small></span><a class="btn btn-primary" href="${appUrl(state.result.downloadUrl)}" download><svg><use href="#i-download"/></svg>下载文件</a></div></div>`;
 }
 
 function renderFooter() {
@@ -103,7 +115,8 @@ function renderFooter() {
 function render() {
   $("crmJobTitle").textContent = state.mode === "export" ? `导出${config().label}` : `导入${config().label}`;
   $("crmJobSubtitle").textContent = state.history ? "最近导入记录" : "Kivisense CRM 2.0";
-  $("crmJobBody").innerHTML = state.mode === "export" ? renderExport() : state.history ? renderHistory() : state.result ? renderResult() : state.job ? renderPreflight() : renderLanding();
+  const content = state.mode === "export" ? renderExport() : state.history ? renderHistory() : state.result ? renderResult() : state.job ? renderPreflight() : renderLanding();
+  $("crmJobBody").innerHTML = `${renderSteps()}<div class="crm-job-stage-body">${content}</div>`;
   renderFooter();
   $("crmChooseFile")?.addEventListener("click", () => { $("crmJobFile").value = ""; $("crmJobFile").click(); });
 }
