@@ -8,8 +8,8 @@ import { renderTimelineMarkup } from "../frontend/js/followups.js";
 import { buildLeadQuery, quoteDisplay, readonlyContactMarkup } from "../frontend/js/leads.js";
 import { preflightMessage, preflightStatusLabel } from "../frontend/js/crm-jobs.js";
 
-const [appSource, markup, styles, contactSource, leadSource, jobSource, followupSource] = await Promise.all([
-  "app.js", "../index.html", "../styles/production.css", "contacts.js", "leads.js", "crm-jobs.js", "followups.js",
+const [appSource, markup, styles, contactSource, leadSource, jobSource, followupSource, fixtureSource] = await Promise.all([
+  "app.js", "../index.html", "../styles/production.css", "contacts.js", "leads.js", "crm-jobs.js", "followups.js", "../../scripts/frontend-browser-fixture.mjs",
 ].map((file) => readFile(new URL(`../frontend/js/${file}`, import.meta.url), "utf8")));
 
 const navOrder = [...markup.matchAll(/class="nav-item"[^>]*data-route="([^"]+)"/g)].map((match) => match[1]);
@@ -78,6 +78,8 @@ assert.equal(quoteDisplay({ estimatedQuote: null, currency: null }), "-");
 assert.match(contactSource, /data-crm-permission="crm\.contact\.import"/);
 assert.match(contactSource, /data-crm-permission="crm\.contact\.export"/);
 assert.match(contactSource, /class="metrics member-metrics"/, "联系人列表必须保留 V1 指标卡布局");
+assert.match(contactSource, /已分配负责人/);
+assert.match(contactSource, /待分配负责人/);
 assert.match(contactSource, /class="detail-grid"/, "联系人详情必须复用 V1 双栏结构");
 assert.match(contactSource, /data-detail-tab="leads"/);
 assert.match(contactSource, /<dialog class="lead-create-dialog crm-form-dialog"/, "联系人表单必须使用 V1 dialog shell");
@@ -86,6 +88,7 @@ assert.doesNotMatch(contactSource, /crm-description-grid/, "联系人详情不�
 assert.match(leadSource, /data-crm-permission="crm\.lead\.import"/);
 assert.match(leadSource, /data-crm-permission="crm\.lead\.export"/);
 assert.match(leadSource, /class="metrics lead-metrics"/, "线索列表必须保留 V1 指标卡布局");
+assert.match(styles, /\.metric-card\s*\{[^}]*background:\s*#fff;[^}]*border:[^}]*border-radius:/s, "联系人和线索指标必须是独立白底圆角卡片");
 assert.match(leadSource, /class="detail-grid"/, "线索详情必须复用 V1 双栏结构");
 assert.match(leadSource, /data-detail-tab="requirement"/);
 assert.match(leadSource, /<dialog class="lead-create-dialog crm-form-dialog"/, "线索表单必须使用 V1 dialog shell");
@@ -103,6 +106,8 @@ assert.equal(preflightMessage({ errors: [], warnings: [{ message: "电子邮箱�
 assert.equal(preflightMessage({ errors: [], warnings: [] }), "可以导入");
 assert.match(followupSource, /沟通记录/);
 assert.doesNotMatch(followupSource, />FOLLOWUP</);
+assert.match(fixtureSource, /fixtureRole = "SUPER_ADMIN"/, "本地 UI 验证环境必须默认展示管理员可用的导入导出操作");
+for (const route of ["/api/v1/users", "/api/v1/roles", "/api/v1/permissions", "/api/v1/audit-logs"]) assert.match(fixtureSource, new RegExp(route.replaceAll("/", "\\/")), `管理员验证夹具缺少路由：${route}`);
 assert.deepEqual(friendlyError({ status: 403 }), { title: "没有操作权限", message: "你没有执行此操作的权限。" });
 assert.deepEqual(friendlyError({ status: 404 }), { title: "记录不存在", message: "该记录不存在或已无法访问。" });
 

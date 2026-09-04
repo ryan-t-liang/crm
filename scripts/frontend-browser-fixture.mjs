@@ -4,6 +4,7 @@ import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const frontendRoot = fileURLToPath(new URL("../frontend/", import.meta.url));
+const fixturePort = Number(process.env.PORT || 8766);
 const now = "2026-09-03T09:30:00.000Z";
 const crmUsers = [
   { id: "qa-user", name: "交互测试管理员", loginAccount: "qa@example.test", status: "ACTIVE" },
@@ -176,7 +177,7 @@ function resetFixture() {
   crmLeads = clone(initialLeads);
   contactFollowups = clone(initialContactFollowups);
   leadFollowups = clone(initialLeadFollowups);
-  fixtureRole = "SALES";
+  fixtureRole = "SUPER_ADMIN";
   emptyContacts = false;
   emptyLeads = false;
   nextId = 1;
@@ -335,6 +336,25 @@ async function apiResponse(request, response, url) {
     return sendJson(response, { data: { id: "qa-user", name: "交互测试管理员", loginAccount: "qa@example.test", mustChangePassword: false, role: { key: fixtureRole, name: { VIEWER: "只读用户", SALES: "销售人员", SUPER_ADMIN: "超级管理员" }[fixtureRole] }, permissions: rolePermissions[fixtureRole] } });
   }
   if (url.pathname === "/api/v1/crm/users" && method === "GET") return sendJson(response, { data: crmUsers });
+  if (url.pathname === "/api/v1/users" && method === "GET") {
+    return sendJson(response, { data: crmUsers.map((user, index) => ({ ...user, roleId: index ? "role-sales" : "role-admin", role: index ? { id: "role-sales", key: "SALES", name: "销售人员" } : { id: "role-admin", key: "SUPER_ADMIN", name: "超级管理员" }, lastLoginAt: "2026-09-03T09:00:00.000Z" })) });
+  }
+  if (url.pathname === "/api/v1/permissions" && method === "GET") {
+    return sendJson(response, { data: rolePermissions.SUPER_ADMIN.map((key) => ({ id: `permission-${key}`, key, name: key, module: key.startsWith("account.") ? "account" : key.startsWith("roles.") ? "role" : key.startsWith("audit.") ? "audit" : "crm" })) });
+  }
+  if (url.pathname === "/api/v1/roles" && method === "GET") {
+    return sendJson(response, { data: [
+      { id: "role-admin", key: "SUPER_ADMIN", name: "超级管理员", description: "完整管理权限", system: true, permissions: rolePermissions.SUPER_ADMIN.map((key) => ({ permission: { id: `permission-${key}`, key, name: key, module: key.startsWith("account.") ? "account" : key.startsWith("roles.") ? "role" : key.startsWith("audit.") ? "audit" : "crm" } })) },
+      { id: "role-sales", key: "SALES", name: "销售人员", description: "联系人和线索业务权限", system: true, permissions: rolePermissions.SALES.map((key) => ({ permission: { id: `permission-${key}`, key, name: key, module: "crm" } })) },
+      { id: "role-viewer", key: "VIEWER", name: "只读用户", description: "只读权限", system: true, permissions: rolePermissions.VIEWER.map((key) => ({ permission: { id: `permission-${key}`, key, name: key, module: "crm" } })) },
+    ] });
+  }
+  if (url.pathname === "/api/v1/audit-logs" && method === "GET") {
+    return sendJson(response, { data: [
+      { id: "audit-contact", actorUserId: "qa-user", actorName: "交互测试管理员", module: "crm", action: "UPDATE_CONTACT", targetType: "contact", targetId: "contact-naderi", requestId: "fixture-contact", details: {}, createdAt: "2026-09-03T08:40:00.000Z" },
+      { id: "audit-lead", actorUserId: "sales-user", actorName: "陈销售", module: "crm", action: "UPDATE_CRM_LEAD", targetType: "crm_lead", targetId: "lead-ar-service", requestId: "fixture-lead", details: {}, createdAt: "2026-09-03T08:45:00.000Z" },
+    ], meta: { page: 1, pageSize: 100, total: 2, pageCount: 1 } });
+  }
 
   const templateMatch = url.pathname.match(/^\/api\/v1\/crm\/templates\/(contacts|leads)$/);
   if (templateMatch && method === "GET") {
@@ -505,4 +525,4 @@ const server = createServer(async (request, response) => {
   }
 });
 
-server.listen(8766, "127.0.0.1", () => console.log("Frontend browser fixture listening on http://127.0.0.1:8766"));
+server.listen(fixturePort, "127.0.0.1", () => console.log(`Frontend browser fixture listening on http://127.0.0.1:${fixturePort}`));

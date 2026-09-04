@@ -22,7 +22,7 @@ export function initializeContacts(options) {
   context = options;
   $("crmContactsView").innerHTML = `<div class="page crm-page">
     <div class="page-heading"><div><h1>客户联系人</h1></div><div class="heading-actions crm-page-actions"><button class="btn btn-quiet" id="crmExportContacts" type="button" data-crm-permission="crm.contact.export"><svg><use href="#i-download"/></svg>导出</button><button class="btn" id="crmImportContacts" type="button" data-crm-permission="crm.contact.import"><svg><use href="#i-upload"/></svg>批量导入</button><button class="btn btn-primary" id="crmNewContact" type="button" data-crm-permission="crm.contact.create"><svg><use href="#i-plus"/></svg>新增联系人</button></div></div>
-    <div class="metrics member-metrics" aria-label="联系人指标"><article class="metric-card"><div class="metric-label">联系人总数</div><div class="metric-value" id="crmContactMetricTotal">0</div></article><article class="metric-card"><div class="metric-label">本页已分配负责人</div><div class="metric-value" id="crmContactMetricOwned">0</div></article><article class="metric-card"><div class="metric-label">本页关联线索</div><div class="metric-value" id="crmContactMetricLeads">0</div></article></div>
+    <div class="metrics member-metrics" aria-label="联系人指标"><article class="metric-card"><div class="metric-label">联系人总数</div><div class="metric-value" id="crmContactMetricTotal">0</div></article><article class="metric-card"><div class="metric-label">已分配负责人</div><div class="metric-value" id="crmContactMetricAssigned">0</div></article><article class="metric-card"><div class="metric-label">待分配负责人</div><div class="metric-value" id="crmContactMetricUnassigned">0</div></article></div>
     <section class="panel filter-panel crm-query-panel" aria-label="联系人筛选"><div class="query-toolbar">
       <label class="query-content"><span class="field-label">查询内容</span><span class="search-field"><svg><use href="#i-search"/></svg><input id="crmContactKeyword" type="search" placeholder="搜索联系人、公司、Email 或 Phone"></span></label>
       <label class="query-field"><span class="field-label">触达阶段</span><select class="control" id="crmContactStage"><option value="">全部阶段</option>${CONTACT_STAGES.map((item) => `<option value="${item.value}">${esc(item.label)}</option>`).join("")}</select></label>
@@ -123,8 +123,8 @@ export async function loadContacts(page = listState.page) {
 function renderContactRows(rows) {
   $("crmContactResultCount").textContent = `${listState.total} 条结果`;
   $("crmContactMetricTotal").textContent = String(listState.total);
-  $("crmContactMetricOwned").textContent = String(rows.filter((contact) => contact.owner).length);
-  $("crmContactMetricLeads").textContent = String(rows.reduce((total, contact) => total + Number(contact.relatedLeadCount || 0), 0));
+  $("crmContactMetricAssigned").textContent = String(rows.filter((contact) => contact.owner).length);
+  $("crmContactMetricUnassigned").textContent = String(rows.filter((contact) => !contact.owner).length);
   $("crmContactRows").innerHTML = rows.map((contact) => `<tr data-crm-contact-id="${esc(contact.id)}" tabindex="0">
     <td><div class="member-cell"><span class="avatar">${esc(contact.contactName.trim().slice(0, 1).toUpperCase() || "客")}</span><span class="member-main"><strong>${esc(contact.contactName)}</strong><span>${esc(contact.email || contact.phone || "-")}</span></span></div></td>
     <td><strong>${esc(contact.companyShortName || contact.companyName || "-")}</strong><small>${esc(contact.companyShortName && contact.companyName ? contact.companyName : "")}</small></td>

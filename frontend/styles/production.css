@@ -627,6 +627,11 @@ body.is-sidebar-collapsed .account-menu { left: 56px; bottom: 0; width: 210px; }
 
 /* Frozen Kivisense CRM v1 structure: lists, details, forms and data management. */
 .panel { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+.metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
+.metric-card { position: relative; min-height: 84px; padding: 14px 16px; overflow: hidden; background: #fff; border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 3px 16px rgba(32, 49, 43, .025); }
+.metric-card::after { content: ""; position: absolute; top: 17px; right: 17px; width: 7px; height: 7px; background: var(--sage); border-radius: 50%; box-shadow: 0 0 0 5px rgba(226, 226, 223, .42); }
+.metric-label { color: var(--muted); font-size: 11px; }
+.metric-value { margin: 7px 0 0; font-family: Georgia, "Times New Roman", serif; font-size: 23px; font-weight: 500; line-height: 1; }
 .heading-actions { display: flex; align-items: center; gap: 8px; }
 .crm-query-panel { margin-bottom: 16px; padding: 18px; }
 .query-toolbar { display: flex; align-items: flex-end; gap: 10px; flex-wrap: nowrap; }
@@ -869,6 +874,7 @@ dialog.data-management-dialog::backdrop { background: rgba(10,13,11,.38); backdr
 
 @media (max-width: 860px) {
   dialog.data-management-dialog { width: calc(100vw - 32px); }
+  .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .query-field { flex: 1 1 150px; }
   .crm-secondary-filter { display: none; }
   .canonical-form-grid, #crmContactFormFields, #crmLeadFormFields, .crm-form-grid, .customer-identity-grid, .field-grid { grid-template-columns: minmax(0, 1fr); }
