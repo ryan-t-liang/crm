@@ -66,7 +66,7 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
     },
   });
   await app.register(rateLimit, { max: 180, timeWindow: "1 minute" });
-  await app.register(multipart, { limits: { fileSize: config.maxBodyBytes, files: 1 } });
+  await app.register(multipart, { limits: { fileSize: config.maxAttachmentBytes, files: 1 } });
   installErrorHandler(app);
 
   app.addHook("onRequest", async (request, reply) => {

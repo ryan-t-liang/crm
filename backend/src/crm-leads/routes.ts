@@ -4,6 +4,7 @@ import { auditActorContext } from "../common/audit.js";
 import { guard } from "../common/auth.js";
 import { paginationMeta, paginationSchema } from "../common/pagination.js";
 import { timezoneAwareDateTimeSchema } from "../contacts/schemas.js";
+import { contentDispositionFilename, LeadAttachmentService } from "./attachments.js";
 import { crmLeadResponse } from "./response.js";
 import { crmLeadCreateSchema, crmLeadOrderBySchema, crmLeadPatchSchema, leadFollowupCreateSchema } from "./schemas.js";
 import { CrmLeadService, LeadFollowupService } from "./service.js";
@@ -26,6 +27,7 @@ const leadListQuery = paginationSchema.extend({
 export async function crmLeadRoutes(app: FastifyInstance): Promise<void> {
   const leads = new CrmLeadService(app.prisma);
   const followups = new LeadFollowupService(app.prisma);
+  const attachments = new LeadAttachmentService(app.prisma, app.config.storageDir, app.config.maxAttachmentBytes);
 
   app.get("/api/v1/crm/leads", { preHandler: guard("crm.lead.view") }, async (request) => {
     const query = leadListQuery.parse(request.query);
@@ -49,6 +51,30 @@ export async function crmLeadRoutes(app: FastifyInstance): Promise<void> {
     const body = crmLeadPatchSchema.parse(request.body);
     return { data: crmLeadResponse(await leads.update(request.params.id, body, auditActorContext(request))) };
   });
+
+  app.delete<{ Params: { id: string } }>("/api/v1/crm/leads/:id", { preHandler: guard("crm.lead.delete") }, async (request) => {
+    const result = await leads.remove(request.params.id, auditActorContext(request));
+    await attachments.removeFiles(result.storagePaths);
+    return { data: { id: result.id } };
+  });
+
+  app.post<{ Params: { id: string } }>("/api/v1/crm/leads/:id/attachments", { preHandler: guard("crm.lead.edit") }, async (request, reply) => {
+    const upload = await request.file();
+    const row = await attachments.create(request.params.id, upload, request.auth!.userId, auditActorContext(request));
+    return reply.status(201).send({ data: row });
+  });
+
+  app.get<{ Params: { id: string; attachmentId: string } }>("/api/v1/crm/leads/:id/attachments/:attachmentId/download", { preHandler: guard("crm.lead.view") }, async (request, reply) => {
+    const result = await attachments.findForDownload(request.params.id, request.params.attachmentId);
+    reply.type(result.row.mimeType);
+    reply.header("content-disposition", contentDispositionFilename(result.row.originalName));
+    reply.header("content-length", result.row.sizeBytes);
+    return reply.send(result.stream);
+  });
+
+  app.delete<{ Params: { id: string; attachmentId: string } }>("/api/v1/crm/leads/:id/attachments/:attachmentId", { preHandler: guard("crm.lead.edit") }, async (request) => ({
+    data: await attachments.remove(request.params.id, request.params.attachmentId, auditActorContext(request)),
+  }));
 
   app.get<{ Params: { id: string } }>("/api/v1/crm/leads/:id/followups", { preHandler: guard("crm.lead_followup.view") }, async (request) => {
     const query = paginationSchema.parse(request.query);

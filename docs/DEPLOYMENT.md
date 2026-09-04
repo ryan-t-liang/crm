@@ -31,6 +31,7 @@ APP_BASE_PATH=/crm_kivisense
 COOKIE_SECURE=true
 TRUST_PROXY=true
 CORS_ORIGIN=https://www.gridworks.cn
+MAX_ATTACHMENT_BYTES=104857600
 ```
 
 应用内部仍以 `/api/...` 注册路由，由 Nginx 将外部 `/crm_kivisense/...` 前缀去除后代理。浏览器端根据 `js/api.js` 的真实加载路径自动拼接前缀；Cookie Path 使用 `/crm_kivisense`。
@@ -38,7 +39,7 @@ CORS_ORIGIN=https://www.gridworks.cn
 ## 发布检查
 
 1. `/api/health` 与 `/api/ready` 返回数据库正常。
-2. 登录、客户联系人、线索和跟进主流程通过。
+2. 登录、客户联系人、线索、附件和跟进主流程通过。
 3. 超级管理员导入导出通过；销售无导入导出；只读用户不能写入。
 4. HTML、JS、CSS、Logo 和 API 无 404/500/CORS/Cookie/Mixed Content 错误。
 5. 联系人和线索详情 Hash 路由刷新后仍可恢复。

@@ -110,6 +110,34 @@ export class ContactService {
     });
   }
 
+  async remove(id: string, audit: AuditActorContext) {
+    return this.prisma.$transaction(async (tx) => {
+      const contact = await tx.contact.findUnique({
+        where: { id },
+        select: { id: true, contactName: true, companyName: true, companyShortName: true, _count: { select: { leads: true, followups: true } } },
+      });
+      if (!contact) throw new ApiError(404, "RESOURCE_NOT_FOUND", "CRM 联系人不存在");
+      if (contact._count.leads > 0) {
+        throw new ApiError(409, "CONTACT_HAS_LEADS", "该联系人仍有关联线索，请先删除关联线索", {
+          relatedLeadCount: contact._count.leads,
+        });
+      }
+      await tx.contact.delete({ where: { id } });
+      await appendAuditRecord(tx, audit, {
+        action: "DELETE_CONTACT",
+        module: "crm",
+        targetType: "contact",
+        targetId: id,
+        details: {
+          contactName: contact.contactName,
+          company: contact.companyShortName ?? contact.companyName,
+          deletedFollowupCount: contact._count.followups,
+        },
+      });
+      return { id };
+    });
+  }
+
   async require(id: string): Promise<void> {
     await requireContact(this.prisma, id);
   }

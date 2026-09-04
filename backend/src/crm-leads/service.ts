@@ -45,12 +45,24 @@ export const crmLeadListInclude = {
   contact: { select: contactSummarySelect },
   salesOwner: { select: crmUserSummarySelect },
   followupOwner: { select: crmUserSummarySelect },
-  _count: { select: { followups: true } },
+  _count: { select: { followups: true, attachments: true } },
 } satisfies Prisma.CrmLeadInclude;
 
 export const crmLeadDetailInclude = {
   ...crmLeadListInclude,
   createdBy: { select: crmUserSummarySelect },
+  attachments: {
+    select: {
+      id: true,
+      originalName: true,
+      mimeType: true,
+      kind: true,
+      sizeBytes: true,
+      createdAt: true,
+      uploadedBy: { select: crmUserSummarySelect },
+    },
+    orderBy: [{ createdAt: "desc" as const }, { id: "desc" as const }],
+  },
 } satisfies Prisma.CrmLeadInclude;
 
 async function requireCrmLead(db: CrmDbClient, id: string) {
@@ -205,6 +217,37 @@ export class CrmLeadService {
       });
       return row;
     });
+  }
+
+  async remove(id: string, audit: AuditActorContext) {
+    const result = await this.prisma.$transaction(async (tx) => {
+      const lead = await tx.crmLead.findUnique({
+        where: { id },
+        select: {
+          id: true,
+          contactId: true,
+          requirementSummary: true,
+          attachments: { select: { storagePath: true } },
+          _count: { select: { followups: true, attachments: true } },
+        },
+      });
+      if (!lead) throw new ApiError(404, "RESOURCE_NOT_FOUND", "线索不存在");
+      await tx.crmLead.delete({ where: { id } });
+      await appendAuditRecord(tx, audit, {
+        action: "DELETE_CRM_LEAD",
+        module: "crm",
+        targetType: "crm_lead",
+        targetId: id,
+        details: {
+          contactId: lead.contactId,
+          requirementSummary: lead.requirementSummary,
+          deletedFollowupCount: lead._count.followups,
+          deletedAttachmentCount: lead._count.attachments,
+        },
+      });
+      return { id, storagePaths: lead.attachments.map((attachment) => attachment.storagePath) };
+    });
+    return result;
   }
 }
 

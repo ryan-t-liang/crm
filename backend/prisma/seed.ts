@@ -15,6 +15,7 @@ const permissionCatalog = [
   ["crm.contact.view", "查看客户联系人", "crm"],
   ["crm.contact.create", "创建客户联系人", "crm"],
   ["crm.contact.edit", "编辑客户联系人", "crm"],
+  ["crm.contact.delete", "删除客户联系人", "crm"],
   ["crm.contact.import", "导入客户联系人", "crm"],
   ["crm.contact.export", "导出客户联系人", "crm"],
   ["crm.contact_followup.view", "查看联系人跟进", "crm"],
@@ -22,6 +23,7 @@ const permissionCatalog = [
   ["crm.lead.view", "查看线索", "crm"],
   ["crm.lead.create", "创建线索", "crm"],
   ["crm.lead.edit", "编辑线索", "crm"],
+  ["crm.lead.delete", "删除线索", "crm"],
   ["crm.lead.import", "导入线索", "crm"],
   ["crm.lead.export", "导出线索", "crm"],
   ["crm.lead_followup.view", "查看线索跟进", "crm"],
@@ -39,9 +41,11 @@ const salesPermissions = [
   ...crmReadPermissions,
   "crm.contact.create",
   "crm.contact.edit",
+  "crm.contact.delete",
   "crm.contact_followup.create",
   "crm.lead.create",
   "crm.lead.edit",
+  "crm.lead.delete",
   "crm.lead_followup.create",
 ];
 

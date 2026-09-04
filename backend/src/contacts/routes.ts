@@ -67,6 +67,10 @@ export async function contactRoutes(app: FastifyInstance): Promise<void> {
     return { data: contactResponse(await contacts.update(request.params.id, body, auditActorContext(request))) };
   });
 
+  app.delete<{ Params: { id: string } }>("/api/v1/crm/contacts/:id", { preHandler: guard("crm.contact.delete") }, async (request) => ({
+    data: await contacts.remove(request.params.id, auditActorContext(request)),
+  }));
+
   app.get<{ Params: { id: string } }>("/api/v1/crm/contacts/:id/followups", { preHandler: guard("crm.contact_followup.view") }, async (request) => {
     const query = paginationSchema.parse(request.query);
     const result = await followups.list(request.params.id, query);

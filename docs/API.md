@@ -16,7 +16,7 @@
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | GET/POST | `/api/v1/crm/contacts` | 列表、创建 |
-| GET/PATCH | `/api/v1/crm/contacts/:id` | 详情、编辑 |
+| GET/PATCH/DELETE | `/api/v1/crm/contacts/:id` | 详情、编辑、删除 |
 | GET/POST | `/api/v1/crm/contacts/:id/followups` | 跟进列表、追加跟进 |
 | GET | `/api/v1/crm/contacts/:id/leads` | 关联线索 |
 
@@ -25,10 +25,15 @@
 | 方法 | 路径 | 说明 |
 | --- | --- | --- |
 | GET/POST | `/api/v1/crm/leads` | 列表、创建 |
-| GET/PATCH | `/api/v1/crm/leads/:id` | 详情、编辑 |
+| GET/PATCH/DELETE | `/api/v1/crm/leads/:id` | 详情、编辑、删除 |
 | GET/POST | `/api/v1/crm/leads/:id/followups` | 跟进列表、追加跟进 |
+| POST | `/api/v1/crm/leads/:id/attachments` | 上传需求附件 |
+| GET | `/api/v1/crm/leads/:id/attachments/:attachmentId/download` | 查看或下载需求附件 |
+| DELETE | `/api/v1/crm/leads/:id/attachments/:attachmentId` | 删除需求附件 |
 
-线索创建时必须提交 `contactId`。联系人姓名、公司、邮箱和电话从关联联系人实时读取，不在线索中重复保存。
+线索创建时必须提交 `contactId`。联系人姓名、公司、邮箱和电话从关联联系人实时读取，不在线索中重复保存。每条线索最多 20 个附件，支持常见图片、视频、PDF、Office、TXT、CSV 和 RTF 文件。
+
+联系人仍有关联线索时，删除接口返回 `409 CONTACT_HAS_LEADS`；删除线索会级联删除其跟进与附件记录，并清理对应附件文件。
 
 ## 导入导出
 

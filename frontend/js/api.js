@@ -85,8 +85,11 @@ export function friendlyError(error) {
   if (status === 401) return { title: "登录已失效", message: "请重新登录后继续操作。" };
   if (status === 403) return { title: "没有操作权限", message: "你没有执行此操作的权限。" };
   if (status === 404) return { title: "记录不存在", message: "该记录不存在或已无法访问。" };
+  if (status === 409) return { title: "无法完成操作", message: error?.message || "当前数据状态不允许执行此操作。" };
+  if (status === 413) return { title: "附件过大", message: error?.message || "请压缩文件后重试。" };
+  if (status === 415) return { title: "附件格式不支持", message: error?.message || "请选择支持的文件格式。" };
   if (status === 400 || status === 422) return { title: "提交内容有误", message: error?.message || "请检查填写内容后重试。" };
-  return { title: "暂时无法完成请求", message: "系统发生意外错误，请稍后重试。" };
+  return { title: "暂时无法完成请求", message: error?.message || "系统发生意外错误，请稍后重试。" };
 }
 
 export function renderErrorMarkup(error, retryId = "") {

@@ -157,12 +157,18 @@ const initialLeadFollowups = {
     { id: "lead-followup-1", occurredAt: "2026-09-02T07:30:00.000Z", type: "CALL", ownerUserId: "sales-user", important: true, content: "Confirmed technical workshop participants and requested CAD source files.", createdByUserId: "qa-user", createdAt: "2026-09-02T07:42:00.000Z" },
   ],
 };
+const initialLeadAttachments = {
+  "lead-ar-service": [
+    { id: "attachment-requirement", originalName: "AR-需求说明.pdf", mimeType: "application/pdf", kind: "DOCUMENT", sizeBytes: 428560, createdAt: "2026-09-02T08:00:00.000Z", uploadedBy: crmUsers[0] },
+  ],
+};
 
 const clone = (value) => structuredClone(value);
 let contacts;
 let crmLeads;
 let contactFollowups;
 let leadFollowups;
+let leadAttachments;
 let fixtureRole;
 let emptyContacts;
 let emptyLeads;
@@ -177,6 +183,7 @@ function resetFixture() {
   crmLeads = clone(initialLeads);
   contactFollowups = clone(initialContactFollowups);
   leadFollowups = clone(initialLeadFollowups);
+  leadAttachments = clone(initialLeadAttachments);
   fixtureRole = "SUPER_ADMIN";
   emptyContacts = false;
   emptyLeads = false;
@@ -190,10 +197,10 @@ resetFixture();
 
 const rolePermissions = {
   VIEWER: ["crm.contact.view", "crm.contact_followup.view", "crm.lead.view", "crm.lead_followup.view"],
-  SALES: ["crm.contact.view", "crm.contact.create", "crm.contact.edit", "crm.contact_followup.view", "crm.contact_followup.create", "crm.lead.view", "crm.lead.create", "crm.lead.edit", "crm.lead_followup.view", "crm.lead_followup.create"],
+  SALES: ["crm.contact.view", "crm.contact.create", "crm.contact.edit", "crm.contact.delete", "crm.contact_followup.view", "crm.contact_followup.create", "crm.lead.view", "crm.lead.create", "crm.lead.edit", "crm.lead.delete", "crm.lead_followup.view", "crm.lead_followup.create"],
   SUPER_ADMIN: [
-    "crm.contact.view", "crm.contact.create", "crm.contact.edit", "crm.contact_followup.view", "crm.contact_followup.create",
-    "crm.lead.view", "crm.lead.create", "crm.lead.edit", "crm.lead_followup.view", "crm.lead_followup.create",
+    "crm.contact.view", "crm.contact.create", "crm.contact.edit", "crm.contact.delete", "crm.contact_followup.view", "crm.contact_followup.create",
+    "crm.lead.view", "crm.lead.create", "crm.lead.edit", "crm.lead.delete", "crm.lead_followup.view", "crm.lead_followup.create",
     "crm.contact.import", "crm.contact.export", "crm.lead.import", "crm.lead.export",
     "account.view", "account.create", "account.edit", "account.disable", "account.reset", "roles.view", "roles.configure", "audit.view",
   ],
@@ -223,7 +230,8 @@ function decorateLead(lead) {
     salesOwner: userSummary(lead.salesOwnerUserId),
     followupOwner: userSummary(lead.followupOwnerUserId),
     createdBy: userSummary(lead.createdByUserId),
-    _count: { followups: (leadFollowups[lead.id] || []).length },
+    attachments: clone(leadAttachments[lead.id] || []),
+    _count: { followups: (leadFollowups[lead.id] || []).length, attachments: (leadAttachments[lead.id] || []).length },
   };
 }
 
@@ -434,6 +442,13 @@ async function apiResponse(request, response, url) {
       Object.assign(contact, body, { updatedAt: new Date().toISOString() });
       return sendJson(response, { data: decorateContact(contact) });
     }
+    if (method === "DELETE") {
+      const relatedLeadCount = crmLeads.filter((lead) => lead.contactId === contact.id).length;
+      if (relatedLeadCount) return sendJson(response, { error: { code: "CONTACT_HAS_LEADS", message: "该联系人仍有关联线索，请先删除关联线索", details: { relatedLeadCount } }, traceId: "fixture-409" }, 409);
+      contacts = contacts.filter((item) => item.id !== contact.id);
+      delete contactFollowups[contact.id];
+      return sendJson(response, { data: { id: contact.id } });
+    }
   }
 
   const contactFollowupMatch = url.pathname.match(/^\/api\/v1\/crm\/contacts\/([^/]+)\/followups$/);
@@ -468,6 +483,29 @@ async function apiResponse(request, response, url) {
     return sendJson(response, { data: decorateLead(lead) }, 201);
   }
 
+  const attachmentMatch = url.pathname.match(/^\/api\/v1\/crm\/leads\/([^/]+)\/attachments(?:\/([^/]+)(?:\/download)?)?$/);
+  if (attachmentMatch) {
+    const lead = crmLeads.find((item) => item.id === attachmentMatch[1]);
+    if (!lead) return sendError(response, 404, "RESOURCE_NOT_FOUND", "线索不存在");
+    const attachmentId = attachmentMatch[2];
+    const rows = leadAttachments[lead.id] || [];
+    if (method === "POST" && !attachmentId) {
+      const attachment = { id: `attachment-created-${nextId++}`, originalName: "fixture-upload.txt", mimeType: "text/plain", kind: "DOCUMENT", sizeBytes: body.size || 32, createdAt: new Date().toISOString(), uploadedBy: crmUsers[0] };
+      leadAttachments[lead.id] = [attachment, ...rows];
+      return sendJson(response, { data: attachment }, 201);
+    }
+    const attachment = rows.find((item) => item.id === attachmentId);
+    if (!attachment) return sendError(response, 404, "RESOURCE_NOT_FOUND", "附件不存在");
+    if (method === "GET" && url.pathname.endsWith("/download")) {
+      response.writeHead(200, { "content-type": attachment.mimeType, "content-disposition": `inline; filename="${attachment.originalName}"` });
+      return response.end(Buffer.from("fixture attachment"));
+    }
+    if (method === "DELETE") {
+      leadAttachments[lead.id] = rows.filter((item) => item.id !== attachment.id);
+      return sendJson(response, { data: { id: attachment.id } });
+    }
+  }
+
   const leadMatch = url.pathname.match(/^\/api\/v1\/crm\/leads\/([^/]+)$/);
   if (leadMatch) {
     const lead = crmLeads.find((item) => item.id === leadMatch[1]);
@@ -477,6 +515,12 @@ async function apiResponse(request, response, url) {
       const { contactId: _ignoredContactId, ...patch } = body;
       Object.assign(lead, patch, { updatedAt: new Date().toISOString() });
       return sendJson(response, { data: decorateLead(lead) });
+    }
+    if (method === "DELETE") {
+      crmLeads = crmLeads.filter((item) => item.id !== lead.id);
+      delete leadFollowups[lead.id];
+      delete leadAttachments[lead.id];
+      return sendJson(response, { data: { id: lead.id } });
     }
   }
 

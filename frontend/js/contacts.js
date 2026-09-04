@@ -34,7 +34,7 @@ export function initializeContacts(options) {
       <div class="table-toolbar"><div class="table-title"><strong id="crmContactTableTitle">联系人目录</strong><span id="crmContactResultCount">0 条结果</span></div><span class="spacer"></span></div>
       <div id="crmContactListState" class="crm-list-state"></div>
       <div class="crm-table-scroll" id="crmContactTableWrap">
-        <table class="crm-data-table crm-contact-table"><thead><tr><th>客户联系人</th><th>公司</th><th>职位</th><th>触达阶段</th><th>负责人</th><th>下次跟进</th><th>线索数量</th><th>更新时间</th></tr></thead><tbody id="crmContactRows"></tbody></table>
+        <table class="crm-data-table crm-contact-table"><thead><tr><th>客户联系人</th><th>公司</th><th>职位</th><th>触达阶段</th><th>负责人</th><th>下次跟进</th><th>线索数量</th><th>更新时间</th><th>操作</th></tr></thead><tbody id="crmContactRows"></tbody></table>
       </div>
       <div class="empty-state" id="crmContactEmpty" hidden><div><div class="empty-illustration"><svg><use href="#i-users"/></svg></div><h3>暂无客户联系人</h3><p>创建第一个联系人后，即可关联线索并记录跟进。</p><button class="btn btn-primary" id="crmEmptyNewContact" type="button" data-crm-permission="crm.contact.create"><svg><use href="#i-plus"/></svg>新增联系人</button></div></div>
       <footer class="table-footer" id="crmContactPagination"><span id="crmContactPageSummary">共 0 条</span><div class="pagination"><button class="page-button" id="crmContactPrev" type="button" aria-label="上一页">‹</button><button class="page-button is-active" id="crmContactPageNumber" type="button" disabled>1 / 1</button><button class="page-button" id="crmContactNextPage" type="button" aria-label="下一页">›</button></div></footer>
@@ -92,7 +92,7 @@ function setContactListLoading() {
   $("crmContactListState").innerHTML = "";
   $("crmContactEmpty").hidden = true;
   $("crmContactTableWrap").hidden = false;
-  $("crmContactRows").innerHTML = Array.from({ length: 6 }, () => '<tr class="crm-skeleton-row"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>').join("");
+  $("crmContactRows").innerHTML = Array.from({ length: 6 }, () => '<tr class="crm-skeleton-row"><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td><td><span></span></td></tr>').join("");
   $("crmContactTableWrap").setAttribute("aria-busy", "true");
 }
 
@@ -134,6 +134,7 @@ function renderContactRows(rows) {
     <td>${esc(formatLocalDateTime(contact.nextFollowupAt))}</td>
     <td><strong>${esc(contact.relatedLeadCount)}</strong></td>
     <td>${esc(formatLocalDateTime(contact.updatedAt))}</td>
+    <td><button class="crm-row-action is-danger" type="button" data-delete-contact="${esc(contact.id)}" data-contact-name="${esc(contact.contactName)}" data-related-leads="${esc(contact.relatedLeadCount)}" data-crm-permission="crm.contact.delete" aria-label="删除联系人 ${esc(contact.contactName)}"><svg><use href="#i-trash"/></svg>删除</button></td>
   </tr>`).join("");
   $("crmContactTableWrap").hidden = rows.length === 0;
   $("crmContactEmpty").hidden = rows.length > 0;
@@ -141,10 +142,31 @@ function renderContactRows(rows) {
   $("crmContactListState").innerHTML = "";
   $("crmContactRows").querySelectorAll("[data-crm-contact-id]").forEach((row) => {
     const open = () => context.navigate(`contacts/${row.dataset.crmContactId}`);
-    row.addEventListener("click", open);
-    row.addEventListener("keydown", (event) => { if (["Enter", " "].includes(event.key)) open(); });
+    row.addEventListener("click", (event) => { if (!event.target.closest("button")) open(); });
+    row.addEventListener("keydown", (event) => { if (!["BUTTON", "A"].includes(event.target.tagName) && ["Enter", " "].includes(event.key)) open(); });
   });
+  $("crmContactRows").querySelectorAll("[data-delete-contact]").forEach((button) => button.addEventListener("click", () => deleteContact(button)));
   context.applyCrmPermissions();
+}
+
+async function deleteContact(button) {
+  const relatedLeadCount = Number(button.dataset.relatedLeads || 0);
+  const name = button.dataset.contactName || "该联系人";
+  if (relatedLeadCount > 0) {
+    context.notify(`“${name}”仍关联 ${relatedLeadCount} 条线索，请先删除关联线索`);
+    return;
+  }
+  if (!await context.confirm("删除联系人", `确认删除联系人“${name}”？联系人跟进记录也会一并删除，此操作无法撤销。`, "确认删除")) return;
+  setButtonBusy(button, true, "删除中");
+  try {
+    await crmApi(`/api/v1/crm/contacts/${button.dataset.deleteContact}`, { method: "DELETE" });
+    context.notify("联系人已删除");
+    await loadContacts(listState.page > 1 && listState.total % listState.pageSize === 1 ? listState.page - 1 : listState.page);
+  } catch (error) {
+    const copy = friendlyError(error);
+    context.notify(`${copy.title}：${copy.message}`);
+    setButtonBusy(button, false);
+  }
 }
 
 function renderContactPagination() {

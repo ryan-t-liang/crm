@@ -77,6 +77,8 @@ assert.equal(quoteDisplay({ estimatedQuote: "63000.50", currency: "USD" }), "USD
 assert.equal(quoteDisplay({ estimatedQuote: null, currency: null }), "-");
 assert.match(contactSource, /data-crm-permission="crm\.contact\.import"/);
 assert.match(contactSource, /data-crm-permission="crm\.contact\.export"/);
+assert.match(contactSource, /data-delete-contact=/, "联系人列表每行必须提供删除操作");
+assert.match(contactSource, /crm\.contact\.delete/, "联系人删除必须受独立权限控制");
 assert.match(contactSource, /class="metrics member-metrics"/, "联系人列表必须保留 V1 指标卡布局");
 assert.match(contactSource, /已分配负责人/);
 assert.match(contactSource, /待分配负责人/);
@@ -87,6 +89,12 @@ for (const section of ["联系人信息", "公司信息", "联系方式", "地�
 assert.doesNotMatch(contactSource, /crm-description-grid/, "联系人详情不得继续使用大面积 Description Grid");
 assert.match(leadSource, /data-crm-permission="crm\.lead\.import"/);
 assert.match(leadSource, /data-crm-permission="crm\.lead\.export"/);
+assert.match(leadSource, /data-delete-lead=/, "线索列表每行必须提供删除操作");
+assert.match(leadSource, /role="combobox"/, "关联联系人必须使用可搜索组合框");
+assert.match(leadSource, /aria-autocomplete="list"/, "联系人组合框必须声明自动完成语义");
+assert.match(leadSource, /crmLeadAttachmentInput/, "线索表单必须提供附件选择字段");
+assert.match(leadSource, /\.jpg,\.jpeg,\.png,\.gif,\.webp,\.mp4,\.webm,\.mov,\.pdf,\.doc,\.docx/, "附件字段必须接受图片、视频和文档");
+assert.match(leadSource, /syncLeadAttachments/, "线索保存必须同步附件变更");
 assert.match(leadSource, /class="metrics lead-metrics"/, "线索列表必须保留 V1 指标卡布局");
 assert.match(styles, /\.metric-card\s*\{[^}]*background:\s*#fff;[^}]*border:[^}]*border-radius:/s, "联系人和线索指标必须是独立白底圆角卡片");
 assert.match(leadSource, /class="detail-grid"/, "线索详情必须复用 V1 双栏结构");
@@ -110,5 +118,7 @@ assert.match(fixtureSource, /fixtureRole = "SUPER_ADMIN"/, "本地 UI 验证环�
 for (const route of ["/api/v1/users", "/api/v1/roles", "/api/v1/permissions", "/api/v1/audit-logs"]) assert.match(fixtureSource, new RegExp(route.replaceAll("/", "\\/")), `管理员验证夹具缺少路由：${route}`);
 assert.deepEqual(friendlyError({ status: 403 }), { title: "没有操作权限", message: "你没有执行此操作的权限。" });
 assert.deepEqual(friendlyError({ status: 404 }), { title: "记录不存在", message: "该记录不存在或已无法访问。" });
+assert.deepEqual(friendlyError({ status: 409, message: "仍有关联线索" }), { title: "无法完成操作", message: "仍有关联线索" });
+assert.deepEqual(friendlyError({ status: 413, message: "附件过大" }), { title: "附件过大", message: "附件过大" });
 
 console.log("frontend interaction contracts: PASS (Kivisense CRM 2.0)");

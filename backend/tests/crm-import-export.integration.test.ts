@@ -73,6 +73,7 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
       appBasePath: "",
       trustProxy: false,
       maxBodyBytes: 10 * 1024 * 1024,
+      maxAttachmentBytes: 100 * 1024 * 1024,
       storageDir,
     };
     const [adminRole, salesRole] = await Promise.all([

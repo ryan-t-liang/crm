@@ -101,7 +101,7 @@ function controlMarkup(definition, value, users) {
 export function renderFormSections(definitions, values, users, sectionLabels) {
   return Object.entries(sectionLabels).map(([section, label]) => {
     const fields = definitions.filter((item) => item.section === section);
-    return `<section class="crm-form-section"><header><h3>${esc(label)}</h3></header><div class="crm-form-grid">${fields.map((definition) => `<label class="crm-field${definition.wide ? " crm-field-wide" : ""}"><span>${esc(definition.label)}${definition.required ? '<b aria-hidden="true">*</b>' : ""}</span>${controlMarkup(definition, values?.[definition.key], users)}<small class="crm-field-error" data-field-error="${esc(definition.key)}"></small></label>`).join("")}</div></section>`;
+    return `<section class="crm-form-section" data-form-section="${esc(section)}"><header><h3>${esc(label)}</h3></header><div class="crm-form-grid">${fields.map((definition) => `<label class="crm-field${definition.wide ? " crm-field-wide" : ""}"><span>${esc(definition.label)}${definition.required ? '<b aria-hidden="true">*</b>' : ""}</span>${controlMarkup(definition, values?.[definition.key], users)}<small class="crm-field-error" data-field-error="${esc(definition.key)}"></small></label>`).join("")}</div></section>`;
   }).join("");
 }
 

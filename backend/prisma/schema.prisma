@@ -56,6 +56,12 @@ enum CrmFollowupType {
   OTHER
 }
 
+enum LeadAttachmentKind {
+  IMAGE
+  VIDEO
+  DOCUMENT
+}
+
 model Role {
   id          String           @id @default(cuid()) @db.VarChar(32)
   key         String           @unique @db.VarChar(64)
@@ -119,6 +125,7 @@ model User {
   createdCrmLeads         CrmLead[]         @relation("CrmLeadCreatedBy")
   ownedLeadFollowups      LeadFollowup[]    @relation("LeadFollowupOwner")
   createdLeadFollowups    LeadFollowup[]    @relation("LeadFollowupCreatedBy")
+  uploadedLeadAttachments LeadAttachment[]  @relation("LeadAttachmentUploadedBy")
 
   @@index([status])
   @@map("users")
@@ -209,7 +216,7 @@ model ContactFollowup {
   content         String          @db.Text
   createdAt       DateTime        @default(now()) @map("created_at") @db.DateTime(3)
   createdByUserId String          @map("created_by_user_id") @db.VarChar(32)
-  contact         Contact         @relation(fields: [contactId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  contact         Contact         @relation(fields: [contactId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   owner           User            @relation("ContactFollowupOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   createdBy       User            @relation("ContactFollowupCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
@@ -247,6 +254,7 @@ model CrmLead {
   followupOwner       User?           @relation("CrmLeadFollowupOwner", fields: [followupOwnerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   createdBy           User            @relation("CrmLeadCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   followups           LeadFollowup[]
+  attachments         LeadAttachment[]
 
   @@index([contactId, updatedAt])
   @@index([status, updatedAt])
@@ -268,12 +276,31 @@ model LeadFollowup {
   important       Boolean         @default(false)
   createdAt       DateTime        @default(now()) @map("created_at") @db.DateTime(3)
   createdByUserId String          @map("created_by_user_id") @db.VarChar(32)
-  lead            CrmLead         @relation(fields: [leadId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  lead            CrmLead         @relation(fields: [leadId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   owner           User            @relation("LeadFollowupOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   createdBy       User            @relation("LeadFollowupCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([leadId, occurredAt])
   @@map("lead_followups")
+}
+
+model LeadAttachment {
+  id               String             @id @db.VarChar(32)
+  leadId           String             @map("lead_id") @db.VarChar(32)
+  originalName     String             @map("original_name") @db.VarChar(255)
+  mimeType         String             @map("mime_type") @db.VarChar(191)
+  kind             LeadAttachmentKind
+  sizeBytes        Int                @map("size_bytes") @db.UnsignedInt
+  fileHash         String             @map("file_hash") @db.Char(64)
+  storagePath      String             @map("storage_path") @db.VarChar(500)
+  uploadedByUserId String             @map("uploaded_by_user_id") @db.VarChar(32)
+  createdAt        DateTime           @default(now()) @map("created_at") @db.DateTime(3)
+  lead             CrmLead            @relation(fields: [leadId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  uploadedBy       User               @relation("LeadAttachmentUploadedBy", fields: [uploadedByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([leadId, createdAt])
+  @@index([uploadedByUserId, createdAt])
+  @@map("lead_attachments")
 }
 
 model ImportJob {

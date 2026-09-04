@@ -31,6 +31,7 @@ const schema = z.object({
   }),
   TRUST_PROXY: booleanFromEnv.default(false),
   MAX_BODY_BYTES: z.coerce.number().int().positive().default(10 * 1024 * 1024),
+  MAX_ATTACHMENT_BYTES: z.coerce.number().int().positive().max(1024 * 1024 * 1024).default(100 * 1024 * 1024),
   STORAGE_DIR: z.string().default("../storage"),
 });
 
@@ -49,6 +50,7 @@ export type AppConfig = {
   appBasePath: string;
   trustProxy: boolean;
   maxBodyBytes: number;
+  maxAttachmentBytes: number;
   storageDir: string;
 };
 
@@ -69,6 +71,7 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     appBasePath: env.APP_BASE_PATH,
     trustProxy: env.TRUST_PROXY,
     maxBodyBytes: env.MAX_BODY_BYTES,
+    maxAttachmentBytes: env.MAX_ATTACHMENT_BYTES,
     storageDir: resolve(process.cwd(), env.STORAGE_DIR),
   };
   return { ...config, ...overrides };
