@@ -44,59 +44,58 @@ export const PRODUCT_TYPE_OPTIONS = ["Real-time engagement"].map((value) => ({ v
 export const PRODUCT_NAME_OPTIONS = ["Object recognition"].map((value) => ({ value, label: value }));
 export const FOLLOW_MODE_OPTIONS = [];
 
-const field = (key, label, section, type = "text", options = {}) => ({ key, label, section, type, ...options });
+const field = (key, label, section, type = "text", options = {}) => ({ key, label, section, type, tab: options.tab || section, ...options });
 
 export const CONTACT_FIELDS = [
-  field("contactName", "客户联系人", "person", "text", { required: true, maxLength: 160 }),
-  field("title", "职位", "person", "text", { maxLength: 160 }),
-  field("department", "部门", "person", "text", { maxLength: 160 }),
-  field("email", "Email", "person", "email", { maxLength: 191 }),
-  field("phone", "Phone", "person", "tel", { maxLength: 64 }),
-  field("wechat", "微信", "person", "text", { maxLength: 191 }),
-  field("linkedin", "LinkedIn", "person", "url", { maxLength: 500 }),
-  field("companyShortName", "公司简称", "company", "text", { maxLength: 120 }),
-  field("companyName", "公司完整名称", "company", "text", { maxLength: 240, wide: true }),
-  field("industry", "行业", "company", "custom-select", { maxLength: 160, options: CONTACT_INDUSTRY_OPTIONS }),
-  field("website", "网站", "company", "url", { maxLength: 500 }),
-  field("country", "国家", "region", "text", { maxLength: 120 }),
-  field("region", "区域", "region", "text", { maxLength: 120 }),
-  field("city", "城市", "region", "text", { maxLength: 120 }),
-  field("source", "来源", "crm", "custom-select", { maxLength: 160, options: CONTACT_SOURCE_OPTIONS }),
-  field("stage", "触达阶段", "crm", "select", { required: true, options: CONTACT_STAGES }),
-  field("ownerUserId", "跟进人员", "crm", "user"),
-  field("nextFollowupAt", "下次跟进", "crm", "datetime-local"),
-  field("followupAttention", "跟进注意", "crm", "textarea", { maxLength: 16_000, wide: true }),
-  field("initialContext", "初始信息", "crm", "textarea", { maxLength: 16_000, wide: true }),
-  field("remark", "备注", "crm", "textarea", { maxLength: 16_000, wide: true }),
+  field("contactName", "客户联系人", "person", "text", { tab: "basic", required: true, maxLength: 160 }),
+  field("title", "职位", "person", "text", { tab: "basic", maxLength: 160 }),
+  field("department", "部门", "person", "text", { tab: "basic", maxLength: 160 }),
+  field("email", "Email", "person", "email", { tab: "basic", maxLength: 191 }),
+  field("phone", "Phone", "person", "tel", { tab: "basic", maxLength: 64 }),
+  field("wechat", "微信", "person", "text", { tab: "basic", maxLength: 191 }),
+  field("linkedin", "LinkedIn", "person", "url", { tab: "basic", maxLength: 500 }),
+  field("companyShortName", "公司简称", "company", "text", { tab: "basic", maxLength: 120 }),
+  field("companyName", "公司完整名称", "company", "text", { tab: "basic", maxLength: 240, wide: true }),
+  field("industry", "行业", "company", "custom-select", { tab: "basic", maxLength: 160, options: CONTACT_INDUSTRY_OPTIONS }),
+  field("website", "网站", "company", "url", { tab: "basic", maxLength: 500 }),
+  field("country", "国家", "region", "text", { tab: "basic", maxLength: 120 }),
+  field("region", "区域", "region", "text", { tab: "basic", maxLength: 120 }),
+  field("city", "城市", "region", "text", { tab: "basic", maxLength: 120 }),
+  field("source", "来源", "crm", "custom-select", { tab: "crm", maxLength: 160, options: CONTACT_SOURCE_OPTIONS }),
+  field("stage", "触达阶段", "crm", "select", { tab: "crm", required: true, options: CONTACT_STAGES }),
+  field("ownerUserId", "跟进人员", "crm", "user", { tab: "crm" }),
+  field("followupAttention", "跟进注意", "crm", "textarea", { tab: "crm", maxLength: 16_000, wide: true }),
+  field("initialContext", "初始信息", "crm", "textarea", { tab: "crm", maxLength: 16_000, wide: true }),
+  field("remark", "备注", "notes", "textarea", { tab: "notes", maxLength: 16_000, wide: true }),
 ];
 
 export const LEAD_FIELDS = [
-  field("requirementSummary", "项目需求简述", "overview", "text", { required: true, maxLength: 200, wide: true }),
-  field("status", "线索阶段", "overview", "select", { required: true, options: LEAD_STATUSES }),
-  field("priority", "优先级", "overview", "select", { required: true, options: LEAD_PRIORITIES }),
-  field("salesOwnerUserId", "销售对接人", "overview", "user"),
-  field("followupOwnerUserId", "跟进对接人", "overview", "user"),
-  field("participantUserIds", "Leads 参与人员", "overview", "multi-user"),
-  field("followMode", "跟单模式", "overview", "custom-select", { maxLength: 160, options: FOLLOW_MODE_OPTIONS }),
-  field("collaborationGroups", "对接群", "overview", "multi-text", { maxLength: 8_000, wide: true }),
-  field("nextFollowupAt", "下次跟进", "overview", "datetime-local"),
-  field("wonAt", "成交日期", "overview", "datetime-local"),
-  field("deliveryFollowupAt", "交付跟进日期", "overview", "datetime-local"),
-  field("contractRenewalAt", "合同续约日期", "overview", "datetime-local"),
-  field("paymentReceivedAt", "收款日期", "overview", "datetime-local"),
+  field("requirementSummary", "项目需求简述", "basic", "text", { required: true, maxLength: 200, wide: true }),
+  field("status", "线索阶段", "basic", "select", { required: true, options: LEAD_STATUSES }),
+  field("priority", "优先级", "basic", "select", { required: true, options: LEAD_PRIORITIES }),
+  field("leadSource", "客户来源", "basic", "custom-select", { maxLength: 160, options: LEAD_SOURCE_OPTIONS }),
+  field("salesOwnerUserId", "销售对接人", "basic", "user", { required: true }),
   field("requirementDetail", "需求整理 / 详细需求", "requirement", "textarea", { maxLength: 16_000, wide: true }),
-  field("leadSource", "客户来源", "requirement", "custom-select", { maxLength: 160, options: LEAD_SOURCE_OPTIONS }),
-  field("projectDomain", "项目领域", "classification", "custom-select", { maxLength: 160, options: PROJECT_DOMAIN_OPTIONS }),
-  field("projectType", "项目类型", "classification", "custom-select", { maxLength: 160, options: PROJECT_TYPE_OPTIONS }),
-  field("technologyType", "技术类型", "classification", "multi-select", { maxLength: 4_000, options: TECHNOLOGY_TYPE_OPTIONS }),
-  field("productType", "产品类型", "classification", "custom-select", { maxLength: 160, options: PRODUCT_TYPE_OPTIONS }),
-  field("productName", "产品名称", "classification", "custom-select", { maxLength: 240, options: PRODUCT_NAME_OPTIONS }),
-  field("resourceRequirement", "资源需求", "classification", "textarea", { maxLength: 16_000, wide: true }),
+  field("imageRequirementNote", "图片需求说明", "requirement", "textarea", { maxLength: 16_000, wide: true }),
+  field("projectDomain", "项目领域", "requirement", "custom-select", { maxLength: 160, options: PROJECT_DOMAIN_OPTIONS }),
+  field("projectType", "项目类型", "requirement", "custom-select", { maxLength: 160, options: PROJECT_TYPE_OPTIONS }),
+  field("technologyType", "技术类型", "requirement", "multi-select", { maxLength: 4_000, options: TECHNOLOGY_TYPE_OPTIONS }),
+  field("productType", "产品类型", "requirement", "custom-select", { maxLength: 160, options: PRODUCT_TYPE_OPTIONS }),
+  field("productName", "产品名称", "requirement", "custom-select", { maxLength: 240, options: PRODUCT_NAME_OPTIONS }),
+  field("resourceRequirement", "资源需求", "requirement", "textarea", { maxLength: 16_000, wide: true }),
   field("solution", "方案说明", "commercial", "textarea", { maxLength: 16_000, wide: true }),
-  field("latestProgress", "最新进度", "commercial", "textarea", { maxLength: 16_000, wide: true }),
+  field("quotationNote", "报价说明", "commercial", "textarea", { maxLength: 16_000, wide: true }),
   field("estimatedQuote", "预计报价", "commercial", "number", { min: 0, step: "0.01" }),
   field("currency", "币种", "commercial", "select", { options: ["CNY", "USD", "EUR", "JPY"].map((value) => ({ value, label: value })) }),
-  field("remark", "备注", "remark", "textarea", { maxLength: 16_000, wide: true }),
+  field("followupOwnerUserId", "跟进对接人", "team", "user"),
+  field("participantUserIds", "Leads 参与人员", "team", "multi-user"),
+  field("followMode", "跟单模式", "team", "custom-select", { maxLength: 160, options: FOLLOW_MODE_OPTIONS }),
+  field("collaborationGroups", "对接群", "team", "multi-text", { maxLength: 8_000, wide: true }),
+  field("remark", "内部备注", "team", "textarea", { maxLength: 16_000, wide: true }),
+  field("wonAt", "成交日期", "milestones", "datetime-local"),
+  field("deliveryFollowupAt", "交付跟进日期", "milestones", "datetime-local"),
+  field("contractRenewalAt", "合同续约日期", "milestones", "datetime-local"),
+  field("paymentReceivedAt", "收款日期", "milestones", "datetime-local"),
 ];
 
 export const stageLabel = (value) => CONTACT_STAGES.find((item) => item.value === value)?.label || value || "-";
@@ -135,6 +134,17 @@ export function renderFormSections(definitions, values, users, sectionLabels) {
     if (!fields.length) return "";
     return `<section class="crm-form-section" data-form-section="${esc(section)}"><header><h3>${esc(label)}</h3></header><div class="crm-form-grid">${fields.map((definition) => `<label class="crm-field${definition.wide ? " crm-field-wide" : ""}"><span>${esc(definition.label)}${definition.required ? '<b aria-hidden="true">*</b>' : ""}</span>${controlMarkup(definition, values?.[definition.key], users)}<small class="crm-field-error" data-field-error="${esc(definition.key)}"></small></label>`).join("")}</div></section>`;
   }).join("");
+}
+
+export function renderFormTabs(definitions, values, users, tabs) {
+  return `<nav class="crm-form-tabs" aria-label="表单分区">${tabs.map((tab, index) => `<button class="crm-form-tab${index === 0 ? " is-active" : ""}" type="button" data-form-tab="${esc(tab.key)}">${esc(tab.label)}<span class="crm-form-tab-error" hidden>0</span></button>`).join("")}</nav><div class="crm-form-tab-panels">${tabs.map((tab, index) => `<section class="crm-form-tab-panel${index === 0 ? " is-active" : ""}" data-form-tab-panel="${esc(tab.key)}"><div class="crm-form-grid">${definitions.filter((item) => item.tab === tab.key).map((definition) => `<label class="crm-field${definition.wide ? " crm-field-wide" : ""}" data-field-shell="${esc(definition.key)}"><span>${esc(definition.label)}${definition.required ? '<b aria-hidden="true">*</b>' : ""}</span>${controlMarkup(definition, values?.[definition.key], users)}<small class="crm-field-error" data-field-error="${esc(definition.key)}"></small></label>`).join("")}</div></section>`).join("")}</div>`;
+}
+
+export function bindFormTabs(form) {
+  form.querySelectorAll("[data-form-tab]").forEach((button) => button.addEventListener("click", () => {
+    form.querySelectorAll("[data-form-tab]").forEach((item) => item.classList.toggle("is-active", item === button));
+    form.querySelectorAll("[data-form-tab-panel]").forEach((panel) => panel.classList.toggle("is-active", panel.dataset.formTabPanel === button.dataset.formTab));
+  }));
 }
 
 export function formPayload(form, definitions) {
@@ -177,6 +187,7 @@ export function validateContactPayload(payload) {
 export function validateLeadPayload(payload, requireContact = true) {
   const errors = {};
   if (requireContact && !payload.contactId) errors.contactId = "请先选择客户联系人";
+  if (!payload.salesOwnerUserId) errors.salesOwnerUserId = "请选择销售对接人";
   const summary = String(payload.requirementSummary || "").trim();
   if (!summary) errors.requirementSummary = "请输入项目需求简述";
   else if (summary.length > 200) errors.requirementSummary = "项目需求简述不能超过 200 个字符";
@@ -198,5 +209,14 @@ export function applyFieldErrors(form, errors) {
     const errorNode = fieldShell?.querySelector(".crm-field-error");
     if (errorNode) errorNode.textContent = message;
   }
+  form.querySelectorAll("[data-form-tab]").forEach((tab) => {
+    const panel = form.querySelector(`[data-form-tab-panel="${tab.dataset.formTab}"]`);
+    const count = panel?.querySelectorAll(".crm-field.is-invalid").length || 0;
+    const badge = tab.querySelector(".crm-form-tab-error");
+    if (badge) { badge.textContent = String(count); badge.hidden = count === 0; }
+  });
+  const firstInvalid = form.querySelector("[data-form-tab-panel] .crm-field.is-invalid");
+  const firstPanel = firstInvalid?.closest("[data-form-tab-panel]");
+  if (firstPanel && !firstPanel.classList.contains("is-active")) form.querySelector(`[data-form-tab="${firstPanel.dataset.formTabPanel}"]`)?.click();
   return Object.keys(errors).length === 0;
 }

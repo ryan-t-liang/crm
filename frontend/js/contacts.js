@@ -1,19 +1,13 @@
 "use strict";
 
 import { $, appUrl, crmApi, dateRangeForPreset, displayValue, esc, formatLocalDateTime, friendlyError, renderErrorMarkup, setButtonBusy } from "./api.js";
-import { applyFieldErrors, CONTACT_FIELDS, CONTACT_STAGES, formPayload, leadPriorityLabel, leadStatusLabel, renderFormSections, stageLabel, validateContactPayload } from "./field-definitions.js";
-import { openFollowup, renderTimelineMarkup } from "./followups.js";
+import { applyFieldErrors, bindFormTabs, CONTACT_FIELDS, CONTACT_STAGES, formPayload, leadPriorityLabel, leadStatusLabel, renderFormTabs, stageLabel, validateContactPayload } from "./field-definitions.js";
+import { openFollowup } from "./followups.js";
 
 let context;
 const listState = { page: 1, pageSize: 20, pageCount: 1, total: 0 };
 const relatedState = { page: 1, pageSize: 8, pageCount: 1, total: 0 };
 let editingContact = null;
-let pendingContactAttachments = [];
-let removedContactAttachmentIds = new Set();
-let existingContactAttachments = [];
-let formContactId = null;
-const contactAttachmentExtensions = new Set(["jpg", "jpeg", "png", "gif", "webp", "mp4", "webm", "mov", "pdf", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "txt"]);
-const contactAttachmentMaxBytes = 50 * 1024 * 1024;
 
 export function buildContactQuery(filters, page = 1, now = new Date()) {
   const params = new URLSearchParams({ page: String(page), pageSize: String(filters.pageSize || 20), orderBy: "updatedAt_desc" });
@@ -162,11 +156,12 @@ async function deleteContact(button) {
     context.notify(`“${name}”仍关联 ${relatedLeadCount} 条线索，请先删除关联线索`);
     return;
   }
-  if (!await context.confirm("删除联系人", `确认删除联系人“${name}”？联系人跟进记录也会一并删除，此操作无法撤销。`, "确认删除")) return;
+  if (!await context.confirm("删除联系人", `确认删除联系人“${name}”？联系人将从业务列表隐藏，历史互动、附件与审计记录会保留。`, "确认删除")) return;
   setButtonBusy(button, true, "删除中");
   try {
     await crmApi(`/api/v1/crm/contacts/${button.dataset.deleteContact}`, { method: "DELETE" });
     context.notify("联系人已删除");
+    if (button.dataset.detailDelete === "true") return context.navigate("contacts");
     await loadContacts(listState.page > 1 && listState.total % listState.pageSize === 1 ? listState.page - 1 : listState.page);
   } catch (error) {
     const copy = friendlyError(error);
@@ -186,30 +181,8 @@ function identityField(label, value, wide = false) {
   return `<div class="customer-identity-item${wide ? " wide" : ""}"><label>${esc(label)}</label><strong>${esc(displayValue(value))}</strong></div>`;
 }
 
-function formatFileSize(bytes) {
-  if (bytes === null || bytes === undefined) return "大小未知";
-  const value = Number(bytes || 0);
-  if (value < 1024) return `${value} B`;
-  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
-  return `${(value / 1024 / 1024).toFixed(1)} MB`;
-}
-
 function contactAttachmentUrl(contactId, attachmentId) {
   return appUrl(`/api/v1/crm/contacts/${encodeURIComponent(contactId)}/attachments/${encodeURIComponent(attachmentId)}/download`);
-}
-
-function contactAttachmentDetailMarkup(contact) {
-  const attachments = (contact.attachments || []).filter((item) => item.fieldKey === "meetingMinutesFiles");
-  if (!attachments.length) return '<div class="crm-attachment-empty"><svg><use href="#i-paperclip"/></svg><span>暂无 Meeting Minutes 文件</span></div>';
-  return `<div class="crm-detail-attachments">${attachments.map((attachment) => {
-    const url = contactAttachmentUrl(contact.id, attachment.id);
-    const preview = attachment.kind === "IMAGE"
-      ? `<img src="${esc(url)}" alt="${esc(attachment.originalName)}" loading="lazy">`
-      : attachment.kind === "VIDEO"
-        ? `<video src="${esc(url)}" controls preload="metadata"></video>`
-        : '<svg><use href="#i-file"/></svg>';
-    return `<article class="crm-detail-attachment"><span class="crm-detail-attachment-preview">${preview}</span><span><strong>${esc(attachment.originalName)}</strong><small>${esc(formatFileSize(attachment.fileSize))} · ${esc(attachment.uploadedBy?.name || "-")} · ${esc(formatLocalDateTime(attachment.createdAt))}</small></span><a class="btn btn-small" href="${esc(url)}" target="_blank" rel="noopener">查看</a><a class="btn btn-small" href="${esc(url)}" download>下载</a></article>`;
-  }).join("")}</div>`;
 }
 
 function renderContactInformation(contact) {
@@ -271,38 +244,60 @@ function bindDetailTabs(container) {
   }));
 }
 
+function journeyAttachmentUrl(contactId, event, attachment) {
+  if (attachment.entityType === "CONTACT") return contactAttachmentUrl(contactId, attachment.id);
+  if (attachment.entityType === "CONTACT_FOLLOWUP") return appUrl(`/api/v1/crm/contacts/${encodeURIComponent(contactId)}/followups/${encodeURIComponent(attachment.entityId)}/attachments/${encodeURIComponent(attachment.id)}/download`);
+  if (attachment.entityType === "LEAD_FOLLOWUP") return appUrl(`/api/v1/crm/leads/${encodeURIComponent(event.relatedLead?.id || "")}/followups/${encodeURIComponent(attachment.entityId)}/attachments/${encodeURIComponent(attachment.id)}/download`);
+  return appUrl(`/api/v1/crm/leads/${encodeURIComponent(event.relatedLead?.id || attachment.entityId)}/attachments/${encodeURIComponent(attachment.id)}/download`);
+}
+
+function renderJourney(contactId, events) {
+  if (!events.length) return '<div class="empty-state crm-compact-empty"><div><h3>暂无客户旅程</h3></div></div>';
+  return `<div class="journey-list">${events.map((event) => `<article class="journey-event" data-journey-category="${esc(event.category)}"><span class="journey-dot"></span><div class="journey-card"><header><span class="crm-badge">${esc(event.title)}</span><time>${esc(formatLocalDateTime(event.occurredAt))}</time></header><p>${esc(event.summary || "-")}</p>${event.progress ? `<div class="journey-next"><strong>当前进展</strong><span>${esc(event.progress)}</span></div>` : ""}${event.nextAction ? `<div class="journey-next"><strong>下一步动作</strong><span>${esc(event.nextAction)}</span></div>` : ""}<footer><span>${esc(event.actor?.name || "系统")}</span>${event.relatedLead ? `<button type="button" class="journey-lead-link" data-related-lead="${esc(event.relatedLead.id)}"${event.relatedLead.deleted ? " disabled" : ""}>${esc(event.relatedLead.requirementSummary)}${event.relatedLead.deleted ? "（线索已删除）" : ""}</button>` : ""}</footer>${event.attachments?.length ? `<div class="journey-files">${event.attachments.map((attachment) => `<a href="${esc(journeyAttachmentUrl(contactId, event, attachment))}" target="_blank" rel="noopener"><svg><use href="#i-paperclip"/></svg>${esc(attachment.originalName)}</a>`).join("")}</div>` : ""}</div></article>`).join("")}</div>`;
+}
+
 export async function openContact(id) {
   const container = $("crmContactDetailView");
   if (context.state.currentCrmContact?.id !== id) relatedState.page = 1;
   container.innerHTML = '<div class="crm-detail-loading"><span class="crm-skeleton crm-skeleton-title"></span><span class="crm-skeleton crm-skeleton-line"></span><span class="crm-skeleton crm-skeleton-block"></span></div>';
   try {
-    const [detailResult, followupResult, relatedResult, auditResult] = await Promise.all([
+    const [detailResult, journeyResult, relatedResult, auditResult] = await Promise.all([
       crmApi(`/api/v1/crm/contacts/${id}`),
-      context.can("crm.contact_followup.view") ? crmApi(`/api/v1/crm/contacts/${id}/followups?page=1&pageSize=50`) : Promise.resolve({ data: [], meta: { total: 0 } }),
+      crmApi(`/api/v1/crm/contacts/${id}/journey`),
       context.can("crm.lead.view") ? crmApi(`/api/v1/crm/contacts/${id}/leads?page=${relatedState.page}&pageSize=${relatedState.pageSize}`) : Promise.resolve({ data: [], meta: { total: 0, pageCount: 0 } }),
       context.can("audit.view") ? crmApi("/api/v1/audit-logs?page=1&pageSize=100").catch(() => ({ data: [] })) : Promise.resolve({ data: [] }),
     ]);
     const contact = detailResult.data;
+    const journey = journeyResult.data;
     const auditItems = auditResult.data.filter((item) => item.targetId === contact.id || item.details?.contactId === contact.id);
     context.state.currentCrmContact = contact;
     relatedState.total = relatedResult.meta.total;
     relatedState.pageCount = Math.max(1, relatedResult.meta.pageCount || 1);
     container.innerHTML = `<div class="crm-record v1-detail">
-      <header class="detail-top"><button class="back-button" id="crmBackToContacts" type="button" aria-label="返回联系人列表"><svg><use href="#i-arrow"/></svg></button><div class="detail-identity"><div class="detail-avatar">${esc(contact.contactName.trim().slice(0, 1).toUpperCase() || "客")}</div><div><div class="detail-name-line"><h1>${esc(contact.contactName)}</h1><span class="crm-badge crm-stage-${esc(contact.stage.toLowerCase())}">${esc(stageLabel(contact.stage))}</span></div><div class="detail-contact-row"><span>${esc(contact.companyShortName || contact.companyName || "-")}</span><span>${esc(contact.title || "-")}</span><span>${esc(contact.email || contact.phone || "-")}</span></div></div></div><div class="detail-top-actions"><button class="btn btn-primary" id="crmContactNewLead" type="button" data-crm-permission="crm.lead.create"><svg><use href="#i-plus"/></svg>新增线索</button><button class="btn" id="crmEditContact" type="button" data-crm-permission="crm.contact.edit"><svg><use href="#i-edit"/></svg>编辑联系人</button></div></header>
-      <div class="detail-grid"><aside class="detail-column detail-side"><article class="content-card customer-identity-card"><div class="content-card-header"><svg class="icon"><use href="#i-user"/></svg><h3>联系人资料</h3></div><div class="customer-identity-grid">${renderContactInformation(contact)}</div></article><article class="content-card customer-identity-card"><div class="content-card-header"><svg class="icon"><use href="#i-file"/></svg><h3>客户资料</h3></div><div class="customer-identity-grid">${renderCompanyInformation(contact)}</div><div class="crm-inline-attachment-section"><div class="subgroup-title">Meeting Minutes 文件</div>${contactAttachmentDetailMarkup(contact)}</div></article><article class="content-card customer-identity-card crm-system-card"><div class="content-card-header"><svg class="icon"><use href="#i-file"/></svg><h3>系统信息</h3></div><div class="customer-identity-grid">${renderContactSystemInformation(contact)}</div></article></aside>
-      <section class="detail-column operations-main"><nav class="detail-tabs" aria-label="联系人详情业务模块"><button class="detail-tab is-active" type="button" data-detail-tab="leads">线索 ${relatedResult.meta.total}</button><button class="detail-tab" type="button" data-detail-tab="followups">跟进记录 ${followupResult.meta.total}</button><button class="detail-tab" type="button" data-detail-tab="notes">备注 ${contact.remark ? 1 : 0}</button><button class="detail-tab" type="button" data-detail-tab="activity">操作记录</button></nav>
+      <header class="detail-top"><button class="back-button" id="crmBackToContacts" type="button" aria-label="返回联系人列表"><svg><use href="#i-arrow"/></svg></button><div class="detail-identity"><div class="detail-avatar">${esc(contact.contactName.trim().slice(0, 1).toUpperCase() || "客")}</div><div><div class="detail-name-line"><h1>${esc(contact.contactName)}</h1><span class="crm-badge crm-stage-${esc(contact.stage.toLowerCase())}">${esc(stageLabel(contact.stage))}</span></div><div class="detail-contact-row"><span>${esc(contact.companyShortName || contact.companyName || "-")}</span><span>${esc(contact.title || "-")}</span><span>${esc(contact.email || contact.phone || "-")}</span></div></div></div><div class="detail-top-actions"><button class="btn btn-primary" id="crmContactNewLead" type="button" data-crm-permission="crm.lead.create"><svg><use href="#i-plus"/></svg>新增线索</button><button class="btn" id="crmAddContactInteraction" type="button" data-crm-permission="crm.contact_followup.create"><svg><use href="#i-plus"/></svg>新增互动</button><button class="btn" id="crmEditContact" type="button" data-crm-permission="crm.contact.edit"><svg><use href="#i-edit"/></svg>编辑</button><details class="crm-more"><summary class="btn">更多</summary><button type="button" id="crmDeleteContactDetail" data-crm-permission="crm.contact.delete">删除联系人</button></details></div></header>
+      <div class="customer-360-summary" aria-label="客户 360 摘要"><div><span>活跃线索</span><strong>${esc(journey.summary.activeLeadCount)}</strong></div><div><span>成交线索</span><strong>${esc(journey.summary.wonLeadCount)}</strong></div><div><span>最近互动</span><strong>${esc(formatLocalDateTime(journey.summary.recentInteractionAt))}</strong></div><div><span>下次跟进</span><strong>${esc(formatLocalDateTime(journey.summary.nextFollowupAt))}</strong></div></div>
+      <div class="detail-grid"><aside class="detail-column detail-side"><article class="content-card customer-identity-card"><div class="content-card-header"><svg class="icon"><use href="#i-user"/></svg><h3>联系人资料</h3></div><div class="customer-identity-grid">${renderContactInformation(contact)}</div></article><article class="content-card customer-identity-card"><div class="content-card-header"><svg class="icon"><use href="#i-file"/></svg><h3>客户资料</h3></div><div class="customer-identity-grid">${renderCompanyInformation(contact)}</div></article><article class="content-card customer-identity-card crm-system-card"><div class="content-card-header"><svg class="icon"><use href="#i-file"/></svg><h3>系统信息</h3></div><div class="customer-identity-grid">${renderContactSystemInformation(contact)}</div></article></aside>
+      <section class="detail-column operations-main"><nav class="detail-tabs" aria-label="联系人详情业务模块"><button class="detail-tab is-active" type="button" data-detail-tab="leads">线索 ${relatedResult.meta.total}</button><button class="detail-tab" type="button" data-detail-tab="journey">客户旅程</button><button class="detail-tab" type="button" data-detail-tab="notes">备注 ${contact.remark ? 1 : 0}</button><button class="detail-tab" type="button" data-detail-tab="activity">操作记录</button></nav>
         <div class="tab-panel is-active" data-detail-panel="leads"><section class="content-card"><div class="list-card-header"><div><h2>线索</h2></div><span class="spacer"></span><button class="btn btn-primary btn-small" id="crmPanelNewLead" type="button" data-crm-permission="crm.lead.create"><svg><use href="#i-plus"/></svg>新增线索</button></div><div class="lead-list">${renderRelatedLeads(relatedResult.data)}</div>${relatedResult.meta.total > relatedState.pageSize ? `<footer class="crm-related-pagination"><button class="btn btn-small" id="crmRelatedPrev" type="button"${relatedState.page <= 1 ? " disabled" : ""}>上一页</button><span>${relatedState.page} / ${relatedState.pageCount}</span><button class="btn btn-small" id="crmRelatedNext" type="button"${relatedState.page >= relatedState.pageCount ? " disabled" : ""}>下一页</button></footer>` : ""}</section></div>
-        <div class="tab-panel" data-detail-panel="followups"><section class="content-card"><div class="list-card-header"><div><h2>跟进记录</h2></div><span class="spacer"></span><button class="btn btn-primary btn-small" id="crmAddContactFollowup" type="button" data-crm-permission="crm.contact_followup.create"><svg><use href="#i-plus"/></svg>新增跟进</button></div><div class="timeline">${renderTimelineMarkup(followupResult.data, "contact")}</div></section></div>
+        <div class="tab-panel" data-detail-panel="journey"><section class="content-card"><div class="list-card-header"><div><h2>客户旅程</h2><p>业务互动、线索推进与关键里程碑</p></div><span class="spacer"></span><button class="btn btn-primary btn-small" id="crmJourneyAddInteraction" type="button" data-crm-permission="crm.contact_followup.create"><svg><use href="#i-plus"/></svg>新增互动</button></div><div class="journey-filters"><button class="is-active" type="button" data-journey-filter="ALL">全部</button><button type="button" data-journey-filter="INTERACTION">互动</button><button type="button" data-journey-filter="LEAD">线索</button><button type="button" data-journey-filter="MILESTONE">里程碑</button></div>${renderJourney(contact.id, journey.events)}</section></div>
         <div class="tab-panel" data-detail-panel="notes"><section class="content-card"><div class="list-card-header"><div><h2>备注</h2></div></div>${renderContactNote(contact)}</section></div>
         <div class="tab-panel" data-detail-panel="activity"><section class="content-card"><div class="list-card-header"><div><h2>操作记录</h2></div></div>${renderContactAudit(auditItems, contact, context.can("audit.view"))}</section></div>
       </section></div>
     </div>`;
     $("crmBackToContacts").addEventListener("click", () => context.navigate("contacts"));
     $("crmEditContact").addEventListener("click", () => openContactForm(contact));
-    $("crmAddContactFollowup").addEventListener("click", () => openFollowup({ kind: "contact", id: contact.id, title: `${contact.contactName} · 新增跟进`, onSaved: () => openContact(contact.id) }));
+    const addInteraction = () => openFollowup({ kind: "contact", id: contact.id, title: `${contact.contactName} · 新增互动`, onSaved: () => openContact(contact.id) });
+    $("crmAddContactInteraction").addEventListener("click", addInteraction);
+    $("crmJourneyAddInteraction").addEventListener("click", addInteraction);
+    Object.assign($("crmDeleteContactDetail").dataset, { deleteContact: contact.id, contactName: contact.contactName, relatedLeads: String(relatedResult.meta.total), detailDelete: "true" });
+    $("crmDeleteContactDetail").addEventListener("click", () => deleteContact($("crmDeleteContactDetail")));
     $("crmContactNewLead").addEventListener("click", () => context.openLeadForm(contact));
     $("crmPanelNewLead").addEventListener("click", () => context.openLeadForm(contact));
     container.querySelectorAll("[data-related-lead]").forEach((row) => row.addEventListener("click", () => context.navigate(`leads/${row.dataset.relatedLead}`)));
+    container.querySelectorAll("[data-journey-filter]").forEach((button) => button.addEventListener("click", () => {
+      container.querySelectorAll("[data-journey-filter]").forEach((item) => item.classList.toggle("is-active", item === button));
+      container.querySelectorAll("[data-journey-category]").forEach((item) => { item.hidden = button.dataset.journeyFilter !== "ALL" && item.dataset.journeyCategory !== button.dataset.journeyFilter; });
+    }));
     $("crmRelatedPrev")?.addEventListener("click", () => { relatedState.page -= 1; openContact(contact.id); });
     $("crmRelatedNext")?.addEventListener("click", () => { relatedState.page += 1; openContact(contact.id); });
     bindDetailTabs(container);
@@ -316,102 +311,13 @@ export async function openContact(id) {
   }
 }
 
-function contactAttachmentEditorMarkup() {
-  const canEdit = context.can("crm.contact.edit");
-  return `<section class="crm-form-section crm-attachment-section" id="crmContactAttachmentSection"><header><h3>Meeting Minutes 文件</h3><span>选填 · 最多 20 个</span></header><p class="crm-attachment-guidance">支持 PDF、Office、TXT、常规图片和视频。单个文件不超过 50 MB。</p>${canEdit ? '<label class="crm-attachment-dropzone" id="crmContactAttachmentDropzone"><input id="crmContactAttachmentInput" type="file" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.mp4,.webm,.mov,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"><svg><use href="#i-paperclip"/></svg><span><strong>选择文件</strong><small>或将文件拖放到这里</small></span></label>' : '<div class="crm-attachment-disabled">当前角色无权修改附件</div>'}<div class="crm-attachment-list" id="crmContactAttachmentList"></div><div class="crm-attachment-error" id="crmContactAttachmentError" role="alert" hidden></div></section>`;
-}
-
-function showContactAttachmentError(message = "") {
-  const node = $("crmContactAttachmentError");
-  if (!node) return;
-  node.textContent = message;
-  node.hidden = !message;
-}
-
-function renderContactAttachmentEditor() {
-  const list = $("crmContactAttachmentList");
-  if (!list) return;
-  const existing = existingContactAttachments.filter((attachment) => !removedContactAttachmentIds.has(attachment.id));
-  const rows = [
-    ...existing.map((attachment) => `<div class="crm-attachment-row"><span class="crm-attachment-type"><svg><use href="#i-file"/></svg></span><span><strong>${esc(attachment.originalName)}</strong><small>${esc(attachment.uploadedBy?.name || "已上传")} · ${esc(formatFileSize(attachment.fileSize))} · ${esc(formatLocalDateTime(attachment.createdAt))}</small></span>${formContactId ? `<a class="crm-attachment-open" href="${esc(contactAttachmentUrl(formContactId, attachment.id))}" target="_blank" rel="noopener">查看</a>` : ""}<button class="crm-attachment-remove" type="button" data-remove-contact-existing="${esc(attachment.id)}" aria-label="移除附件 ${esc(attachment.originalName)}"><svg><use href="#i-trash"/></svg></button></div>`),
-    ...pendingContactAttachments.map((file, index) => `<div class="crm-attachment-row is-pending"><span class="crm-attachment-type"><svg><use href="#i-paperclip"/></svg></span><span><strong>${esc(file.name)}</strong><small>待上传 · ${esc(formatFileSize(file.size))}</small></span><span class="crm-attachment-pending">待保存</span><button class="crm-attachment-remove" type="button" data-remove-contact-pending="${index}" aria-label="移除待上传附件 ${esc(file.name)}"><svg><use href="#i-x"/></svg></button></div>`),
-  ];
-  list.innerHTML = rows.length ? rows.join("") : '<div class="crm-attachment-empty"><svg><use href="#i-paperclip"/></svg><span>尚未添加文件</span></div>';
-  list.querySelectorAll("[data-remove-contact-existing]").forEach((button) => button.addEventListener("click", () => {
-    removedContactAttachmentIds.add(button.dataset.removeContactExisting);
-    renderContactAttachmentEditor();
-  }));
-  list.querySelectorAll("[data-remove-contact-pending]").forEach((button) => button.addEventListener("click", () => {
-    pendingContactAttachments.splice(Number(button.dataset.removeContactPending), 1);
-    renderContactAttachmentEditor();
-  }));
-}
-
-function addContactAttachmentFiles(files) {
-  showContactAttachmentError();
-  const rejected = [];
-  for (const file of Array.from(files || [])) {
-    const extension = file.name.split(".").pop()?.toLowerCase() || "";
-    if (!contactAttachmentExtensions.has(extension)) rejected.push(`${file.name}：格式不支持`);
-    else if (file.size <= 0) rejected.push(`${file.name}：文件为空`);
-    else if (file.size > contactAttachmentMaxBytes) rejected.push(`${file.name}：超过 50 MB`);
-    else if (existingContactAttachments.length - removedContactAttachmentIds.size + pendingContactAttachments.length >= 20) rejected.push(`${file.name}：已达到 20 个文件上限`);
-    else if (!pendingContactAttachments.some((item) => item.name === file.name && item.size === file.size && item.lastModified === file.lastModified)) pendingContactAttachments.push(file);
-  }
-  renderContactAttachmentEditor();
-  if (rejected.length) showContactAttachmentError(rejected.join("；"));
-  const input = $("crmContactAttachmentInput");
-  if (input) input.value = "";
-}
-
-function bindContactAttachmentEditor() {
-  $("crmContactAttachmentInput")?.addEventListener("change", (event) => addContactAttachmentFiles(event.target.files));
-  const dropzone = $("crmContactAttachmentDropzone");
-  if (!dropzone) return;
-  for (const eventName of ["dragenter", "dragover"]) dropzone.addEventListener(eventName, (event) => { event.preventDefault(); dropzone.classList.add("is-dragging"); });
-  for (const eventName of ["dragleave", "drop"]) dropzone.addEventListener(eventName, (event) => { event.preventDefault(); dropzone.classList.remove("is-dragging"); });
-  dropzone.addEventListener("drop", (event) => addContactAttachmentFiles(event.dataTransfer.files));
-}
-
-async function syncContactAttachments(contactId) {
-  const failures = [];
-  for (const attachmentId of [...removedContactAttachmentIds]) {
-    const attachment = existingContactAttachments.find((item) => item.id === attachmentId);
-    try {
-      await crmApi(`/api/v1/crm/contacts/${contactId}/attachments/${attachmentId}`, { method: "DELETE" });
-      existingContactAttachments = existingContactAttachments.filter((item) => item.id !== attachmentId);
-      removedContactAttachmentIds.delete(attachmentId);
-    } catch (error) { failures.push(`${attachment?.originalName || "附件"}：${friendlyError(error).message}`); }
-  }
-  for (const file of [...pendingContactAttachments]) {
-    const body = new FormData();
-    body.append("file", file, file.name);
-    try {
-      const result = await crmApi(`/api/v1/crm/contacts/${contactId}/attachments/meetingMinutesFiles`, { method: "POST", body });
-      existingContactAttachments.push(result.data);
-      pendingContactAttachments = pendingContactAttachments.filter((item) => item !== file);
-    } catch (error) { failures.push(`${file.name}：${friendlyError(error).message}`); }
-  }
-  renderContactAttachmentEditor();
-  return failures;
-}
-
 export function openContactForm(contact = null) {
   editingContact = contact;
-  pendingContactAttachments = [];
-  removedContactAttachmentIds = new Set();
-  existingContactAttachments = [...(contact?.attachments || []).filter((item) => item.fieldKey === "meetingMinutesFiles")];
-  formContactId = contact?.id || null;
   $("crmContactFormTitle").textContent = contact ? "编辑联系人" : "新增联系人";
-  $("crmContactFormFields").innerHTML = renderFormSections(CONTACT_FIELDS, contact || { stage: "INITIAL", ownerUserId: context.currentUserId() }, context.getUsers(), {
-    person: "联系人信息",
-    company: "公司信息",
-    region: "地区信息",
-    crm: "CRM 信息",
-  });
-  $("crmContactFormFields").insertAdjacentHTML("beforeend", contactAttachmentEditorMarkup());
-  bindContactAttachmentEditor();
-  renderContactAttachmentEditor();
+  $("crmContactFormFields").innerHTML = renderFormTabs(CONTACT_FIELDS, contact || { stage: "INITIAL", ownerUserId: context.currentUserId() }, context.getUsers(), [
+    { key: "basic", label: "基础资料" }, { key: "crm", label: "CRM 信息" }, { key: "notes", label: "备注" },
+  ]);
+  bindFormTabs($("crmContactForm"));
   $("crmContactFormError").hidden = true;
   $("crmContactDrawer").showModal();
   setTimeout(() => $("crmContactForm").elements.contactName.focus(), 30);
@@ -420,10 +326,6 @@ export function openContactForm(contact = null) {
 function closeContactForm() {
   if ($("crmContactDrawer")?.open) $("crmContactDrawer").close();
   editingContact = null;
-  pendingContactAttachments = [];
-  removedContactAttachmentIds = new Set();
-  existingContactAttachments = [];
-  formContactId = null;
 }
 
 async function saveContact(event) {
@@ -449,14 +351,6 @@ async function saveContact(event) {
       body: JSON.stringify(payload),
     });
     const id = result.data.id;
-    formContactId = id;
-    const attachmentFailures = await syncContactAttachments(id);
-    if (attachmentFailures.length) {
-      editingContact = { ...result.data, id, attachments: existingContactAttachments };
-      showContactAttachmentError(`联系人已保存；以下附件未完成，请重试：${attachmentFailures.join("；")}`);
-      context.notify("联系人已保存，部分附件需要重试");
-      return;
-    }
     closeContactForm();
     context.notify(wasEditing ? "联系人已更新" : "联系人已创建");
     await context.navigate(`contacts/${id}`);

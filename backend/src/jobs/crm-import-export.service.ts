@@ -6,9 +6,9 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { appendAuditRecord, type AuditActorContext } from "../common/audit.js";
 import { ApiError } from "../common/errors.js";
 import { jobNumber } from "../common/ids.js";
-import { contactCreateSchema, type ContactCreateInput } from "../contacts/schemas.js";
+import { contactImportSchema, type ContactImportInput } from "../contacts/schemas.js";
 import { ContactService } from "../contacts/service.js";
-import { crmLeadCreateSchema, type CrmLeadCreateInput } from "../crm-leads/schemas.js";
+import { crmLeadImportSchema, type CrmLeadImportInput } from "../crm-leads/schemas.js";
 import { CrmLeadService } from "../crm-leads/service.js";
 import { CrmAttachmentService } from "../crm-leads/attachments.js";
 import { crmImportFields, contactExportFields, crmLeadExportFields } from "./crm-schema.js";
@@ -147,7 +147,7 @@ function serializable<T>(value: T): T {
 async function preflightContacts(app: FastifyInstance, rows: Array<{ rowNumber: number; values: Record<string, string> }>): Promise<CrmPreflightRow[]> {
   const resolveUser = await userResolver(app);
   const contacts = await app.prisma.contact.findMany({
-    where: { OR: [{ email: { not: null } }, { phone: { not: null } }] },
+    where: { deletedAt: null, OR: [{ email: { not: null } }, { phone: { not: null } }] },
     select: { id: true, contactName: true, companyShortName: true, companyName: true, email: true, phone: true },
   });
   const emailMatches = new Map<string, typeof contacts>();
@@ -180,7 +180,7 @@ async function preflightContacts(app: FastifyInstance, rows: Array<{ rowNumber: 
       ownerUserId, nextFollowupAt: parseDate(raw.nextFollowupAt, "nextFollowupAt", errors),
       initialContext: trimOrNull(raw.initialContext), followupAttention: trimOrNull(raw.followupAttention), remark: trimOrNull(raw.remark),
     };
-    const parsed = contactCreateSchema.safeParse(candidate);
+    const parsed = contactImportSchema.safeParse(candidate);
     if (!parsed.success) errors.push(...schemaErrors(parsed.error));
     const addDuplicate = (field: "email" | "phone", message: string) => {
       if (!warnings.some((warning) => warning.field === field && warning.message === message)) warnings.push({ code: "POTENTIAL_DUPLICATE", field, message });
@@ -212,7 +212,7 @@ async function preflightContacts(app: FastifyInstance, rows: Array<{ rowNumber: 
 async function preflightLeads(app: FastifyInstance, rows: Array<{ rowNumber: number; values: Record<string, string> }>): Promise<CrmPreflightRow[]> {
   const resolveUser = await userResolver(app);
   const contactIds = [...new Set(rows.map((row) => trimOrNull(row.values.contactId)).filter((value): value is string => Boolean(value)))];
-  const existingContacts = new Set((await app.prisma.contact.findMany({ where: { id: { in: contactIds } }, select: { id: true } })).map((contact) => contact.id));
+  const existingContacts = new Set((await app.prisma.contact.findMany({ where: { id: { in: contactIds }, deletedAt: null }, select: { id: true } })).map((contact) => contact.id));
   const output: CrmPreflightRow[] = [];
   for (const row of rows) {
     const raw = row.values;
@@ -233,19 +233,19 @@ async function preflightLeads(app: FastifyInstance, rows: Array<{ rowNumber: num
     const candidate = {
       contactId,
       requirementSummary: String(raw.requirementSummary ?? "").trim(),
-      requirementDetail: trimOrNull(raw.requirementDetail), latestProgress: trimOrNull(raw.latestProgress), leadSource: trimOrNull(raw.leadSource),
+      requirementDetail: trimOrNull(raw.requirementDetail), imageRequirementNote: trimOrNull(raw.imageRequirementNote), latestProgress: trimOrNull(raw.latestProgress), nextAction: trimOrNull(raw.nextAction), leadSource: trimOrNull(raw.leadSource),
       priority, estimatedQuote: quote, currency, projectDomain: trimOrNull(raw.projectDomain),
       projectType: trimOrNull(raw.projectType), technologyType: trimOrNull(raw.technologyType),
       productType: trimOrNull(raw.productType), productName: trimOrNull(raw.productName),
       resourceRequirement: trimOrNull(raw.resourceRequirement), collaborationGroups: splitMultiValue(raw.collaborationGroups).join("\n") || null,
-      followMode: trimOrNull(raw.followMode), solution: trimOrNull(raw.solution),
+      followMode: trimOrNull(raw.followMode), solution: trimOrNull(raw.solution), quotationNote: trimOrNull(raw.quotationNote),
       remark: trimOrNull(raw.remark), status, salesOwnerUserId, followupOwnerUserId,
       nextFollowupAt: parseDate(raw.nextFollowupAt, "nextFollowupAt", errors),
       wonAt: parseDate(raw.wonAt, "wonAt", errors), deliveryFollowupAt: parseDate(raw.deliveryFollowupAt, "deliveryFollowupAt", errors),
       contractRenewalAt: parseDate(raw.contractRenewalAt, "contractRenewalAt", errors), paymentReceivedAt: parseDate(raw.paymentReceivedAt, "paymentReceivedAt", errors),
       participantUserIds,
     };
-    const parsed = crmLeadCreateSchema.safeParse(candidate);
+    const parsed = crmLeadImportSchema.safeParse(candidate);
     if (!parsed.success) errors.push(...schemaErrors(parsed.error));
     const fileUrls = Object.fromEntries(["requirementFiles", "requirementImages", "proposalFiles", "quotationFiles"].map((field) => [field, attachmentUrls(raw[field], field, warnings)]));
     const normalizedData = { ...(parsed.success ? serializable(parsed.data) : serializable(candidate)), attachmentUrls: fileUrls };
@@ -274,12 +274,12 @@ export async function prepareCrmImport(app: FastifyInstance, objectType: CrmJobO
   return { parsed, mapping, rows, summary: crmPreflightSummary(rows) };
 }
 
-function contactInput(data: Record<string, unknown>): ContactCreateInput {
-  return contactCreateSchema.parse(data);
+function contactInput(data: Record<string, unknown>): ContactImportInput {
+  return contactImportSchema.parse(data);
 }
 
-function leadInput(data: Record<string, unknown>): CrmLeadCreateInput {
-  return crmLeadCreateSchema.parse(data);
+function leadInput(data: Record<string, unknown>): CrmLeadImportInput {
+  return crmLeadImportSchema.parse(data);
 }
 
 export async function executeCrmImportJob(app: FastifyInstance, request: FastifyRequest, jobId: string) {
@@ -380,7 +380,7 @@ export async function buildCrmExportWorkbook(app: FastifyInstance, objectType: C
     const sheet = workbook.addWorksheet("Contacts", { views: [{ state: "frozen", ySplit: 1 }] });
     sheet.columns = contactExportFields.map(([key, header]) => ({ key, header, width: Math.max(14, Math.min(32, header.length + 6)) }));
     const [rows, attachmentRows] = await Promise.all([
-      app.prisma.contact.findMany({ include: { owner: { select: { loginAccount: true } }, createdBy: { select: { loginAccount: true } }, _count: { select: { leads: true } } }, orderBy: [{ updatedAt: "desc" }, { id: "desc" }] }),
+      app.prisma.contact.findMany({ where: { deletedAt: null }, include: { owner: { select: { loginAccount: true } }, createdBy: { select: { loginAccount: true } }, _count: { select: { leads: { where: { deletedAt: null } } } } }, orderBy: [{ updatedAt: "desc" }, { id: "desc" }] }),
       app.prisma.crmAttachment.findMany({ where: { entityType: "CONTACT" }, select: { id: true, entityId: true, fieldKey: true, storageType: true, originalName: true, externalUrl: true } }),
     ]);
     for (const contact of rows) sheet.addRow({
@@ -398,6 +398,7 @@ export async function buildCrmExportWorkbook(app: FastifyInstance, objectType: C
   const sheet = workbook.addWorksheet("CRM Leads", { views: [{ state: "frozen", ySplit: 1 }] });
   sheet.columns = crmLeadExportFields.map(([key, header]) => ({ key, header, width: Math.max(14, Math.min(32, header.length + 6)) }));
   const [rows, attachmentRows] = await Promise.all([app.prisma.crmLead.findMany({
+    where: { deletedAt: null, contact: { deletedAt: null } },
     include: {
       contact: { select: { contactName: true, companyShortName: true, companyName: true, email: true, phone: true, wechat: true } },
       salesOwner: { select: { loginAccount: true } }, followupOwner: { select: { loginAccount: true } },

@@ -1,7 +1,7 @@
 "use strict";
 
 import { $, appUrl, crmApi, dateRangeForPreset, displayValue, esc, formatLocalDateTime, friendlyError, renderErrorMarkup, setButtonBusy } from "./api.js";
-import { applyFieldErrors, formPayload, LEAD_FIELDS, LEAD_PRIORITIES, LEAD_STATUSES, leadPriorityLabel, leadStatusLabel, renderFormSections, validateLeadPayload } from "./field-definitions.js";
+import { applyFieldErrors, bindFormTabs, formPayload, LEAD_FIELDS, LEAD_PRIORITIES, LEAD_STATUSES, leadPriorityLabel, leadStatusLabel, renderFormTabs, validateLeadPayload } from "./field-definitions.js";
 import { openFollowup, renderTimelineMarkup } from "./followups.js";
 
 let context;
@@ -22,10 +22,10 @@ const imageExtensions = new Set(["jpg", "jpeg", "png", "gif", "webp"]);
 const videoExtensions = new Set(["mp4", "webm", "mov"]);
 const maxAttachmentBytes = 50 * 1024 * 1024;
 const leadAttachmentFields = [
-  { key: "requirementFiles", label: "需求 / 签署文件", accept: ".jpg,.jpeg,.png,.gif,.webp,.mp4,.webm,.mov,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt", kinds: ["IMAGE", "VIDEO", "DOCUMENT"] },
-  { key: "requirementImages", label: "图片需求", accept: ".jpg,.jpeg,.png,.gif,.webp", kinds: ["IMAGE"] },
-  { key: "proposalFiles", label: "正式方案文件", accept: ".jpg,.jpeg,.png,.gif,.webp,.mp4,.webm,.mov,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt", kinds: ["IMAGE", "VIDEO", "DOCUMENT"] },
-  { key: "quotationFiles", label: "报价单", accept: ".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt", kinds: ["IMAGE", "DOCUMENT"] },
+  { key: "requirementFiles", tab: "requirement", label: "需求 / 签署文件", hint: "对应上方需求整理，可上传图片、视频或文档", accept: ".jpg,.jpeg,.png,.gif,.webp,.mp4,.webm,.mov,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt", kinds: ["IMAGE", "VIDEO", "DOCUMENT"] },
+  { key: "requirementImages", tab: "requirement", label: "图片需求", hint: "对应上方图片需求说明，仅接受图片", accept: ".jpg,.jpeg,.png,.gif,.webp", kinds: ["IMAGE"] },
+  { key: "proposalFiles", tab: "commercial", label: "正式方案文件", hint: "对应上方方案说明，可上传图片、视频或文档", accept: ".jpg,.jpeg,.png,.gif,.webp,.mp4,.webm,.mov,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt", kinds: ["IMAGE", "VIDEO", "DOCUMENT"] },
+  { key: "quotationFiles", tab: "commercial", label: "报价单", hint: "对应报价说明、金额与币种", accept: ".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt", kinds: ["IMAGE", "DOCUMENT"] },
 ];
 
 export function buildLeadQuery(filters, page = 1, now = new Date()) {
@@ -79,7 +79,7 @@ export function initializeLeads(options) {
         <div id="crmLeadFormFields"></div>
         <div class="crm-form-message" id="crmLeadFormError" role="alert" hidden></div>
       </div></div>
-      <div class="dialog-footer"><button class="btn" type="button" data-close-lead-form>取消</button><span class="spacer"></span><button class="btn btn-primary" id="crmSaveLead" type="submit">保存线索</button></div>
+      <div class="dialog-footer"><button class="btn" type="button" data-close-lead-form>取消</button><span class="spacer"></span><button class="btn" id="crmSaveContinueLead" type="submit" data-save-mode="continue">保存并继续编辑</button><button class="btn btn-primary" id="crmSaveLead" type="submit">保存线索</button></div>
     </form>
   </dialog>`);
 
@@ -187,11 +187,12 @@ function renderLeadRows(rows) {
 
 async function deleteLead(button) {
   const summary = button.dataset.leadSummary || "该线索";
-  if (!await context.confirm("删除线索", `确认删除线索“${summary}”？跟进记录和附件也会一并删除，此操作无法撤销。`, "确认删除")) return;
+  if (!await context.confirm("删除线索", `确认删除线索“${summary}”？线索将从业务列表隐藏，跟进、附件与审计记录会保留。`, "确认删除")) return;
   setButtonBusy(button, true, "删除中");
   try {
     await crmApi(`/api/v1/crm/leads/${button.dataset.deleteLead}`, { method: "DELETE" });
     context.notify("线索已删除");
+    if (button.dataset.detailDelete === "true") return context.navigate("leads");
     await loadLeads(listState.page > 1 && listState.total % listState.pageSize === 1 ? listState.page - 1 : listState.page);
   } catch (error) {
     const copy = friendlyError(error);
@@ -248,13 +249,9 @@ function attachmentDetailMarkup(lead, fieldKey, emptyLabel) {
 function overviewMarkup(lead) {
   return [
     identityField("线索阶段", leadStatusLabel(lead.status)), identityField("优先级", leadPriorityLabel(lead.priority)),
-    identityField("销售对接人", lead.salesOwner?.name), identityField("跟进对接人", lead.followupOwner?.name),
-    identityField("Leads 参与人员", (lead.participants || []).map((item) => item.user?.name).filter(Boolean).join("、"), true),
-    identityField("跟单模式", lead.followMode), identityField("对接群", lead.collaborationGroups, true),
-    identityField("下次跟进", formatLocalDateTime(lead.nextFollowupAt)), identityField("最近沟通", formatLocalDateTime(lead.lastFollowupAt)),
-    identityField("预计报价", quoteDisplay(lead)), identityField("成交日期", formatLocalDateTime(lead.wonAt)),
-    identityField("交付跟进日期", formatLocalDateTime(lead.deliveryFollowupAt)), identityField("合同续约日期", formatLocalDateTime(lead.contractRenewalAt)),
-    identityField("收款日期", formatLocalDateTime(lead.paymentReceivedAt), true),
+    identityField("销售负责人", lead.salesOwner?.name), identityField("预计报价", quoteDisplay(lead)),
+    identityField("最新进度", lead.latestProgress, true), identityField("下一步动作", lead.nextAction, true),
+    identityField("下次跟进", formatLocalDateTime(lead.nextFollowupAt), true),
   ].join("");
 }
 
@@ -266,7 +263,7 @@ function contactMarkup(contact) {
 }
 
 function requirementMarkup(lead) {
-  return `<div class="field-groups"><section><div class="subgroup-title">A. 需求内容</div><div class="field-grid">${fieldTile("项目需求简述", lead.requirementSummary, true)}${fieldTile("需求整理", lead.requirementDetail, true)}${fieldTile("客户来源", lead.leadSource, true)}</div><div class="crm-inline-attachment-section"><h4>需求 / 签署文件</h4>${attachmentDetailMarkup(lead, "requirementFiles", "暂无需求 / 签署文件")}</div><div class="crm-inline-attachment-section"><h4>图片需求</h4>${attachmentDetailMarkup(lead, "requirementImages", "暂无图片需求")}</div></section><section><div class="subgroup-title">B. 项目分类</div><div class="field-grid">${fieldTile("项目领域", lead.projectDomain)}${fieldTile("项目类型", lead.projectType)}${fieldTile("技术类型", lead.technologyType)}${fieldTile("产品类型", lead.productType)}${fieldTile("产品名称", lead.productName)}${fieldTile("资源需求", lead.resourceRequirement, true)}</div></section><section><div class="subgroup-title">C. 方案与商务</div><div class="crm-inline-attachment-section"><h4>正式方案文件</h4>${attachmentDetailMarkup(lead, "proposalFiles", "暂无正式方案文件")}</div><div class="field-grid">${fieldTile("方案说明", lead.solution, true)}${fieldTile("最新进度", lead.latestProgress, true)}${fieldTile("预计报价", quoteDisplay(lead), true)}</div><div class="crm-inline-attachment-section"><h4>报价单</h4>${attachmentDetailMarkup(lead, "quotationFiles", "暂无报价单")}</div></section></div>`;
+  return `<div class="field-groups"><section><div class="subgroup-title">需求内容</div><div class="field-grid">${fieldTile("项目需求简述", lead.requirementSummary, true)}${fieldTile("需求整理", lead.requirementDetail, true)}${fieldTile("客户来源", lead.leadSource, true)}</div><div class="crm-context-pair"><div><h4>需求 / 签署文件</h4><p>与需求整理共同说明项目范围</p></div>${attachmentDetailMarkup(lead, "requirementFiles", "暂无需求 / 签署文件")}</div><div class="field-grid">${fieldTile("图片需求说明", lead.imageRequirementNote, true)}</div><div class="crm-context-pair"><div><h4>图片需求</h4><p>与图片需求说明成对归档</p></div>${attachmentDetailMarkup(lead, "requirementImages", "暂无图片需求")}</div></section><section><div class="subgroup-title">项目分类</div><div class="field-grid">${fieldTile("项目领域", lead.projectDomain)}${fieldTile("项目类型", lead.projectType)}${fieldTile("技术类型", lead.technologyType)}${fieldTile("产品类型", lead.productType)}${fieldTile("产品名称", lead.productName)}${fieldTile("资源需求", lead.resourceRequirement, true)}</div></section><section><div class="subgroup-title">方案与报价</div><div class="field-grid">${fieldTile("方案说明", lead.solution, true)}</div><div class="crm-context-pair"><div><h4>正式方案文件</h4><p>与方案说明共同呈现交付方案</p></div>${attachmentDetailMarkup(lead, "proposalFiles", "暂无正式方案文件")}</div><div class="field-grid">${fieldTile("报价说明", lead.quotationNote, true)}${fieldTile("预计报价", quoteDisplay(lead), true)}</div><div class="crm-context-pair"><div><h4>报价单</h4><p>与报价说明、金额和币种共同归档</p></div>${attachmentDetailMarkup(lead, "quotationFiles", "暂无报价单")}</div></section></div>`;
 }
 
 function leadSystemInformationMarkup(lead) {
@@ -278,7 +275,7 @@ function renderLeadNote(lead) {
   return `<div class="notes-list"><article class="note-item"><div class="note-head"><span class="mini-avatar">${esc((lead.createdBy?.name || "系").slice(0, 1))}</span><span class="note-author"><strong>${esc(lead.createdBy?.name || "系统记录")}</strong><time>${esc(formatLocalDateTime(lead.updatedAt))}</time></span></div><p>${esc(lead.remark)}</p></article></div>`;
 }
 
-const leadAuditLabel = (action) => ({ CREATE_CRM_LEAD: "创建线索", UPDATE_CRM_LEAD: "编辑线索", DELETE_CRM_LEAD: "删除线索", CREATE_LEAD_FOLLOWUP: "新增线索跟进", UPLOAD_ATTACHMENT: "上传附件", DELETE_ATTACHMENT: "删除附件", DOWNLOAD_ATTACHMENT: "下载附件" })[action] || action;
+const leadAuditLabel = (action) => ({ CREATE_CRM_LEAD: "创建线索", UPDATE_CRM_LEAD: "编辑线索", DELETE_CRM_LEAD: "删除线索", DELETE_LEAD: "删除线索", CREATE_LEAD_FOLLOWUP: "新增线索跟进", UPLOAD_ATTACHMENT: "上传附件", DELETE_ATTACHMENT: "删除附件", DOWNLOAD_ATTACHMENT: "下载附件" })[action] || action;
 
 function renderLeadAudit(items, lead, allowed) {
   if (!allowed) return '<div class="empty-state crm-compact-empty"><div><div class="empty-illustration"><svg><use href="#i-lock"/></svg></div><h3>当前角色无权查看操作记录</h3></div></div>';
@@ -309,7 +306,7 @@ export async function openLead(id) {
     const auditItems = auditResult.data.filter((item) => item.targetId === lead.id || item.details?.leadId === lead.id);
     context.state.currentCrmLead = lead;
     container.innerHTML = `<div class="crm-record v1-detail">
-      <header class="detail-top"><button class="back-button" id="crmBackToLeads" type="button" aria-label="返回线索列表"><svg><use href="#i-arrow"/></svg></button><div class="detail-identity"><div class="detail-avatar">${esc(lead.contact.contactName.trim().slice(0, 1).toUpperCase() || "线")}</div><div><div class="detail-name-line"><h1>${esc(lead.requirementSummary)}</h1><span class="crm-badge crm-status-${esc(lead.status.toLowerCase())}">${esc(leadStatusLabel(lead.status))}</span><span class="crm-badge crm-priority-${esc(lead.priority.toLowerCase())}">${esc(leadPriorityLabel(lead.priority))}</span></div><div class="detail-contact-row"><span>${esc(lead.contact.contactName)}</span><span>${esc(lead.contact.companyShortName || lead.contact.companyName || "-")}</span></div></div></div><div class="detail-top-actions"><button class="btn" id="crmEditLead" type="button" data-crm-permission="crm.lead.edit"><svg><use href="#i-edit"/></svg>编辑线索</button><button class="btn btn-primary" id="crmAddLeadFollowup" type="button" data-crm-permission="crm.lead_followup.create"><svg><use href="#i-plus"/></svg>新增跟进</button></div></header>
+      <header class="detail-top"><button class="back-button" id="crmBackToLeads" type="button" aria-label="返回线索列表"><svg><use href="#i-arrow"/></svg></button><div class="detail-identity"><div class="detail-avatar">${esc(lead.contact.contactName.trim().slice(0, 1).toUpperCase() || "线")}</div><div><div class="detail-name-line"><h1>${esc(lead.requirementSummary)}</h1><span class="crm-badge crm-status-${esc(lead.status.toLowerCase())}">${esc(leadStatusLabel(lead.status))}</span><span class="crm-badge crm-priority-${esc(lead.priority.toLowerCase())}">${esc(leadPriorityLabel(lead.priority))}</span></div><div class="detail-contact-row"><span>${esc(lead.contact.contactName)}</span><span>${esc(lead.contact.companyShortName || lead.contact.companyName || "-")}</span><span>销售负责人 ${esc(lead.salesOwner?.name || "-")}</span></div></div></div><div class="detail-top-actions"><button class="btn" id="crmEditLead" type="button" data-crm-permission="crm.lead.edit"><svg><use href="#i-edit"/></svg>编辑线索</button><button class="btn btn-primary" id="crmAddLeadFollowup" type="button" data-crm-permission="crm.lead_followup.create"><svg><use href="#i-plus"/></svg>新增跟进</button><details class="crm-more"><summary class="btn">更多</summary><button type="button" id="crmDeleteLeadDetail" data-crm-permission="crm.lead.delete">删除线索</button></details></div></header>
       <div class="detail-grid"><aside class="detail-column detail-side"><article class="content-card customer-identity-card"><div class="content-card-header"><svg class="icon"><use href="#i-lead"/></svg><h3>线索概览</h3></div><div class="customer-identity-grid">${overviewMarkup(lead)}</div></article><article class="content-card customer-identity-card"><div class="content-card-header"><svg class="icon"><use href="#i-user"/></svg><h3>关联联系人</h3><span class="spacer"></span><button class="btn btn-small" id="crmViewLeadContact" type="button">查看联系人</button></div><div class="customer-identity-grid">${contactMarkup(lead.contact)}</div></article><article class="content-card customer-identity-card crm-system-card"><div class="content-card-header"><svg class="icon"><use href="#i-file"/></svg><h3>系统信息</h3></div><div class="customer-identity-grid">${leadSystemInformationMarkup(lead)}</div></article></aside>
       <section class="detail-column operations-main"><nav class="detail-tabs" aria-label="线索详情业务模块"><button class="detail-tab is-active" type="button" data-detail-tab="requirement">需求信息</button><button class="detail-tab" type="button" data-detail-tab="followups">跟进记录 ${followupResult.meta.total}</button><button class="detail-tab" type="button" data-detail-tab="notes">备注 ${lead.remark ? 1 : 0}</button><button class="detail-tab" type="button" data-detail-tab="activity">操作记录</button></nav>
         <div class="tab-panel is-active" data-detail-panel="requirement"><section class="content-card"><div class="list-card-header"><div><h2>需求信息</h2></div></div>${requirementMarkup(lead)}</section></div>
@@ -322,6 +319,8 @@ export async function openLead(id) {
     $("crmEditLead").addEventListener("click", () => openLeadForm(lead.contact, lead));
     $("crmAddLeadFollowup").addEventListener("click", () => openFollowup({ kind: "lead", id: lead.id, title: "新增线索跟进", onSaved: () => openLead(lead.id) }));
     $("crmPanelAddLeadFollowup").addEventListener("click", () => openFollowup({ kind: "lead", id: lead.id, title: "新增线索跟进", onSaved: () => openLead(lead.id) }));
+    Object.assign($("crmDeleteLeadDetail").dataset, { deleteLead: lead.id, leadSummary: lead.requirementSummary, detailDelete: "true" });
+    $("crmDeleteLeadDetail").addEventListener("click", () => deleteLead($("crmDeleteLeadDetail")));
     $("crmViewLeadContact").addEventListener("click", () => context.navigate(`contacts/${lead.contact.id}`));
     bindDetailTabs(container);
     context.applyCrmPermissions();
@@ -359,6 +358,11 @@ function attachmentKindForFile(file) {
 function attachmentEditorMarkup() {
   const canEdit = context.can("crm.lead.edit");
   return `<section class="crm-form-section crm-attachment-section" id="crmLeadAttachmentSection"><header><h3>附件字段</h3><span>每个字段最多 20 个</span></header><p class="crm-attachment-guidance">每个文件会保存到明确的业务字段。支持图片、视频和文档，单个文件不超过 50 MB。</p><div class="crm-attachment-field-grid">${leadAttachmentFields.map((field) => `<section class="crm-attachment-field" data-attachment-field="${esc(field.key)}"><h4>${esc(field.label)}</h4>${canEdit ? `<label class="crm-attachment-dropzone" data-attachment-dropzone="${esc(field.key)}"><input id="crmLeadAttachmentInput-${esc(field.key)}" data-attachment-input="${esc(field.key)}" type="file" multiple accept="${esc(field.accept)}"><svg><use href="#i-paperclip"/></svg><span><strong>选择文件</strong><small>或拖放到这里</small></span></label>` : '<div class="crm-attachment-disabled">当前角色无权修改附件</div>'}<div class="crm-attachment-list" data-attachment-list="${esc(field.key)}"></div></section>`).join("")}</div><div class="crm-attachment-error" id="crmLeadAttachmentError" role="alert" hidden></div></section>`;
+}
+
+function attachmentContextMarkup(field) {
+  const canEdit = context.can("crm.lead.edit");
+  return `<section class="crm-attachment-field crm-context-attachment" data-attachment-field="${esc(field.key)}"><header><div><h4>${esc(field.label)}</h4><p>${esc(field.hint)}</p></div><span>最多 20 个</span></header>${canEdit ? `<label class="crm-attachment-dropzone" data-attachment-dropzone="${esc(field.key)}"><input id="crmLeadAttachmentInput-${esc(field.key)}" data-attachment-input="${esc(field.key)}" type="file" multiple accept="${esc(field.accept)}"><svg><use href="#i-paperclip"/></svg><span><strong>选择文件</strong><small>或拖放到这里</small></span></label>` : '<div class="crm-attachment-disabled">当前角色无权修改附件</div>'}<div class="crm-attachment-list" data-attachment-list="${esc(field.key)}"></div></section>`;
 }
 
 function showAttachmentError(message = "") {
@@ -429,17 +433,21 @@ export async function openLeadForm(contact = null, lead = null) {
   const formValues = lead
     ? { ...lead, participantUserIds: (lead.participants || []).map((item) => item.user?.id).filter(Boolean) }
     : { priority: "MEDIUM", status: "NEW", currency: "CNY", salesOwnerUserId: context.currentUserId(), followupOwnerUserId: context.currentUserId(), participantUserIds: [] };
-  $("crmLeadFormFields").innerHTML = renderFormSections(LEAD_FIELDS, formValues, context.getUsers(), {
-    overview: "线索概览",
-    requirement: "需求内容",
-    classification: "项目分类",
-    commercial: "方案与商务",
-    remark: "备注",
-  });
-  $("crmLeadFormFields").insertAdjacentHTML("beforeend", attachmentEditorMarkup());
+  $("crmLeadFormFields").innerHTML = renderFormTabs(LEAD_FIELDS, formValues, context.getUsers(), [
+    { key: "basic", label: "基础信息" },
+    { key: "requirement", label: "需求信息" },
+    { key: "commercial", label: "方案与报价" },
+    { key: "team", label: "团队协作" },
+    { key: "milestones", label: "里程碑" },
+  ]);
+  const attachmentAnchors = { requirementFiles: "requirementDetail", requirementImages: "imageRequirementNote", proposalFiles: "solution", quotationFiles: "quotationNote" };
+  for (const field of leadAttachmentFields) $("crmLeadFormFields").querySelector(`[data-field-shell="${attachmentAnchors[field.key]}"]`)?.insertAdjacentHTML("afterend", attachmentContextMarkup(field));
+  $("crmLeadFormFields").insertAdjacentHTML("beforeend", '<div class="crm-attachment-error" id="crmLeadAttachmentError" role="alert" hidden></div>');
+  bindFormTabs($("crmLeadForm"));
   bindAttachmentEditor();
   renderAttachmentEditor();
   $("crmLeadFormError").hidden = true;
+  $("crmSaveContinueLead").hidden = Boolean(lead);
   $("crmLeadDrawer").showModal();
   setTimeout(() => (selectedContact ? $("crmLeadForm").elements.requirementSummary : $("crmLeadContactKeyword")).focus(), 30);
 }
@@ -559,6 +567,7 @@ async function saveLead(event) {
   const form = event.currentTarget;
   const wasEditing = Boolean(editingLead);
   const leadId = editingLead?.id;
+  const continueEditing = !editingLead && event.submitter?.dataset.saveMode === "continue";
   const payload = formPayload(form, LEAD_FIELDS);
   if (!editingLead) payload.contactId = selectedContact?.id || null;
   const errors = validateLeadPayload(payload, !editingLead);
@@ -585,6 +594,15 @@ async function saveLead(event) {
       renderSelectedContact();
       showAttachmentError(`线索已保存；以下附件未完成，请重试：${attachmentFailures.join("；")}`);
       context.notify("线索已保存，部分附件需要重试");
+      return;
+    }
+    if (continueEditing) {
+      editingLead = { ...result.data, id, contact: selectedContact, attachments: existingAttachments };
+      lockedContact = true;
+      $("crmLeadFormTitle").textContent = "编辑线索";
+      $("crmSaveContinueLead").hidden = true;
+      renderSelectedContact();
+      context.notify("线索已创建，可继续补充编辑");
       return;
     }
     closeLeadForm();

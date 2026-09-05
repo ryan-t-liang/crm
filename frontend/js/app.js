@@ -22,7 +22,7 @@ const statusLabel = (status) => ({ ACTIVE: "启用", DISABLED: "禁用", COMPLET
 const actionLabel = (action) => ({
   LOGIN: "登录", LOGOUT: "退出登录", CHANGE_PASSWORD: "修改密码", PASSWORD_FORCE_CHANGE: "首次修改密码",
   CREATE_CONTACT: "创建联系人", UPDATE_CONTACT: "编辑联系人", DELETE_CONTACT: "删除联系人", CREATE_CONTACT_FOLLOWUP: "新增联系人跟进",
-  CREATE_CRM_LEAD: "创建线索", UPDATE_CRM_LEAD: "编辑线索", DELETE_CRM_LEAD: "删除线索", CREATE_LEAD_FOLLOWUP: "新增线索跟进",
+  CREATE_CRM_LEAD: "创建线索", UPDATE_CRM_LEAD: "编辑线索", DELETE_CRM_LEAD: "删除线索", DELETE_LEAD: "删除线索", CREATE_LEAD_FOLLOWUP: "新增线索跟进",
   UPLOAD_LEAD_ATTACHMENT: "上传线索附件", DELETE_LEAD_ATTACHMENT: "删除线索附件",
   IMPORT_UPLOAD: "上传导入文件", IMPORT_PREFLIGHT: "导入预检", IMPORT_EXECUTE: "执行导入",
   EXPORT_CREATE: "创建导出", EXPORT_DOWNLOAD: "下载导出文件", CREATE_USER: "创建账号", UPDATE_USER: "编辑账号",
@@ -193,6 +193,12 @@ async function enterApplication(me = null) {
   hideLogin();
   updateIdentity();
   await loadDirectories();
+  const navigationCounts = await Promise.all([
+    can("crm.contact.view") ? crmApi("/api/v1/crm/contacts?page=1&pageSize=1").catch(() => null) : null,
+    can("crm.lead.view") ? crmApi("/api/v1/crm/leads?page=1&pageSize=1").catch(() => null) : null,
+  ]);
+  if (navigationCounts[0]) setNavCount("contacts", navigationCounts[0].meta.total);
+  if (navigationCounts[1]) setNavCount("leads", navigationCounts[1].meta.total);
   applyCrmPermissions();
   await route();
 }

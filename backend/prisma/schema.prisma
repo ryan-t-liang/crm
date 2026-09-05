@@ -130,11 +130,13 @@ model User {
   sessions                Session[]
   ownedContacts           Contact[]         @relation("ContactOwner")
   createdContacts         Contact[]         @relation("ContactCreatedBy")
+  deletedContacts         Contact[]         @relation("ContactDeletedBy")
   ownedContactFollowups   ContactFollowup[] @relation("ContactFollowupOwner")
   createdContactFollowups ContactFollowup[] @relation("ContactFollowupCreatedBy")
   salesOwnedCrmLeads      CrmLead[]         @relation("CrmLeadSalesOwner")
   followupOwnedCrmLeads   CrmLead[]         @relation("CrmLeadFollowupOwner")
   createdCrmLeads         CrmLead[]         @relation("CrmLeadCreatedBy")
+  deletedCrmLeads         CrmLead[]         @relation("CrmLeadDeletedBy")
   ownedLeadFollowups      LeadFollowup[]    @relation("LeadFollowupOwner")
   createdLeadFollowups    LeadFollowup[]    @relation("LeadFollowupCreatedBy")
   leadParticipations       CrmLeadParticipant[] @relation("CrmLeadParticipantUser")
@@ -210,14 +212,19 @@ model Contact {
   createdAt        DateTime          @default(now()) @map("created_at") @db.DateTime(3)
   updatedAt        DateTime          @updatedAt @map("updated_at") @db.DateTime(3)
   createdByUserId  String            @map("created_by_user_id") @db.VarChar(32)
+  deletedAt        DateTime?         @map("deleted_at") @db.DateTime(3)
+  deletedByUserId  String?           @map("deleted_by_user_id") @db.VarChar(32)
   owner            User?             @relation("ContactOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   createdBy        User              @relation("ContactCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  deletedBy        User?             @relation("ContactDeletedBy", fields: [deletedByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   followups        ContactFollowup[]
   leads            CrmLead[]
 
   @@index([stage, updatedAt])
   @@index([ownerUserId, updatedAt])
   @@index([nextFollowupAt])
+  @@index([deletedAt, updatedAt])
+  @@index([deletedByUserId])
   @@map("contacts")
 }
 
@@ -228,6 +235,7 @@ model ContactFollowup {
   ownerUserId     String          @map("owner_user_id") @db.VarChar(32)
   type            CrmFollowupType @default(GENERAL)
   content         String          @db.Text
+  nextFollowupAt  DateTime?       @map("next_followup_at") @db.DateTime(3)
   createdAt       DateTime        @default(now()) @map("created_at") @db.DateTime(3)
   createdByUserId String          @map("created_by_user_id") @db.VarChar(32)
   contact         Contact         @relation(fields: [contactId], references: [id], onDelete: Cascade, onUpdate: Cascade)
@@ -235,6 +243,7 @@ model ContactFollowup {
   createdBy       User            @relation("ContactFollowupCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([contactId, occurredAt])
+  @@index([contactId, nextFollowupAt])
   @@map("contact_followups")
 }
 
@@ -244,6 +253,9 @@ model CrmLead {
   requirementSummary  String          @map("requirement_summary") @db.VarChar(200)
   requirementDetail   String?         @map("requirement_detail") @db.Text
   latestProgress      String?         @map("latest_progress") @db.Text
+  nextAction          String?         @map("next_action") @db.Text
+  imageRequirementNote String?        @map("image_requirement_note") @db.Text
+  quotationNote       String?         @map("quotation_note") @db.Text
   leadSource          String?         @map("lead_source") @db.VarChar(160)
   priority            CrmLeadPriority @default(MEDIUM)
   estimatedQuote      Decimal?        @map("estimated_quote") @db.Decimal(18, 2)
@@ -270,10 +282,13 @@ model CrmLead {
   createdAt           DateTime        @default(now()) @map("created_at") @db.DateTime(3)
   updatedAt           DateTime        @updatedAt @map("updated_at") @db.DateTime(3)
   createdByUserId     String          @map("created_by_user_id") @db.VarChar(32)
+  deletedAt           DateTime?       @map("deleted_at") @db.DateTime(3)
+  deletedByUserId     String?         @map("deleted_by_user_id") @db.VarChar(32)
   contact             Contact         @relation(fields: [contactId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   salesOwner          User?           @relation("CrmLeadSalesOwner", fields: [salesOwnerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   followupOwner       User?           @relation("CrmLeadFollowupOwner", fields: [followupOwnerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   createdBy           User            @relation("CrmLeadCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  deletedBy           User?           @relation("CrmLeadDeletedBy", fields: [deletedByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   followups           LeadFollowup[]
   participants        CrmLeadParticipant[]
 
@@ -285,6 +300,8 @@ model CrmLead {
   @@index([nextFollowupAt])
   @@index([lastFollowupAt])
   @@index([wonAt])
+  @@index([deletedAt, updatedAt])
+  @@index([deletedByUserId])
   @@map("crm_leads")
 }
 
@@ -295,6 +312,9 @@ model LeadFollowup {
   ownerUserId     String          @map("owner_user_id") @db.VarChar(32)
   type            CrmFollowupType @default(GENERAL)
   content         String          @db.Text
+  progress        String?         @db.Text
+  nextAction      String?         @map("next_action") @db.Text
+  nextFollowupAt  DateTime?       @map("next_followup_at") @db.DateTime(3)
   important       Boolean         @default(false)
   createdAt       DateTime        @default(now()) @map("created_at") @db.DateTime(3)
   createdByUserId String          @map("created_by_user_id") @db.VarChar(32)
@@ -303,6 +323,7 @@ model LeadFollowup {
   createdBy       User            @relation("LeadFollowupCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@index([leadId, occurredAt])
+  @@index([leadId, nextFollowupAt])
   @@map("lead_followups")
 }
 

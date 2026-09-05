@@ -51,9 +51,9 @@ CRM 2.0 does not add a field-definition database, custom-fields JSON, a formula 
 | 5 | 🚀客户CRM | C部门 | Contact | Contact profile | department | 部门 | TEXT | No | No | Yes | Stored | EXISTING | Keep |  |
 | 6 | 🚀客户CRM | C公司名称 | Contact | Customer profile | companyName | 公司完整名称 | TEXT | No | No | Yes | Stored | EXISTING | Keep |  |
 | 7 | 🚀客户CRM | C 职务Tittle | Contact | Contact profile | title | 职位 | TEXT | No | No | Yes | Stored | EXISTING | Keep | Source spelling retained only in Source Header |
-| 8 | 🚀客户CRM | F次回跟进日期 | Contact | CRM | nextFollowupAt | 下次跟进 | DATETIME | No | No | Yes | Stored | EXISTING | Keep | Timezone-aware input and display |
+| 8 | 🚀客户CRM | F次回跟进日期 | Contact | CRM | nextFollowupAt | 下次跟进 | DATETIME | No | No | No | Stored snapshot | EXISTING | Maintain from the latest ContactFollowup | Import compatibility is retained; interactive Contact edit is read-only |
 | 9 | 🚀客户CRM | F跟进人员 | Contact | CRM | ownerUserId | 跟进人员 | USER | No | No | Yes | Relation | EXISTING | Keep and use the label 跟进人员 consistently | Only active users can be newly assigned |
-| 10 | 🚀客户CRM | F 会议minutes文件 | Contact | CRM | meetingMinutesFiles | Meeting Minutes 文件 | ATTACHMENT | No | Yes | Yes | Relation | MISSING | Implement with CrmAttachment and fieldKey `meetingMinutesFiles` | Real upload; never a file-name text field |
+| 10 | 🚀客户CRM | F 会议minutes文件 | Contact | CRM | meetingMinutesFiles | Meeting Minutes 文件 | ATTACHMENT | No | Yes | No | Relation | MISSING | Preserve as read-only legacy Contact attachment | New meeting minutes belong to ContactFollowup `followupAttachments` with interaction context |
 | 11 | 🚀客户CRM | F跟进注意 | Contact | CRM | followupAttention | 跟进注意 | LONG_TEXT | No | No | Yes | Stored | MISSING | Add Contact field and V1 form/detail placement | Long-lived attention note; not timeline followup content |
 | 12 | 🚀客户CRM | F备注/初次获取的信息 | Contact | CRM | initialContext | 初始信息 | LONG_TEXT | No | No | Yes | Stored | EXISTING | Keep |  |
 | 13 | 🚀客户CRM | A Leadsbook关联 | Contact | Relations | leads | 关联线索 | RELATION | No | Yes | No | Relation | RELATION | Keep Contact 1:N Lead | Managed from Lead.contactId, not edited as text |
@@ -99,14 +99,14 @@ CRM 2.0 does not add a field-definition database, custom-fields JSON, a formula 
 | 3 | Leadsbook 2025 | L 客户联系人 | Lead | Relation | contactId | 关联联系人 | RELATION | Yes | No | Yes | Relation | RELATION | Keep required Contact relation and searchable selector | Contact 1:N Lead |
 | 4 | Leadsbook 2025 | R leads项目需求简述 | Lead | Requirement | requirementSummary | 项目需求简述 | TEXT | Yes | No | Yes | Stored | EXISTING | Keep |  |
 | 5 | Leadsbook 2025 | A公司名称 | Lead | Related Contact | contact.companyName | 公司名称 | COMPUTED | No | No | No | Computed | COMPUTED | Read from Contact | Never duplicate on Lead |
-| 6 | Leadsbook 2025 | R 预计次回沟通日期 | Lead | Overview | nextFollowupAt | 下次跟进 | DATETIME | No | No | Yes | Stored | EXISTING | Keep | Timezone-aware input and display |
+| 6 | Leadsbook 2025 | R 预计次回沟通日期 | Lead | Overview | nextFollowupAt | 下次跟进 | DATETIME | No | No | No | Stored snapshot | EXISTING | Maintain from the latest LeadFollowup | Import compatibility is retained; Lead create/edit cannot mutate it |
 | 7 | Leadsbook 2025 | A品牌 | Lead | Related Contact | contact.companyShortName | 品牌 / 公司简称 | COMPUTED | No | No | No | Computed | COMPUTED | Read from Contact | Never duplicate on Lead; not Kivisense brand scope |
 | 8 | Leadsbook 2025 | A客户微信 于客户CRM表填写 | Lead | Related Contact | contact.wechat | 客户微信 | COMPUTED | No | No | No | Computed | COMPUTED | Read from Contact | Never duplicate on Lead |
 | 9 | Leadsbook 2025 | R需求整理 | Lead | Requirement | requirementDetail | 需求整理 | LONG_TEXT | No | No | Yes | Stored | EXISTING | Keep |  |
 | 10 | Leadsbook 2025 | R需求/签署文件 | Lead | Requirement | requirementFiles | 需求 / 签署文件 | ATTACHMENT | No | Yes | Yes | Relation | TYPE_MISMATCH | Replace lead-level generic attachment semantics with CrmAttachment fieldKey `requirementFiles` | Existing attachment has no fieldKey |
 | 11 | Leadsbook 2025 | R图片需求 | Lead | Requirement | requirementImages | 图片需求 | IMAGE | No | Yes | Yes | Relation | TYPE_MISMATCH | Use CrmAttachment fieldKey `requirementImages`; accept image MIME only | Existing attachment kind is not tied to this business field |
 | 12 | Leadsbook 2025 | R正式方案 | Lead | Solution and commercial | proposalFiles | 正式方案文件 | ATTACHMENT | No | Yes | Yes | Relation | TYPE_MISMATCH | Use CrmAttachment fieldKey `proposalFiles` | `solution` text is an extra explanation field and is not a proposal file |
-| 13 | Leadsbook 2025 | R最新进度 | Lead | Solution and commercial | latestProgress | 最新进度 | LONG_TEXT | No | No | Yes | Stored | EXISTING | Keep |  |
+| 13 | Leadsbook 2025 | R最新进度 | Lead | Solution and commercial | latestProgress | 最新进度 | LONG_TEXT | No | No | No | Stored snapshot | EXISTING | Maintain from the latest LeadFollowup | Import compatibility is retained; Lead create/edit cannot mutate it |
 | 14 | Leadsbook 2025 | R重要性 | Lead | Overview | priority | 优先级 | SELECT | Yes | No | Yes | Stored | EXISTING | Keep current priority codes and labels |  |
 | 15 | Leadsbook 2025 | 客户来源 | Lead | Requirement | leadSource | 客户来源 | SELECT | No | No | Yes | Stored | MISSING | Add extensible string field and custom-capable Select | Do not create a database enum |
 | 16 | Leadsbook 2025 | R预计报价 | Lead | Solution and commercial | estimatedQuote | 预计报价 | CURRENCY | No | No | Yes | Stored | EXISTING | Keep Decimal plus `currency` helper | Amount requires currency when present |
@@ -173,6 +173,19 @@ These fields are not additional Excel source columns. They are required system f
 | ContactFollowup | createdAt | 创建时间 | SYSTEM_DATETIME | No | Stored | EXISTING | SYSTEM | Keep and display on timeline |
 | LeadFollowup | createdByUserId | 创建人 | SYSTEM_USER | No | Relation | EXISTING | SYSTEM | Keep and display on timeline |
 | LeadFollowup | createdAt | 创建时间 | SYSTEM_DATETIME | No | Stored | EXISTING | SYSTEM | Keep and display on timeline |
+| Contact | deletedAt | 删除时间 | SYSTEM_DATETIME | No | Stored | EXISTING | EXTRA_SYSTEM | Soft-delete marker; active queries exclude it |
+| Contact | deletedByUserId | 删除人 | SYSTEM_USER | No | Relation | EXISTING | EXTRA_SYSTEM | Stored only during soft delete |
+| ContactFollowup | nextFollowupAt | 下次跟进时间 | DATETIME | Yes | Stored | EXISTING | EXTRA_UX | Latest interaction updates Contact snapshot; backdated interaction cannot roll it back |
+| ContactFollowup | followupAttachments | 互动附件 / 会议纪要 | ATTACHMENT | Yes | Relation | EXISTING | EXTRA_UX | Content and files share one interaction context |
+| Lead | nextAction | 下一步动作 | LONG_TEXT | No | Stored snapshot | EXISTING | EXTRA_UX | Updated only by the latest LeadFollowup |
+| Lead | imageRequirementNote | 图片需求说明 | LONG_TEXT | Yes | Stored | EXISTING | EXTRA_UX | Paired with `requirementImages` |
+| Lead | quotationNote | 报价说明 | LONG_TEXT | Yes | Stored | EXISTING | EXTRA_UX | Paired with amount, currency, and `quotationFiles` |
+| Lead | deletedAt | 删除时间 | SYSTEM_DATETIME | No | Stored | EXISTING | EXTRA_SYSTEM | Soft-delete marker; active queries exclude it |
+| Lead | deletedByUserId | 删除人 | SYSTEM_USER | No | Relation | EXISTING | EXTRA_SYSTEM | Stored only during soft delete |
+| LeadFollowup | progress | 当前进展 | LONG_TEXT | Yes | Stored | EXISTING | EXTRA_UX | Source of Lead `latestProgress` snapshot when this is the latest followup |
+| LeadFollowup | nextAction | 下一步动作 | LONG_TEXT | Yes | Stored | EXISTING | EXTRA_UX | Source of Lead `nextAction` snapshot when this is the latest followup |
+| LeadFollowup | nextFollowupAt | 下次跟进时间 | DATETIME | Yes | Stored | EXISTING | EXTRA_UX | Source of Lead `nextFollowupAt` snapshot when this is the latest followup |
+| LeadFollowup | followupAttachments | 跟进附件 | ATTACHMENT | Yes | Relation | EXISTING | EXTRA_UX | Content, progress, next action, and files share one followup context |
 
 ## 6. Storage and relation rules
 
@@ -189,10 +202,12 @@ These fields are not additional Excel source columns. They are required system f
 | Entity Type | Field Key | Accepted category | Multiple |
 |---|---|---|---|
 | CONTACT | meetingMinutesFiles | Document, image, or video | Yes |
+| CONTACT_FOLLOWUP | followupAttachments | Document, image, or video | Yes |
 | LEAD | requirementFiles | Document, image, or video | Yes |
 | LEAD | requirementImages | Image only | Yes |
 | LEAD | proposalFiles | Document, image, or video | Yes |
 | LEAD | quotationFiles | Document or image | Yes |
+| LEAD_FOLLOWUP | followupAttachments | Document, image, or video | Yes |
 
 The generic attachment metadata contract is: `id`, `entityType`, `entityId`, `fieldKey`, `storageType`, `originalName`, `mimeType`, `fileSize`, `storageKey`, `externalUrl`, `uploadedByUserId`, and `createdAt`. Local files use generated storage keys under private `storage/crm-attachments/`; user file names never become server paths. Allowed extensions and MIME values are checked together. The per-file limit comes from `CRM_ATTACHMENT_MAX_BYTES` and defaults to 50 MB for UAT.
 
@@ -207,9 +222,11 @@ The generic attachment metadata contract is: `id`, `entityType`, `entityId`, `fi
 ## 9. UI placement rules
 
 - Keep the Kivisense CRM V1 header, sidebar, cards, tabs, density, typography, and two-column detail layout.
-- Contact left column: Contact profile card, Customer profile card (including CRM fields), then weak system information. Right tabs: Leads, Followup records, Notes, Audit records.
+- Contact is the Customer 360 record. Its left column contains Contact profile, Customer profile, then weak system information. Right tabs are Leads, Customer Journey, Notes, and Audit records.
 - Lead left column: Lead overview, Related Contact, then weak system information. Right tabs: Requirement information, Followup records, Notes, Audit records.
-- Lead Requirement tab is divided into Requirement content, Project classification, and Solution and commercial sections.
+- Contact edit uses one persistent form with Basic Data, CRM Info, and Notes tabs. Meeting Minutes upload is absent; new files are added through an Interaction.
+- Lead edit uses one persistent form with Basic, Requirement, Solution & Quote, Team Collaboration, and Milestones tabs. Snapshot fields are read-only on Lead Detail and absent from Lead edit.
+- Lead Requirement and Solution & Quote tabs pair business text directly with their related attachment controls.
 - No Dashboard, wizard, large replacement Drawer, sidebar redesign, header redesign, dynamic fields, or CRM 2.1 feature is in scope.
 
 ## 10. Coverage gate

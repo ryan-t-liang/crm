@@ -5,7 +5,7 @@ import { assertAssignableCrmUser, crmUserSummarySelect, type CrmDbClient } from 
 import { ApiError } from "../common/errors.js";
 import { crmAttachmentSelect } from "./attachments.js";
 import type { TimelineListInput } from "../contacts/service.js";
-import type { CrmLeadCreateInput, CrmLeadPatchInput, LeadFollowupCreateInput } from "./schemas.js";
+import type { CrmLeadCreateInput, CrmLeadImportInput, CrmLeadPatchInput, LeadFollowupCreateInput } from "./schemas.js";
 
 export type CrmLeadListInput = {
   keyword?: string;
@@ -56,13 +56,13 @@ export const crmLeadDetailInclude = {
 } satisfies Prisma.CrmLeadInclude;
 
 async function requireCrmLead(db: CrmDbClient, id: string) {
-  const lead = await db.crmLead.findUnique({ where: { id } });
+  const lead = await db.crmLead.findFirst({ where: { id, deletedAt: null } });
   if (!lead) throw new ApiError(404, "RESOURCE_NOT_FOUND", "线索不存在");
   return lead;
 }
 
 async function requireContactForLead(db: CrmDbClient, contactId: string): Promise<void> {
-  const contact = await db.contact.findUnique({ where: { id: contactId }, select: { id: true } });
+  const contact = await db.contact.findFirst({ where: { id: contactId, deletedAt: null }, select: { id: true } });
   if (!contact) {
     throw new ApiError(422, "VALIDATION_ERROR", "请求数据校验失败", [{
       field: "contactId",
@@ -92,6 +92,8 @@ export class CrmLeadService {
 
   async list(input: CrmLeadListInput) {
     const where: Prisma.CrmLeadWhereInput = {
+      deletedAt: null,
+      contact: { is: { deletedAt: null } },
       contactId: input.contactId,
       status: input.status,
       priority: input.priority,
@@ -121,7 +123,7 @@ export class CrmLeadService {
   }
 
   async listForContact(contactId: string, input: TimelineListInput) {
-    const where: Prisma.CrmLeadWhereInput = { contactId };
+    const where: Prisma.CrmLeadWhereInput = { contactId, deletedAt: null };
     const [total, rows] = await this.prisma.$transaction([
       this.prisma.crmLead.count({ where }),
       this.prisma.crmLead.findMany({
@@ -135,7 +137,7 @@ export class CrmLeadService {
     return { total, rows };
   }
 
-  async create(input: CrmLeadCreateInput, createdByUserId: string, audit: AuditActorContext) {
+  async create(input: CrmLeadCreateInput | CrmLeadImportInput, createdByUserId: string, audit: AuditActorContext) {
     return this.prisma.$transaction(async (tx) => {
       const { participantUserIds, ...fields } = input;
       await requireContactForLead(tx, input.contactId);
@@ -168,7 +170,7 @@ export class CrmLeadService {
 
   async detail(id: string) {
     const [row, attachments] = await Promise.all([
-      this.prisma.crmLead.findUnique({ where: { id }, include: crmLeadDetailInclude }),
+      this.prisma.crmLead.findFirst({ where: { id, deletedAt: null }, include: crmLeadDetailInclude }),
       this.prisma.crmAttachment.findMany({ where: { entityType: "LEAD", entityId: id }, select: crmAttachmentSelect, orderBy: [{ createdAt: "desc" }, { id: "desc" }] }),
     ]);
     if (!row) throw new ApiError(404, "RESOURCE_NOT_FOUND", "线索不存在");
@@ -226,41 +228,32 @@ export class CrmLeadService {
   }
 
   async remove(id: string, audit: AuditActorContext) {
-    const result = await this.prisma.$transaction(async (tx) => {
-      const lead = await tx.crmLead.findUnique({
-        where: { id },
+    return this.prisma.$transaction(async (tx) => {
+      const lead = await tx.crmLead.findFirst({
+        where: { id, deletedAt: null },
         select: {
           id: true,
           contactId: true,
           requirementSummary: true,
-          followups: { select: { id: true } },
-          _count: { select: { followups: true, participants: true } },
         },
       });
       if (!lead) throw new ApiError(404, "RESOURCE_NOT_FOUND", "线索不存在");
-      const followupIds = lead.followups.map((followup) => followup.id);
-      const attachments = await tx.crmAttachment.findMany({
-        where: { OR: [{ entityType: "LEAD", entityId: id }, { entityType: "LEAD_FOLLOWUP", entityId: { in: followupIds } }] },
-        select: { storageType: true, storageKey: true },
-      });
-      await tx.crmAttachment.deleteMany({ where: { OR: [{ entityType: "LEAD", entityId: id }, { entityType: "LEAD_FOLLOWUP", entityId: { in: followupIds } }] } });
-      await tx.crmLead.delete({ where: { id } });
+      const deletedAt = new Date();
+      await tx.crmLead.update({ where: { id }, data: { deletedAt, deletedByUserId: audit.actorUserId } });
       await appendAuditRecord(tx, audit, {
-        action: "DELETE_CRM_LEAD",
+        action: "DELETE_LEAD",
         module: "crm",
         targetType: "crm_lead",
         targetId: id,
         details: {
-          contactId: lead.contactId,
-          requirementSummary: lead.requirementSummary,
-          deletedFollowupCount: lead._count.followups,
-          deletedAttachmentCount: attachments.length,
-          deletedParticipantCount: lead._count.participants,
+          entityName: lead.requirementSummary,
+          entityId: id,
+          deletedBy: audit.actorUserId,
+          deletedAt: deletedAt.toISOString(),
         },
       });
-      return { id, storageKeys: attachments.filter((item) => item.storageType === "LOCAL" && item.storageKey).map((item) => item.storageKey as string) };
+      return { id };
     });
-    return result;
   }
 }
 
@@ -283,7 +276,8 @@ export class LeadFollowupService {
         take: input.pageSize,
       }),
     ]);
-    return { total, rows };
+    const attachments = await this.prisma.crmAttachment.findMany({ where: { entityType: "LEAD_FOLLOWUP", entityId: { in: rows.map((row) => row.id) } }, select: crmAttachmentSelect, orderBy: [{ createdAt: "desc" }, { id: "desc" }] });
+    return { total, rows: rows.map((row) => ({ ...row, attachments: attachments.filter((item) => item.entityId === row.id) })) };
   }
 
   async create(leadId: string, input: LeadFollowupCreateInput, createdByUserId: string, audit: AuditActorContext) {
@@ -298,15 +292,15 @@ export class LeadFollowupService {
           createdBy: { select: crmUserSummarySelect },
         },
       });
-      await tx.crmLead.updateMany({
-        where: {
-          id: leadId,
-          OR: [
-            { lastFollowupAt: null },
-            { lastFollowupAt: { lt: row.occurredAt } },
-          ],
+      const latest = await tx.leadFollowup.findFirst({ where: { leadId }, orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }, { id: "desc" }], select: { id: true, occurredAt: true } });
+      await tx.crmLead.update({
+        where: { id: leadId },
+        data: {
+          lastFollowupAt: latest?.occurredAt ?? null,
+          ...(latest?.id === row.id && row.progress ? { latestProgress: row.progress } : {}),
+          ...(latest?.id === row.id && row.nextAction ? { nextAction: row.nextAction } : {}),
+          ...(latest?.id === row.id && row.nextFollowupAt ? { nextFollowupAt: row.nextFollowupAt } : {}),
         },
-        data: { lastFollowupAt: row.occurredAt },
       });
       await appendAuditRecord(tx, audit, {
         action: "CREATE_LEAD_FOLLOWUP",
@@ -315,7 +309,7 @@ export class LeadFollowupService {
         targetId: row.id,
         details: { leadId, type: row.type, important: row.important, occurredAt: row.occurredAt.toISOString(), ownerUserId },
       });
-      return row;
+      return { ...row, attachments: [] };
     });
   }
 }

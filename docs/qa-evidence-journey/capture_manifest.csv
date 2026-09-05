@@ -1,0 +1,10 @@
+order,file,viewport,state,result,notes
+1,01-contact-detail-customer-journey-1440.png,1440x900,Contact Detail - Customer Journey,PASS,"Customer 360 summary; aggregated interactions, leads, milestone, legacy meeting minutes and attachments"
+2,02-contact-edit-tabs-1440.png,1440x900,Contact Edit - Basic Data,PASS,"Basic Data / CRM Info / Notes tabs; Meeting Minutes uploader absent"
+3,03-add-contact-interaction-1440.png,1440x900,Add Contact Interaction,PASS,"Content, next follow-up and image/video/document attachment chooser"
+4,04-lead-detail-1440.png,1440x900,Lead Detail,PASS,"Contact, status, priority, owner, quote and read-only snapshot hierarchy"
+5,05-lead-edit-tabs-1440.png,1440x900,Lead Edit - Basic,PASS,"Exact five business tabs; immutable related Contact"
+6,06-add-lead-followup-1440.png,1440x900,Add Lead Followup,PASS,"Progress, next action, next follow-up and attachment chooser"
+7,07-lead-followup-attachment-1440.png,1440x900,Lead Followup Timeline,PASS,"Followup content and contextual attachment rendered together"
+8,08-delete-contact-confirmation-1440.png,1440x900,Delete Contact Confirmation,PASS,"Soft-delete copy and history preservation message"
+9,09-delete-lead-confirmation-1440.png,1440x900,Delete Lead Confirmation,PASS,"Soft-delete copy and followup/attachment/audit preservation message"

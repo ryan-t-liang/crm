@@ -41,10 +41,12 @@ const extensionRules: Readonly<Record<string, AttachmentRule>> = {
 
 const fieldKinds: Readonly<Record<string, readonly CrmAttachmentKind[]>> = {
   "CONTACT:meetingMinutesFiles": ["DOCUMENT", "IMAGE", "VIDEO"],
+  "CONTACT_FOLLOWUP:followupAttachments": ["DOCUMENT", "IMAGE", "VIDEO"],
   "LEAD:requirementFiles": ["DOCUMENT", "IMAGE", "VIDEO"],
   "LEAD:requirementImages": ["IMAGE"],
   "LEAD:proposalFiles": ["DOCUMENT", "IMAGE", "VIDEO"],
   "LEAD:quotationFiles": ["DOCUMENT", "IMAGE"],
+  "LEAD_FOLLOWUP:followupAttachments": ["DOCUMENT", "IMAGE", "VIDEO"],
 };
 
 export const crmAttachmentSelect = {
@@ -129,14 +131,14 @@ async function unlinkIfPresent(path: string): Promise<void> {
   });
 }
 
-async function requireEntity(db: CrmDbClient, entityType: CrmAttachmentEntityType, entityId: string): Promise<void> {
+async function requireEntity(db: CrmDbClient, entityType: CrmAttachmentEntityType, entityId: string, allowDeletedLeadHistory = false): Promise<void> {
   const row = entityType === "CONTACT"
-    ? await db.contact.findUnique({ where: { id: entityId }, select: { id: true } })
+    ? await db.contact.findFirst({ where: { id: entityId, deletedAt: null }, select: { id: true } })
     : entityType === "LEAD"
-      ? await db.crmLead.findUnique({ where: { id: entityId }, select: { id: true } })
+      ? await db.crmLead.findFirst({ where: { id: entityId, ...(allowDeletedLeadHistory ? {} : { deletedAt: null }), contact: { deletedAt: null } }, select: { id: true } })
       : entityType === "CONTACT_FOLLOWUP"
-        ? await db.contactFollowup.findUnique({ where: { id: entityId }, select: { id: true } })
-        : await db.leadFollowup.findUnique({ where: { id: entityId }, select: { id: true } });
+        ? await db.contactFollowup.findFirst({ where: { id: entityId, contact: { deletedAt: null } }, select: { id: true } })
+        : await db.leadFollowup.findFirst({ where: { id: entityId, lead: allowDeletedLeadHistory ? { contact: { deletedAt: null } } : { deletedAt: null, contact: { deletedAt: null } } }, select: { id: true } });
   if (!row) throw new ApiError(404, "RESOURCE_NOT_FOUND", "附件所属业务记录不存在");
 }
 
@@ -257,7 +259,7 @@ export class CrmAttachmentService {
   }
 
   async findForDownload(entityType: CrmAttachmentEntityType, entityId: string, attachmentId: string, audit: AuditActorContext) {
-    await requireEntity(this.prisma, entityType, entityId);
+    await requireEntity(this.prisma, entityType, entityId, true);
     const row = await this.prisma.crmAttachment.findFirst({ where: { id: attachmentId, entityType, entityId } });
     if (!row) throw new ApiError(404, "RESOURCE_NOT_FOUND", "附件不存在");
     await appendAuditRecord(this.prisma, audit, {

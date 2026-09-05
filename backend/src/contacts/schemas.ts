@@ -36,7 +36,6 @@ const contactFields = {
   city: optionalText(120),
   region: optionalText(120),
   ownerUserId: optionalId,
-  nextFollowupAt: optionalDateTime,
   initialContext: optionalText(16_000),
   followupAttention: optionalText(16_000),
   remark: optionalText(16_000),
@@ -46,6 +45,12 @@ export const contactCreateSchema = z.object({
   contactName: z.string().trim().min(1).max(160),
   ...contactFields,
   stage: contactStageSchema.default("INITIAL"),
+}).strict();
+
+// Import-only compatibility for the historical Contact snapshot column. The
+// interactive create/edit API intentionally cannot mutate this value.
+export const contactImportSchema = contactCreateSchema.extend({
+  nextFollowupAt: optionalDateTime,
 }).strict();
 
 export const contactPatchSchema = z.object({
@@ -61,6 +66,7 @@ export const contactFollowupCreateSchema = z.object({
   ownerUserId: z.string().trim().min(1).max(32).optional(),
   type: followupTypeSchema.default("GENERAL"),
   content: z.string().trim().min(1).max(16_000),
+  nextFollowupAt: optionalDateTime,
 }).strict();
 
 export const contactOrderBySchema = z.enum([
@@ -73,5 +79,6 @@ export const contactOrderBySchema = z.enum([
 ]);
 
 export type ContactCreateInput = z.infer<typeof contactCreateSchema>;
+export type ContactImportInput = z.infer<typeof contactImportSchema>;
 export type ContactPatchInput = z.infer<typeof contactPatchSchema>;
 export type ContactFollowupCreateInput = z.infer<typeof contactFollowupCreateSchema>;

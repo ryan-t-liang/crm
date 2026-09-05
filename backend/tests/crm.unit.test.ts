@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { contactCreateSchema, contactFollowupCreateSchema } from "../src/contacts/schemas.js";
-import { crmLeadCreateSchema, crmLeadPatchSchema, leadFollowupCreateSchema } from "../src/crm-leads/schemas.js";
+import { contactCreateSchema, contactFollowupCreateSchema, contactImportSchema } from "../src/contacts/schemas.js";
+import { crmLeadCreateSchema, crmLeadImportSchema, crmLeadPatchSchema, leadFollowupCreateSchema } from "../src/crm-leads/schemas.js";
 import { redactAuditDetails } from "../src/common/audit.js";
 import { normalizePermissionDependencies } from "../src/common/permissions.js";
 import { safeEqual, sessionToken, sessionTokenHash } from "../src/common/auth.js";
@@ -26,13 +26,15 @@ describe("Kivisense CRM 2.0 core unit contracts", () => {
   it("requires a contact and summary when creating a lead", () => {
     expect(crmLeadCreateSchema.safeParse({ requirementSummary: "AR 应用服务" }).success).toBe(false);
     expect(crmLeadCreateSchema.safeParse({ contactId: "contact-1", requirementSummary: "" }).success).toBe(false);
-    expect(crmLeadCreateSchema.parse({ contactId: "contact-1", requirementSummary: "AR 应用服务" })).toMatchObject({ priority: "MEDIUM", status: "NEW" });
+    expect(crmLeadCreateSchema.safeParse({ contactId: "contact-1", requirementSummary: "AR 应用服务" }).success).toBe(false);
+    expect(crmLeadCreateSchema.parse({ contactId: "contact-1", requirementSummary: "AR 应用服务", salesOwnerUserId: "sales-1" })).toMatchObject({ priority: "MEDIUM", status: "NEW" });
   });
 
   it("normalizes multi-participant and field-alignment inputs", () => {
     const lead = crmLeadCreateSchema.parse({
       contactId: "contact-1",
       requirementSummary: "AR 应用服务",
+      salesOwnerUserId: "sales-1",
       participantUserIds: ["sales-1", "admin-1", "sales-1"],
       leadSource: " Kiviman ",
       technologyType: "Kivicube Engine\nWebAR",
@@ -47,6 +49,24 @@ describe("Kivisense CRM 2.0 core unit contracts", () => {
   it("does not allow a lead patch to change contactId", () => {
     expect(crmLeadPatchSchema.safeParse({ contactId: "contact-2" }).success).toBe(false);
     expect(crmLeadPatchSchema.safeParse({ status: "SOLUTION" }).success).toBe(true);
+  });
+
+  it("keeps current snapshots out of interactive master-data APIs", () => {
+    expect(crmLeadCreateSchema.safeParse({ contactId: "contact-1", requirementSummary: "AR", salesOwnerUserId: "sales-1", latestProgress: "direct" }).success).toBe(false);
+    expect(crmLeadPatchSchema.safeParse({ nextAction: "direct" }).success).toBe(false);
+    expect(crmLeadPatchSchema.safeParse({ nextFollowupAt: "2026-09-04T10:00:00+08:00" }).success).toBe(false);
+    expect(contactCreateSchema.safeParse({ contactName: "Naderi", nextFollowupAt: "2026-09-04T10:00:00+08:00" }).success).toBe(false);
+  });
+
+  it("retains snapshot compatibility only for imports", () => {
+    expect(crmLeadImportSchema.parse({ contactId: "contact-1", requirementSummary: "AR", salesOwnerUserId: "sales-1", latestProgress: "legacy", nextAction: "call", nextFollowupAt: "2026-09-04T10:00:00+08:00" })).toMatchObject({ latestProgress: "legacy", nextAction: "call" });
+    expect(contactImportSchema.parse({ contactName: "Naderi", nextFollowupAt: "2026-09-04T10:00:00+08:00" }).nextFollowupAt).toBeInstanceOf(Date);
+  });
+
+  it("accepts progress, next action, next time, and attachment-ready followups", () => {
+    const parsed = leadFollowupCreateSchema.parse({ occurredAt: "2026-09-04T10:00:00+08:00", content: "方案评审", progress: "评审完成", nextAction: "发送报价", nextFollowupAt: "2026-09-08T10:00:00+08:00" });
+    expect(parsed).toMatchObject({ progress: "评审完成", nextAction: "发送报价" });
+    expect(parsed.nextFollowupAt).toBeInstanceOf(Date);
   });
 
   it("removes dependent write permissions when view permission is absent", () => {

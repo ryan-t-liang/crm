@@ -37,6 +37,7 @@ const initialContacts = [
     createdByUserId: "qa-user",
     createdAt: "2026-08-21T03:10:00.000Z",
     updatedAt: "2026-09-03T08:40:00.000Z",
+    deletedAt: null,
   },
   {
     id: "contact-lina",
@@ -64,6 +65,7 @@ const initialContacts = [
     createdByUserId: "sales-user",
     createdAt: "2026-08-29T06:00:00.000Z",
     updatedAt: "2026-09-02T10:20:00.000Z",
+    deletedAt: null,
   },
 ];
 
@@ -74,6 +76,8 @@ const initialLeads = [
     requirementSummary: "AR application and service cooperation for our products",
     requirementDetail: "Build an AR product presentation experience for the new product line.",
     latestProgress: "Product samples and API documentation received.",
+    nextAction: "Confirm revised scope and workshop schedule.",
+    imageRequirementNote: "Use front-facing product pack shots on a clean background.",
     leadSource: "Kiviman",
     priority: "HIGH",
     status: "SOLUTION",
@@ -88,6 +92,7 @@ const initialLeads = [
     collaborationGroups: "Dena AR 项目群\nKivisense 交付群",
     followMode: "联合跟单",
     solution: "Browser-based AR viewer with CMS integration.",
+    quotationNote: "Includes implementation and one year of support.",
     remark: "Target launch in Q4.",
     salesOwnerUserId: "qa-user",
     followupOwnerUserId: "sales-user",
@@ -101,6 +106,7 @@ const initialLeads = [
     createdByUserId: "qa-user",
     createdAt: "2026-08-22T04:00:00.000Z",
     updatedAt: "2026-09-03T08:45:00.000Z",
+    deletedAt: null,
   },
   {
     id: "lead-oem",
@@ -108,6 +114,8 @@ const initialLeads = [
     requirementSummary: "OEM cooperation for interactive product displays",
     requirementDetail: "Explore embedded visualization capabilities for OEM distribution.",
     latestProgress: "Commercial model under review.",
+    nextAction: "Share the OEM commercial model.",
+    imageRequirementNote: null,
     leadSource: "Kiviman",
     priority: "MEDIUM",
     status: "QUALIFIED",
@@ -120,6 +128,7 @@ const initialLeads = [
     productName: null,
     resourceRequirement: null,
     solution: null,
+    quotationNote: null,
     remark: null,
     salesOwnerUserId: "qa-user",
     followupOwnerUserId: "qa-user",
@@ -133,6 +142,7 @@ const initialLeads = [
     createdByUserId: "qa-user",
     createdAt: "2026-08-30T03:00:00.000Z",
     updatedAt: "2026-09-01T05:00:00.000Z",
+    deletedAt: null,
   },
   {
     id: "lead-digital",
@@ -140,6 +150,8 @@ const initialLeads = [
     requirementSummary: "Digital solution for flagship retail experience",
     requirementDetail: "Interactive product storytelling for the Shanghai flagship store.",
     latestProgress: null,
+    nextAction: "Customer to confirm budget approval.",
+    imageRequirementNote: "Provide Shanghai flagship store references.",
     leadSource: "展会转介",
     priority: "URGENT",
     status: "QUOTATION",
@@ -152,6 +164,7 @@ const initialLeads = [
     productName: null,
     resourceRequirement: null,
     solution: "Interactive display system connected to the product catalog.",
+    quotationNote: "Budget split by hardware and content production.",
     remark: null,
     salesOwnerUserId: "sales-user",
     followupOwnerUserId: "sales-user",
@@ -165,18 +178,19 @@ const initialLeads = [
     createdByUserId: "sales-user",
     createdAt: "2026-08-31T03:00:00.000Z",
     updatedAt: "2026-09-02T09:15:00.000Z",
+    deletedAt: null,
   },
 ];
 
 const initialContactFollowups = {
   "contact-naderi": [
-    { id: "contact-followup-1", occurredAt: "2026-09-02T07:30:00.000Z", type: "MEETING", ownerUserId: "sales-user", content: "Reviewed the AR service scope and confirmed the first product batch.", createdByUserId: "qa-user", createdAt: "2026-09-02T07:45:00.000Z" },
-    { id: "contact-followup-2", occurredAt: "2026-08-25T03:00:00.000Z", type: "EMAIL", ownerUserId: "qa-user", content: "Shared capability deck and reference cases.", createdByUserId: "qa-user", createdAt: "2026-08-25T03:05:00.000Z" },
+    { id: "contact-followup-1", contactId: "contact-naderi", occurredAt: "2026-09-02T07:30:00.000Z", type: "MEETING", ownerUserId: "sales-user", content: "Reviewed the AR service scope and confirmed the first product batch.", nextFollowupAt: "2026-09-08T02:00:00.000Z", createdByUserId: "qa-user", createdAt: "2026-09-02T07:45:00.000Z" },
+    { id: "contact-followup-2", contactId: "contact-naderi", occurredAt: "2026-08-25T03:00:00.000Z", type: "EMAIL", ownerUserId: "qa-user", content: "Shared capability deck and reference cases.", nextFollowupAt: null, createdByUserId: "qa-user", createdAt: "2026-08-25T03:05:00.000Z" },
   ],
 };
 const initialLeadFollowups = {
   "lead-ar-service": [
-    { id: "lead-followup-1", occurredAt: "2026-09-02T07:30:00.000Z", type: "CALL", ownerUserId: "sales-user", important: true, content: "Confirmed technical workshop participants and requested CAD source files.", createdByUserId: "qa-user", createdAt: "2026-09-02T07:42:00.000Z" },
+    { id: "lead-followup-1", leadId: "lead-ar-service", occurredAt: "2026-09-02T07:30:00.000Z", type: "CALL", ownerUserId: "sales-user", important: true, content: "Confirmed technical workshop participants and requested CAD source files.", progress: "Workshop scope confirmed.", nextAction: "Customer uploads CAD source files.", nextFollowupAt: "2026-09-08T02:00:00.000Z", createdByUserId: "qa-user", createdAt: "2026-09-02T07:42:00.000Z" },
   ],
 };
 const initialCrmAttachments = [
@@ -185,6 +199,7 @@ const initialCrmAttachments = [
   { id: "attachment-proposal", entityType: "LEAD", entityId: "lead-ar-service", fieldKey: "proposalFiles", storageType: "EXTERNAL_URL", originalName: "AR-正式方案.docx", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document", kind: "DOCUMENT", fileSize: null, externalUrl: "https://example.test/ar-proposal.docx", createdAt: "2026-09-02T08:20:00.000Z", uploadedBy: crmUsers[0] },
   { id: "attachment-quotation", entityType: "LEAD", entityId: "lead-ar-service", fieldKey: "quotationFiles", storageType: "LOCAL", originalName: "AR-报价单.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", kind: "DOCUMENT", fileSize: 96540, createdAt: "2026-09-02T08:30:00.000Z", uploadedBy: crmUsers[0] },
   { id: "attachment-minutes", entityType: "CONTACT", entityId: "contact-naderi", fieldKey: "meetingMinutesFiles", storageType: "LOCAL", originalName: "Dena-会议纪要.pdf", mimeType: "application/pdf", kind: "DOCUMENT", fileSize: 118820, createdAt: "2026-09-02T07:50:00.000Z", uploadedBy: crmUsers[0] },
+  { id: "attachment-followup", entityType: "LEAD_FOLLOWUP", entityId: "lead-followup-1", fieldKey: "followupAttachments", storageType: "LOCAL", originalName: "CAD-source-checklist.pdf", mimeType: "application/pdf", kind: "DOCUMENT", fileSize: 88220, createdAt: "2026-09-02T07:48:00.000Z", uploadedBy: crmUsers[0] },
 ];
 
 const clone = (value) => structuredClone(value);
@@ -239,13 +254,14 @@ function decorateContact(contact) {
     ...contact,
     owner: userSummary(contact.ownerUserId),
     createdBy: userSummary(contact.createdByUserId),
-    relatedLeadCount: crmLeads.filter((lead) => lead.contactId === contact.id).length,
+    relatedLeadCount: crmLeads.filter((lead) => lead.contactId === contact.id && !lead.deletedAt).length,
     attachments: clone(crmAttachments.filter((attachment) => attachment.entityType === "CONTACT" && attachment.entityId === contact.id)),
   };
 }
 
 function decorateFollowup(followup) {
-  return { ...followup, owner: userSummary(followup.ownerUserId), createdBy: userSummary(followup.createdByUserId) };
+  const entityType = followup.contactId ? "CONTACT_FOLLOWUP" : "LEAD_FOLLOWUP";
+  return { ...followup, owner: userSummary(followup.ownerUserId), createdBy: userSummary(followup.createdByUserId), attachments: clone(crmAttachments.filter((item) => item.entityType === entityType && item.entityId === followup.id)) };
 }
 
 function decorateLead(lead) {
@@ -286,6 +302,7 @@ function filteredContacts(url) {
   if (emptyContacts) return [];
   const keyword = (url.searchParams.get("keyword") || "").toLocaleLowerCase();
   return contacts
+    .filter((contact) => !contact.deletedAt)
     .filter((contact) => !keyword || [contact.contactName, contact.companyName, contact.companyShortName, contact.email, contact.phone].some((value) => String(value || "").toLocaleLowerCase().includes(keyword)))
     .filter((contact) => !url.searchParams.get("stage") || contact.stage === url.searchParams.get("stage"))
     .filter((contact) => !url.searchParams.get("ownerUserId") || contact.ownerUserId === url.searchParams.get("ownerUserId"))
@@ -298,6 +315,7 @@ function filteredLeads(url) {
   if (emptyLeads) return [];
   const keyword = (url.searchParams.get("keyword") || "").toLocaleLowerCase();
   return crmLeads
+    .filter((lead) => !lead.deletedAt && !contacts.find((item) => item.id === lead.contactId)?.deletedAt)
     .filter((lead) => {
       const contact = contacts.find((item) => item.id === lead.contactId);
       return !keyword || [lead.requirementSummary, contact?.contactName, contact?.companyName, contact?.companyShortName].some((value) => String(value || "").toLocaleLowerCase().includes(keyword));
@@ -332,6 +350,23 @@ async function readRequestBody(request) {
 
 function applyDefaults(input, defaults) {
   return Object.fromEntries(Object.entries({ ...defaults, ...input }).map(([key, value]) => [key, value === "" ? null : value]));
+}
+
+function contactJourney(contact) {
+  const leads = crmLeads.filter((lead) => lead.contactId === contact.id);
+  const events = [{ id: `contact-created-${contact.id}`, occurredAt: contact.createdAt, category: "MILESTONE", type: "CONTACT_CREATED", title: "创建联系人", summary: `建立 ${contact.contactName} 的客户档案`, actor: userSummary(contact.createdByUserId), relatedLead: null, attachments: [] }];
+  for (const followup of contactFollowups[contact.id] || []) events.push({ id: `contact-followup-${followup.id}`, occurredAt: followup.occurredAt, category: "INTERACTION", type: "CONTACT_FOLLOWUP", title: "客户互动", summary: followup.content, actor: userSummary(followup.ownerUserId), relatedLead: null, attachments: crmAttachments.filter((item) => item.entityType === "CONTACT_FOLLOWUP" && item.entityId === followup.id) });
+  for (const lead of leads) {
+    const relatedLead = { id: lead.id, requirementSummary: lead.requirementSummary, deleted: Boolean(lead.deletedAt) };
+    events.push({ id: `lead-created-${lead.id}`, occurredAt: lead.createdAt, category: "LEAD", type: "LEAD_CREATED", title: "创建线索", summary: lead.requirementSummary, actor: userSummary(lead.createdByUserId), relatedLead, attachments: crmAttachments.filter((item) => item.entityType === "LEAD" && item.entityId === lead.id) });
+    for (const followup of leadFollowups[lead.id] || []) events.push({ id: `lead-followup-${followup.id}`, occurredAt: followup.occurredAt, category: "INTERACTION", type: "LEAD_FOLLOWUP", title: "线索跟进", summary: followup.content, progress: followup.progress, nextAction: followup.nextAction, actor: userSummary(followup.ownerUserId), relatedLead, attachments: crmAttachments.filter((item) => item.entityType === "LEAD_FOLLOWUP" && item.entityId === followup.id) });
+  }
+  const legacyFiles = crmAttachments.filter((item) => item.entityType === "CONTACT" && item.entityId === contact.id && item.fieldKey === "meetingMinutesFiles");
+  if (legacyFiles.length) events.push({ id: `legacy-meeting-${contact.id}`, occurredAt: legacyFiles[0].createdAt, category: "INTERACTION", type: "LEGACY_MEETING_FILES", title: "历史会议资料", summary: "历史会议资料，未关联具体互动", actor: legacyFiles[0].uploadedBy, relatedLead: null, attachments: legacyFiles });
+  events.sort((left, right) => right.occurredAt.localeCompare(left.occurredAt));
+  const activeLeads = leads.filter((lead) => !lead.deletedAt && !["WON", "LOST"].includes(lead.status));
+  const followupDates = [contact.nextFollowupAt, ...activeLeads.map((lead) => lead.nextFollowupAt)].filter(Boolean).sort();
+  return { summary: { activeLeadCount: activeLeads.length, wonLeadCount: leads.filter((lead) => !lead.deletedAt && lead.status === "WON").length, recentInteractionAt: events.find((event) => event.category === "INTERACTION")?.occurredAt || null, nextFollowupAt: followupDates[0] || null }, events };
 }
 
 async function apiResponse(request, response, url) {
@@ -462,7 +497,7 @@ async function apiResponse(request, response, url) {
 
   const contactMatch = url.pathname.match(/^\/api\/v1\/crm\/contacts\/([^/]+)$/);
   if (contactMatch) {
-    const contact = contacts.find((item) => item.id === contactMatch[1]);
+    const contact = contacts.find((item) => item.id === contactMatch[1] && !item.deletedAt);
     if (!contact) return sendError(response, 404, "RESOURCE_NOT_FOUND", "CRM 联系人不存在");
     if (method === "GET") return sendJson(response, { data: decorateContact(contact) });
     if (method === "PATCH") {
@@ -470,22 +505,29 @@ async function apiResponse(request, response, url) {
       return sendJson(response, { data: decorateContact(contact) });
     }
     if (method === "DELETE") {
-      const relatedLeadCount = crmLeads.filter((lead) => lead.contactId === contact.id).length;
-      if (relatedLeadCount) return sendJson(response, { error: { code: "CONTACT_HAS_LEADS", message: "该联系人仍有关联线索，请先删除关联线索", details: { relatedLeadCount } }, traceId: "fixture-409" }, 409);
-      contacts = contacts.filter((item) => item.id !== contact.id);
-      delete contactFollowups[contact.id];
-      crmAttachments = crmAttachments.filter((attachment) => !(attachment.entityType === "CONTACT" && attachment.entityId === contact.id));
+      const relatedLeadCount = crmLeads.filter((lead) => lead.contactId === contact.id && !lead.deletedAt).length;
+      if (relatedLeadCount) return sendJson(response, { error: { code: "CONTACT_HAS_ACTIVE_LEADS", message: `该联系人仍有 ${relatedLeadCount} 条未删除线索，请先删除这些线索后再删除联系人`, details: { relatedLeadCount } }, traceId: "fixture-409" }, 409);
+      contact.deletedAt = new Date().toISOString();
+      contact.deletedByUserId = "qa-user";
       return sendJson(response, { data: { id: contact.id } });
     }
+  }
+
+  const contactJourneyMatch = url.pathname.match(/^\/api\/v1\/crm\/contacts\/([^/]+)\/journey$/);
+  if (contactJourneyMatch && method === "GET") {
+    const contact = contacts.find((item) => item.id === contactJourneyMatch[1] && !item.deletedAt);
+    if (!contact) return sendError(response, 404, "RESOURCE_NOT_FOUND", "CRM 联系人不存在");
+    return sendJson(response, { data: contactJourney(contact) });
   }
 
   const attachmentMatch = url.pathname.match(/^\/api\/v1\/crm\/(contacts|leads)\/([^/]+)\/attachments\/([^/]+)(\/download)?$/);
   if (attachmentMatch) {
     const [, collection, entityId, fieldOrAttachmentId, downloadSuffix] = attachmentMatch;
     const entityType = collection === "contacts" ? "CONTACT" : "LEAD";
+    const lead = entityType === "LEAD" ? crmLeads.find((item) => item.id === entityId) : null;
     const entityExists = entityType === "CONTACT"
-      ? contacts.some((item) => item.id === entityId)
-      : crmLeads.some((item) => item.id === entityId);
+      ? contacts.some((item) => item.id === entityId && !item.deletedAt)
+      : Boolean(lead && contacts.some((item) => item.id === lead.contactId && !item.deletedAt) && (!lead.deletedAt || (method === "GET" && downloadSuffix)));
     if (!entityExists) return sendError(response, 404, "RESOURCE_NOT_FOUND", entityType === "CONTACT" ? "CRM 联系人不存在" : "CRM Lead 不存在");
     if (method === "POST" && !downloadSuffix) {
       const fieldKey = fieldOrAttachmentId;
@@ -527,34 +569,64 @@ async function apiResponse(request, response, url) {
     }
   }
 
+  const followupAttachmentMatch = url.pathname.match(/^\/api\/v1\/crm\/(contacts|leads)\/([^/]+)\/followups\/([^/]+)\/attachments\/([^/]+)(\/download)?$/);
+  if (followupAttachmentMatch) {
+    const [, collection, parentId, followupId, fieldOrAttachmentId, downloadSuffix] = followupAttachmentMatch;
+    const entityType = collection === "contacts" ? "CONTACT_FOLLOWUP" : "LEAD_FOLLOWUP";
+    const followup = collection === "contacts"
+      ? (contactFollowups[parentId] || []).find((item) => item.id === followupId)
+      : (leadFollowups[parentId] || []).find((item) => item.id === followupId);
+    const parentActive = collection === "contacts"
+      ? contacts.some((item) => item.id === parentId && !item.deletedAt)
+      : crmLeads.some((item) => item.id === parentId && contacts.some((contact) => contact.id === item.contactId && !contact.deletedAt) && (!item.deletedAt || (method === "GET" && downloadSuffix)));
+    if (!followup || !parentActive) return sendError(response, 404, "RESOURCE_NOT_FOUND", "跟进记录不存在");
+    if (method === "POST" && !downloadSuffix) {
+      if (fieldOrAttachmentId !== "followupAttachments") return sendError(response, 422, "VALIDATION_ERROR", "附件字段不存在");
+      const attachment = { id: `attachment-created-${nextId++}`, entityType, entityId: followupId, fieldKey: "followupAttachments", storageType: "LOCAL", originalName: "互动附件.txt", mimeType: "text/plain", kind: "DOCUMENT", fileSize: body.size || 32, createdAt: new Date().toISOString(), uploadedBy: crmUsers[0] };
+      crmAttachments.unshift(attachment);
+      return sendJson(response, { data: attachment }, 201);
+    }
+    const attachment = crmAttachments.find((item) => item.id === fieldOrAttachmentId && item.entityType === entityType && item.entityId === followupId);
+    if (!attachment) return sendError(response, 404, "RESOURCE_NOT_FOUND", "附件不存在");
+    if (method === "GET" && downloadSuffix) {
+      response.writeHead(200, { "content-type": attachment.mimeType || "application/octet-stream", "content-disposition": `inline; filename="fixture-followup"; filename*=UTF-8''${encodeURIComponent(attachment.originalName)}` });
+      return response.end(Buffer.from("fixture followup attachment"));
+    }
+    if (method === "DELETE") {
+      crmAttachments = crmAttachments.filter((item) => item.id !== attachment.id);
+      return sendJson(response, { data: { id: attachment.id } });
+    }
+  }
+
   const contactFollowupMatch = url.pathname.match(/^\/api\/v1\/crm\/contacts\/([^/]+)\/followups$/);
   if (contactFollowupMatch) {
-    const contact = contacts.find((item) => item.id === contactFollowupMatch[1]);
+    const contact = contacts.find((item) => item.id === contactFollowupMatch[1] && !item.deletedAt);
     if (!contact) return sendError(response, 404, "RESOURCE_NOT_FOUND", "CRM 联系人不存在");
     const rows = contactFollowups[contact.id] || [];
     if (method === "GET") return sendJson(response, paged(rows.map(decorateFollowup), url));
     if (method === "POST") {
-      const followup = { ...body, id: `contact-followup-created-${nextId++}`, ownerUserId: body.ownerUserId || "qa-user", createdByUserId: "qa-user", createdAt: new Date().toISOString() };
+      const followup = { ...body, id: `contact-followup-created-${nextId++}`, contactId: contact.id, ownerUserId: body.ownerUserId || "qa-user", createdByUserId: "qa-user", createdAt: new Date().toISOString() };
       contactFollowups[contact.id] = [followup, ...rows].sort((left, right) => right.occurredAt.localeCompare(left.occurredAt) || right.id.localeCompare(left.id));
+      if (contactFollowups[contact.id][0].id === followup.id && followup.nextFollowupAt) contact.nextFollowupAt = followup.nextFollowupAt;
       return sendJson(response, { data: decorateFollowup(followup) }, 201);
     }
   }
 
   const relatedLeadMatch = url.pathname.match(/^\/api\/v1\/crm\/contacts\/([^/]+)\/leads$/);
   if (relatedLeadMatch && method === "GET") {
-    if (!contacts.some((item) => item.id === relatedLeadMatch[1])) return sendError(response, 404, "RESOURCE_NOT_FOUND", "CRM 联系人不存在");
+    if (!contacts.some((item) => item.id === relatedLeadMatch[1] && !item.deletedAt)) return sendError(response, 404, "RESOURCE_NOT_FOUND", "CRM 联系人不存在");
     return sendJson(response, paged(filteredLeads(url).filter((lead) => lead.contactId === relatedLeadMatch[1]), url));
   }
 
   if (url.pathname === "/api/v1/crm/leads" && method === "GET") return sendJson(response, paged(filteredLeads(url), url));
   if (url.pathname === "/api/v1/crm/leads" && method === "POST") {
-    if (!contacts.some((contact) => contact.id === body.contactId)) return sendError(response, 422, "VALIDATION_ERROR", "关联的 CRM 联系人不存在");
+    if (!contacts.some((contact) => contact.id === body.contactId && !contact.deletedAt)) return sendError(response, 422, "VALIDATION_ERROR", "关联的 CRM 联系人不存在");
     if (!body.requirementSummary?.trim()) return sendError(response, 422, "VALIDATION_ERROR", "请求数据校验失败");
     const lead = applyDefaults(body, {
       id: `lead-created-${nextId++}`, status: "NEW", priority: "MEDIUM", estimatedQuote: null, currency: null,
       salesOwnerUserId: null, followupOwnerUserId: null, nextFollowupAt: null, lastFollowupAt: null,
       participantUserIds: [], wonAt: null, deliveryFollowupAt: null, contractRenewalAt: null, paymentReceivedAt: null,
-      createdByUserId: "qa-user", createdAt: now, updatedAt: now,
+      createdByUserId: "qa-user", createdAt: now, updatedAt: now, deletedAt: null,
     });
     if (lead.status === "WON" && !lead.wonAt) lead.wonAt = new Date().toISOString();
     crmLeads.unshift(lead);
@@ -563,7 +635,7 @@ async function apiResponse(request, response, url) {
 
   const leadMatch = url.pathname.match(/^\/api\/v1\/crm\/leads\/([^/]+)$/);
   if (leadMatch) {
-    const lead = crmLeads.find((item) => item.id === leadMatch[1]);
+    const lead = crmLeads.find((item) => item.id === leadMatch[1] && !item.deletedAt);
     if (!lead) return sendError(response, 404, "RESOURCE_NOT_FOUND", "CRM Lead 不存在");
     if (method === "GET") return sendJson(response, { data: decorateLead(lead) });
     if (method === "PATCH") {
@@ -573,23 +645,28 @@ async function apiResponse(request, response, url) {
       return sendJson(response, { data: decorateLead(lead) });
     }
     if (method === "DELETE") {
-      crmLeads = crmLeads.filter((item) => item.id !== lead.id);
-      delete leadFollowups[lead.id];
-      crmAttachments = crmAttachments.filter((attachment) => !(attachment.entityType === "LEAD" && attachment.entityId === lead.id));
+      lead.deletedAt = new Date().toISOString();
+      lead.deletedByUserId = "qa-user";
       return sendJson(response, { data: { id: lead.id } });
     }
   }
 
   const leadFollowupMatch = url.pathname.match(/^\/api\/v1\/crm\/leads\/([^/]+)\/followups$/);
   if (leadFollowupMatch) {
-    const lead = crmLeads.find((item) => item.id === leadFollowupMatch[1]);
+    const lead = crmLeads.find((item) => item.id === leadFollowupMatch[1] && !item.deletedAt);
     if (!lead) return sendError(response, 404, "RESOURCE_NOT_FOUND", "CRM Lead 不存在");
     const rows = leadFollowups[lead.id] || [];
     if (method === "GET") return sendJson(response, paged(rows.map(decorateFollowup), url));
     if (method === "POST") {
-      const followup = { ...body, id: `lead-followup-created-${nextId++}`, ownerUserId: body.ownerUserId || "qa-user", important: Boolean(body.important), createdByUserId: "qa-user", createdAt: new Date().toISOString() };
+      const followup = { ...body, id: `lead-followup-created-${nextId++}`, leadId: lead.id, ownerUserId: body.ownerUserId || "qa-user", important: Boolean(body.important), createdByUserId: "qa-user", createdAt: new Date().toISOString() };
       leadFollowups[lead.id] = [followup, ...rows].sort((left, right) => right.occurredAt.localeCompare(left.occurredAt) || right.id.localeCompare(left.id));
-      if (!lead.lastFollowupAt || followup.occurredAt > lead.lastFollowupAt) lead.lastFollowupAt = followup.occurredAt;
+      const latest = leadFollowups[lead.id][0];
+      lead.lastFollowupAt = latest.occurredAt;
+      if (latest.id === followup.id) {
+        if (followup.progress) lead.latestProgress = followup.progress;
+        if (followup.nextAction) lead.nextAction = followup.nextAction;
+        if (followup.nextFollowupAt) lead.nextFollowupAt = followup.nextFollowupAt;
+      }
       lead.updatedAt = new Date().toISOString();
       return sendJson(response, { data: decorateFollowup(followup) }, 201);
     }

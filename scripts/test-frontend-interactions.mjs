@@ -48,20 +48,22 @@ assert.deepEqual(validateContactPayload({ contactName: "Naderi", email: "invalid
 assert.equal(localDateTimeToIso("2026-09-03T14:30").endsWith("Z"), true);
 assert.equal(localDateTimeToIso("not-a-date"), null);
 assert.deepEqual(validateLeadPayload({ contactId: null, requirementSummary: "", estimatedQuote: null, currency: null }), {
-  contactId: "请先选择客户联系人", requirementSummary: "请输入项目需求简述",
+  contactId: "请先选择客户联系人", salesOwnerUserId: "请选择销售对接人", requirementSummary: "请输入项目需求简述",
 });
-assert.deepEqual(validateLeadPayload({ contactId: "contact-1", requirementSummary: "AR 服务", estimatedQuote: "63000.50", currency: null }), {
+assert.deepEqual(validateLeadPayload({ contactId: "contact-1", requirementSummary: "AR 服务", salesOwnerUserId: "sales-1", estimatedQuote: "63000.50", currency: null }), {
   currency: "填写预计报价时必须选择币种",
 });
 assert.equal(LEAD_FIELDS.some((field) => ["email", "phone", "contactEmail", "contactPhone"].includes(field.key)), false, "线索表单不能重复编辑联系人通讯字段");
-assert.deepEqual([...new Set(CONTACT_FIELDS.map((field) => field.section))], ["person", "company", "region", "crm"], "联系人表单必须按联系人、客户、地区和 CRM 分组");
-assert.deepEqual([...new Set(LEAD_FIELDS.map((field) => field.section))], ["overview", "requirement", "classification", "commercial", "remark"], "线索字段必须按概览、需求、分类、商务和备注分组");
-for (const key of ["contactName", "title", "department", "email", "phone", "wechat", "linkedin", "companyShortName", "companyName", "industry", "website", "country", "region", "city", "source", "stage", "ownerUserId", "nextFollowupAt", "followupAttention", "initialContext", "remark"]) {
+assert.deepEqual([...new Set(CONTACT_FIELDS.map((field) => field.tab))], ["basic", "crm", "notes"], "联系人编辑必须按基础资料、CRM 信息和备注分区");
+assert.deepEqual([...new Set(LEAD_FIELDS.map((field) => field.tab))], ["basic", "requirement", "commercial", "team", "milestones"], "线索编辑必须使用五个指定业务分区");
+for (const key of ["contactName", "title", "department", "email", "phone", "wechat", "linkedin", "companyShortName", "companyName", "industry", "website", "country", "region", "city", "source", "stage", "ownerUserId", "followupAttention", "initialContext", "remark"]) {
   assert.equal(CONTACT_FIELDS.some((field) => field.key === key), true, `联系人表单缺少字段：${key}`);
 }
-for (const key of ["requirementSummary", "status", "priority", "salesOwnerUserId", "followupOwnerUserId", "participantUserIds", "followMode", "collaborationGroups", "nextFollowupAt", "wonAt", "deliveryFollowupAt", "contractRenewalAt", "paymentReceivedAt", "requirementDetail", "leadSource", "projectDomain", "projectType", "technologyType", "productType", "productName", "resourceRequirement", "solution", "latestProgress", "estimatedQuote", "currency", "remark"]) {
+assert.equal(CONTACT_FIELDS.some((field) => field.key === "nextFollowupAt"), false, "联系人下次跟进快照不能在主数据表单中编辑");
+for (const key of ["requirementSummary", "status", "priority", "salesOwnerUserId", "followupOwnerUserId", "participantUserIds", "followMode", "collaborationGroups", "wonAt", "deliveryFollowupAt", "contractRenewalAt", "paymentReceivedAt", "requirementDetail", "imageRequirementNote", "leadSource", "projectDomain", "projectType", "technologyType", "productType", "productName", "resourceRequirement", "solution", "quotationNote", "estimatedQuote", "currency", "remark"]) {
   assert.equal(LEAD_FIELDS.some((field) => field.key === key), true, `线索表单缺少字段：${key}`);
 }
+for (const snapshot of ["latestProgress", "nextAction", "nextFollowupAt"]) assert.equal(LEAD_FIELDS.some((field) => field.key === snapshot), false, `线索快照 ${snapshot} 不能出现在主数据编辑表单`);
 assert.equal(LEAD_FIELDS.find((field) => field.key === "participantUserIds")?.type, "multi-user", "线索参与人员必须支持多人选择");
 assert.equal(LEAD_FIELDS.find((field) => field.key === "technologyType")?.type, "multi-select", "技术类型必须支持多选和其他值");
 
@@ -92,11 +94,13 @@ assert.match(contactSource, /已分配负责人/);
 assert.match(contactSource, /待分配负责人/);
 assert.match(contactSource, /class="detail-grid"/, "联系人详情必须复用 V1 双栏结构");
 assert.match(contactSource, /data-detail-tab="leads"/);
+assert.match(contactSource, /data-detail-tab="journey"/);
+assert.match(contactSource, /客户旅程/);
+assert.match(contactSource, /customer-360-summary/);
 assert.match(contactSource, /<dialog class="lead-create-dialog crm-form-dialog"/, "联系人表单必须使用 V1 dialog shell");
-for (const section of ["联系人信息", "公司信息", "地区信息", "CRM 信息"]) assert.match(contactSource, new RegExp(section), `联系人表单缺少模块：${section}`);
-assert.match(contactSource, /Meeting Minutes 文件/);
-assert.match(contactSource, /crmContactAttachmentInput/);
-assert.match(contactSource, /\/api\/v1\/crm\/contacts\/\$\{contactId\}\/attachments\/meetingMinutesFiles/);
+for (const section of ["基础资料", "CRM 信息", "备注"]) assert.match(contactSource, new RegExp(section), `联系人表单缺少页签：${section}`);
+assert.match(fixtureSource, /历史会议资料/);
+assert.doesNotMatch(contactSource.match(/export function openContactForm[\s\S]*?function closeContactForm/)?.[0] || "", /contactAttachmentEditorMarkup/, "联系人编辑不得继续上传 Meeting Minutes");
 assert.match(contactSource, /<h3>系统信息<\/h3>/, "联系人详情必须显示创建人和时间戳等系统信息");
 assert.doesNotMatch(contactSource, /crm-description-grid/, "联系人详情不得继续使用大面积 Description Grid");
 assert.match(leadSource, /data-crm-permission="crm\.lead\.import"/);
@@ -116,7 +120,9 @@ assert.match(styles, /\.metric-card\s*\{[^}]*background:\s*#fff;[^}]*border:[^}]
 assert.match(leadSource, /class="detail-grid"/, "线索详情必须复用 V1 双栏结构");
 assert.match(leadSource, /data-detail-tab="requirement"/);
 assert.match(leadSource, /<dialog class="lead-create-dialog crm-form-dialog"/, "线索表单必须使用 V1 dialog shell");
-for (const section of ["关联联系人", "线索概览", "需求内容", "项目分类", "方案与商务", "备注", "附件字段"]) assert.match(leadSource, new RegExp(section), `线索表单缺少模块：${section}`);
+for (const section of ["关联联系人", "基础信息", "需求信息", "方案与报价", "团队协作", "里程碑"]) assert.match(leadSource, new RegExp(section), `线索表单缺少模块：${section}`);
+assert.match(leadSource, /保存并继续编辑/);
+assert.match(leadSource, /下一步动作/);
 assert.match(leadSource, /<h3>系统信息<\/h3>/, "线索详情必须显示创建人和时间戳等系统信息");
 assert.doesNotMatch(leadSource, /crm-description-grid/, "线索详情不得继续使用大面积 Description Grid");
 assert.match(jobSource, /class="data-management-dialog"/, "导入导出必须使用 V1 data management dialog");
@@ -130,10 +136,18 @@ assert.equal(preflightStatusLabel("ERROR"), "有错误");
 assert.equal(preflightMessage({ errors: [], warnings: [{ message: "电子邮箱可能重复" }] }), "电子邮箱可能重复");
 assert.equal(preflightMessage({ errors: [], warnings: [] }), "可以导入");
 assert.match(followupSource, /沟通记录/);
+assert.match(followupSource, /当前进展/);
+assert.match(followupSource, /下一步动作/);
+assert.match(followupSource, /followupAttachments/);
+assert.match(followupSource, /图片 \/ 视频 \/ 文档/);
 assert.doesNotMatch(followupSource, />FOLLOWUP</);
 assert.match(fixtureSource, /fixtureRole = "SUPER_ADMIN"/, "本地 UI 验证环境必须默认展示管理员可用的导入导出操作");
 assert.match(fixtureSource, /initialCrmAttachments/, "浏览器夹具必须覆盖通用 CRM 附件");
 assert.match(fixtureSource, /entityType === "CONTACT"/, "浏览器夹具必须覆盖联系人附件归属");
+assert.match(fixtureSource, /contactJourney/, "浏览器夹具必须覆盖客户旅程聚合");
+assert.match(fixtureSource, /LEAD_FOLLOWUP/, "浏览器夹具必须覆盖线索跟进附件归属");
+assert.match(fixtureSource, /deletedAt/, "浏览器夹具必须覆盖软删除");
+assert.match(appSource, /DELETE_LEAD:\s*"删除线索"/, "软删除线索的审计动作必须显示为中文业务名称");
 assert.match(fixtureSource, /participantUserIds/, "浏览器夹具必须覆盖多人参与");
 for (const route of ["/api/v1/users", "/api/v1/roles", "/api/v1/permissions", "/api/v1/audit-logs"]) assert.match(fixtureSource, new RegExp(route.replaceAll("/", "\\/")), `管理员验证夹具缺少路由：${route}`);
 assert.deepEqual(friendlyError({ status: 403 }), { title: "没有操作权限", message: "你没有执行此操作的权限。" });

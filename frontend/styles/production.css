@@ -883,6 +883,62 @@ dialog.data-management-dialog::backdrop { background: rgba(10,13,11,.38); backdr
   .crm-field-wide, .customer-identity-item.wide, .field-tile.wide { grid-column: auto; }
 }
 
+/* Customer 360, journey, and sectioned form refinement */
+.crm-form-tabs { position: sticky; top: 0; z-index: 8; display: flex; gap: 4px; padding: 4px; margin-bottom: 14px; overflow-x: auto; background: #eeefeb; border: 1px solid #e0e2dd; border-radius: 11px; }
+.crm-form-tab { min-height: 38px; padding: 0 15px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; color: #666c68; white-space: nowrap; background: transparent; border: 0; border-radius: 8px; font-size: 10px; font-weight: 650; cursor: pointer; }
+.crm-form-tab.is-active { color: #1f2421; background: #fff; box-shadow: 0 1px 5px rgba(26, 32, 29, .08); }
+.crm-form-tab-error { min-width: 18px; height: 18px; padding: 0 5px; display: inline-grid; place-items: center; color: #fff; background: #a34e52; border-radius: 999px; font-size: 9px; }
+.crm-form-tab-panel { display: none; padding: 4px 1px 12px; }
+.crm-form-tab-panel.is-active { display: block; }
+.crm-form-tab-panel > .crm-form-grid { margin-bottom: 12px; }
+.crm-context-attachment, .crm-followup-attachment { margin: 12px 0; background: #f8f8f5; }
+.crm-form-grid > .crm-context-attachment { grid-column: 1 / -1; }
+.crm-context-attachment > header, .crm-followup-attachment > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 9px; }
+.crm-context-attachment h4, .crm-followup-attachment h4 { margin: 0 0 3px; }
+.crm-context-attachment p, .crm-followup-attachment p { margin: 0; color: var(--soft-muted); font-size: 9px; line-height: 1.45; }
+.crm-context-attachment > header > span, .crm-followup-attachment > header > span { color: var(--soft-muted); font-size: 9px; white-space: nowrap; }
+.customer-360-summary { margin: 0 0 14px; padding: 11px 14px; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0; background: #fff; border: 1px solid var(--line); border-radius: 12px; }
+.customer-360-summary > div { min-width: 0; padding: 2px 14px; border-right: 1px solid #e7e8e4; }
+.customer-360-summary > div:first-child { padding-left: 2px; }
+.customer-360-summary > div:last-child { border-right: 0; }
+.customer-360-summary span, .customer-360-summary strong { display: block; }
+.customer-360-summary span { color: var(--soft-muted); font-size: 9px; }
+.customer-360-summary strong { margin-top: 5px; overflow: hidden; color: #252a27; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
+.journey-filters { display: inline-flex; gap: 4px; padding: 3px; margin: 12px 17px 4px; background: #f0f1ed; border-radius: 9px; }
+.journey-filters button { min-height: 30px; padding: 0 12px; color: #6b716d; background: transparent; border: 0; border-radius: 7px; font-size: 9px; cursor: pointer; }
+.journey-filters button.is-active { color: #222724; background: #fff; box-shadow: 0 1px 4px rgba(28, 34, 31, .08); }
+.journey-list { padding: 12px 17px 18px; }
+.journey-event { position: relative; display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 8px; padding-bottom: 12px; }
+.journey-event::before { content: ""; position: absolute; left: 6px; top: 13px; bottom: -2px; width: 1px; background: #dfe2dd; }
+.journey-event:last-child::before { display: none; }
+.journey-dot { position: relative; z-index: 1; width: 13px; height: 13px; margin-top: 12px; background: #53635a; border: 3px solid #edf0ec; border-radius: 50%; }
+.journey-card { padding: 11px 13px; background: #fafaf8; border: 1px solid #e4e6e2; border-radius: 10px; }
+.journey-card header, .journey-card footer { display: flex; align-items: center; gap: 9px; }
+.journey-card header time { margin-left: auto; color: var(--soft-muted); font-size: 9px; }
+.journey-card > p { margin: 8px 0; color: #343936; font-size: 10px; line-height: 1.6; white-space: pre-wrap; }
+.journey-card footer { color: var(--soft-muted); font-size: 9px; }
+.journey-lead-link { padding: 0; color: #3e5147; background: transparent; border: 0; font-size: 9px; text-decoration: underline; cursor: pointer; }
+.journey-lead-link:disabled { color: #979d99; cursor: default; text-decoration: none; }
+.journey-next, .followup-outcome { margin-top: 7px; padding: 7px 9px; display: grid; grid-template-columns: 72px 1fr; gap: 8px; background: #fff; border-radius: 7px; font-size: 9px; }
+.journey-files, .followup-files { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.journey-files a, .followup-files a { min-height: 27px; padding: 0 8px; display: inline-flex; align-items: center; gap: 5px; color: #3e4d45; background: #fff; border: 1px solid #dfe2dd; border-radius: 7px; font-size: 9px; text-decoration: none; }
+.journey-files svg, .followup-files svg { width: 12px; height: 12px; }
+.followup-next-time { margin-top: 7px; color: #5d6661; font-size: 9px; }
+.followup-next-time strong { margin-right: 8px; }
+.crm-context-pair { margin: 10px 0; padding: 11px; background: #f8f8f5; border: 1px solid #e5e6e2; border-radius: 10px; }
+.crm-context-pair > div:first-child { margin-bottom: 8px; }
+.crm-context-pair h4, .crm-context-pair p { margin: 0; }
+.crm-context-pair p { margin-top: 3px; color: var(--soft-muted); font-size: 9px; }
+.crm-more { position: relative; }
+.crm-more summary { list-style: none; cursor: pointer; }
+.crm-more summary::-webkit-details-marker { display: none; }
+.crm-more[open] > button { position: absolute; z-index: 20; top: calc(100% + 5px); right: 0; min-width: 120px; min-height: 36px; padding: 0 12px; color: #8c4548; background: #fff; border: 1px solid #dfd4d3; border-radius: 8px; box-shadow: 0 9px 24px rgba(34, 27, 27, .12); cursor: pointer; }
+
+@media (max-width: 860px) {
+  .customer-360-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .customer-360-summary > div { border-right: 0; border-bottom: 1px solid #e7e8e4; padding: 8px; }
+}
+
 /* CRM destructive row actions, searchable contact picker, and lead attachments */
 .crm-contact-table { min-width: 1160px; }
 .crm-lead-table { min-width: 1400px; }

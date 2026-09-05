@@ -122,7 +122,7 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
   it("下载联系人和线索导入模板", async () => {
     for (const [route, expected, forbidden] of [
       ["contacts", ["contactName", "companyName", "owner", "followupAttention", "meetingMinutesFiles"], ["brandId", "customerId"]],
-      ["leads", ["contactId", "requirementSummary", "salesOwner", "participantUsers", "proposalFiles", "wonAt"], ["contactName", "email", "brandId"]],
+      ["leads", ["contactId", "requirementSummary", "salesOwner", "participantUsers", "proposalFiles", "wonAt", "nextAction", "imageRequirementNote", "quotationNote"], ["contactName", "email", "brandId"]],
     ] as const) {
       const response = await inject({ method: "GET", url: `/api/v1/crm/templates/${route}` });
       expect(response.statusCode).toBe(200);
@@ -154,7 +154,7 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
 
   it("线索导入必须关联现有联系人", async () => {
     const response = await upload("leads", [
-      { contactId, requirementSummary: `AR 服务合作 ${runKey}`, status: "方案", priority: "高", estimatedQuote: "120000.50", currency: "CNY", salesOwner: adminId, participantUsers: adminId, leadSource: "Kiviman", proposalFiles: "https://files.example.com/proposal.pptx" },
+      { contactId, requirementSummary: `AR 服务合作 ${runKey}`, status: "方案", priority: "高", estimatedQuote: "120000.50", currency: "CNY", salesOwner: adminId, participantUsers: adminId, leadSource: "Kiviman", latestProgress: "历史进度", nextAction: "安排演示", imageRequirementNote: "准备产品正面图", quotationNote: "含一年运维", proposalFiles: "https://files.example.com/proposal.pptx" },
       { contactId: "missing-contact", requirementSummary: `无效线索 ${runKey}` },
     ]);
     expect(response.statusCode).toBe(201);
@@ -162,7 +162,7 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
     const executed = await inject({ method: "POST", url: `/api/v1/crm/imports/${response.json().data.id}/execute`, payload: {} });
     expect(executed.statusCode).toBe(200);
     const lead = await prisma.crmLead.findFirstOrThrow({ where: { requirementSummary: `AR 服务合作 ${runKey}` } });
-    expect(lead).toMatchObject({ contactId, status: "SOLUTION", priority: "HIGH", salesOwnerUserId: adminId, createdByUserId: adminId, leadSource: "Kiviman" });
+    expect(lead).toMatchObject({ contactId, status: "SOLUTION", priority: "HIGH", salesOwnerUserId: adminId, createdByUserId: adminId, leadSource: "Kiviman", latestProgress: "历史进度", nextAction: "安排演示", imageRequirementNote: "准备产品正面图", quotationNote: "含一年运维" });
     expect(lead.estimatedQuote?.toString()).toBe("120000.5");
     expect(await prisma.crmLeadParticipant.count({ where: { leadId: lead.id, userId: adminId } })).toBe(1);
     expect(await prisma.crmAttachment.count({ where: { entityType: "LEAD", entityId: lead.id, fieldKey: "proposalFiles", storageType: "EXTERNAL_URL" } })).toBe(1);
@@ -183,7 +183,7 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
     await book.xlsx.load(download.rawPayload as never);
     const sheet = book.worksheets[0]!;
     const header = headers(sheet);
-    expect(header).toEqual(expect.arrayContaining(["客户来源", "正式方案文件", "Leads 参与人员", "创建人", "成交日期"]));
+    expect(header).toEqual(expect.arrayContaining(["客户来源", "正式方案文件", "Leads 参与人员", "创建人", "成交日期", "下一步动作", "图片需求说明", "报价说明"]));
     const contactColumn = header.indexOf("客户联系人编号") + 1;
     const emailColumn = header.indexOf("联系人电子邮箱") + 1;
     const row = Array.from({ length: sheet.rowCount - 1 }, (_, index) => index + 2).find((number) => String(sheet.getCell(number, contactColumn).value) === contactId);

@@ -71,9 +71,12 @@ export async function contactRoutes(app: FastifyInstance): Promise<void> {
 
   app.delete<{ Params: { id: string } }>("/api/v1/crm/contacts/:id", { preHandler: guard("crm.contact.delete") }, async (request) => {
     const result = await contacts.remove(request.params.id, auditActorContext(request));
-    await attachments.removeFiles(result.storageKeys);
     return { data: { id: result.id } };
   });
+
+  app.get<{ Params: { id: string } }>("/api/v1/crm/contacts/:id/journey", { preHandler: guard("crm.contact.view") }, async (request) => ({
+    data: await contacts.journey(request.params.id),
+  }));
 
   app.post<{ Params: { id: string; fieldKey: string } }>("/api/v1/crm/contacts/:id/attachments/:fieldKey", { preHandler: guard("crm.contact.edit") }, async (request, reply) => {
     const upload = await request.file();
@@ -104,6 +107,32 @@ export async function contactRoutes(app: FastifyInstance): Promise<void> {
     const body = contactFollowupCreateSchema.parse(request.body);
     const row = await followups.create(request.params.id, body, request.auth!.userId, auditActorContext(request));
     return reply.status(201).send({ data: row });
+  });
+
+  const requireContactFollowup = async (contactId: string, followupId: string) => {
+    const row = await app.prisma.contactFollowup.findFirst({ where: { id: followupId, contactId, contact: { deletedAt: null } }, select: { id: true } });
+    if (!row) throw new ApiError(404, "RESOURCE_NOT_FOUND", "联系人互动不存在");
+  };
+
+  app.post<{ Params: { id: string; followupId: string; fieldKey: string } }>("/api/v1/crm/contacts/:id/followups/:followupId/attachments/:fieldKey", { preHandler: guard("crm.contact_followup.create") }, async (request, reply) => {
+    await requireContactFollowup(request.params.id, request.params.followupId);
+    const upload = await request.file();
+    const row = await attachments.create("CONTACT_FOLLOWUP", request.params.followupId, request.params.fieldKey, upload, request.auth!.userId, auditActorContext(request));
+    return reply.status(201).send({ data: row });
+  });
+
+  app.get<{ Params: { id: string; followupId: string; attachmentId: string } }>("/api/v1/crm/contacts/:id/followups/:followupId/attachments/:attachmentId/download", { preHandler: guard("crm.contact_followup.view") }, async (request, reply) => {
+    await requireContactFollowup(request.params.id, request.params.followupId);
+    const result = await attachments.findForDownload("CONTACT_FOLLOWUP", request.params.followupId, request.params.attachmentId, auditActorContext(request));
+    if (result.externalUrl) return reply.redirect(result.externalUrl);
+    reply.type(result.row.mimeType || "application/octet-stream").header("content-disposition", contentDispositionFilename(result.row.originalName));
+    if (result.row.fileSize !== null) reply.header("content-length", result.row.fileSize);
+    return reply.send(result.stream);
+  });
+
+  app.delete<{ Params: { id: string; followupId: string; attachmentId: string } }>("/api/v1/crm/contacts/:id/followups/:followupId/attachments/:attachmentId", { preHandler: guard("crm.contact_followup.create") }, async (request) => {
+    await requireContactFollowup(request.params.id, request.params.followupId);
+    return { data: await attachments.remove("CONTACT_FOLLOWUP", request.params.followupId, request.params.attachmentId, auditActorContext(request)) };
   });
 
   app.get<{ Params: { id: string } }>("/api/v1/crm/contacts/:id/leads", {

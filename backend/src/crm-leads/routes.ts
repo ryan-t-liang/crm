@@ -3,6 +3,7 @@ import { z } from "zod";
 import { auditActorContext } from "../common/audit.js";
 import { guard } from "../common/auth.js";
 import { paginationMeta, paginationSchema } from "../common/pagination.js";
+import { ApiError } from "../common/errors.js";
 import { timezoneAwareDateTimeSchema } from "../contacts/schemas.js";
 import { contentDispositionFilename, CrmAttachmentService } from "./attachments.js";
 import { crmLeadResponse } from "./response.js";
@@ -54,7 +55,6 @@ export async function crmLeadRoutes(app: FastifyInstance): Promise<void> {
 
   app.delete<{ Params: { id: string } }>("/api/v1/crm/leads/:id", { preHandler: guard("crm.lead.delete") }, async (request) => {
     const result = await leads.remove(request.params.id, auditActorContext(request));
-    await attachments.removeFiles(result.storageKeys);
     return { data: { id: result.id } };
   });
 
@@ -87,5 +87,31 @@ export async function crmLeadRoutes(app: FastifyInstance): Promise<void> {
     const body = leadFollowupCreateSchema.parse(request.body);
     const row = await followups.create(request.params.id, body, request.auth!.userId, auditActorContext(request));
     return reply.status(201).send({ data: row });
+  });
+
+  const requireLeadFollowup = async (leadId: string, followupId: string, allowDeletedLeadHistory = false) => {
+    const row = await app.prisma.leadFollowup.findFirst({ where: { id: followupId, leadId, lead: allowDeletedLeadHistory ? { contact: { deletedAt: null } } : { deletedAt: null, contact: { deletedAt: null } } }, select: { id: true } });
+    if (!row) throw new ApiError(404, "RESOURCE_NOT_FOUND", "线索跟进不存在");
+  };
+
+  app.post<{ Params: { id: string; followupId: string; fieldKey: string } }>("/api/v1/crm/leads/:id/followups/:followupId/attachments/:fieldKey", { preHandler: guard("crm.lead_followup.create") }, async (request, reply) => {
+    await requireLeadFollowup(request.params.id, request.params.followupId);
+    const upload = await request.file();
+    const row = await attachments.create("LEAD_FOLLOWUP", request.params.followupId, request.params.fieldKey, upload, request.auth!.userId, auditActorContext(request));
+    return reply.status(201).send({ data: row });
+  });
+
+  app.get<{ Params: { id: string; followupId: string; attachmentId: string } }>("/api/v1/crm/leads/:id/followups/:followupId/attachments/:attachmentId/download", { preHandler: guard("crm.lead_followup.view") }, async (request, reply) => {
+    await requireLeadFollowup(request.params.id, request.params.followupId, true);
+    const result = await attachments.findForDownload("LEAD_FOLLOWUP", request.params.followupId, request.params.attachmentId, auditActorContext(request));
+    if (result.externalUrl) return reply.redirect(result.externalUrl);
+    reply.type(result.row.mimeType || "application/octet-stream").header("content-disposition", contentDispositionFilename(result.row.originalName));
+    if (result.row.fileSize !== null) reply.header("content-length", result.row.fileSize);
+    return reply.send(result.stream);
+  });
+
+  app.delete<{ Params: { id: string; followupId: string; attachmentId: string } }>("/api/v1/crm/leads/:id/followups/:followupId/attachments/:attachmentId", { preHandler: guard("crm.lead_followup.create") }, async (request) => {
+    await requireLeadFollowup(request.params.id, request.params.followupId);
+    return { data: await attachments.remove("LEAD_FOLLOWUP", request.params.followupId, request.params.attachmentId, auditActorContext(request)) };
   });
 }

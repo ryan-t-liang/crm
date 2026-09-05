@@ -23,7 +23,8 @@ const participantUserIdsSchema = z.array(z.string().trim().min(1).max(32)).max(5
 
 const leadFields = {
   requirementDetail: optionalText(16_000),
-  latestProgress: optionalText(16_000),
+  imageRequirementNote: optionalText(16_000),
+  quotationNote: optionalText(16_000),
   leadSource: optionalText(160),
   estimatedQuote: optionalQuote,
   currency: optionalCurrency,
@@ -39,7 +40,6 @@ const leadFields = {
   remark: optionalText(16_000),
   salesOwnerUserId: optionalId,
   followupOwnerUserId: optionalId,
-  nextFollowupAt: optionalDateTime,
   wonAt: optionalDateTime,
   deliveryFollowupAt: optionalDateTime,
   contractRenewalAt: optionalDateTime,
@@ -50,6 +50,7 @@ export const crmLeadCreateSchema = z.object({
   contactId: z.string().trim().min(1).max(32),
   requirementSummary: z.string().trim().min(1).max(200),
   ...leadFields,
+  salesOwnerUserId: z.string().trim().min(1).max(32),
   participantUserIds: participantUserIdsSchema.default([]),
   priority: prioritySchema.default("MEDIUM"),
   status: statusSchema.default("NEW"),
@@ -58,6 +59,14 @@ export const crmLeadCreateSchema = z.object({
     context.addIssue({ code: "custom", path: ["currency"], message: "填写预计报价时必须填写币种" });
   }
 });
+
+// Snapshot values are accepted only by the legacy-compatible import path.
+// Lead create/edit HTTP schemas intentionally omit them.
+export const crmLeadImportSchema = crmLeadCreateSchema.safeExtend({
+  latestProgress: optionalText(16_000),
+  nextAction: optionalText(16_000),
+  nextFollowupAt: optionalDateTime,
+}).strict();
 
 export const crmLeadPatchSchema = z.object({
   requirementSummary: z.string().trim().min(1).max(200).optional(),
@@ -74,6 +83,9 @@ export const leadFollowupCreateSchema = z.object({
   ownerUserId: z.string().trim().min(1).max(32).optional(),
   type: followupTypeSchema.default("GENERAL"),
   content: z.string().trim().min(1).max(16_000),
+  progress: optionalText(16_000),
+  nextAction: optionalText(16_000),
+  nextFollowupAt: optionalDateTime,
   important: z.boolean().default(false),
 }).strict();
 
@@ -89,5 +101,6 @@ export const crmLeadOrderBySchema = z.enum([
 ]);
 
 export type CrmLeadCreateInput = z.infer<typeof crmLeadCreateSchema>;
+export type CrmLeadImportInput = z.infer<typeof crmLeadImportSchema>;
 export type CrmLeadPatchInput = z.infer<typeof crmLeadPatchSchema>;
 export type LeadFollowupCreateInput = z.infer<typeof leadFollowupCreateSchema>;

@@ -36,7 +36,8 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core", () => {
   let leadId: string;
   let secondLeadId: string;
   let storageDir: string;
-  let cascadeAttachmentPath: string;
+  let preservedAttachmentPath: string;
+  let preservedAttachmentId: string;
 
   const inject = (input: any, cookie = salesCookie) => app.inject({
     ...input,
@@ -155,13 +156,16 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core", () => {
     const created = await inject({
       method: "POST",
       url: `/api/v1/crm/contacts/${contactId}/followups`,
-      payload: { occurredAt: "2026-09-04T10:00:00+08:00", type: "WECHAT", content: "确认首轮需求", ownerUserId: salesId },
+      payload: { occurredAt: "2026-09-04T10:00:00+08:00", type: "WECHAT", content: "确认首轮需求", nextFollowupAt: "2026-09-08T10:00:00+08:00", ownerUserId: salesId },
     });
     expect(created.statusCode).toBe(201);
     contactFollowupId = created.json().data.id;
     expect((await inject({ method: "GET", url: `/api/v1/crm/contacts/${contactId}/followups` })).json().data[0].id).toBe(contactFollowupId);
     expect((await inject({ method: "PATCH", url: `/api/v1/crm/contacts/${contactId}/followups/${contactFollowupId}`, payload: { content: "修改" } })).statusCode).toBe(404);
     expect((await inject({ method: "DELETE", url: `/api/v1/crm/contacts/${contactId}/followups/${contactFollowupId}` })).statusCode).toBe(404);
+    expect((await prisma.contact.findUniqueOrThrow({ where: { id: contactId } })).nextFollowupAt?.toISOString()).toBe("2026-09-08T02:00:00.000Z");
+    await inject({ method: "POST", url: `/api/v1/crm/contacts/${contactId}/followups`, payload: { occurredAt: "2026-09-01T10:00:00+08:00", type: "EMAIL", content: "补录较早邮件", nextFollowupAt: "2026-09-02T10:00:00+08:00", ownerUserId: salesId } });
+    expect((await prisma.contact.findUniqueOrThrow({ where: { id: contactId } })).nextFollowupAt?.toISOString()).toBe("2026-09-08T02:00:00.000Z");
   });
 
   it("一个联系人可关联多个线索，线索详情实时读取联系人信息", async () => {
@@ -192,11 +196,19 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core", () => {
     const followup = await inject({
       method: "POST",
       url: `/api/v1/crm/leads/${leadId}/followups`,
-      payload: { occurredAt: "2026-09-04T11:00:00+08:00", type: "MEETING", content: "完成技术方案评审", important: true, ownerUserId: salesId },
+      payload: { occurredAt: "2026-09-04T11:00:00+08:00", type: "MEETING", content: "完成技术方案评审", progress: "方案评审完成", nextAction: "发送正式报价", nextFollowupAt: "2026-09-09T10:00:00+08:00", important: true, ownerUserId: salesId },
     });
     expect(followup.statusCode).toBe(201);
     expect(followup.json().data.important).toBe(true);
-    expect((await prisma.crmLead.findUniqueOrThrow({ where: { id: leadId } })).lastFollowupAt).not.toBeNull();
+    const snapshot = await prisma.crmLead.findUniqueOrThrow({ where: { id: leadId } });
+    expect(snapshot).toMatchObject({ latestProgress: "方案评审完成", nextAction: "发送正式报价" });
+    expect(snapshot.lastFollowupAt?.toISOString()).toBe("2026-09-04T03:00:00.000Z");
+    expect(snapshot.nextFollowupAt?.toISOString()).toBe("2026-09-09T02:00:00.000Z");
+    await inject({ method: "POST", url: `/api/v1/crm/leads/${leadId}/followups`, payload: { occurredAt: "2026-09-03T11:00:00+08:00", type: "CALL", content: "补录早期沟通", progress: "旧进度", nextAction: "旧动作", nextFollowupAt: "2026-09-04T10:00:00+08:00", ownerUserId: salesId } });
+    const afterBackfill = await prisma.crmLead.findUniqueOrThrow({ where: { id: leadId } });
+    expect(afterBackfill).toMatchObject({ latestProgress: "方案评审完成", nextAction: "发送正式报价" });
+    expect(afterBackfill.lastFollowupAt?.toISOString()).toBe("2026-09-04T03:00:00.000Z");
+    expect((await inject({ method: "PATCH", url: `/api/v1/crm/leads/${leadId}`, payload: { latestProgress: "禁止直接改" } })).statusCode).toBe(422);
   });
 
   it("线索支持多参与人员和成交日期只写一次", async () => {
@@ -205,7 +217,7 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core", () => {
     expect(updated.json().data.participants.map((item: { user: { id: string } }) => item.user.id).sort()).toEqual([adminId, salesId].sort());
     const firstWonAt = updated.json().data.wonAt;
     expect(firstWonAt).toBeTruthy();
-    const edited = await inject({ method: "PATCH", url: `/api/v1/crm/leads/${leadId}`, payload: { latestProgress: "成交后更新" } });
+    const edited = await inject({ method: "PATCH", url: `/api/v1/crm/leads/${leadId}`, payload: { remark: "成交后更新" } });
     expect(edited.json().data.wonAt).toBe(firstWonAt);
     await prisma.user.update({ where: { id: viewerId }, data: { status: "DISABLED" } });
     expect((await inject({ method: "PATCH", url: `/api/v1/crm/leads/${leadId}`, payload: { participantUserIds: [viewerId] } })).statusCode).toBe(422);
@@ -279,12 +291,25 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core", () => {
       ...multipart(document, "需求说明.txt", "text/plain"),
     });
     expect(cascadeUpload.statusCode).toBe(201);
-    cascadeAttachmentPath = join(storageDir, (await prisma.crmAttachment.findUniqueOrThrow({ where: { id: cascadeUpload.json().data.id } })).storageKey!);
+    preservedAttachmentId = cascadeUpload.json().data.id;
+    preservedAttachmentPath = join(storageDir, (await prisma.crmAttachment.findUniqueOrThrow({ where: { id: cascadeUpload.json().data.id } })).storageKey!);
 
     const pdf = Buffer.from("%PDF-1.4\nKivisense meeting minutes");
     const contactUpload = await inject({ method: "POST", url: `/api/v1/crm/contacts/${contactId}/attachments/meetingMinutesFiles`, ...multipart(pdf, "会议纪要.pdf", "application/pdf") });
     expect(contactUpload.statusCode).toBe(201);
     expect((await inject({ method: "GET", url: `/api/v1/crm/contacts/${contactId}` })).json().data.attachments[0]).toMatchObject({ fieldKey: "meetingMinutesFiles" });
+
+    const followupDocument = Buffer.from("Kivisense followup notes");
+    const followupUpload = await inject({ method: "POST", url: `/api/v1/crm/leads/${leadId}/followups/${(await prisma.leadFollowup.findFirstOrThrow({ where: { leadId }, orderBy: { occurredAt: "desc" } })).id}/attachments/followupAttachments`, ...multipart(followupDocument, "跟进资料.txt", "text/plain") });
+    expect(followupUpload.statusCode).toBe(201);
+    expect(followupUpload.json().data).toMatchObject({ entityType: "LEAD_FOLLOWUP", fieldKey: "followupAttachments" });
+    const followupList = await inject({ method: "GET", url: `/api/v1/crm/leads/${leadId}/followups` });
+    expect(followupList.json().data[0].attachments[0].originalName).toBe("跟进资料.txt");
+
+    const journey = await inject({ method: "GET", url: `/api/v1/crm/contacts/${contactId}/journey` });
+    expect(journey.statusCode).toBe(200);
+    expect(journey.json().data.events.some((event: { type: string }) => event.type === "LEAD_FOLLOWUP")).toBe(true);
+    expect(journey.json().data.events.some((event: { type: string }) => event.type === "LEGACY_MEETING_FILES")).toBe(true);
   });
 
   it("VIEWER 只读，SALES 无导入导出权限", async () => {
@@ -295,20 +320,27 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core", () => {
     expect((await inject({ method: "POST", url: "/api/v1/crm/exports/leads", payload: {} }, salesCookie)).statusCode).toBe(403);
   });
 
-  it("删除受权限和关联关系保护，并级联清理跟进与附件", async () => {
+  it("删除受权限和关联关系保护，并以软删除保留历史跟进与附件", async () => {
     const blockedContact = await inject({ method: "DELETE", url: `/api/v1/crm/contacts/${contactId}` });
     expect(blockedContact.statusCode).toBe(409);
-    expect(blockedContact.json().error).toMatchObject({ code: "CONTACT_HAS_LEADS", details: { relatedLeadCount: 2 } });
+    expect(blockedContact.json().error).toMatchObject({ code: "CONTACT_HAS_ACTIVE_LEADS", details: { relatedLeadCount: 2 } });
 
     expect((await inject({ method: "DELETE", url: `/api/v1/crm/leads/${secondLeadId}` })).statusCode).toBe(200);
     expect((await inject({ method: "DELETE", url: `/api/v1/crm/leads/${leadId}` })).statusCode).toBe(200);
-    expect(await prisma.leadFollowup.count({ where: { leadId } })).toBe(0);
-    expect(await prisma.crmAttachment.count({ where: { entityType: "LEAD", entityId: leadId } })).toBe(0);
-    await expect(stat(cascadeAttachmentPath)).rejects.toMatchObject({ code: "ENOENT" });
+    expect((await prisma.crmLead.findUniqueOrThrow({ where: { id: leadId } })).deletedAt).not.toBeNull();
+    expect(await prisma.leadFollowup.count({ where: { leadId } })).toBeGreaterThan(0);
+    expect(await prisma.crmAttachment.count({ where: { entityType: "LEAD", entityId: leadId } })).toBeGreaterThan(0);
+    expect((await stat(preservedAttachmentPath)).isFile()).toBe(true);
+    expect((await inject({ method: "GET", url: `/api/v1/crm/leads/${leadId}` })).statusCode).toBe(404);
+    const journeyWithDeletedLead = await inject({ method: "GET", url: `/api/v1/crm/contacts/${contactId}/journey` });
+    expect(journeyWithDeletedLead.json().data.events.some((event: { relatedLead?: { id: string; deleted: boolean } }) => event.relatedLead?.id === leadId && event.relatedLead.deleted)).toBe(true);
+    expect((await inject({ method: "GET", url: `/api/v1/crm/leads/${leadId}/attachments/${preservedAttachmentId}/download` })).rawPayload).toEqual(Buffer.from("Kivisense requirement document"));
 
     expect((await inject({ method: "DELETE", url: `/api/v1/crm/contacts/${contactId}` })).statusCode).toBe(200);
-    expect(await prisma.contact.findUnique({ where: { id: contactId } })).toBeNull();
-    expect(await prisma.contactFollowup.findUnique({ where: { id: contactFollowupId } })).toBeNull();
+    expect((await prisma.contact.findUniqueOrThrow({ where: { id: contactId } })).deletedAt).not.toBeNull();
+    expect(await prisma.contactFollowup.findUnique({ where: { id: contactFollowupId } })).not.toBeNull();
+    expect((await inject({ method: "GET", url: `/api/v1/crm/contacts/${contactId}` })).statusCode).toBe(404);
+    expect((await inject({ method: "GET", url: `/api/v1/crm/leads/${leadId}/attachments/${preservedAttachmentId}/download` })).statusCode).toBe(404);
   });
 
   it("超级管理员可管理账号、角色与审计，不接受品牌字段", async () => {
@@ -321,7 +353,7 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core", () => {
       payload: { name: "错误账号", loginAccount: `invalid-${runKey}@example.test`, roleId: (await prisma.role.findUniqueOrThrow({ where: { key: "SALES" } })).id, brandIds: [] },
     }, adminCookie);
     expect(invalid.statusCode).toBe(422);
-    const audit = await inject({ method: "GET", url: "/api/v1/audit-logs?module=crm" }, adminCookie);
+    const audit = await inject({ method: "GET", url: "/api/v1/audit-logs?module=crm&pageSize=100" }, adminCookie);
     expect(audit.statusCode).toBe(200);
     const auditActions = new Set(audit.json().data.map((item: { action: string }) => item.action));
     for (const action of ["CREATE_CRM_LEAD", "UPLOAD_ATTACHMENT", "DOWNLOAD_ATTACHMENT", "DELETE_ATTACHMENT"]) expect(auditActions.has(action)).toBe(true);
