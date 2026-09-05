@@ -21,6 +21,7 @@ const contactStageSchema = z.enum(["INITIAL", "ONE_TO_ONE", "SOLUTION", "CONVENT
 const followupTypeSchema = z.enum(["GENERAL", "MEETING", "CALL", "EMAIL", "WECHAT", "OTHER"]);
 
 const contactFields = {
+  organizationId: optionalId,
   companyShortName: optionalText(120),
   companyName: optionalText(240),
   department: optionalText(160),
@@ -66,7 +67,9 @@ export const contactFollowupCreateSchema = z.object({
   ownerUserId: z.string().trim().min(1).max(32).optional(),
   type: followupTypeSchema.default("GENERAL"),
   content: z.string().trim().min(1).max(16_000),
+  nextAction: optionalText(16_000),
   nextFollowupAt: optionalDateTime,
+  currentTaskId: optionalId,
 }).strict();
 
 export const contactOrderBySchema = z.enum([

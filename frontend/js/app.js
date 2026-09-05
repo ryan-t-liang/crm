@@ -5,6 +5,7 @@ import { initializeContacts, loadContacts, openContact, syncContactUsers } from 
 import { initializeFollowups } from "./followups.js";
 import { initializeCrmJobs, openCrmExport, openCrmImport } from "./crm-jobs.js";
 import { initializeLeads, loadLeads, openLead, openLeadForm, syncLeadUsers } from "./leads.js";
+import { initializeCustomerOperations, loadDashboard, loadOrganizations, openOrganization, loadCustomerOperations, loadWorkbench, loadVendors, openOrganizationQuickCreate } from "./customer-operations.js";
 
 const state = {
   me: null,
@@ -15,6 +16,7 @@ const state = {
   activeRoleId: null,
   currentCrmContact: null,
   currentCrmLead: null,
+  organizations: [],
 };
 
 const can = (permission) => Boolean(state.me?.permissions?.includes(permission));
@@ -48,6 +50,9 @@ function applyCrmPermissions() {
   document.querySelectorAll("[data-crm-permission]").forEach((element) => {
     element.hidden = !can(element.dataset.crmPermission);
   });
+  document.querySelectorAll("[data-crm-any-permission]").forEach((element) => {
+    element.hidden = !element.dataset.crmAnyPermission.split(",").some(can);
+  });
 }
 
 function setNavCount(route, count) {
@@ -68,13 +73,15 @@ const context = {
   openLeadForm,
   openImport: openCrmImport,
   openExport: openCrmExport,
-  reload: (objectType) => objectType === "CONTACT" ? loadContacts(1) : loadLeads(1),
+  openOrganizationQuickCreate,
+  reload: (objectType) => objectType === "CONTACT" ? loadContacts(1) : objectType === "CRM_LEAD" ? loadLeads(1) : loadOrganizations(),
 };
 
 initializeContacts(context);
 initializeLeads(context);
 initializeFollowups(context);
 initializeCrmJobs(context);
+initializeCustomerOperations(context);
 
 function showLogin() {
   $("loginOverlay").hidden = false;
@@ -162,7 +169,7 @@ function resolveConfirmation(confirmed) {
 
 async function loadDirectories() {
   const tasks = [];
-  if (can("crm.contact.view") || can("crm.lead.view")) {
+  if (can("crm.contact.view") || can("crm.lead.view") || can("crm.organization.view") || can("crm.task.view")) {
     tasks.push(crmApi("/api/v1/crm/users").then((result) => { state.crmUsers = result.data; }));
   }
   if (can("account.view")) tasks.push(crmApi("/api/v1/users").then((result) => { state.users = result.data; }));
@@ -176,6 +183,8 @@ async function loadDirectories() {
 }
 
 function allowedDefaultRoute() {
+  if (can("crm.dashboard.management.view") || can("crm.dashboard.self.view")) return "dashboard";
+  if (can("crm.organization.view")) return "organizations";
   if (can("crm.contact.view")) return "contacts";
   if (can("crm.lead.view")) return "leads";
   if (can("account.view")) return "accounts";
@@ -196,9 +205,11 @@ async function enterApplication(me = null) {
   const navigationCounts = await Promise.all([
     can("crm.contact.view") ? crmApi("/api/v1/crm/contacts?page=1&pageSize=1").catch(() => null) : null,
     can("crm.lead.view") ? crmApi("/api/v1/crm/leads?page=1&pageSize=1").catch(() => null) : null,
+    can("crm.organization.view") ? crmApi("/api/v1/crm/organizations?page=1&pageSize=1").catch(() => null) : null,
   ]);
   if (navigationCounts[0]) setNavCount("contacts", navigationCounts[0].meta.total);
   if (navigationCounts[1]) setNavCount("leads", navigationCounts[1].meta.total);
+  if (navigationCounts[2]) setNavCount("organizations", navigationCounts[2].meta.total);
   applyCrmPermissions();
   await route();
 }
@@ -264,6 +275,11 @@ function navigate(path) {
 }
 
 const views = {
+  dashboard: "dashboardView",
+  organizations: "organizationsView",
+  operations: "customerOperationsView",
+  workbench: "workbenchView",
+  vendors: "vendorsView",
   leads: "crmLeadsView",
   contacts: "crmContactsView",
   accounts: "accountsView",
@@ -274,19 +290,26 @@ const views = {
 async function route() {
   if (!state.me || state.me.mustChangePassword) return;
   const [section, id] = currentPath().split("/");
-  const routePermissions = { leads: "crm.lead.view", contacts: "crm.contact.view", accounts: "account.view", roles: "roles.view", audit: "audit.view" };
-  if (!routePermissions[section] || !can(routePermissions[section])) {
+  const routePermissions = { organizations: "crm.organization.view", operations: "crm.organization.view", workbench: "crm.task.view", vendors: "crm.organization.view", leads: "crm.lead.view", contacts: "crm.contact.view", accounts: "account.view", roles: "roles.view", audit: "audit.view" };
+  const dashboardAllowed = section === "dashboard" && (can("crm.dashboard.self.view") || can("crm.dashboard.management.view"));
+  if ((!routePermissions[section] || !can(routePermissions[section])) && !dashboardAllowed) {
     navigate(allowedDefaultRoute());
     return;
   }
   document.querySelectorAll(".view").forEach((view) => view.classList.remove("is-active"));
   document.querySelectorAll(".nav-item").forEach((item) => item.classList.toggle("is-active", item.dataset.route === section));
-  $(id ? (section === "leads" ? "crmLeadDetailView" : "crmContactDetailView") : views[section]).classList.add("is-active");
-  const labels = { leads: "线索", contacts: "客户联系人", accounts: "账户管理", roles: "角色与权限", audit: "审计日志" };
+  const detailView = section === "leads" ? "crmLeadDetailView" : section === "contacts" ? "crmContactDetailView" : "organizationDetailView";
+  $(id ? detailView : views[section]).classList.add("is-active");
+  const labels = { dashboard: "Dashboard", organizations: "公司", operations: "客户运营", workbench: "我的工作台", vendors: "供应商", leads: "线索", contacts: "客户联系人", accounts: "账户管理", roles: "角色与权限", audit: "审计日志" };
   $("breadcrumbCurrent").textContent = labels[section];
   try {
     if (section === "leads") await (id ? openLead(id) : loadLeads());
     if (section === "contacts") await (id ? openContact(id) : loadContacts());
+    if (section === "dashboard") await loadDashboard();
+    if (section === "organizations") await (id ? openOrganization(id) : loadOrganizations());
+    if (section === "operations") await loadCustomerOperations();
+    if (section === "workbench") await loadWorkbench();
+    if (section === "vendors") await loadVendors();
     if (section === "accounts") await renderAccounts();
     if (section === "roles") renderRoles();
     if (section === "audit") await renderAudit();

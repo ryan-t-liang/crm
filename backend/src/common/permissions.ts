@@ -5,6 +5,10 @@ export const permissionDependencies: Readonly<Record<string, readonly string[]>>
   "crm.contact_followup.view": ["crm.contact_followup.create"],
   "crm.lead.view": ["crm.lead.create", "crm.lead.edit", "crm.lead.delete", "crm.lead.import", "crm.lead.export", "crm.lead_followup.view", "crm.lead_followup.create"],
   "crm.lead_followup.view": ["crm.lead_followup.create"],
+  "crm.organization.view": ["crm.organization.create", "crm.organization.edit", "crm.organization.delete", "crm.organization.import", "crm.organization.export", "crm.organization.score.edit", "crm.organization.nurture.manage"],
+  "crm.task.view": ["crm.task.create", "crm.task.edit", "crm.task.complete", "crm.task.cancel"],
+  "crm.dashboard.self.view": [],
+  "crm.dashboard.management.view": [],
 };
 
 export function normalizePermissionDependencies(keys: Iterable<string>): string[] {

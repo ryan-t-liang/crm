@@ -83,7 +83,7 @@ export async function crmLeadRoutes(app: FastifyInstance): Promise<void> {
     return { data: result.rows, meta: paginationMeta(query.page, query.pageSize, result.total) };
   });
 
-  app.post<{ Params: { id: string } }>("/api/v1/crm/leads/:id/followups", { preHandler: guard("crm.lead_followup.create") }, async (request, reply) => {
+  app.post<{ Params: { id: string } }>("/api/v1/crm/leads/:id/followups", { preHandler: [guard("crm.lead_followup.create"), guard("crm.task.create")] }, async (request, reply) => {
     const body = leadFollowupCreateSchema.parse(request.body);
     const row = await followups.create(request.params.id, body, request.auth!.userId, auditActorContext(request));
     return reply.status(201).send({ data: row });

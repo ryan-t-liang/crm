@@ -3,10 +3,11 @@
 import { $, appUrl, crmApi, esc, formatLocalDateTime } from "./api.js";
 
 let context;
-const state = { mode: "import", objectType: "CONTACT", job: null, result: null, loading: false, error: "", history: null, file: null };
+const state = { mode: "import", objectType: "CONTACT", job: null, result: null, loading: false, error: "", history: null, file: null, createMissingOrganization: false };
 const objectConfig = {
   CONTACT: { label: "客户联系人", route: "contacts" },
   CRM_LEAD: { label: "线索", route: "leads" },
+  ORGANIZATION: { label: "公司", route: "organizations" },
 };
 
 export function preflightStatusLabel(status) {
@@ -61,7 +62,7 @@ function renderLanding() {
   const item = config();
   return `<div class="upload-stage"><h3>上传${esc(item.label)}数据</h3><p class="section-intro">上传标准 XLSX 文件，系统会在写入前完成数据检查。</p>
     <div class="upload-card" id="crmUploadCard"><div><div class="upload-symbol"><svg><use href="#i-upload"/></svg></div><div class="upload-copy"><strong>拖放 XLSX 文件</strong><span>单次最多 5,000 行</span></div><div class="upload-actions"><button class="btn btn-primary btn-small" id="crmChooseFile" type="button">选择文件</button><a class="text-action" href="${appUrl(`/api/v1/crm/templates/${item.route}`)}" download>下载${esc(item.label)}模板</a></div><span class="template-guidance">Excel 模板 · 请保留标准字段 Key</span></div></div>
-    ${inlineError()}
+    ${state.objectType === "CONTACT" ? `<label class="import-option"><input id="crmCreateMissingOrganization" type="checkbox"${state.createMissingOrganization ? " checked" : ""}><span><strong>Create Missing Organization</strong><small>显式创建未匹配公司；默认关闭，避免重复主档</small></span></label>` : ""}${inlineError()}
   </div>`;
 }
 
@@ -81,7 +82,7 @@ function renderResult() {
 }
 
 function renderHistory() {
-  const rows = (state.history || []).map((job) => `<tr><td>${esc(job.fileName)}</td><td>${job.objectType === "CONTACT" ? "客户联系人" : "线索"}</td><td>${esc(job.operatorName || "-")}</td><td>${esc(formatLocalDateTime(job.createdAt))}</td><td>${esc(jobStatusLabel(job.status))}</td><td>${job.successCount}</td><td>${job.failedCount}</td></tr>`).join("");
+  const rows = (state.history || []).map((job) => `<tr><td>${esc(job.fileName)}</td><td>${job.objectType === "CONTACT" ? "客户联系人" : job.objectType === "CRM_LEAD" ? "线索" : "公司"}</td><td>${esc(job.operatorName || "-")}</td><td>${esc(formatLocalDateTime(job.createdAt))}</td><td>${esc(jobStatusLabel(job.status))}</td><td>${job.successCount}</td><td>${job.failedCount}</td></tr>`).join("");
   return `<div class="history-view"><h3>导入记录</h3><p class="section-intro">查看最近的导入任务和处理结果。</p><div class="preview-table-wrap"><table class="history-table"><thead><tr><th>文件</th><th>对象</th><th>操作人</th><th>时间</th><th>状态</th><th>成功</th><th>失败</th></tr></thead><tbody>${rows || '<tr><td colspan="7">暂无导入记录</td></tr>'}</tbody></table></div>${inlineError()}</div>`;
 }
 
@@ -121,6 +122,7 @@ function render() {
   $("crmJobBody").innerHTML = content;
   renderFooter();
   $("crmChooseFile")?.addEventListener("click", () => { $("crmJobFile").value = ""; $("crmJobFile").click(); });
+  $("crmCreateMissingOrganization")?.addEventListener("change", (event) => { state.createMissingOrganization = event.target.checked; });
   const uploadCard = $("crmUploadCard");
   if (uploadCard) {
     for (const type of ["dragenter", "dragover"]) uploadCard.addEventListener(type, (event) => { event.preventDefault(); uploadCard.classList.add("is-dragging"); });
@@ -149,7 +151,7 @@ async function uploadFile(file) {
   try {
     const body = new FormData();
     body.append("file", file);
-    const result = await crmApi(`/api/v1/crm/imports/${config().route}`, { method: "POST", body });
+    const result = await crmApi(`/api/v1/crm/imports/${config().route}?createMissingOrganization=${state.createMissingOrganization}`, { method: "POST", body });
     state.job = result.data;
   } catch (error) {
     state.error = error.message || "文件检查失败。";

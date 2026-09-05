@@ -6,6 +6,7 @@ import { ApiError } from "../common/errors.js";
 import { crmAttachmentSelect } from "./attachments.js";
 import type { TimelineListInput } from "../contacts/service.js";
 import type { CrmLeadCreateInput, CrmLeadImportInput, CrmLeadPatchInput, LeadFollowupCreateInput } from "./schemas.js";
+import { transitionOrganizationLifecycle } from "../organizations/service.js";
 
 export type CrmLeadListInput = {
   keyword?: string;
@@ -39,6 +40,8 @@ export const contactSummarySelect = {
   city: true,
   region: true,
   stage: true,
+  organizationId: true,
+  organization: { select: { id: true, name: true, shortName: true, lifecycleStage: true, fitScore: true, roles: true } },
   owner: { select: crmUserSummarySelect },
 } satisfies Prisma.ContactSelect;
 
@@ -61,8 +64,8 @@ async function requireCrmLead(db: CrmDbClient, id: string) {
   return lead;
 }
 
-async function requireContactForLead(db: CrmDbClient, contactId: string): Promise<void> {
-  const contact = await db.contact.findFirst({ where: { id: contactId, deletedAt: null }, select: { id: true } });
+async function requireContactForLead(db: CrmDbClient, contactId: string) {
+  const contact = await db.contact.findFirst({ where: { id: contactId, deletedAt: null }, select: { id: true, organizationId: true } });
   if (!contact) {
     throw new ApiError(422, "VALIDATION_ERROR", "请求数据校验失败", [{
       field: "contactId",
@@ -70,6 +73,7 @@ async function requireContactForLead(db: CrmDbClient, contactId: string): Promis
       message: "关联的 CRM 联系人不存在",
     }]);
   }
+  return contact;
 }
 
 function validateQuoteCurrency(estimatedQuote: string | null | undefined, currency: string | null | undefined): void {
@@ -140,7 +144,7 @@ export class CrmLeadService {
   async create(input: CrmLeadCreateInput | CrmLeadImportInput, createdByUserId: string, audit: AuditActorContext) {
     return this.prisma.$transaction(async (tx) => {
       const { participantUserIds, ...fields } = input;
-      await requireContactForLead(tx, input.contactId);
+      const contact = await requireContactForLead(tx, input.contactId);
       await Promise.all([
         assertAssignableCrmUser(tx, input.salesOwnerUserId, "salesOwnerUserId"),
         assertAssignableCrmUser(tx, input.followupOwnerUserId, "followupOwnerUserId"),
@@ -152,11 +156,16 @@ export class CrmLeadService {
           ...fields,
           estimatedQuote: input.estimatedQuote == null ? input.estimatedQuote : new Prisma.Decimal(input.estimatedQuote),
           wonAt: input.wonAt ?? (input.status === "WON" ? new Date() : undefined),
+          closedAt: ["WON", "LOST"].includes(input.status) ? input.wonAt ?? new Date() : undefined,
           createdByUserId,
           participants: participantUserIds.length ? { create: participantUserIds.map((userId) => ({ userId })) } : undefined,
         },
         include: crmLeadDetailInclude,
       });
+      await tx.leadStageHistory.create({ data: { leadId: row.id, fromStatus: null, toStatus: row.status, changedByUserId: createdByUserId, changedAt: row.createdAt } });
+      if (contact.organizationId) {
+        await transitionOrganizationLifecycle(tx, contact.organizationId, row.status === "WON" ? "CUSTOMER" : "OPPORTUNITY", createdByUserId, row.status === "WON" ? "First won lead" : "Active lead created", { automatic: true });
+      }
       await appendAuditRecord(tx, audit, {
         action: "CREATE_CRM_LEAD",
         module: "crm",
@@ -205,12 +214,25 @@ export class CrmLeadService {
           wonAt: existing.wonAt
             ? undefined
             : input.wonAt ?? (input.status === "WON" && existing.status !== "WON" ? new Date() : undefined),
+          closedAt: input.status === undefined
+            ? undefined
+            : ["WON", "LOST"].includes(input.status)
+              ? existing.closedAt ?? new Date()
+              : null,
           participants: participantUserIds === undefined
             ? undefined
             : { deleteMany: {}, create: participantUserIds.map((userId) => ({ userId })) },
         },
         include: crmLeadDetailInclude,
       });
+      if (input.status !== undefined && input.status !== existing.status) {
+        await tx.leadStageHistory.create({ data: { leadId: id, fromStatus: existing.status, toStatus: row.status, changedByUserId: audit.actorUserId! } });
+        const contact = await tx.contact.findUnique({ where: { id: row.contactId }, select: { organizationId: true } });
+        if (contact?.organizationId) {
+          if (row.status === "WON") await transitionOrganizationLifecycle(tx, contact.organizationId, "CUSTOMER", audit.actorUserId!, "Lead won", { automatic: true });
+          else if (!["LOST"].includes(row.status)) await transitionOrganizationLifecycle(tx, contact.organizationId, "OPPORTUNITY", audit.actorUserId!, "Active lead stage", { automatic: true });
+        }
+      }
       await appendAuditRecord(tx, audit, {
         action: "UPDATE_CRM_LEAD",
         module: "crm",
@@ -282,11 +304,18 @@ export class LeadFollowupService {
 
   async create(leadId: string, input: LeadFollowupCreateInput, createdByUserId: string, audit: AuditActorContext) {
     return this.prisma.$transaction(async (tx) => {
-      await requireCrmLead(tx, leadId);
+      const lead = await tx.crmLead.findFirst({ where: { id: leadId, deletedAt: null }, include: { contact: { select: { organizationId: true } } } });
+      if (!lead) throw new ApiError(404, "RESOURCE_NOT_FOUND", "线索不存在");
       const ownerUserId = input.ownerUserId ?? createdByUserId;
       await assertAssignableCrmUser(tx, ownerUserId, "ownerUserId");
+      const { currentTaskId, ...followupInput } = input;
+      if (currentTaskId) {
+        const currentTask = await tx.crmTask.findFirst({ where: { id: currentTaskId, status: "OPEN", ownerUserId: createdByUserId } });
+        if (!currentTask) throw new ApiError(422, "INVALID_CURRENT_TASK", "当前任务不存在、已关闭或不属于当前用户");
+        await tx.crmTask.update({ where: { id: currentTaskId }, data: { status: "DONE", completedAt: new Date(), completedByUserId: createdByUserId } });
+      }
       const row = await tx.leadFollowup.create({
-        data: { ...input, leadId, ownerUserId, createdByUserId },
+        data: { ...followupInput, leadId, ownerUserId, createdByUserId },
         include: {
           owner: { select: crmUserSummarySelect },
           createdBy: { select: crmUserSummarySelect },
@@ -302,12 +331,15 @@ export class LeadFollowupService {
           ...(latest?.id === row.id && row.nextFollowupAt ? { nextFollowupAt: row.nextFollowupAt } : {}),
         },
       });
+      if (row.nextAction && row.nextFollowupAt) {
+        await tx.crmTask.create({ data: { organizationId: lead.contact.organizationId, contactId: lead.contactId, leadId, title: row.nextAction.slice(0, 300), description: row.content, ownerUserId, dueAt: row.nextFollowupAt, source: "FOLLOWUP", createdByUserId } });
+      }
       await appendAuditRecord(tx, audit, {
         action: "CREATE_LEAD_FOLLOWUP",
         module: "crm",
         targetType: "lead_followup",
         targetId: row.id,
-        details: { leadId, type: row.type, important: row.important, occurredAt: row.occurredAt.toISOString(), ownerUserId },
+        details: { leadId, type: row.type, important: row.important, occurredAt: row.occurredAt.toISOString(), ownerUserId, currentTaskId, nextTaskCreated: Boolean(row.nextAction && row.nextFollowupAt) },
       });
       return { ...row, attachments: [] };
     });

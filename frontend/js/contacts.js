@@ -8,6 +8,7 @@ let context;
 const listState = { page: 1, pageSize: 20, pageCount: 1, total: 0 };
 const relatedState = { page: 1, pageSize: 8, pageCount: 1, total: 0 };
 let editingContact = null;
+let organizationSearchTimer = null;
 
 export function buildContactQuery(filters, page = 1, now = new Date()) {
   const params = new URLSearchParams({ page: String(page), pageSize: String(filters.pageSize || 20), orderBy: "updatedAt_desc" });
@@ -127,7 +128,7 @@ function renderContactRows(rows) {
   $("crmContactMetricUnassigned").textContent = String(rows.filter((contact) => !contact.owner).length);
   $("crmContactRows").innerHTML = rows.map((contact) => `<tr data-crm-contact-id="${esc(contact.id)}" tabindex="0">
     <td><div class="member-cell"><span class="avatar">${esc(contact.contactName.trim().slice(0, 1).toUpperCase() || "客")}</span><span class="member-main"><strong>${esc(contact.contactName)}</strong><span>${esc(contact.email || contact.phone || "-")}</span></span></div></td>
-    <td><strong>${esc(contact.companyShortName || contact.companyName || "-")}</strong><small>${esc(contact.companyShortName && contact.companyName ? contact.companyName : "")}</small></td>
+    <td><strong>${esc(contact.organization?.shortName || contact.organization?.name || contact.companyShortName || contact.companyName || "-")}</strong><small>${esc(contact.organization?.name || (contact.companyShortName && contact.companyName ? contact.companyName : ""))}</small></td>
     <td>${esc(displayValue(contact.title))}</td>
     <td><span class="crm-badge crm-stage-${esc(contact.stage.toLowerCase())}">${esc(stageLabel(contact.stage))}</span></td>
     <td>${esc(contact.owner?.name || "-")}</td>
@@ -193,9 +194,10 @@ function renderContactInformation(contact) {
 }
 
 function renderCompanyInformation(contact) {
+  const company = contact.organization || contact;
   return [
-    identityField("公司简称", contact.companyShortName), identityField("公司完整名称", contact.companyName), identityField("行业", contact.industry),
-    identityField("Website", contact.website), identityField("国家", contact.country), identityField("区域", contact.region), identityField("城市", contact.city),
+    identityField("公司简称", company.shortName || contact.companyShortName), identityField("公司完整名称", company.name || contact.companyName), identityField("行业", company.industry || contact.industry),
+    identityField("Website", company.website || contact.website), identityField("国家", company.country || contact.country), identityField("区域", company.region || contact.region), identityField("城市", company.city || contact.city),
     identityField("来源", contact.source), identityField("跟进人员", contact.owner?.name), identityField("触达阶段", stageLabel(contact.stage)),
     identityField("下次跟进", formatLocalDateTime(contact.nextFollowupAt)), identityField("跟进注意", contact.followupAttention, true), identityField("初始信息", contact.initialContext, true),
   ].join("");
@@ -274,7 +276,7 @@ export async function openContact(id) {
     relatedState.total = relatedResult.meta.total;
     relatedState.pageCount = Math.max(1, relatedResult.meta.pageCount || 1);
     container.innerHTML = `<div class="crm-record v1-detail">
-      <header class="detail-top"><button class="back-button" id="crmBackToContacts" type="button" aria-label="返回联系人列表"><svg><use href="#i-arrow"/></svg></button><div class="detail-identity"><div class="detail-avatar">${esc(contact.contactName.trim().slice(0, 1).toUpperCase() || "客")}</div><div><div class="detail-name-line"><h1>${esc(contact.contactName)}</h1><span class="crm-badge crm-stage-${esc(contact.stage.toLowerCase())}">${esc(stageLabel(contact.stage))}</span></div><div class="detail-contact-row"><span>${esc(contact.companyShortName || contact.companyName || "-")}</span><span>${esc(contact.title || "-")}</span><span>${esc(contact.email || contact.phone || "-")}</span></div></div></div><div class="detail-top-actions"><button class="btn btn-primary" id="crmContactNewLead" type="button" data-crm-permission="crm.lead.create"><svg><use href="#i-plus"/></svg>新增线索</button><button class="btn" id="crmAddContactInteraction" type="button" data-crm-permission="crm.contact_followup.create"><svg><use href="#i-plus"/></svg>新增互动</button><button class="btn" id="crmEditContact" type="button" data-crm-permission="crm.contact.edit"><svg><use href="#i-edit"/></svg>编辑</button><details class="crm-more"><summary class="btn">更多</summary><button type="button" id="crmDeleteContactDetail" data-crm-permission="crm.contact.delete">删除联系人</button></details></div></header>
+      <header class="detail-top"><button class="back-button" id="crmBackToContacts" type="button" aria-label="返回联系人列表"><svg><use href="#i-arrow"/></svg></button><div class="detail-identity"><div class="detail-avatar">${esc(contact.contactName.trim().slice(0, 1).toUpperCase() || "客")}</div><div><div class="detail-name-line"><h1>${esc(contact.contactName)}</h1><span class="crm-badge crm-stage-${esc(contact.stage.toLowerCase())}">${esc(stageLabel(contact.stage))}</span></div><div class="detail-contact-row">${contact.organization ? `<button class="contact-company-link" id="crmContactOrganizationLink" type="button">${esc(contact.organization.shortName || contact.organization.name)}</button>` : `<span>${esc(contact.companyShortName || contact.companyName || "未关联公司")}</span>`}<span>${esc(contact.title || "-")}</span><span>${esc(contact.email || contact.phone || "-")}</span></div></div></div><div class="detail-top-actions"><button class="btn btn-primary" id="crmContactNewLead" type="button" data-crm-permission="crm.lead.create"><svg><use href="#i-plus"/></svg>新增线索</button><button class="btn" id="crmAddContactInteraction" type="button" data-crm-permission="crm.contact_followup.create"><svg><use href="#i-plus"/></svg>新增互动</button><button class="btn" id="crmEditContact" type="button" data-crm-permission="crm.contact.edit"><svg><use href="#i-edit"/></svg>编辑</button><details class="crm-more"><summary class="btn">更多</summary><button type="button" id="crmDeleteContactDetail" data-crm-permission="crm.contact.delete">删除联系人</button></details></div></header>
       <div class="customer-360-summary" aria-label="客户 360 摘要"><div><span>活跃线索</span><strong>${esc(journey.summary.activeLeadCount)}</strong></div><div><span>成交线索</span><strong>${esc(journey.summary.wonLeadCount)}</strong></div><div><span>最近互动</span><strong>${esc(formatLocalDateTime(journey.summary.recentInteractionAt))}</strong></div><div><span>下次跟进</span><strong>${esc(formatLocalDateTime(journey.summary.nextFollowupAt))}</strong></div></div>
       <div class="detail-grid"><aside class="detail-column detail-side"><article class="content-card customer-identity-card"><div class="content-card-header"><svg class="icon"><use href="#i-user"/></svg><h3>联系人资料</h3></div><div class="customer-identity-grid">${renderContactInformation(contact)}</div></article><article class="content-card customer-identity-card"><div class="content-card-header"><svg class="icon"><use href="#i-file"/></svg><h3>客户资料</h3></div><div class="customer-identity-grid">${renderCompanyInformation(contact)}</div></article><article class="content-card customer-identity-card crm-system-card"><div class="content-card-header"><svg class="icon"><use href="#i-file"/></svg><h3>系统信息</h3></div><div class="customer-identity-grid">${renderContactSystemInformation(contact)}</div></article></aside>
       <section class="detail-column operations-main"><nav class="detail-tabs" aria-label="联系人详情业务模块"><button class="detail-tab is-active" type="button" data-detail-tab="leads">线索 ${relatedResult.meta.total}</button><button class="detail-tab" type="button" data-detail-tab="journey">客户旅程</button><button class="detail-tab" type="button" data-detail-tab="notes">备注 ${contact.remark ? 1 : 0}</button><button class="detail-tab" type="button" data-detail-tab="activity">操作记录</button></nav>
@@ -286,6 +288,7 @@ export async function openContact(id) {
     </div>`;
     $("crmBackToContacts").addEventListener("click", () => context.navigate("contacts"));
     $("crmEditContact").addEventListener("click", () => openContactForm(contact));
+    $("crmContactOrganizationLink")?.addEventListener("click", () => context.navigate(`organizations/${contact.organization.id}`));
     const addInteraction = () => openFollowup({ kind: "contact", id: contact.id, title: `${contact.contactName} · 新增互动`, onSaved: () => openContact(contact.id) });
     $("crmAddContactInteraction").addEventListener("click", addInteraction);
     $("crmJourneyAddInteraction").addEventListener("click", addInteraction);
@@ -318,9 +321,56 @@ export function openContactForm(contact = null) {
     { key: "basic", label: "基础资料" }, { key: "crm", label: "CRM 信息" }, { key: "notes", label: "备注" },
   ]);
   bindFormTabs($("crmContactForm"));
+  initializeOrganizationSelector(contact?.organization || null);
   $("crmContactFormError").hidden = true;
   $("crmContactDrawer").showModal();
   setTimeout(() => $("crmContactForm").elements.contactName.focus(), 30);
+}
+
+function setSelectedOrganization(organization) {
+  const form = $("crmContactForm");
+  form.dataset.organizationId = organization?.id || "";
+  $("crmContactOrganizationSearch").value = organization?.name || "";
+  $("crmContactOrganizationSelected").innerHTML = organization
+    ? `<span><strong>${esc(organization.name)}</strong><small>${esc([organization.shortName, organization.industry, organization.city].filter(Boolean).join(" · ") || "已关联公司")}</small></span><button type="button" id="crmClearOrganization">取消关联</button>`
+    : '<span><strong>未关联公司</strong><small>可继续使用历史公司文字；建议选择统一公司主档</small></span>';
+  $("crmClearOrganization")?.addEventListener("click", () => setSelectedOrganization(null));
+  const linked = Boolean(organization);
+  ["companyShortName", "companyName", "industry", "website", "country", "region", "city"].forEach((key) => {
+    const input = form.elements[key];
+    if (!input) return;
+    input.disabled = linked;
+    if (linked) {
+      const map = { companyShortName: "shortName", companyName: "name" };
+      input.value = organization[map[key] || key] || "";
+    }
+    input.closest(".crm-field")?.classList.toggle("is-readonly-company", linked);
+  });
+}
+
+function initializeOrganizationSelector(selected) {
+  const form = $("crmContactForm");
+  form.dataset.originalOrganizationId = selected?.id || "";
+  const grid = form.querySelector('[data-form-tab-panel="basic"] .crm-form-grid');
+  grid.insertAdjacentHTML("afterbegin", `<div class="crm-field crm-field-wide organization-selector"><span>所属公司</span><div class="organization-search-control"><svg><use href="#i-search"/></svg><input id="crmContactOrganizationSearch" type="search" placeholder="搜索公司名称、简称、网站或联系人"><button class="btn btn-small" id="crmQuickCreateOrganization" type="button">+ 新建公司</button></div><div class="organization-search-results" id="crmContactOrganizationResults" hidden></div><div class="organization-selected" id="crmContactOrganizationSelected"></div></div>`);
+  setSelectedOrganization(selected);
+  $("crmContactOrganizationSearch").addEventListener("input", () => {
+    clearTimeout(organizationSearchTimer);
+    organizationSearchTimer = setTimeout(searchOrganizations, 180);
+  });
+  $("crmContactOrganizationSearch").addEventListener("focus", searchOrganizations);
+  $("crmQuickCreateOrganization").addEventListener("click", () => context.openOrganizationQuickCreate((organization) => setSelectedOrganization(organization), { role: "PROSPECT" }));
+}
+
+async function searchOrganizations() {
+  const keyword = $("crmContactOrganizationSearch").value.trim();
+  const resultNode = $("crmContactOrganizationResults");
+  try {
+    const result = await crmApi(`/api/v1/crm/organizations?page=1&pageSize=20${keyword ? `&keyword=${encodeURIComponent(keyword)}` : ""}`);
+    resultNode.innerHTML = result.data.map((organization) => `<button type="button" data-select-organization="${esc(organization.id)}"><span class="organization-logo-fallback small">${esc((organization.shortName || organization.name).slice(0,2).toUpperCase())}</span><span><strong>${esc(organization.name)}</strong><small>${esc([organization.shortName, organization.industry, organization.city].filter(Boolean).join(" · ") || "-")}</small></span><em>${organization.contactCount} 位联系人</em></button>`).join("") || '<div class="organization-no-result">未找到公司，可使用“新建公司”快速创建</div>';
+    resultNode.hidden = false;
+    resultNode.querySelectorAll("[data-select-organization]").forEach((button) => button.addEventListener("click", () => { setSelectedOrganization(result.data.find((item) => item.id === button.dataset.selectOrganization)); resultNode.hidden = true; }));
+  } catch (error) { resultNode.innerHTML = `<div class="organization-no-result">${esc(error.message)}</div>`; resultNode.hidden = false; }
 }
 
 function closeContactForm() {
@@ -334,6 +384,9 @@ async function saveContact(event) {
   const wasEditing = Boolean(editingContact);
   const contactId = editingContact?.id;
   const payload = formPayload(form, CONTACT_FIELDS);
+  const organizationId = form.dataset.organizationId || null;
+  payload.organizationId = organizationId;
+  if (organizationId) ["companyShortName", "companyName", "industry", "website", "country", "region", "city"].forEach((key) => delete payload[key]);
   const errors = validateContactPayload(payload);
   const errorNode = $("crmContactFormError");
   if (!applyFieldErrors(form, errors)) {

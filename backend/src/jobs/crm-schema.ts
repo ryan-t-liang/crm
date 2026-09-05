@@ -12,6 +12,8 @@ export type CrmImportField = {
 
 const contactFields: CrmImportField[] = [
   { key: "contactName", label: "联系人姓名", type: "text", required: true, example: "Naderi" },
+  { key: "organizationId", label: "公司编号", type: "text", required: false, example: "cmxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" },
+  { key: "organizationName", label: "公司名称", type: "text", required: false, example: "Dena Technologies Co., Ltd." },
   { key: "companyShortName", label: "公司简称", type: "text", required: false, example: "Dena" },
   { key: "companyName", label: "公司全称", type: "text", required: false, example: "Dena Technologies Co., Ltd." },
   { key: "department", label: "部门", type: "text", required: false, example: "Business Development" },
@@ -33,6 +35,23 @@ const contactFields: CrmImportField[] = [
   { key: "initialContext", label: "初始沟通背景", type: "text", required: false, example: "Met at an industry convention." },
   { key: "meetingMinutesFiles", label: "Meeting Minutes 外部 URL", type: "attachment-url", required: false, example: "https://files.example.com/meeting-minutes.pdf" },
   { key: "remark", label: "备注", type: "text", required: false, example: "Decision maker for digital cooperation." },
+];
+
+const organizationFields: CrmImportField[] = [
+  { key: "name", label: "公司名称", type: "text", required: true, example: "Dena Technologies Co., Ltd." },
+  { key: "shortName", label: "公司简称", type: "text", required: false, example: "Dena" },
+  { key: "website", label: "网站", type: "url", required: false, example: "https://dena.example.com" },
+  { key: "industry", label: "行业", type: "text", required: false, example: "Consumer Electronics" },
+  { key: "country", label: "国家", type: "text", required: false, example: "Iran" },
+  { key: "region", label: "区域", type: "text", required: false, example: "Middle East" },
+  { key: "city", label: "城市", type: "text", required: false, example: "Tehran" },
+  { key: "roles", label: "公司角色（每行一项）", type: "multi-text", required: false, options: ["PROSPECT", "CUSTOMER", "VENDOR", "PARTNER"], example: "PROSPECT" },
+  { key: "lifecycle", label: "生命周期", type: "enum", required: false, options: ["TARGET", "CONTACTED", "NURTURING", "OPPORTUNITY", "CUSTOMER", "DISQUALIFIED"], example: "TARGET" },
+  { key: "owner", label: "负责人账号或用户编号", type: "owner", required: false, example: "sales@example.com" },
+  { key: "fitScore", label: "适配评分", type: "decimal", required: false, example: "80" },
+  { key: "fitReason", label: "评分原因", type: "text", required: false, example: "重点品牌，长期合作潜力" },
+  { key: "note", label: "备注", type: "text", required: false, example: "客户与供应商统一主档" },
+  { key: "logo", label: "Logo 外部 URL", type: "attachment-url", required: false, example: "https://files.example.com/logo.png" },
 ];
 
 const leadFields: CrmImportField[] = [
@@ -73,11 +92,11 @@ const leadFields: CrmImportField[] = [
 ];
 
 export function crmImportFields(objectType: CrmJobObjectType): CrmImportField[] {
-  return objectType === "CONTACT" ? contactFields : leadFields;
+  return objectType === "CONTACT" ? contactFields : objectType === "CRM_LEAD" ? leadFields : organizationFields;
 }
 
 export function crmTemplateFilename(objectType: CrmJobObjectType): string {
-  return objectType === "CONTACT" ? "kivisense_contact_import_template.xlsx" : "kivisense_crm_lead_import_template.xlsx";
+  return objectType === "CONTACT" ? "kivisense_contact_import_template.xlsx" : objectType === "CRM_LEAD" ? "kivisense_crm_lead_import_template.xlsx" : "kivisense_organization_import_template.xlsx";
 }
 
 export async function crmTemplateWorkbook(objectType: CrmJobObjectType): Promise<Buffer> {
@@ -85,7 +104,7 @@ export async function crmTemplateWorkbook(objectType: CrmJobObjectType): Promise
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Kivisense CRM";
   workbook.created = new Date("2026-09-03T00:00:00.000Z");
-  const sheetName = objectType === "CONTACT" ? "客户联系人" : "线索";
+  const sheetName = objectType === "CONTACT" ? "客户联系人" : objectType === "CRM_LEAD" ? "线索" : "公司";
   const sheet = workbook.addWorksheet(sheetName, { views: [{ state: "frozen", ySplit: 2 }] });
   fields.forEach((field, index) => {
     const column = index + 1;
@@ -134,7 +153,7 @@ export async function crmTemplateWorkbook(objectType: CrmJobObjectType): Promise
 }
 
 export const contactExportFields = [
-  ["id", "客户联系人编号"], ["contactName", "联系人姓名"], ["companyShortName", "公司简称"],
+  ["id", "客户联系人编号"], ["contactName", "联系人姓名"], ["organizationId", "公司编号"], ["organizationName", "公司主档名称"], ["companyShortName", "公司简称"],
   ["companyName", "公司全称"], ["department", "部门"], ["title", "职位"], ["email", "电子邮箱"],
   ["phone", "电话"], ["wechat", "微信"], ["linkedin", "领英"], ["website", "网站"],
   ["industry", "行业"], ["source", "来源"], ["country", "国家"], ["city", "城市"], ["region", "区域"],
@@ -155,4 +174,11 @@ export const crmLeadExportFields = [
   ["contractRenewalAt", "合同续约日期"], ["paymentReceivedAt", "收款日期"], ["contactName", "联系人姓名"],
   ["company", "公司"], ["contactEmail", "联系人电子邮箱"], ["contactPhone", "联系人电话"], ["contactWechat", "联系人微信"],
   ["createdBy", "创建人"], ["createdAt", "创建时间"], ["updatedAt", "更新时间"],
+] as const;
+
+export const organizationExportFields = [
+  ["id", "公司编号"], ["name", "公司名称"], ["shortName", "公司简称"], ["website", "网站"],
+  ["industry", "行业"], ["country", "国家"], ["region", "区域"], ["city", "城市"],
+  ["roles", "公司角色"], ["lifecycle", "生命周期"], ["owner", "负责人"], ["fitScore", "适配评分"],
+  ["fitReason", "评分原因"], ["note", "备注"], ["logo", "Logo"], ["createdAt", "创建时间"], ["updatedAt", "更新时间"],
 ] as const;

@@ -72,7 +72,7 @@ export function initializeFollowups(options) {
             <label class="crm-field crm-important-field" id="crmImportantField" hidden><span>重要跟进</span><span class="crm-toggle-row"><input name="important" type="checkbox"><span>标记为重要</span></span></label>
             <label class="crm-field"><span>沟通记录<b aria-hidden="true">*</b></span><textarea name="content" maxlength="16000" required></textarea><small class="crm-field-error"></small></label>
             <label class="crm-field crm-lead-followup-field" hidden><span>当前进展</span><textarea name="progress" maxlength="16000" placeholder="本次互动带来的项目进展"></textarea></label>
-            <label class="crm-field crm-lead-followup-field" hidden><span>下一步动作</span><textarea name="nextAction" maxlength="16000" placeholder="下一步要做什么、由谁推进"></textarea></label>
+            <label class="crm-field"><span>下一步动作</span><textarea name="nextAction" maxlength="16000" placeholder="下一步要做什么、由谁推进"></textarea></label>
             <label class="crm-field"><span>下次跟进时间</span><input name="nextFollowupAt" type="datetime-local"></label>
           </div>
           <section class="crm-attachment-field crm-followup-attachment"><header><div><h4 id="crmFollowupAttachmentTitle">互动附件</h4><p id="crmFollowupAttachmentHint">附件会与本次跟进内容成对保存</p></div><span>图片 / 视频 / 文档</span></header><label class="crm-attachment-dropzone"><input id="crmFollowupAttachmentInput" type="file" multiple accept=".jpg,.jpeg,.png,.gif,.webp,.mp4,.webm,.mov,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"><svg><use href="#i-paperclip"/></svg><span><strong>选择附件</strong><small>单个文件不超过 50 MB</small></span></label><div class="crm-attachment-list" id="crmFollowupAttachmentList"></div><div class="crm-attachment-error" id="crmFollowupAttachmentError" hidden></div></section>
@@ -88,8 +88,8 @@ export function initializeFollowups(options) {
   $("crmFollowupAttachmentInput").addEventListener("change", (event) => addFiles(event.target.files));
 }
 
-export function openFollowup({ kind, id, title, onSaved }) {
-  pending = { kind, id, onSaved };
+export function openFollowup({ kind, id, title, onSaved, currentTaskId = null }) {
+  pending = { kind, id, onSaved, currentTaskId };
   pendingFiles = [];
   const form = $("crmFollowupForm");
   form.reset();
@@ -121,8 +121,10 @@ export function buildFollowupPayload(form, kind) {
     type: String(data.get("type") || "GENERAL"),
     ownerUserId: String(data.get("ownerUserId") || ""),
     content: String(data.get("content") || "").trim(),
+    nextAction: String(data.get("nextAction") || "").trim() || null,
     nextFollowupAt: optionalDate ? localDateTimeToIso(optionalDate) : null,
-    ...(kind === "lead" ? { important: data.get("important") === "on", progress: String(data.get("progress") || "").trim() || null, nextAction: String(data.get("nextAction") || "").trim() || null } : {}),
+    currentTaskId: pending?.currentTaskId || null,
+    ...(kind === "lead" ? { important: data.get("important") === "on", progress: String(data.get("progress") || "").trim() || null } : {}),
   };
 }
 

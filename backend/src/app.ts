@@ -19,6 +19,9 @@ import { auditRoutes } from "./audit/routes.js";
 import { contactRoutes } from "./contacts/routes.js";
 import { crmLeadRoutes } from "./crm-leads/routes.js";
 import { crmImportExportRoutes } from "./jobs/crm-routes.js";
+import { organizationRoutes } from "./organizations/routes.js";
+import { crmTaskRoutes } from "./tasks/routes.js";
+import { analyticsRoutes } from "./analytics/routes.js";
 
 export type BuildAppOptions = {
   config?: AppConfig;
@@ -91,6 +94,9 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   await app.register(roleRoutes);
   await app.register(contactRoutes);
   await app.register(crmLeadRoutes);
+  await app.register(organizationRoutes);
+  await app.register(crmTaskRoutes);
+  await app.register(analyticsRoutes);
   await app.register(auditRoutes);
   await app.register(crmImportExportRoutes);
 

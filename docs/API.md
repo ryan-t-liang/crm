@@ -20,6 +20,43 @@
 | GET/POST | `/api/v1/crm/contacts/:id/followups` | 跟进列表、追加跟进 |
 | GET | `/api/v1/crm/contacts/:id/leads` | 关联线索 |
 
+联系人可提交 `organizationId` 关联统一公司主档；已关联后，公司名称、网站、行业和地区以 Organization 为准。
+
+## 公司、孵化与文件
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET/POST | `/api/v1/crm/organizations` | 公司列表、创建与重复预警 |
+| GET/PATCH/DELETE | `/api/v1/crm/organizations/:id` | Company 360、编辑、受保护删除 |
+| GET | `/api/v1/crm/organizations/:id/journey` | 公司业务旅程 |
+| GET/POST | `/api/v1/crm/organizations/:id/nurtures` | 孵化计划列表、创建并生成下一触达任务 |
+| PATCH | `/api/v1/crm/nurtures/:id` | 暂停、恢复或完成孵化 |
+| POST | `/api/v1/crm/organizations/:id/attachments/logo` | 上传并替换公司 Logo（仅图片） |
+| POST | `/api/v1/crm/organizations/:id/attachments/files` | 上传公司文件 |
+| GET/DELETE | `/api/v1/crm/organizations/:id/attachments/:attachmentId[/download]` | 下载或删除公司文件 |
+
+## 任务与执行
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET/POST | `/api/v1/crm/tasks` | 按权限范围查询或创建任务 |
+| PATCH | `/api/v1/crm/tasks/:id` | 编辑未关闭任务 |
+| POST | `/api/v1/crm/tasks/:id/complete` | 完成任务并保留历史 |
+| POST | `/api/v1/crm/tasks/:id/cancel` | 取消任务并保留历史 |
+
+任务至少关联公司、联系人或线索之一。`OPEN` 任务可编辑；`DONE` 和 `CANCELED` 不可重写业务内容。联系人或线索跟进可提交 `currentTaskId`、`nextAction` 和 `nextFollowupAt`，以原子方式完成当前任务并创建下一任务。
+
+## Analytics
+
+| 方法 | 路径 | 说明 |
+| --- | --- | --- |
+| GET | `/api/v1/crm/analytics/management` | 管理 Dashboard 聚合数据 |
+| GET | `/api/v1/crm/analytics/self` | 当前用户范围 Dashboard |
+| GET | `/api/v1/crm/analytics/fit-engagement-matrix` | 3×3 Fit × Engagement 矩阵 |
+| GET | `/api/v1/crm/analytics/team` | 团队执行数据 |
+
+Analytics 支持 `from`、`to`、`ownerUserId` 和 `organizationRole` 过滤（自助 Dashboard 强制当前用户范围），且不返回报价、金额、收入、成本、合同、付款、发票或采购数据。
+
 ## 线索
 
 | 方法 | 路径 | 说明 |
@@ -47,7 +84,7 @@
 | POST | `/api/v1/crm/exports/:object` | 创建导出文件 |
 | GET | `/api/v1/crm/exports/:id/download` | 下载导出文件 |
 
-`:object` 取值为 `contacts` 或 `leads`。
+`:object` 取值为 `contacts`、`leads` 或 `organizations`。联系人导入可使用精确 `Organization ID` 或精确规范化后的 `Organization Name`；创建缺失公司必须显式提交 `createMissingOrganization=true`，默认关闭，禁止模糊合并。
 
 ## 系统管理
 

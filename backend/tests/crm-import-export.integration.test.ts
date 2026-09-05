@@ -47,9 +47,9 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
     headers: { ...(input.headers || {}), cookie },
   });
 
-  async function upload(route: "contacts" | "leads", rows: Array<Record<string, string>>, cookie = adminCookie) {
+  async function upload(route: "contacts" | "leads" | "organizations", rows: Array<Record<string, string>>, cookie = adminCookie, query = "") {
     const form = multipart(await workbook(rows), `${route}-${runKey}.xlsx`);
-    return inject({ method: "POST", url: `/api/v1/crm/imports/${route}`, ...form }, cookie);
+    return inject({ method: "POST", url: `/api/v1/crm/imports/${route}${query}`, ...form }, cookie);
   }
 
   beforeAll(async () => {
@@ -75,6 +75,10 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
       maxBodyBytes: 10 * 1024 * 1024,
       maxAttachmentBytes: 100 * 1024 * 1024,
       storageDir,
+      crmActiveDays: 30,
+      crmDormantDays: 60,
+      crmStaleLeadDays: 30,
+      crmHighFitUntouchedDays: 30,
     };
     const [adminRole, salesRole] = await Promise.all([
       prisma.role.findUniqueOrThrow({ where: { key: "SUPER_ADMIN" } }),
@@ -107,10 +111,13 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
       await prisma.crmAttachment.deleteMany({ where: { uploadedByUserId: { in: userIds } } });
       await prisma.importJob.deleteMany({ where: { createdBy: { in: userIds } } });
       await prisma.exportJob.deleteMany({ where: { createdBy: { in: userIds } } });
+      await prisma.crmTask.deleteMany({ where: { OR: [{ createdByUserId: { in: userIds } }, { ownerUserId: { in: userIds } }] } });
+      await prisma.organizationNurture.deleteMany({ where: { createdByUserId: { in: userIds } } });
       await prisma.leadFollowup.deleteMany({ where: { lead: { createdByUserId: { in: userIds } } } });
       await prisma.crmLead.deleteMany({ where: { createdByUserId: { in: userIds } } });
       await prisma.contactFollowup.deleteMany({ where: { contact: { createdByUserId: { in: userIds } } } });
       await prisma.contact.deleteMany({ where: { createdByUserId: { in: userIds } } });
+      await prisma.organization.deleteMany({ where: { createdByUserId: { in: userIds } } });
       await prisma.auditLog.deleteMany({ where: { actorUserId: { in: userIds } } });
       await prisma.session.deleteMany({ where: { userId: { in: userIds } } });
       await prisma.user.deleteMany({ where: { id: { in: userIds } } });
@@ -119,10 +126,11 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
     if (storageDir) await rm(storageDir, { recursive: true, force: true });
   }, 30_000);
 
-  it("下载联系人和线索导入模板", async () => {
+  it("下载联系人、线索和公司导入模板", async () => {
     for (const [route, expected, forbidden] of [
       ["contacts", ["contactName", "companyName", "owner", "followupAttention", "meetingMinutesFiles"], ["brandId", "customerId"]],
       ["leads", ["contactId", "requirementSummary", "salesOwner", "participantUsers", "proposalFiles", "wonAt", "nextAction", "imageRequirementNote", "quotationNote"], ["contactName", "email", "brandId"]],
+      ["organizations", ["name", "shortName", "roles", "lifecycle", "fitScore", "fitReason", "logo"], ["competitor", "amount", "revenue"]],
     ] as const) {
       const response = await inject({ method: "GET", url: `/api/v1/crm/templates/${route}` });
       expect(response.statusCode).toBe(200);
@@ -134,9 +142,29 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
     }
   });
 
+  it("公司导入支持多角色且导出保持统一主档字段", async () => {
+    const organizationName = `批量公司 ${runKey}`;
+    const response = await upload("organizations", [{ name: organizationName, shortName: "批量公司", roles: "PROSPECT\nVENDOR", lifecycle: "TARGET", owner: adminId, fitScore: "82", fitReason: "批量导入评分" }]);
+    expect(response.statusCode).toBe(201);
+    expect(response.json().data.preflight).toMatchObject({ importableRows: 1, errorRows: 0 });
+    const executed = await inject({ method: "POST", url: `/api/v1/crm/imports/${response.json().data.id}/execute`, payload: {} });
+    expect(executed.statusCode).toBe(200);
+    const organization = await prisma.organization.findFirstOrThrow({ where: { name: organizationName }, include: { roles: true } });
+    expect(organization.fitScore).toBe(82);
+    expect(organization.roles.map((item) => item.role).sort()).toEqual(["PROSPECT", "VENDOR"]);
+
+    const exported = await inject({ method: "POST", url: "/api/v1/crm/exports/organizations", payload: {} });
+    expect(exported.statusCode).toBe(201);
+    const download = await inject({ method: "GET", url: exported.json().data.downloadUrl });
+    expect(download.statusCode).toBe(200);
+    const book = new ExcelJS.Workbook();
+    await book.xlsx.load(download.rawPayload as never);
+    expect(headers(book.worksheets[0]!)).toEqual(expect.arrayContaining(["公司编号", "公司名称", "公司角色", "生命周期", "适配评分", "评分原因", "Logo"]));
+  });
+
   it("联系人导入执行预检并生成失败明细", async () => {
     const response = await upload("contacts", [
-      { contactName: `导入联系人 ${runKey}`, email: `imported-${runKey}@example.test`, stage: "1v1", owner: adminId, followupAttention: "持续确认素材", meetingMinutesFiles: "保密协议.pdf" },
+      { contactName: `导入联系人 ${runKey}`, organizationName: `批量公司 ${runKey}`, email: `imported-${runKey}@example.test`, stage: "1v1", owner: adminId, followupAttention: "持续确认素材", meetingMinutesFiles: "保密协议.pdf" },
       { contactName: "", email: `invalid-${runKey}@example.test` },
     ]);
     expect(response.statusCode).toBe(201);
@@ -148,8 +176,25 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
     expect(executed.statusCode).toBe(200);
     expect(executed.json().data.job).toMatchObject({ status: "COMPLETED_WITH_ERRORS", successCount: 1, failedCount: 1 });
     const importedContact = await prisma.contact.findFirstOrThrow({ where: { email: `imported-${runKey}@example.test`, stage: "ONE_TO_ONE" } });
-    expect(importedContact).toMatchObject({ createdByUserId: adminId, followupAttention: "持续确认素材" });
+    expect(importedContact).toMatchObject({ createdByUserId: adminId, followupAttention: "持续确认素材", organizationId: expect.any(String) });
     expect((await inject({ method: "GET", url: `/api/v1/crm/imports/${job.id}/failures` })).statusCode).toBe(200);
+  });
+
+  it("联系人导入默认不创建缺失公司，只有显式开关才允许创建", async () => {
+    const blockedName = `默认禁止创建公司 ${runKey}`;
+    const blocked = await upload("contacts", [{ contactName: `未关联联系人 ${runKey}`, organizationName: blockedName, email: `missing-org-${runKey}@example.test` }]);
+    expect(blocked.statusCode).toBe(201);
+    expect(blocked.json().data.preflight).toMatchObject({ importableRows: 0, errorRows: 1 });
+    expect(blocked.json().data.rows[0].errors[0].code).toBe("ORGANIZATION_NOT_FOUND");
+    expect(await prisma.organization.count({ where: { name: blockedName } })).toBe(0);
+
+    const explicitName = `显式创建公司 ${runKey}`;
+    const allowed = await upload("contacts", [{ contactName: `自动建档联系人 ${runKey}`, organizationName: explicitName, email: `created-org-${runKey}@example.test` }], adminCookie, "?createMissingOrganization=true");
+    expect(allowed.statusCode).toBe(201);
+    expect(allowed.json().data.rows[0].warnings[0].code).toBe("ORGANIZATION_WILL_BE_CREATED");
+    expect((await inject({ method: "POST", url: `/api/v1/crm/imports/${allowed.json().data.id}/execute`, payload: {} })).statusCode).toBe(200);
+    const contact = await prisma.contact.findFirstOrThrow({ where: { email: `created-org-${runKey}@example.test` }, include: { organization: true } });
+    expect(contact.organization?.name).toBe(explicitName);
   });
 
   it("线索导入必须关联现有联系人", async () => {
@@ -195,6 +240,7 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
     expect((await inject({ method: "GET", url: "/api/v1/crm/templates/contacts" }, salesCookie)).statusCode).toBe(403);
     expect((await inject({ method: "POST", url: "/api/v1/crm/exports/contacts", payload: {} }, salesCookie)).statusCode).toBe(403);
     expect((await upload("leads", [{ contactId, requirementSummary: "禁止导入" }], salesCookie)).statusCode).toBe(403);
+    expect((await upload("organizations", [{ name: "禁止导入公司" }], salesCookie)).statusCode).toBe(403);
   });
 
   it("未注册的导入导出接口返回 404", async () => {

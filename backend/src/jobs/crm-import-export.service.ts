@@ -11,7 +11,9 @@ import { ContactService } from "../contacts/service.js";
 import { crmLeadImportSchema, type CrmLeadImportInput } from "../crm-leads/schemas.js";
 import { CrmLeadService } from "../crm-leads/service.js";
 import { CrmAttachmentService } from "../crm-leads/attachments.js";
-import { crmImportFields, contactExportFields, crmLeadExportFields } from "./crm-schema.js";
+import { organizationCreateSchema } from "../organizations/schemas.js";
+import { normalizeOrganizationName, OrganizationService } from "../organizations/service.js";
+import { crmImportFields, contactExportFields, crmLeadExportFields, organizationExportFields } from "./crm-schema.js";
 import type { CrmJobObjectType } from "./job-types.js";
 import { fileSha256, parseWorkbook, writeFailureCsv } from "./workbook.js";
 
@@ -38,6 +40,15 @@ const statusAliases = new Map([
 const priorityAliases = new Map([
   ["LOW", "LOW"], ["低", "LOW"], ["MEDIUM", "MEDIUM"], ["中", "MEDIUM"],
   ["HIGH", "HIGH"], ["高", "HIGH"], ["URGENT", "URGENT"], ["紧急", "URGENT"],
+]);
+const organizationRoleAliases = new Map([
+  ["PROSPECT", "PROSPECT"], ["潜在客户", "PROSPECT"], ["CUSTOMER", "CUSTOMER"], ["客户", "CUSTOMER"],
+  ["VENDOR", "VENDOR"], ["供应商", "VENDOR"], ["PARTNER", "PARTNER"], ["合作伙伴", "PARTNER"],
+]);
+const lifecycleAliases = new Map([
+  ["TARGET", "TARGET"], ["目标", "TARGET"], ["CONTACTED", "CONTACTED"], ["已触达", "CONTACTED"],
+  ["NURTURING", "NURTURING"], ["孵化中", "NURTURING"], ["OPPORTUNITY", "OPPORTUNITY"], ["机会中", "OPPORTUNITY"],
+  ["CUSTOMER", "CUSTOMER"], ["客户", "CUSTOMER"], ["DISQUALIFIED", "DISQUALIFIED"], ["不合格", "DISQUALIFIED"],
 ]);
 
 function auditContext(request: FastifyRequest): AuditActorContext {
@@ -144,7 +155,7 @@ function serializable<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
-async function preflightContacts(app: FastifyInstance, rows: Array<{ rowNumber: number; values: Record<string, string> }>): Promise<CrmPreflightRow[]> {
+async function preflightContacts(app: FastifyInstance, rows: Array<{ rowNumber: number; values: Record<string, string> }>, createMissingOrganization = false): Promise<CrmPreflightRow[]> {
   const resolveUser = await userResolver(app);
   const contacts = await app.prisma.contact.findMany({
     where: { deletedAt: null, OR: [{ email: { not: null } }, { phone: { not: null } }] },
@@ -160,6 +171,7 @@ async function preflightContacts(app: FastifyInstance, rows: Array<{ rowNumber: 
   }
   const workbookEmails = new Map<string, number>();
   const workbookPhones = new Map<string, number>();
+  const organizations = await app.prisma.organization.findMany({ where: { deletedAt: null }, select: { id: true, name: true, normalizedName: true } });
   const output: CrmPreflightRow[] = [];
   for (const row of rows) {
     const raw = row.values;
@@ -170,9 +182,24 @@ async function preflightContacts(app: FastifyInstance, rows: Array<{ rowNumber: 
     const phoneKey = normalizedPhone(phone);
     const stage = enumValue(raw.stage, stageAliases, "stage", "INITIAL", errors);
     const ownerUserId = resolveUser(raw.owner, "owner", errors);
+    let organizationId = trimOrNull(raw.organizationId);
+    const organizationName = trimOrNull(raw.organizationName);
+    let organizationNameToCreate: string | null = null;
+    if (organizationId && !organizations.some((organization) => organization.id === organizationId)) {
+      errors.push({ code: "ORGANIZATION_NOT_FOUND", field: "organizationId", message: `未找到公司编号：${organizationId}` });
+      organizationId = null;
+    } else if (!organizationId && organizationName) {
+      const matches = organizations.filter((organization) => organization.normalizedName === normalizeOrganizationName(organizationName));
+      if (matches.length === 1) organizationId = matches[0]!.id;
+      else if (matches.length > 1) errors.push({ code: "ORGANIZATION_AMBIGUOUS", field: "organizationName", message: `公司名称匹配到 ${matches.length} 条记录，请改用 organizationId` });
+      else if (createMissingOrganization) {
+        organizationNameToCreate = organizationName;
+        warnings.push({ code: "ORGANIZATION_WILL_BE_CREATED", field: "organizationName", message: `执行导入时将显式创建公司：${organizationName}` });
+      } else errors.push({ code: "ORGANIZATION_NOT_FOUND", field: "organizationName", message: `未找到公司：${organizationName}；如需创建，请开启 Create Missing Organization` });
+    }
     const candidate = {
       contactName: String(raw.contactName ?? "").trim(),
-      companyShortName: trimOrNull(raw.companyShortName), companyName: trimOrNull(raw.companyName),
+      organizationId, companyShortName: trimOrNull(raw.companyShortName), companyName: trimOrNull(raw.companyName) ?? organizationName,
       department: trimOrNull(raw.department), title: trimOrNull(raw.title), email, phone,
       wechat: trimOrNull(raw.wechat), linkedin: trimOrNull(raw.linkedin), website: trimOrNull(raw.website),
       industry: trimOrNull(raw.industry), source: trimOrNull(raw.source), country: trimOrNull(raw.country),
@@ -198,13 +225,41 @@ async function preflightContacts(app: FastifyInstance, rows: Array<{ rowNumber: 
       else workbookPhones.set(phoneKey, row.rowNumber);
     }
     const fileUrls = attachmentUrls(raw.meetingMinutesFiles, "meetingMinutesFiles", warnings);
-    const normalizedData = { ...(parsed.success ? serializable(parsed.data) : serializable(candidate)), attachmentUrls: { meetingMinutesFiles: fileUrls } };
+    const normalizedData = { ...(parsed.success ? serializable(parsed.data) : serializable(candidate)), _organizationNameToCreate: organizationNameToCreate, attachmentUrls: { meetingMinutesFiles: fileUrls } };
     output.push({
       rowNumber: row.rowNumber,
       status: errors.length ? "ERROR" : warnings.length ? "WARNING" : "VALID",
       identity: [candidate.contactName, candidate.companyShortName || candidate.companyName].filter(Boolean).join(" / "),
       rawData: raw, normalizedData, errors, warnings,
     });
+  }
+  return output;
+}
+
+async function preflightOrganizations(app: FastifyInstance, rows: Array<{ rowNumber: number; values: Record<string, string> }>): Promise<CrmPreflightRow[]> {
+  const resolveUser = await userResolver(app);
+  const existing = await app.prisma.organization.findMany({ where: { deletedAt: null }, select: { id: true, name: true, normalizedName: true, websiteDomain: true } });
+  const output: CrmPreflightRow[] = [];
+  for (const row of rows) {
+    const raw = row.values;
+    const errors: ValidationMessage[] = [];
+    const warnings: ValidationMessage[] = [];
+    const roles = splitMultiValue(raw.roles || "PROSPECT").map((value) => enumValue(value, organizationRoleAliases, "roles", "PROSPECT", errors));
+    const lifecycleStage = enumValue(raw.lifecycle, lifecycleAliases, "lifecycle", "TARGET", errors);
+    const fitScore = trimOrNull(raw.fitScore) ? Number(raw.fitScore) : 0;
+    if (!Number.isInteger(fitScore) || fitScore < 0 || fitScore > 100) errors.push({ code: "INVALID_FIT_SCORE", field: "fitScore", message: "fitScore 必须是 0 到 100 的整数" });
+    const candidate = {
+      name: String(raw.name ?? "").trim(), shortName: trimOrNull(raw.shortName), website: trimOrNull(raw.website),
+      industry: trimOrNull(raw.industry), country: trimOrNull(raw.country), region: trimOrNull(raw.region), city: trimOrNull(raw.city),
+      roles, lifecycleStage, ownerUserId: resolveUser(raw.owner, "owner", errors), fitScore,
+      fitReason: trimOrNull(raw.fitReason), note: trimOrNull(raw.note), confirmDuplicate: false,
+    };
+    const parsed = organizationCreateSchema.safeParse(candidate);
+    if (!parsed.success) errors.push(...schemaErrors(parsed.error));
+    const nameMatches = existing.filter((organization) => organization.normalizedName === normalizeOrganizationName(candidate.name));
+    if (nameMatches.length) warnings.push({ code: "POTENTIAL_DUPLICATE", field: "name", message: `发现 ${nameMatches.length} 条同名公司；执行时仍会要求显式确认` });
+    const logo = attachmentUrls(raw.logo, "logo", warnings);
+    output.push({ rowNumber: row.rowNumber, status: errors.length ? "ERROR" : warnings.length ? "WARNING" : "VALID", identity: candidate.name, rawData: raw, normalizedData: { ...(parsed.success ? serializable(parsed.data) : serializable(candidate)), attachmentUrls: { logo } }, errors, warnings });
   }
   return output;
 }
@@ -266,11 +321,15 @@ export function crmPreflightSummary(rows: CrmPreflightRow[]) {
   return { totalRows: rows.length, validRows, warningRows, errorRows, importableRows: validRows + warningRows };
 }
 
-export async function prepareCrmImport(app: FastifyInstance, objectType: CrmJobObjectType, buffer: Buffer) {
+export async function prepareCrmImport(app: FastifyInstance, objectType: CrmJobObjectType, buffer: Buffer, options: { createMissingOrganization?: boolean } = {}) {
   const parsed = await parseWorkbook(buffer);
   if (parsed.rows.length > 5000) throw new ApiError(400, "IMPORT_LIMIT_EXCEEDED", "单次导入最多 5000 行");
   const mapping = assertHeaders(objectType, parsed.headers);
-  const rows = objectType === "CONTACT" ? await preflightContacts(app, parsed.rows) : await preflightLeads(app, parsed.rows);
+  const rows = objectType === "CONTACT"
+    ? await preflightContacts(app, parsed.rows, options.createMissingOrganization)
+    : objectType === "CRM_LEAD"
+      ? await preflightLeads(app, parsed.rows)
+      : await preflightOrganizations(app, parsed.rows);
   return { parsed, mapping, rows, summary: crmPreflightSummary(rows) };
 }
 
@@ -284,7 +343,7 @@ function leadInput(data: Record<string, unknown>): CrmLeadImportInput {
 
 export async function executeCrmImportJob(app: FastifyInstance, request: FastifyRequest, jobId: string) {
   const job = await app.prisma.importJob.findFirst({
-    where: { id: jobId, objectType: { in: ["CONTACT", "CRM_LEAD"] }, createdBy: request.auth!.userId },
+    where: { id: jobId, objectType: { in: ["CONTACT", "CRM_LEAD", "ORGANIZATION"] }, createdBy: request.auth!.userId },
     include: { rows: { orderBy: { rowNumber: "asc" } } },
   });
   if (!job) throw new ApiError(404, "RESOURCE_NOT_FOUND", "CRM 导入任务不存在或不是当前用户创建");
@@ -299,6 +358,7 @@ export async function executeCrmImportJob(app: FastifyInstance, request: Fastify
 
   const contacts = new ContactService(app.prisma);
   const leads = new CrmLeadService(app.prisma);
+  const organizations = new OrganizationService(app.prisma, app.config);
   const attachments = new CrmAttachmentService(app.prisma, app.config.storageDir, app.config.maxAttachmentBytes);
   let success = 0;
   let failed = 0;
@@ -310,16 +370,22 @@ export async function executeCrmImportJob(app: FastifyInstance, request: Fastify
       warnings += rowWarnings;
       if (row.status === "ERROR") throw new ApiError(400, "PREFLIGHT_ERROR", "该行未通过预检");
       const data = (row.normalizedData ?? {}) as Record<string, unknown>;
-      const { attachmentUrls: importedAttachmentUrls, ...entityData } = data;
+      const { attachmentUrls: importedAttachmentUrls, _organizationNameToCreate, ...entityData } = data;
+      if (job.objectType === "CONTACT" && _organizationNameToCreate && !entityData.organizationId) {
+        const createdOrganization = await organizations.create({ name: String(_organizationNameToCreate), roles: ["PROSPECT"], confirmDuplicate: false }, request.auth!.userId, auditContext(request));
+        entityData.organizationId = createdOrganization!.id;
+      }
       const created = job.objectType === "CONTACT"
         ? await contacts.create(contactInput(entityData), request.auth!.userId, auditContext(request))
-        : await leads.create(leadInput(entityData), request.auth!.userId, auditContext(request));
+        : job.objectType === "CRM_LEAD"
+          ? await leads.create(leadInput(entityData), request.auth!.userId, auditContext(request))
+          : await organizations.create(organizationCreateSchema.parse(entityData), request.auth!.userId, auditContext(request));
       const urlsByField = (importedAttachmentUrls ?? {}) as Record<string, string[]>;
       for (const [fieldKey, urls] of Object.entries(urlsByField)) {
-        for (const url of urls) await attachments.createExternal(job.objectType === "CONTACT" ? "CONTACT" : "LEAD", created.id, fieldKey, url, request.auth!.userId, auditContext(request));
+        for (const url of urls) await attachments.createExternal(job.objectType === "CONTACT" ? "CONTACT" : job.objectType === "CRM_LEAD" ? "LEAD" : "ORGANIZATION", created!.id, fieldKey, url, request.auth!.userId, auditContext(request));
       }
       success += 1;
-      await app.prisma.importJobRow.update({ where: { id: row.id }, data: { status: "SUCCEEDED", createdId: created.id } });
+      await app.prisma.importJobRow.update({ where: { id: row.id }, data: { status: "SUCCEEDED", createdId: created!.id } });
     } catch (error) {
       failed += 1;
       const errorCode = error instanceof ApiError ? error.code : "IMPORT_ROW_FAILED";
@@ -351,11 +417,11 @@ function formatDate(value: Date | null | undefined): string | null {
 
 type ExportAttachment = { id: string; entityId: string; fieldKey: string; storageType: "LOCAL" | "EXTERNAL_URL"; originalName: string; externalUrl: string | null };
 
-function attachmentExportValue(app: FastifyInstance, entityType: "CONTACT" | "LEAD", entityId: string, fieldKey: string, rows: ExportAttachment[]): string | null {
+function attachmentExportValue(app: FastifyInstance, entityType: "CONTACT" | "LEAD" | "ORGANIZATION", entityId: string, fieldKey: string, rows: ExportAttachment[]): string | null {
   const value = rows.filter((item) => item.entityId === entityId && item.fieldKey === fieldKey).map((item) => {
     const url = item.storageType === "EXTERNAL_URL"
       ? item.externalUrl
-      : `${app.config.appBasePath}/api/v1/crm/${entityType === "CONTACT" ? "contacts" : "leads"}/${encodeURIComponent(entityId)}/attachments/${encodeURIComponent(item.id)}/download`;
+      : `${app.config.appBasePath}/api/v1/crm/${entityType === "CONTACT" ? "contacts" : entityType === "LEAD" ? "leads" : "organizations"}/${encodeURIComponent(entityId)}/attachments/${encodeURIComponent(item.id)}/download`;
     return `${item.originalName} | ${url || "-"}`;
   });
   return value.length ? value.join("\n") : null;
@@ -376,15 +442,32 @@ function styleExportSheet(sheet: ExcelJS.Worksheet, textColumns: string[]) {
 export async function buildCrmExportWorkbook(app: FastifyInstance, objectType: CrmJobObjectType) {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Kivisense CRM";
+  if (objectType === "ORGANIZATION") {
+    const sheet = workbook.addWorksheet("Organizations", { views: [{ state: "frozen", ySplit: 1 }] });
+    sheet.columns = organizationExportFields.map(([key, header]) => ({ key, header, width: Math.max(14, Math.min(32, header.length + 6)) }));
+    const [rows, attachmentRows] = await Promise.all([
+      app.prisma.organization.findMany({ where: { deletedAt: null }, include: { roles: true, owner: { select: { loginAccount: true } } }, orderBy: [{ updatedAt: "desc" }, { id: "desc" }] }),
+      app.prisma.crmAttachment.findMany({ where: { entityType: "ORGANIZATION" }, select: { id: true, entityId: true, fieldKey: true, storageType: true, originalName: true, externalUrl: true } }),
+    ]);
+    for (const organization of rows) sheet.addRow({
+      ...organization, roles: organization.roles.map((item) => item.role).join("\n"), lifecycle: organization.lifecycleStage,
+      owner: organization.owner?.loginAccount ?? null, logo: attachmentExportValue(app, "ORGANIZATION", organization.id, "logo", attachmentRows),
+      createdAt: formatDate(organization.createdAt), updatedAt: formatDate(organization.updatedAt),
+    });
+    styleExportSheet(sheet, ["id", "roles", "logo"]);
+    return { buffer: Buffer.from(await workbook.xlsx.writeBuffer()), rowCount: rows.length, fields: organizationExportFields.map(([key]) => key) };
+  }
   if (objectType === "CONTACT") {
     const sheet = workbook.addWorksheet("Contacts", { views: [{ state: "frozen", ySplit: 1 }] });
     sheet.columns = contactExportFields.map(([key, header]) => ({ key, header, width: Math.max(14, Math.min(32, header.length + 6)) }));
     const [rows, attachmentRows] = await Promise.all([
-      app.prisma.contact.findMany({ where: { deletedAt: null }, include: { owner: { select: { loginAccount: true } }, createdBy: { select: { loginAccount: true } }, _count: { select: { leads: { where: { deletedAt: null } } } } }, orderBy: [{ updatedAt: "desc" }, { id: "desc" }] }),
+      app.prisma.contact.findMany({ where: { deletedAt: null }, include: { organization: { select: { id: true, name: true } }, owner: { select: { loginAccount: true } }, createdBy: { select: { loginAccount: true } }, _count: { select: { leads: { where: { deletedAt: null } } } } }, orderBy: [{ updatedAt: "desc" }, { id: "desc" }] }),
       app.prisma.crmAttachment.findMany({ where: { entityType: "CONTACT" }, select: { id: true, entityId: true, fieldKey: true, storageType: true, originalName: true, externalUrl: true } }),
     ]);
     for (const contact of rows) sheet.addRow({
       ...contact,
+      organizationId: contact.organization?.id ?? null,
+      organizationName: contact.organization?.name ?? null,
       owner: contact.owner?.loginAccount ?? null,
       createdBy: contact.createdBy.loginAccount,
       nextFollowupAt: formatDate(contact.nextFollowupAt),
@@ -392,7 +475,7 @@ export async function buildCrmExportWorkbook(app: FastifyInstance, objectType: C
       relatedLeadCount: contact._count.leads,
       createdAt: formatDate(contact.createdAt), updatedAt: formatDate(contact.updatedAt),
     });
-    styleExportSheet(sheet, ["id", "phone", "meetingMinutesFiles"]);
+    styleExportSheet(sheet, ["id", "organizationId", "phone", "meetingMinutesFiles"]);
     return { buffer: Buffer.from(await workbook.xlsx.writeBuffer()), rowCount: rows.length, fields: contactExportFields.map(([key]) => key) };
   }
   const sheet = workbook.addWorksheet("CRM Leads", { views: [{ state: "frozen", ySplit: 1 }] });
@@ -400,7 +483,7 @@ export async function buildCrmExportWorkbook(app: FastifyInstance, objectType: C
   const [rows, attachmentRows] = await Promise.all([app.prisma.crmLead.findMany({
     where: { deletedAt: null, contact: { deletedAt: null } },
     include: {
-      contact: { select: { contactName: true, companyShortName: true, companyName: true, email: true, phone: true, wechat: true } },
+      contact: { select: { contactName: true, companyShortName: true, companyName: true, email: true, phone: true, wechat: true, organization: { select: { name: true, shortName: true } } } },
       salesOwner: { select: { loginAccount: true } }, followupOwner: { select: { loginAccount: true } },
       createdBy: { select: { loginAccount: true } }, participants: { include: { user: { select: { loginAccount: true } } } },
     },
@@ -418,7 +501,7 @@ export async function buildCrmExportWorkbook(app: FastifyInstance, objectType: C
     proposalFiles: attachmentExportValue(app, "LEAD", lead.id, "proposalFiles", attachmentRows),
     quotationFiles: attachmentExportValue(app, "LEAD", lead.id, "quotationFiles", attachmentRows),
     contactName: lead.contact.contactName,
-    company: lead.contact.companyShortName || lead.contact.companyName || null,
+    company: lead.contact.organization?.shortName || lead.contact.organization?.name || lead.contact.companyShortName || lead.contact.companyName || null,
     contactEmail: lead.contact.email ?? null, contactPhone: lead.contact.phone ?? null, contactWechat: lead.contact.wechat ?? null,
     createdBy: lead.createdBy.loginAccount,
     createdAt: formatDate(lead.createdAt), updatedAt: formatDate(lead.updatedAt),
@@ -443,7 +526,7 @@ export async function persistCrmExport(app: FastifyInstance, request: FastifyReq
     const result = await buildCrmExportWorkbook(app, objectType);
     const directory = join(app.config.storageDir, "exports");
     await mkdir(directory, { recursive: true });
-    const fileName = `${objectType === "CONTACT" ? "kivisense-contacts" : "kivisense-crm-leads"}-${jobNo}.xlsx`;
+    const fileName = `${objectType === "CONTACT" ? "kivisense-contacts" : objectType === "CRM_LEAD" ? "kivisense-crm-leads" : "kivisense-organizations"}-${jobNo}.xlsx`;
     const storagePath = join(directory, `${job.id}.xlsx`);
     await writeFile(storagePath, result.buffer);
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);

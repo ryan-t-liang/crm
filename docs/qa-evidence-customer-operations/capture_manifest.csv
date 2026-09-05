@@ -1,0 +1,44 @@
+id,viewport,state,file,verification
+01,1440,Dashboard Management,01-dashboard-management-1440.png,no_page_overflow
+02,1440,Dashboard Fit x Engagement Matrix,02-dashboard-fit-engagement-matrix-1440.png,no_page_overflow
+03,1440,My Workbench,03-my-workbench-1440.png,no_page_overflow
+04,1440,Company List,04-company-list-1440.png,no_page_overflow
+05,1440,Company 360,05-company-360-1440.png,no_page_overflow
+06,1440,Company Quick Create from Contact,06-company-quick-create-from-contact-1440.png,no_page_overflow
+07,1440,Contact Detail linked Company,07-contact-detail-linked-company-1440.png,no_page_overflow
+08,1440,Customer Operations Priority,08-customer-operations-priority-1440.png,no_page_overflow
+09,1440,Customer Operations Nurture,09-customer-operations-nurture-1440.png,no_page_overflow
+10,1440,Customer Operations Reactivation,10-customer-operations-reactivation-1440.png,no_page_overflow
+11,1440,Nurture Form,11-nurture-form-1440.png,no_page_overflow
+12,1440,Task Queue,12-task-queue-1440.png,no_page_overflow
+13,1440,Followup to Next Task,13-followup-next-task-loop-1440.png,no_page_overflow
+13b,1440,Followup Next Task Created,13b-followup-next-task-created-1440.png,no_page_overflow
+14,1440,Supplier View,14-supplier-view-1440.png,no_page_overflow
+01,1280,Dashboard Management,01-dashboard-management-1280.png,no_page_overflow
+02,1280,Dashboard Fit x Engagement Matrix,02-dashboard-fit-engagement-matrix-1280.png,no_page_overflow
+03,1280,My Workbench,03-my-workbench-1280.png,no_page_overflow
+04,1280,Company List,04-company-list-1280.png,no_page_overflow
+05,1280,Company 360,05-company-360-1280.png,no_page_overflow
+06,1280,Company Quick Create from Contact,06-company-quick-create-from-contact-1280.png,no_page_overflow
+07,1280,Contact Detail linked Company,07-contact-detail-linked-company-1280.png,no_page_overflow
+08,1280,Customer Operations Priority,08-customer-operations-priority-1280.png,no_page_overflow
+09,1280,Customer Operations Nurture,09-customer-operations-nurture-1280.png,no_page_overflow
+10,1280,Customer Operations Reactivation,10-customer-operations-reactivation-1280.png,no_page_overflow
+11,1280,Nurture Form,11-nurture-form-1280.png,no_page_overflow
+12,1280,Task Queue,12-task-queue-1280.png,no_page_overflow
+13,1280,Followup to Next Task,13-followup-next-task-loop-1280.png,no_page_overflow
+14,1280,Supplier View,14-supplier-view-1280.png,no_page_overflow
+01,1024,Dashboard Management,01-dashboard-management-1024.png,no_page_overflow
+02,1024,Dashboard Fit x Engagement Matrix,02-dashboard-fit-engagement-matrix-1024.png,no_page_overflow
+03,1024,My Workbench,03-my-workbench-1024.png,no_page_overflow
+04,1024,Company List,04-company-list-1024.png,no_page_overflow
+05,1024,Company 360,05-company-360-1024.png,no_page_overflow
+06,1024,Company Quick Create from Contact,06-company-quick-create-from-contact-1024.png,no_page_overflow
+07,1024,Contact Detail linked Company,07-contact-detail-linked-company-1024.png,no_page_overflow
+08,1024,Customer Operations Priority,08-customer-operations-priority-1024.png,no_page_overflow
+09,1024,Customer Operations Nurture,09-customer-operations-nurture-1024.png,no_page_overflow
+10,1024,Customer Operations Reactivation,10-customer-operations-reactivation-1024.png,no_page_overflow
+11,1024,Nurture Form,11-nurture-form-1024.png,no_page_overflow
+12,1024,Task Queue,12-task-queue-1024.png,no_page_overflow
+13,1024,Followup to Next Task,13-followup-next-task-loop-1024.png,no_page_overflow
+14,1024,Supplier View,14-supplier-view-1024.png,no_page_overflow

@@ -28,6 +28,21 @@ const permissionCatalog = [
   ["crm.lead.export", "导出线索", "crm"],
   ["crm.lead_followup.view", "查看线索跟进", "crm"],
   ["crm.lead_followup.create", "新增线索跟进", "crm"],
+  ["crm.organization.view", "查看公司", "crm"],
+  ["crm.organization.create", "创建公司", "crm"],
+  ["crm.organization.edit", "编辑公司", "crm"],
+  ["crm.organization.delete", "删除公司", "crm"],
+  ["crm.organization.import", "导入公司", "crm"],
+  ["crm.organization.export", "导出公司", "crm"],
+  ["crm.organization.score.edit", "编辑公司适配评分", "crm"],
+  ["crm.organization.nurture.manage", "管理客户孵化", "crm"],
+  ["crm.task.view", "查看任务", "crm"],
+  ["crm.task.create", "创建任务", "crm"],
+  ["crm.task.edit", "编辑任务", "crm"],
+  ["crm.task.complete", "完成任务", "crm"],
+  ["crm.task.cancel", "取消任务", "crm"],
+  ["crm.dashboard.self.view", "查看个人 Dashboard", "crm_dashboard"],
+  ["crm.dashboard.management.view", "查看管理 Dashboard", "crm_dashboard"],
 ] as const;
 
 const crmReadPermissions = [
@@ -35,6 +50,9 @@ const crmReadPermissions = [
   "crm.contact_followup.view",
   "crm.lead.view",
   "crm.lead_followup.view",
+  "crm.organization.view",
+  "crm.task.view",
+  "crm.dashboard.self.view",
 ];
 
 const salesPermissions = [
@@ -47,6 +65,15 @@ const salesPermissions = [
   "crm.lead.edit",
   "crm.lead.delete",
   "crm.lead_followup.create",
+  "crm.organization.create",
+  "crm.organization.edit",
+  "crm.organization.delete",
+  "crm.organization.score.edit",
+  "crm.organization.nurture.manage",
+  "crm.task.create",
+  "crm.task.edit",
+  "crm.task.complete",
+  "crm.task.cancel",
 ];
 
 const roles = [

@@ -87,6 +87,7 @@ export const leadFollowupCreateSchema = z.object({
   nextAction: optionalText(16_000),
   nextFollowupAt: optionalDateTime,
   important: z.boolean().default(false),
+  currentTaskId: optionalId,
 }).strict();
 
 export const crmLeadOrderBySchema = z.enum([

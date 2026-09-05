@@ -5,6 +5,9 @@ import { redactAuditDetails } from "../src/common/audit.js";
 import { normalizePermissionDependencies } from "../src/common/permissions.js";
 import { safeEqual, sessionToken, sessionTokenHash } from "../src/common/auth.js";
 import { assertCrmJobObjectType, jobPermission } from "../src/jobs/job-types.js";
+import { organizationCreateSchema, nurtureCreateSchema } from "../src/organizations/schemas.js";
+import { calculateEngagement, engagementState, scoreBand } from "../src/organizations/scoring.js";
+import { taskCreateSchema } from "../src/tasks/schemas.js";
 
 describe("Kivisense CRM 2.0 core unit contracts", () => {
   it("validates and normalizes contact fields", () => {
@@ -94,5 +97,32 @@ describe("Kivisense CRM 2.0 core unit contracts", () => {
     expect(jobPermission("CONTACT", "import")).toBe("crm.contact.import");
     expect(jobPermission("CRM_LEAD", "export")).toBe("crm.lead.export");
     expect(() => assertCrmJobObjectType("CUSTOMER")).toThrowError(/不支持/);
+  });
+
+  it("validates the unified organization, nurture, and task contracts", () => {
+    expect(organizationCreateSchema.parse({ name: " Dena Technologies ", roles: ["PROSPECT", "VENDOR", "PROSPECT"], fitScore: 70 })).toMatchObject({
+      name: "Dena Technologies", roles: ["PROSPECT", "VENDOR"], fitScore: 70, confirmDuplicate: false,
+    });
+    expect(organizationCreateSchema.safeParse({ name: "Competitor", roles: ["COMPETITOR"] }).success).toBe(false);
+    expect(nurtureCreateSchema.safeParse({ ownerUserId: "sales-1", reason: "等待预算", objective: "重启方案沟通", cadenceDays: 14, nextTouchAt: "2026-09-15T10:00:00+08:00", touchTopic: "预算确认" }).success).toBe(true);
+    expect(taskCreateSchema.safeParse({ title: "跟进", ownerUserId: "sales-1", dueAt: "2026-09-15T10:00:00+08:00" }).success).toBe(false);
+    expect(taskCreateSchema.safeParse({ organizationId: "org-1", title: "跟进", ownerUserId: "sales-1", dueAt: "2026-09-15T10:00:00+08:00" }).success).toBe(true);
+  });
+
+  it("uses transparent and clamped Fit and Engagement scoring boundaries", () => {
+    expect([0, 39, 40, 69, 70, 100].map(scoreBand)).toEqual(["LOW", "LOW", "MEDIUM", "MEDIUM", "HIGH", "HIGH"]);
+    const now = new Date("2026-09-05T00:00:00.000Z");
+    const daysAgo = (days: number) => new Date(now.getTime() - days * 86_400_000);
+    expect(engagementState({ now, lastInteractionAt: daysAgo(30), hasActiveLead: false, activeDays: 30, dormantDays: 60 })).toBe("ACTIVE");
+    expect(engagementState({ now, lastInteractionAt: daysAgo(31), hasActiveLead: false, activeDays: 30, dormantDays: 60 })).toBe("COOLING");
+    expect(engagementState({ now, lastInteractionAt: daysAgo(60), hasActiveLead: false, activeDays: 30, dormantDays: 60 })).toBe("COOLING");
+    expect(engagementState({ now, lastInteractionAt: daysAgo(61), hasActiveLead: false, activeDays: 30, dormantDays: 60 })).toBe("DORMANT");
+    expect(engagementState({ now, lastInteractionAt: null, hasActiveLead: true, activeDays: 30, dormantDays: 60 })).toBe("ACTIVE");
+    const maximum = calculateEngagement({ now, lastInteractionAt: now, interactionsLast30Days: 99, hasActiveLead: true, hasRecentMeeting: true, hasOpenNextActionTask: true, hasOverdueTask: false, activeDays: 30, dormantDays: 60 });
+    expect(maximum.score).toBe(95);
+    expect(maximum.breakdown.map((item) => item.points)).toEqual([35, 20, 20, 10, 10, 0]);
+    const minimum = calculateEngagement({ now, lastInteractionAt: null, interactionsLast30Days: 0, hasActiveLead: false, hasRecentMeeting: false, hasOpenNextActionTask: false, hasOverdueTask: true, activeDays: 30, dormantDays: 60 });
+    expect(minimum.score).toBe(0);
+    expect(minimum.level).toBe("LOW");
   });
 });

@@ -43,8 +43,13 @@
       <nav>
         <div class="nav-label">客户管理</div>
         <div class="nav-list">
+          <button class="nav-item" type="button" data-route="dashboard" data-crm-any-permission="crm.dashboard.self.view,crm.dashboard.management.view"><svg class="icon"><use href="#i-lead"/></svg><span>Dashboard</span></button>
+          <button class="nav-item" type="button" data-route="organizations" data-crm-permission="crm.organization.view"><svg class="icon"><use href="#i-file"/></svg><span>公司</span><b class="nav-count" data-nav-count="organizations">0</b></button>
           <button class="nav-item" type="button" data-route="contacts" data-crm-permission="crm.contact.view"><svg class="icon"><use href="#i-users"/></svg><span>客户联系人</span><b class="nav-count" data-nav-count="contacts">0</b></button>
           <button class="nav-item" type="button" data-route="leads" data-crm-permission="crm.lead.view"><svg class="icon"><use href="#i-lead"/></svg><span>线索</span><b class="nav-count" data-nav-count="leads">0</b></button>
+          <button class="nav-item" type="button" data-route="operations" data-crm-permission="crm.organization.view"><svg class="icon"><use href="#i-clock"/></svg><span>客户运营</span></button>
+          <button class="nav-item" type="button" data-route="workbench" data-crm-permission="crm.task.view"><svg class="icon"><use href="#i-check"/></svg><span>我的工作台</span></button>
+          <button class="nav-item" type="button" data-route="vendors" data-crm-permission="crm.organization.view"><svg class="icon"><use href="#i-file"/></svg><span>供应商</span></button>
         </div>
         <div class="nav-label system-nav-label" data-crm-permission="account.view">系统管理</div>
         <div class="nav-list">
@@ -77,6 +82,12 @@
       <section id="crmLeadDetailView" class="view"></section>
       <section id="crmContactsView" class="view"></section>
       <section id="crmContactDetailView" class="view"></section>
+      <section id="dashboardView" class="view"></section>
+      <section id="organizationsView" class="view"></section>
+      <section id="organizationDetailView" class="view"></section>
+      <section id="customerOperationsView" class="view"></section>
+      <section id="workbenchView" class="view"></section>
+      <section id="vendorsView" class="view"></section>
       <section id="accountsView" class="view"></section>
       <section id="rolesView" class="view"></section>
       <section id="auditView" class="view"></section>

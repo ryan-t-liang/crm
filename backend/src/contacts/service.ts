@@ -21,6 +21,7 @@ export type TimelineListInput = { page: number; pageSize: number };
 
 export const contactListInclude = {
   owner: { select: crmUserSummarySelect },
+  organization: { include: { roles: true } },
   _count: { select: { leads: { where: { deletedAt: null } } } },
 } satisfies Prisma.ContactInclude;
 
@@ -33,6 +34,22 @@ async function requireContact(db: CrmDbClient, id: string) {
   const contact = await db.contact.findFirst({ where: { id, deletedAt: null } });
   if (!contact) throw new ApiError(404, "RESOURCE_NOT_FOUND", "CRM 联系人不存在");
   return contact;
+}
+
+async function organizationSnapshot(db: CrmDbClient, organizationId: string | null | undefined) {
+  if (!organizationId) return null;
+  const organization = await db.organization.findFirst({ where: { id: organizationId, deletedAt: null }, select: { id: true, name: true, shortName: true, website: true, industry: true, country: true, region: true, city: true } });
+  if (!organization) throw new ApiError(422, "INVALID_ORGANIZATION", "关联公司不存在");
+  return {
+    organizationId: organization.id,
+    companyName: organization.name,
+    companyShortName: organization.shortName,
+    website: organization.website,
+    industry: organization.industry,
+    country: organization.country,
+    region: organization.region,
+    city: organization.city,
+  };
 }
 
 function contactOrderBy(orderBy: ContactListInput["orderBy"]): Prisma.ContactOrderByWithRelationInput[] {
@@ -56,6 +73,10 @@ export class ContactService {
       { contactName: { contains: input.keyword } },
       { companyName: { contains: input.keyword } },
       { companyShortName: { contains: input.keyword } },
+      { organization: { is: { OR: [
+        { name: { contains: input.keyword } },
+        { shortName: { contains: input.keyword } },
+      ] } } },
       { email: { contains: input.keyword } },
       { phone: { contains: input.keyword } },
     ];
@@ -75,8 +96,9 @@ export class ContactService {
   async create(input: ContactCreateInput | ContactImportInput, createdByUserId: string, audit: AuditActorContext) {
     return this.prisma.$transaction(async (tx) => {
       await assertAssignableCrmUser(tx, input.ownerUserId, "ownerUserId");
+      const organizationFields = await organizationSnapshot(tx, input.organizationId);
       const row = await tx.contact.create({
-        data: { ...input, createdByUserId },
+        data: { ...input, ...(organizationFields || {}), createdByUserId },
         include: contactDetailInclude,
       });
       await appendAuditRecord(tx, audit, {
@@ -101,9 +123,14 @@ export class ContactService {
 
   async update(id: string, input: ContactPatchInput, audit: AuditActorContext) {
     return this.prisma.$transaction(async (tx) => {
-      await requireContact(tx, id);
+      const existing = await requireContact(tx, id);
       if (input.ownerUserId !== undefined) await assertAssignableCrmUser(tx, input.ownerUserId, "ownerUserId");
-      const row = await tx.contact.update({ where: { id }, data: input, include: contactDetailInclude });
+      const linkedOrganizationId = input.organizationId === undefined ? existing.organizationId : input.organizationId;
+      if (linkedOrganizationId && ["companyName", "companyShortName", "website", "industry", "country", "region", "city"].some((field) => field in input)) {
+        throw new ApiError(422, "ORGANIZATION_SOURCE_OF_TRUTH", "联系人已关联公司，公司资料请在公司档案中维护");
+      }
+      const organizationFields = input.organizationId === undefined ? null : await organizationSnapshot(tx, input.organizationId);
+      const row = await tx.contact.update({ where: { id }, data: { ...input, ...(organizationFields || {}) }, include: contactDetailInclude });
       await appendAuditRecord(tx, audit, {
         action: "UPDATE_CONTACT",
         module: "crm",
@@ -243,11 +270,17 @@ export class ContactFollowupService {
 
   async create(contactId: string, input: ContactFollowupCreateInput, createdByUserId: string, audit: AuditActorContext) {
     return this.prisma.$transaction(async (tx) => {
-      await requireContact(tx, contactId);
+      const contact = await requireContact(tx, contactId);
       const ownerUserId = input.ownerUserId ?? createdByUserId;
       await assertAssignableCrmUser(tx, ownerUserId, "ownerUserId");
+      const { currentTaskId, ...followupInput } = input;
+      if (currentTaskId) {
+        const currentTask = await tx.crmTask.findFirst({ where: { id: currentTaskId, status: "OPEN", ownerUserId: createdByUserId } });
+        if (!currentTask) throw new ApiError(422, "INVALID_CURRENT_TASK", "当前任务不存在、已关闭或不属于当前用户");
+        await tx.crmTask.update({ where: { id: currentTaskId }, data: { status: "DONE", completedAt: new Date(), completedByUserId: createdByUserId } });
+      }
       const row = await tx.contactFollowup.create({
-        data: { ...input, contactId, ownerUserId, createdByUserId },
+        data: { ...followupInput, contactId, ownerUserId, createdByUserId },
         include: {
           owner: { select: crmUserSummarySelect },
           createdBy: { select: crmUserSummarySelect },
@@ -257,12 +290,15 @@ export class ContactFollowupService {
       if (latest?.id === row.id && row.nextFollowupAt) {
         await tx.contact.update({ where: { id: contactId }, data: { nextFollowupAt: row.nextFollowupAt } });
       }
+      if (row.nextAction && row.nextFollowupAt) {
+        await tx.crmTask.create({ data: { organizationId: contact.organizationId, contactId, title: row.nextAction.slice(0, 300), description: row.content, ownerUserId, dueAt: row.nextFollowupAt, source: "FOLLOWUP", createdByUserId } });
+      }
       await appendAuditRecord(tx, audit, {
         action: "CREATE_CONTACT_FOLLOWUP",
         module: "crm",
         targetType: "contact_followup",
         targetId: row.id,
-        details: { contactId, type: row.type, occurredAt: row.occurredAt.toISOString(), ownerUserId },
+        details: { contactId, type: row.type, occurredAt: row.occurredAt.toISOString(), ownerUserId, currentTaskId, nextTaskCreated: Boolean(row.nextAction && row.nextFollowupAt) },
       });
       return { ...row, attachments: [] };
     });

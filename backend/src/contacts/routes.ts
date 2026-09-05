@@ -42,7 +42,7 @@ export async function contactRoutes(app: FastifyInstance): Promise<void> {
   const attachments = new CrmAttachmentService(app.prisma, app.config.storageDir, app.config.maxAttachmentBytes);
 
   app.get("/api/v1/crm/users", { preHandler: guard() }, async (request) => {
-    if (!request.auth!.permissions.has("crm.contact.view") && !request.auth!.permissions.has("crm.lead.view")) {
+    if (!["crm.contact.view", "crm.lead.view", "crm.organization.view", "crm.task.view"].some((permission) => request.auth!.permissions.has(permission))) {
       throw new ApiError(403, "PERMISSION_DENIED", "当前账户没有此操作权限");
     }
     return { data: await users.listActive() };
@@ -103,7 +103,7 @@ export async function contactRoutes(app: FastifyInstance): Promise<void> {
     return { data: result.rows, meta: paginationMeta(query.page, query.pageSize, result.total) };
   });
 
-  app.post<{ Params: { id: string } }>("/api/v1/crm/contacts/:id/followups", { preHandler: guard("crm.contact_followup.create") }, async (request, reply) => {
+  app.post<{ Params: { id: string } }>("/api/v1/crm/contacts/:id/followups", { preHandler: [guard("crm.contact_followup.create"), guard("crm.task.create")] }, async (request, reply) => {
     const body = contactFollowupCreateSchema.parse(request.body);
     const row = await followups.create(request.params.id, body, request.auth!.userId, auditActorContext(request));
     return reply.status(201).send({ data: row });

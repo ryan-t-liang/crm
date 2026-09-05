@@ -8,21 +8,26 @@ import { renderTimelineMarkup } from "../frontend/js/followups.js";
 import { buildLeadQuery, quoteDisplay, readonlyContactMarkup } from "../frontend/js/leads.js";
 import { preflightMessage, preflightStatusLabel } from "../frontend/js/crm-jobs.js";
 
-const [appSource, markup, styles, contactSource, leadSource, jobSource, followupSource, fixtureSource] = await Promise.all([
-  "app.js", "../index.html", "../styles/production.css", "contacts.js", "leads.js", "crm-jobs.js", "followups.js", "../../scripts/frontend-browser-fixture.mjs",
+const [appSource, markup, styles, contactSource, leadSource, jobSource, followupSource, fixtureSource, operationsSource] = await Promise.all([
+  "app.js", "../index.html", "../styles/production.css", "contacts.js", "leads.js", "crm-jobs.js", "followups.js", "../../scripts/frontend-browser-fixture.mjs", "customer-operations.js",
 ].map((file) => readFile(new URL(`../frontend/js/${file}`, import.meta.url), "utf8")));
 
 const navOrder = [...markup.matchAll(/class="nav-item"[^>]*data-route="([^"]+)"/g)].map((match) => match[1]);
-assert.deepEqual(navOrder, ["contacts", "leads", "accounts", "roles", "audit"], "客户联系人必须是左侧第一项，且不得存在旧业务导航");
+assert.deepEqual(navOrder, ["dashboard", "organizations", "contacts", "leads", "operations", "workbench", "vendors", "accounts", "roles", "audit"], "客户运营扩展导航顺序必须稳定");
 assert.match(markup, /<html lang="zh-CN">/);
 assert.match(markup, /assets\/kivisense-logo\.svg/);
 assert.match(styles, /\.app-brand-logo-shell[^{]*\{[^}]*overflow:\s*visible/s, "Logo 容器不得裁剪");
 assert.match(styles, /\.app-brand-logo[^{]*\{[^}]*object-fit:\s*contain/s, "Logo 必须按比例完整显示");
 assert.doesNotMatch(appSource, /Object\.groupBy/, "前端不得依赖兼容性不足的 Object.groupBy");
 assert.match(appSource, /localStorage\.setItem\("kivisense\.crm\.sidebar\.collapsed"/, "侧栏状态必须持久化");
+for (const permission of ["crm.organization.view", "crm.organization.create", "crm.organization.import", "crm.organization.export", "crm.organization.nurture.manage", "crm.task.view", "crm.task.create", "crm.dashboard.self.view", "crm.dashboard.management.view"]) {
+  assert.match(`${markup}\n${operationsSource}`, new RegExp(permission.replaceAll(".", "\\.")), `客户运营前端缺少权限边界：${permission}`);
+}
+for (const capability of ["公司目录", "Company Journey", "我的工作台", "Fit × Engagement", "供应商目录", "开始孵化", "批量导入"]) assert.match(operationsSource, new RegExp(capability), `客户运营前端缺少能力：${capability}`);
+assert.doesNotMatch(operationsSource, /estimatedQuote|quotationNote|paymentReceivedAt/, "管理 Dashboard 不得读取或展示金额字段");
 
 for (const requiredId of [
-  "crmLeadsView", "crmLeadDetailView", "crmContactsView", "crmContactDetailView", "accountsView", "rolesView", "auditView",
+  "crmLeadsView", "crmLeadDetailView", "crmContactsView", "crmContactDetailView", "dashboardView", "organizationsView", "organizationDetailView", "customerOperationsView", "workbenchView", "vendorsView", "accountsView", "rolesView", "auditView",
   "loginOverlay", "loginForm", "loginAccountInput", "loginPasswordInput", "changePasswordDialog", "accountDialog", "toast",
 ]) assert.match(markup, new RegExp(`id="${requiredId}"`), `缺少前端节点 ${requiredId}`);
 

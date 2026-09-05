@@ -44,7 +44,8 @@ export function quoteDisplay(lead) {
 
 export function readonlyContactMarkup(contact, compact = false) {
   if (!contact) return "";
-  return `<div class="crm-readonly-contact${compact ? " is-compact" : ""}"><header><div><span>所属客户联系人 · 只读</span><strong>${esc(contact.contactName)}</strong></div><span class="crm-lock-label"><svg><use href="#i-lock"/></svg>系统自动关联</span></header><div class="crm-readonly-grid"><div><span>公司</span><strong>${esc(contact.companyShortName || contact.companyName || "-")}</strong></div><div><span>职位</span><strong>${esc(contact.title || "-")}</strong></div><div><span>电子邮箱</span><strong>${esc(contact.email || "-")}</strong></div><div><span>电话</span><strong>${esc(contact.phone || "-")}</strong></div><div><span>行业</span><strong>${esc(contact.industry || "-")}</strong></div><div><span>国家 / 城市</span><strong>${esc([contact.country, contact.city].filter(Boolean).join(" / ") || "-")}</strong></div></div></div>`;
+  const company = contact.organization || contact;
+  return `<div class="crm-readonly-contact${compact ? " is-compact" : ""}"><header><div><span>所属客户联系人 · 只读</span><strong>${esc(contact.contactName)}</strong></div><span class="crm-lock-label"><svg><use href="#i-lock"/></svg>系统自动关联</span></header><div class="crm-readonly-grid"><div><span>公司</span><strong>${esc(company.shortName || company.name || contact.companyShortName || contact.companyName || "-")}</strong></div><div><span>职位</span><strong>${esc(contact.title || "-")}</strong></div><div><span>电子邮箱</span><strong>${esc(contact.email || "-")}</strong></div><div><span>电话</span><strong>${esc(contact.phone || "-")}</strong></div><div><span>行业</span><strong>${esc(company.industry || contact.industry || "-")}</strong></div><div><span>国家 / 城市</span><strong>${esc([company.country || contact.country, company.city || contact.city].filter(Boolean).join(" / ") || "-")}</strong></div></div></div>`;
 }
 
 export function initializeLeads(options) {
@@ -165,7 +166,7 @@ function renderLeadRows(rows) {
   $("crmLeadMetricFollowup").textContent = String(rows.filter((lead) => lead.nextFollowupAt).length);
   $("crmLeadRows").innerHTML = rows.map((lead) => `<tr data-crm-lead-id="${esc(lead.id)}" tabindex="0">
     <td><strong>${esc(lead.requirementSummary)}</strong><small>${esc(lead.projectType || lead.projectDomain || "-")}</small></td>
-    <td><strong>${esc(lead.contact.contactName)}</strong><small>${esc(lead.contact.companyShortName || lead.contact.companyName || "-")}</small></td>
+    <td><strong>${esc(lead.contact.contactName)}</strong><small>${esc(lead.contact.organization?.shortName || lead.contact.organization?.name || lead.contact.companyShortName || lead.contact.companyName || "-")}</small></td>
     <td><span class="crm-badge crm-status-${esc(lead.status.toLowerCase())}">${esc(leadStatusLabel(lead.status))}</span></td>
     <td><span class="crm-badge crm-priority-${esc(lead.priority.toLowerCase())}">${esc(leadPriorityLabel(lead.priority))}</span></td>
     <td>${esc(lead.salesOwner?.name || "-")}</td><td>${esc(lead.followupOwner?.name || "-")}</td>
@@ -257,7 +258,7 @@ function overviewMarkup(lead) {
 
 function contactMarkup(contact) {
   return [
-    identityField("客户联系人", contact.contactName), identityField("公司", contact.companyShortName || contact.companyName),
+    identityField("客户联系人", contact.contactName), identityField("公司", contact.organization?.shortName || contact.organization?.name || contact.companyShortName || contact.companyName),
     identityField("职位", contact.title), identityField("Email", contact.email), identityField("Phone", contact.phone), identityField("微信", contact.wechat, true),
   ].join("");
 }
@@ -306,7 +307,7 @@ export async function openLead(id) {
     const auditItems = auditResult.data.filter((item) => item.targetId === lead.id || item.details?.leadId === lead.id);
     context.state.currentCrmLead = lead;
     container.innerHTML = `<div class="crm-record v1-detail">
-      <header class="detail-top"><button class="back-button" id="crmBackToLeads" type="button" aria-label="返回线索列表"><svg><use href="#i-arrow"/></svg></button><div class="detail-identity"><div class="detail-avatar">${esc(lead.contact.contactName.trim().slice(0, 1).toUpperCase() || "线")}</div><div><div class="detail-name-line"><h1>${esc(lead.requirementSummary)}</h1><span class="crm-badge crm-status-${esc(lead.status.toLowerCase())}">${esc(leadStatusLabel(lead.status))}</span><span class="crm-badge crm-priority-${esc(lead.priority.toLowerCase())}">${esc(leadPriorityLabel(lead.priority))}</span></div><div class="detail-contact-row"><span>${esc(lead.contact.contactName)}</span><span>${esc(lead.contact.companyShortName || lead.contact.companyName || "-")}</span><span>销售负责人 ${esc(lead.salesOwner?.name || "-")}</span></div></div></div><div class="detail-top-actions"><button class="btn" id="crmEditLead" type="button" data-crm-permission="crm.lead.edit"><svg><use href="#i-edit"/></svg>编辑线索</button><button class="btn btn-primary" id="crmAddLeadFollowup" type="button" data-crm-permission="crm.lead_followup.create"><svg><use href="#i-plus"/></svg>新增跟进</button><details class="crm-more"><summary class="btn">更多</summary><button type="button" id="crmDeleteLeadDetail" data-crm-permission="crm.lead.delete">删除线索</button></details></div></header>
+      <header class="detail-top"><button class="back-button" id="crmBackToLeads" type="button" aria-label="返回线索列表"><svg><use href="#i-arrow"/></svg></button><div class="detail-identity"><div class="detail-avatar">${esc(lead.contact.contactName.trim().slice(0, 1).toUpperCase() || "线")}</div><div><div class="detail-name-line"><h1>${esc(lead.requirementSummary)}</h1><span class="crm-badge crm-status-${esc(lead.status.toLowerCase())}">${esc(leadStatusLabel(lead.status))}</span><span class="crm-badge crm-priority-${esc(lead.priority.toLowerCase())}">${esc(leadPriorityLabel(lead.priority))}</span></div><div class="detail-contact-row"><span>${esc(lead.contact.contactName)}</span><span>${esc(lead.contact.organization?.shortName || lead.contact.organization?.name || lead.contact.companyShortName || lead.contact.companyName || "-")}</span><span>销售负责人 ${esc(lead.salesOwner?.name || "-")}</span></div></div></div><div class="detail-top-actions"><button class="btn" id="crmEditLead" type="button" data-crm-permission="crm.lead.edit"><svg><use href="#i-edit"/></svg>编辑线索</button><button class="btn btn-primary" id="crmAddLeadFollowup" type="button" data-crm-permission="crm.lead_followup.create"><svg><use href="#i-plus"/></svg>新增跟进</button><details class="crm-more"><summary class="btn">更多</summary><button type="button" id="crmDeleteLeadDetail" data-crm-permission="crm.lead.delete">删除线索</button></details></div></header>
       <div class="detail-grid"><aside class="detail-column detail-side"><article class="content-card customer-identity-card"><div class="content-card-header"><svg class="icon"><use href="#i-lead"/></svg><h3>线索概览</h3></div><div class="customer-identity-grid">${overviewMarkup(lead)}</div></article><article class="content-card customer-identity-card"><div class="content-card-header"><svg class="icon"><use href="#i-user"/></svg><h3>关联联系人</h3><span class="spacer"></span><button class="btn btn-small" id="crmViewLeadContact" type="button">查看联系人</button></div><div class="customer-identity-grid">${contactMarkup(lead.contact)}</div></article><article class="content-card customer-identity-card crm-system-card"><div class="content-card-header"><svg class="icon"><use href="#i-file"/></svg><h3>系统信息</h3></div><div class="customer-identity-grid">${leadSystemInformationMarkup(lead)}</div></article></aside>
       <section class="detail-column operations-main"><nav class="detail-tabs" aria-label="线索详情业务模块"><button class="detail-tab is-active" type="button" data-detail-tab="requirement">需求信息</button><button class="detail-tab" type="button" data-detail-tab="followups">跟进记录 ${followupResult.meta.total}</button><button class="detail-tab" type="button" data-detail-tab="notes">备注 ${lead.remark ? 1 : 0}</button><button class="detail-tab" type="button" data-detail-tab="activity">操作记录</button></nav>
         <div class="tab-panel is-active" data-detail-panel="requirement"><section class="content-card"><div class="list-card-header"><div><h2>需求信息</h2></div></div>${requirementMarkup(lead)}</section></div>
@@ -335,7 +336,8 @@ export async function openLead(id) {
 
 function selectedContactCardMarkup(contact, changeable) {
   if (!contact) return "";
-  return `<div class="crm-selected-contact-card"><span class="crm-selected-contact-avatar">${esc(contact.contactName.trim().slice(0, 1).toUpperCase() || "客")}</span><span class="crm-selected-contact-copy"><small>已关联联系人</small><strong>${esc(contact.contactName)}</strong><span>${esc(contact.companyShortName || contact.companyName || "未填写公司")} · ${esc(contact.email || contact.phone || "未填写联系方式")}</span></span><span class="crm-selected-contact-state"><svg><use href="#i-check"/></svg>已选择</span>${changeable ? '<button class="btn btn-small" id="crmChangeLeadContact" type="button">更换</button>' : '<span class="crm-lock-label"><svg><use href="#i-lock"/></svg>不可变更</span>'}</div>`;
+  const companyName = contact.organization?.shortName || contact.organization?.name || contact.companyShortName || contact.companyName;
+  return `<div class="crm-selected-contact-card"><span class="crm-selected-contact-avatar">${esc(contact.contactName.trim().slice(0, 1).toUpperCase() || "客")}</span><span class="crm-selected-contact-copy"><small>已关联联系人</small><strong>${esc(contact.contactName)}</strong><span>${esc(companyName || "未关联公司")} · ${esc(contact.email || contact.phone || "未填写联系方式")}</span></span><span class="crm-selected-contact-state"><svg><use href="#i-check"/></svg>已选择</span>${changeable ? '<button class="btn btn-small" id="crmChangeLeadContact" type="button">更换</button>' : '<span class="crm-lock-label"><svg><use href="#i-lock"/></svg>不可变更</span>'}</div>${!contact.organization ? `<div class="crm-company-link-warning"><span><strong>该联系人尚未关联公司主档</strong><small>线索仍可保存；也可以现在创建公司并自动关联。</small></span><button class="btn btn-small" id="crmQuickLinkLeadCompany" type="button" data-crm-permission="crm.organization.create">快速新建并关联公司</button></div>` : ""}`;
 }
 
 function renderSelectedContact() {
@@ -346,6 +348,30 @@ function renderSelectedContact() {
     $("crmLeadContactPicker").hidden = false;
     $("crmLeadContactKeyword").focus();
   });
+  $("crmQuickLinkLeadCompany")?.addEventListener("click", () => {
+    const contact = selectedContact;
+    if (!contact) return;
+    context.openOrganizationQuickCreate(async (organization) => {
+      const result = await crmApi(`/api/v1/crm/contacts/${encodeURIComponent(contact.id)}`, {
+        method: "PATCH",
+        body: JSON.stringify({ organizationId: organization.id }),
+      });
+      selectedContact = result.data;
+      renderSelectedContact();
+      context.notify("公司已创建并关联联系人");
+    }, {
+      role: "PROSPECT",
+      name: contact.companyName || contact.companyShortName || "",
+      shortName: contact.companyShortName || "",
+      website: contact.website || "",
+      industry: contact.industry || "",
+      country: contact.country || "",
+      region: contact.region || "",
+      city: contact.city || "",
+      ownerUserId: contact.owner?.id || context.currentUserId(),
+    });
+  });
+  context.applyCrmPermissions();
 }
 
 function attachmentKindForFile(file) {
@@ -502,7 +528,7 @@ async function searchContacts(keyword) {
     if (sequence !== contactSearchSequence) return;
     contactMatches = result.data;
     activeContactIndex = -1;
-    $("crmLeadContactOptions").innerHTML = result.data.length ? result.data.map((contact, index) => `<button class="crm-contact-option" type="button" role="option" aria-selected="false" data-picker-contact="${esc(contact.id)}" data-picker-index="${index}"><span class="crm-contact-option-avatar">${esc(contact.contactName.trim().slice(0, 1).toUpperCase() || "客")}</span><span><strong>${esc(contact.contactName)}</strong><small>${esc(contact.companyShortName || contact.companyName || "未填写公司")}</small></span><span>${esc(contact.email || contact.phone || "未填写联系方式")}</span><svg><use href="#i-chevron"/></svg></button>`).join("") : '<div class="crm-inline-empty">没有匹配的客户联系人，请调整关键词</div>';
+    $("crmLeadContactOptions").innerHTML = result.data.length ? result.data.map((contact, index) => `<button class="crm-contact-option" type="button" role="option" aria-selected="false" data-picker-contact="${esc(contact.id)}" data-picker-index="${index}"><span class="crm-contact-option-avatar">${esc(contact.contactName.trim().slice(0, 1).toUpperCase() || "客")}</span><span><strong>${esc(contact.contactName)}</strong><small>${esc(contact.organization?.shortName || contact.organization?.name || contact.companyShortName || contact.companyName || "未关联公司")}</small></span><span>${esc(contact.email || contact.phone || "未填写联系方式")}</span><svg><use href="#i-chevron"/></svg></button>`).join("") : '<div class="crm-inline-empty">没有匹配的客户联系人，请调整关键词</div>';
     $("crmLeadContactOptions").querySelectorAll("[data-picker-contact]").forEach((button) => button.addEventListener("click", () => selectContact(contactMatches[Number(button.dataset.pickerIndex)])));
   } catch (error) {
     if (sequence !== contactSearchSequence) return;

@@ -19,7 +19,7 @@ npm run prisma:migrate:deploy
 npm run prisma:seed
 ```
 
-CRM 2.0 基线迁移只用于空的新数据库。不要对包含其他系统数据的数据库运行该迁移。
+CRM 2.0 基线迁移只用于空的新数据库。Customer Operations 扩展迁移是增量、非破坏式迁移：升级已有 UAT 前仍必须先做数据库、应用、附件与 Nginx 四类备份，执行 `prisma migrate deploy`，禁止 reset、seed 或清空业务表。
 
 ## 子路径部署
 
@@ -32,6 +32,10 @@ COOKIE_SECURE=true
 TRUST_PROXY=true
 CORS_ORIGIN=https://www.gridworks.cn
 CRM_ATTACHMENT_MAX_BYTES=52428800
+CRM_ACTIVE_DAYS=30
+CRM_DORMANT_DAYS=60
+CRM_STALE_LEAD_DAYS=30
+CRM_HIGH_FIT_UNTOUCHED_DAYS=30
 ```
 
 应用内部仍以 `/api/...` 注册路由，由 Nginx 将外部 `/crm_kivisense/...` 前缀去除后代理。浏览器端根据 `js/api.js` 的真实加载路径自动拼接前缀；Cookie Path 使用 `/crm_kivisense`。Nginx 的 `client_max_body_size` 必须大于 `CRM_ATTACHMENT_MAX_BYTES`，建议 UAT 配置为 `55m`。
@@ -43,3 +47,6 @@ CRM_ATTACHMENT_MAX_BYTES=52428800
 3. 超级管理员导入导出通过；销售无导入导出；只读用户不能写入。
 4. HTML、JS、CSS、Logo 和 API 无 404/500/CORS/Cookie/Mixed Content 错误。
 5. 联系人和线索详情 Hash 路由刷新后仍可恢复。
+6. Company 360、Supplier View、孵化、任务闭环、我的工作台和非金额 Dashboard 通过真实浏览器验收。
+7. 在 1440、1280、1024 宽度下页面壳无横向溢出；宽表只在白色卡片内部滚动。
+8. `/api/v1/crm/analytics/*` 的响应不包含金额、收入、成本、合同、付款、发票或采购字段。

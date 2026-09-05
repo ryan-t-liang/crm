@@ -32,6 +32,10 @@ const schema = z.object({
   TRUST_PROXY: booleanFromEnv.default(false),
   MAX_BODY_BYTES: z.coerce.number().int().positive().default(10 * 1024 * 1024),
   CRM_ATTACHMENT_MAX_BYTES: z.coerce.number().int().positive().max(1024 * 1024 * 1024).default(50 * 1024 * 1024),
+  CRM_ACTIVE_DAYS: z.coerce.number().int().min(1).max(365).default(30),
+  CRM_DORMANT_DAYS: z.coerce.number().int().min(2).max(730).default(60),
+  CRM_STALE_LEAD_DAYS: z.coerce.number().int().min(1).max(365).default(30),
+  CRM_HIGH_FIT_UNTOUCHED_DAYS: z.coerce.number().int().min(1).max(365).default(30),
   STORAGE_DIR: z.string().default("../storage"),
 });
 
@@ -52,6 +56,10 @@ export type AppConfig = {
   maxBodyBytes: number;
   maxAttachmentBytes: number;
   storageDir: string;
+  crmActiveDays: number;
+  crmDormantDays: number;
+  crmStaleLeadDays: number;
+  crmHighFitUntouchedDays: number;
 };
 
 export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
@@ -73,6 +81,10 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     maxBodyBytes: env.MAX_BODY_BYTES,
     maxAttachmentBytes: env.CRM_ATTACHMENT_MAX_BYTES,
     storageDir: resolve(process.cwd(), env.STORAGE_DIR),
+    crmActiveDays: env.CRM_ACTIVE_DAYS,
+    crmDormantDays: env.CRM_DORMANT_DAYS,
+    crmStaleLeadDays: env.CRM_STALE_LEAD_DAYS,
+    crmHighFitUntouchedDays: env.CRM_HIGH_FIT_UNTOUCHED_DAYS,
   };
   return { ...config, ...overrides };
 }

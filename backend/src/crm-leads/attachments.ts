@@ -40,6 +40,8 @@ const extensionRules: Readonly<Record<string, AttachmentRule>> = {
 };
 
 const fieldKinds: Readonly<Record<string, readonly CrmAttachmentKind[]>> = {
+  "ORGANIZATION:logo": ["IMAGE"],
+  "ORGANIZATION:files": ["DOCUMENT", "IMAGE", "VIDEO"],
   "CONTACT:meetingMinutesFiles": ["DOCUMENT", "IMAGE", "VIDEO"],
   "CONTACT_FOLLOWUP:followupAttachments": ["DOCUMENT", "IMAGE", "VIDEO"],
   "LEAD:requirementFiles": ["DOCUMENT", "IMAGE", "VIDEO"],
@@ -132,8 +134,10 @@ async function unlinkIfPresent(path: string): Promise<void> {
 }
 
 async function requireEntity(db: CrmDbClient, entityType: CrmAttachmentEntityType, entityId: string, allowDeletedLeadHistory = false): Promise<void> {
-  const row = entityType === "CONTACT"
-    ? await db.contact.findFirst({ where: { id: entityId, deletedAt: null }, select: { id: true } })
+  const row = entityType === "ORGANIZATION"
+    ? await db.organization.findFirst({ where: { id: entityId, deletedAt: null }, select: { id: true } })
+    : entityType === "CONTACT"
+      ? await db.contact.findFirst({ where: { id: entityId, deletedAt: null }, select: { id: true } })
     : entityType === "LEAD"
       ? await db.crmLead.findFirst({ where: { id: entityId, ...(allowDeletedLeadHistory ? {} : { deletedAt: null }), contact: { deletedAt: null } }, select: { id: true } })
       : entityType === "CONTACT_FOLLOWUP"

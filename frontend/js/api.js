@@ -20,6 +20,7 @@ export async function crmApi(path, options = {}) {
     error.code = payload?.error?.code;
     error.status = response.status;
     error.fieldErrors = payload?.error?.fieldErrors || [];
+    error.details = payload?.error?.details || null;
     error.traceId = payload?.traceId || response.headers.get("x-trace-id");
     if (typeof window !== "undefined") {
       if (response.status === 401) window.dispatchEvent(new CustomEvent("crm:unauthenticated"));
