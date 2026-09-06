@@ -25,6 +25,10 @@ for (const permission of ["crm.organization.view", "crm.organization.create", "c
 }
 for (const capability of ["公司目录", "Company Journey", "我的工作台", "Fit × Engagement", "供应商目录", "开始孵化", "批量导入"]) assert.match(operationsSource, new RegExp(capability), `客户运营前端缺少能力：${capability}`);
 assert.doesNotMatch(operationsSource, /estimatedQuote|quotationNote|paymentReceivedAt/, "管理 Dashboard 不得读取或展示金额字段");
+assert.match(operationsSource, /data-org-task="\$\{esc\(organization\.id\)\}" data-crm-permission="crm\.task\.create"/, "公司列表创建任务必须受任务创建权限控制");
+assert.match(operationsSource, /data-task-postpone="\$\{task\.id\}" data-crm-permission="crm\.task\.edit"/, "任务顺延必须受任务编辑权限控制");
+assert.match(operationsSource, /data-task-complete="\$\{task\.id\}" data-crm-permission="crm\.task\.complete"/, "任务完成必须受任务完成权限控制");
+assert.match(operationsSource, /data-nurture-(?:pause|complete|resume)="\$\{item\.id\}" data-crm-permission="crm\.organization\.nurture\.manage"/, "孵化状态动作必须受孵化管理权限控制");
 
 for (const requiredId of [
   "crmLeadsView", "crmLeadDetailView", "crmContactsView", "crmContactDetailView", "dashboardView", "organizationsView", "organizationDetailView", "customerOperationsView", "workbenchView", "vendorsView", "accountsView", "rolesView", "auditView",
