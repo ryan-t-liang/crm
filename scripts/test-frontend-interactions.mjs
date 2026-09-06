@@ -25,6 +25,13 @@ for (const permission of ["crm.organization.view", "crm.organization.create", "c
 }
 for (const capability of ["公司目录", "Company Journey", "我的工作台", "Fit × Engagement", "供应商目录", "开始孵化", "批量导入"]) assert.match(operationsSource, new RegExp(capability), `客户运营前端缺少能力：${capability}`);
 assert.doesNotMatch(operationsSource, /estimatedQuote|quotationNote|paymentReceivedAt/, "管理 Dashboard 不得读取或展示金额字段");
+for (const companyFilter of ["orgRole", "orgLifecycle", "orgOwner", "orgIndustry", "orgFit", "orgEngagement", "orgState"]) assert.match(operationsSource, new RegExp(`id="${companyFilter}"`), `公司列表缺少筛选：${companyFilter}`);
+for (const action of ["data-org-interaction", "data-org-lead", "data-org-task", "data-org-nurture", "data-view-org"]) assert.match(operationsSource, new RegExp(action), `客户运营缺少直接动作：${action}`);
+assert.match(operationsSource, /<th>更新时间<\/th>/, "公司列表必须显示更新时间");
+for (const vendorColumn of ["联系人", "Website", "地区", "负责人", "最近互动", "备注"]) assert.match(operationsSource, new RegExp(`<th>${vendorColumn}<\\/th>`), `供应商视图缺少列：${vendorColumn}`);
+assert.match(operationsSource, /<option value="custom">自定义<\/option>/, "Dashboard 必须支持自定义日期范围");
+assert.match(operationsSource, /id="dashboardFrom" type="date"/);
+assert.match(operationsSource, /id="dashboardTo" type="date"/);
 assert.match(operationsSource, /data-org-task="\$\{esc\(organization\.id\)\}" data-crm-permission="crm\.task\.create"/, "公司列表创建任务必须受任务创建权限控制");
 assert.match(operationsSource, /data-task-postpone="\$\{task\.id\}" data-crm-permission="crm\.task\.edit"/, "任务顺延必须受任务编辑权限控制");
 assert.match(operationsSource, /data-task-complete="\$\{task\.id\}" data-crm-permission="crm\.task\.complete"/, "任务完成必须受任务完成权限控制");

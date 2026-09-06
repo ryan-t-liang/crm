@@ -1082,7 +1082,7 @@ dialog.data-management-dialog::backdrop { background: rgba(10,13,11,.38); backdr
 .ops-page { min-width: 0; }
 .ops-page .page-heading { align-items: center; }
 .page-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
-.ops-filter { margin-bottom: 16px; padding: 13px; display: grid; grid-template-columns: minmax(220px, 1.7fr) repeat(5, minmax(126px, .72fr)) auto; gap: 9px; }
+.ops-filter { margin-bottom: 16px; padding: 13px; display: grid; grid-template-columns: minmax(220px, 1.7fr) repeat(7, minmax(110px, .68fr)) auto; gap: 9px; }
 .ops-filter .control { min-width: 0; }
 .organization-table { min-width: 1280px; table-layout: auto; }
 .organization-table th:first-child, .organization-table td:first-child { width: 60px; }
@@ -1154,6 +1154,9 @@ dialog.ops-small-dialog { width: min(620px, calc(100vw - 40px)); }
 .nurture-card dd { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dashboard-filters { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
 .dashboard-filters .control { width: auto; min-width: 135px; }
+.dashboard-custom-range { display: flex; align-items: flex-end; gap: 8px; }
+.dashboard-custom-range label { display: grid; gap: 4px; color: var(--muted); font-size: 12px; }
+.dashboard-custom-range .control { min-width: 148px; }
 .dashboard-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .dashboard-grid > article { min-width: 0; }
 .fit-matrix { padding: 14px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
