@@ -16,6 +16,11 @@ function daysBetween(from: Date, to: Date) {
   return Math.max(0, (to.getTime() - from.getTime()) / DAY);
 }
 
+export function qualifiesAsReactivation(input: { organizationCreatedAt: Date; previousInteractionAt: Date | null; interactionAt: Date; dormantDays: number }) {
+  const baseline = input.previousInteractionAt ?? input.organizationCreatedAt;
+  return daysBetween(baseline, input.interactionAt) >= input.dormantDays;
+}
+
 export class CrmAnalyticsService {
   private readonly metrics: OrganizationMetricsService;
   constructor(private readonly prisma: PrismaClient, private readonly config: AppConfig) {
@@ -206,7 +211,7 @@ export class CrmAnalyticsService {
       const firstInPeriod = ordered.find((item) => item.occurredAt >= filter.from && item.occurredAt <= filter.to);
       if (!firstInPeriod) continue;
       const previous = [...ordered].reverse().find((item) => item.occurredAt < firstInPeriod.occurredAt);
-      if (!previous || daysBetween(previous.occurredAt, firstInPeriod.occurredAt) >= this.config.crmDormantDays) {
+      if (qualifiesAsReactivation({ organizationCreatedAt: organization.createdAt, previousInteractionAt: previous?.occurredAt ?? null, interactionAt: firstInPeriod.occurredAt, dormantDays: this.config.crmDormantDays })) {
         touchedDormant += 1;
         reactivated += 1;
       }

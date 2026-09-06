@@ -8,6 +8,7 @@ import { assertCrmJobObjectType, jobPermission } from "../src/jobs/job-types.js"
 import { organizationCreateSchema, nurtureCreateSchema } from "../src/organizations/schemas.js";
 import { calculateEngagement, engagementState, scoreBand } from "../src/organizations/scoring.js";
 import { taskCreateSchema } from "../src/tasks/schemas.js";
+import { qualifiesAsReactivation } from "../src/analytics/service.js";
 
 describe("Kivisense CRM 2.0 core unit contracts", () => {
   it("validates and normalizes contact fields", () => {
@@ -124,5 +125,13 @@ describe("Kivisense CRM 2.0 core unit contracts", () => {
     const minimum = calculateEngagement({ now, lastInteractionAt: null, interactionsLast30Days: 0, hasActiveLead: false, hasRecentMeeting: false, hasOpenNextActionTask: false, hasOverdueTask: true, activeDays: 30, dormantDays: 60 });
     expect(minimum.score).toBe(0);
     expect(minimum.level).toBe("LOW");
+  });
+
+  it("counts reactivation only after a genuine dormant interval", () => {
+    const interactionAt = new Date("2026-09-05T00:00:00.000Z");
+    expect(qualifiesAsReactivation({ organizationCreatedAt: new Date("2026-09-01T00:00:00.000Z"), previousInteractionAt: null, interactionAt, dormantDays: 60 })).toBe(false);
+    expect(qualifiesAsReactivation({ organizationCreatedAt: new Date("2026-05-01T00:00:00.000Z"), previousInteractionAt: null, interactionAt, dormantDays: 60 })).toBe(true);
+    expect(qualifiesAsReactivation({ organizationCreatedAt: new Date("2026-01-01T00:00:00.000Z"), previousInteractionAt: new Date("2026-08-20T00:00:00.000Z"), interactionAt, dormantDays: 60 })).toBe(false);
+    expect(qualifiesAsReactivation({ organizationCreatedAt: new Date("2026-01-01T00:00:00.000Z"), previousInteractionAt: new Date("2026-06-01T00:00:00.000Z"), interactionAt, dormantDays: 60 })).toBe(true);
   });
 });
