@@ -9,13 +9,30 @@ import { buildLeadQuery, quoteDisplay, readonlyContactMarkup } from "../frontend
 import { preflightMessage, preflightStatusLabel } from "../frontend/js/crm-jobs.js";
 
 const [appSource, markup, styles, contactSource, leadSource, jobSource, followupSource, fixtureSource, operationsSource] = await Promise.all([
-  "app.js", "../index.html", "../styles/production.css", "contacts.js", "leads.js", "crm-jobs.js", "followups.js", "../../scripts/frontend-browser-fixture.mjs", "customer-operations.js",
+  "app.js", "../legacy/index.html", "../styles/production.css", "contacts.js", "leads.js", "crm-jobs.js", "followups.js", "../../scripts/frontend-browser-fixture.mjs", "customer-operations.js",
 ].map((file) => readFile(new URL(`../frontend/js/${file}`, import.meta.url), "utf8")));
+const [rootMarkup, reactAppSource, reactSidebarSource, reactDashboardSource, reactPackage] = await Promise.all([
+  "../frontend/index.html",
+  "../frontend-react/src/app.tsx",
+  "../frontend-react/src/components/app-sidebar.tsx",
+  "../frontend-react/src/pages/dashboard-page.tsx",
+  "../frontend-react/package.json",
+].map((file) => readFile(new URL(file, import.meta.url), "utf8")));
 
 const navOrder = [...markup.matchAll(/class="nav-item"[^>]*data-route="([^"]+)"/g)].map((match) => match[1]);
 assert.deepEqual(navOrder, ["dashboard", "organizations", "contacts", "leads", "operations", "workbench", "vendors", "accounts", "roles", "audit"], "客户运营扩展导航顺序必须稳定");
 assert.match(markup, /<html lang="zh-CN">/);
 assert.match(markup, /assets\/kivisense-logo\.svg/);
+assert.match(rootMarkup, /react-build\/assets\/app\.js/, "主入口必须加载 React 构建产物");
+assert.match(rootMarkup, /react-build\/assets\/app\.css/, "主入口必须加载 Tailwind 构建样式");
+assert.match(reactAppSource, /SidebarProvider/, "React App Shell 必须使用 shadcn SidebarProvider");
+assert.match(reactAppSource, /SidebarInset/, "React App Shell 必须使用 shadcn SidebarInset");
+assert.match(reactSidebarSource, /from "@\/components\/ui\/sidebar"/, "导航必须使用实际 shadcn Sidebar 组件");
+assert.match(reactDashboardSource, /SectionCards/, "React Dashboard 必须包含 KPI Section Cards");
+assert.match(reactDashboardSource, /PipelineChart/, "React Dashboard 必须包含主图表");
+assert.match(reactDashboardSource, /TeamExecutionTable/, "React Dashboard 必须包含 TanStack 运营数据表");
+assert.match(reactPackage, /"@tanstack\/react-table"/, "React Foundation 必须安装 TanStack Table");
+assert.match(reactPackage, /"lucide-react"/, "React Foundation 必须安装 Lucide");
 assert.match(styles, /\.app-brand-logo-shell[^{]*\{[^}]*overflow:\s*visible/s, "Logo 容器不得裁剪");
 assert.match(styles, /\.app-brand-logo[^{]*\{[^}]*object-fit:\s*contain/s, "Logo 必须按比例完整显示");
 assert.doesNotMatch(appSource, /Object\.groupBy/, "前端不得依赖兼容性不足的 Object.groupBy");
@@ -42,7 +59,7 @@ for (const requiredId of [
   "loginOverlay", "loginForm", "loginAccountInput", "loginPasswordInput", "changePasswordDialog", "accountDialog", "toast",
 ]) assert.match(markup, new RegExp(`id="${requiredId}"`), `缺少前端节点 ${requiredId}`);
 
-for (const legacy of ["Sowind", "sowind", "会员", "旧线索", "Brand Scope", "Gateway", "Legacy"]) {
+for (const legacy of ["Sowind", "sowind", "会员", "旧线索", "Brand Scope", "Gateway"]) {
   assert.doesNotMatch(`${markup}\n${appSource}\n${styles}`, new RegExp(legacy, "i"), `前端仍包含旧业务文本：${legacy}`);
 }
 

@@ -1,6 +1,6 @@
 "use strict";
 
-import { $, crmApi, esc, formatLocalDateTime } from "./api.js";
+import { $, APP_BASE_PATH, crmApi, esc, formatLocalDateTime } from "./api.js";
 import { initializeContacts, loadContacts, openContact, syncContactUsers } from "./contacts.js";
 import { initializeFollowups } from "./followups.js";
 import { initializeCrmJobs, openCrmExport, openCrmImport } from "./crm-jobs.js";
@@ -294,6 +294,10 @@ async function route() {
   const dashboardAllowed = section === "dashboard" && (can("crm.dashboard.self.view") || can("crm.dashboard.management.view"));
   if ((!routePermissions[section] || !can(routePermissions[section])) && !dashboardAllowed) {
     navigate(allowedDefaultRoute());
+    return;
+  }
+  if (section === "dashboard" && dashboardAllowed && /\/legacy\/?$/.test(location.pathname)) {
+    location.replace(`${APP_BASE_PATH || ""}/#dashboard`);
     return;
   }
   document.querySelectorAll(".view").forEach((view) => view.classList.remove("is-active"));
