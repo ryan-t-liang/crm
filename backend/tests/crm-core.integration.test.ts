@@ -379,16 +379,20 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core", () => {
   });
 
   it("个人和管理 Dashboard 只返回非金额客户运营指标", async () => {
+    const unassigned = await inject({ method: "POST", url: "/api/v1/crm/organizations", payload: { name: `未分配公司 ${runKey}`, roles: ["PROSPECT"] } }, adminCookie);
+    expect(unassigned.statusCode).toBe(201);
     const self = await inject({ method: "GET", url: "/api/v1/crm/analytics/self" }, salesCookie);
     expect(self.statusCode).toBe(200);
     expect(self.json().data).toHaveProperty("kpis.activeOrganizations");
     const management = await inject({ method: "GET", url: "/api/v1/crm/analytics/management" }, adminCookie);
     expect(management.statusCode).toBe(200);
     expect(management.json().data).toHaveProperty("execution.winRate.denominator");
+    expect(management.json().data.execution.customerCoverage).toMatchObject({ numerator: 1, denominator: 1, percent: 100 });
     expect(JSON.stringify(management.json())).not.toMatch(/estimatedQuote|quotationNote|paymentReceivedAt|revenue|amount/i);
     const team = await inject({ method: "GET", url: "/api/v1/crm/analytics/team" }, adminCookie);
     expect(team.statusCode).toBe(200);
     expect(team.json().data.rows.some((row: { user: { id: string } }) => row.user.id === salesId)).toBe(true);
+    expect(team.json().data.rows.find((row: { user: { id: string } }) => row.user.id === salesId).leadsWithNextActionPercent).toBe(0);
   });
 
   it("删除受权限和关联关系保护，并以软删除保留历史跟进与附件", async () => {

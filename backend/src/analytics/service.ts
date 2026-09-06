@@ -72,7 +72,8 @@ export class CrmAnalyticsService {
     const dueInPeriod = tasks.filter((task) => task.status !== "CANCELED" && task.dueAt >= filter.from && task.dueAt <= filter.to);
     const doneInPeriod = dueInPeriod.filter((task) => task.status === "DONE");
     const nextActionCovered = activeLeads.filter((lead) => lead.nextAction?.trim() && tasks.some((task) => task.leadId === lead.id && task.status === "OPEN")).length;
-    const coveredOrganizationIds = new Set(interactions.filter((item) => item.occurredAt >= filter.from && item.occurredAt <= filter.to).map((item) => item.organizationId));
+    const assignedOrganizationIds = new Set(organizations.filter((organization) => organization.ownerUserId).map((organization) => organization.id));
+    const coveredOrganizationIds = new Set(interactions.filter((item) => assignedOrganizationIds.has(item.organizationId) && item.occurredAt >= filter.from && item.occurredAt <= filter.to).map((item) => item.organizationId));
     const nurtureStarts = nurtures.filter((item) => item.startedAt >= filter.from && item.startedAt <= filter.to);
     const nurtureOrganizationIds = new Set(nurtureStarts.map((item) => item.organizationId));
     const nurtureConvertedIds = new Set(leads.filter((lead) => {
@@ -102,7 +103,7 @@ export class CrmAnalyticsService {
         averageSalesCycleDays: salesCycles.length ? Math.round((salesCycles.reduce((sum, days) => sum + days, 0) / salesCycles.length) * 10) / 10 : 0,
         nextActionCoverage: { numerator: nextActionCovered, denominator: activeLeads.length, percent: percentage(nextActionCovered, activeLeads.length) },
         followupCompletion: { numerator: doneInPeriod.length, denominator: dueInPeriod.length, percent: percentage(doneInPeriod.length, dueInPeriod.length), onTime: doneInPeriod.filter((task) => task.completedAt && task.completedAt <= task.dueAt).length },
-        customerCoverage: { numerator: coveredOrganizationIds.size, denominator: organizations.length, percent: percentage(coveredOrganizationIds.size, organizations.length) },
+        customerCoverage: { numerator: coveredOrganizationIds.size, denominator: assignedOrganizationIds.size, percent: percentage(coveredOrganizationIds.size, assignedOrganizationIds.size) },
         nurtureConversion: { numerator: nurtureConvertedIds.size, denominator: nurtureOrganizationIds.size, percent: percentage(nurtureConvertedIds.size, nurtureOrganizationIds.size) },
         reactivation,
         activeNurtures: nurtures.filter((item) => item.status === "ACTIVE").length,
@@ -145,7 +146,7 @@ export class CrmAnalyticsService {
     const [tasks, leads, contactInteractionGroups, leadInteractionGroups] = await Promise.all([
       this.prisma.crmTask.findMany({
         where: { ownerUserId: { in: userIds } },
-        select: { ownerUserId: true, status: true, dueAt: true, completedAt: true },
+        select: { ownerUserId: true, leadId: true, status: true, dueAt: true, completedAt: true },
       }),
       this.prisma.crmLead.findMany({
         where: { contactId: { in: contactIds }, deletedAt: null, salesOwnerUserId: { in: userIds } },
@@ -185,7 +186,7 @@ export class CrmAnalyticsService {
         interactions: (contactInteractionsByOwner.get(user.id) ?? 0) + (leadInteractionsByOwner.get(user.id) ?? 0),
         activeLeads: activeLeads.length,
         staleLeads: activeLeads.filter((lead) => (lead.lastFollowupAt ?? lead.createdAt) < staleBoundary).length,
-        leadsWithNextActionPercent: percentage(activeLeads.filter((lead) => lead.nextAction?.trim()).length, activeLeads.length),
+        leadsWithNextActionPercent: percentage(activeLeads.filter((lead) => lead.nextAction?.trim() && tasks.some((task) => task.leadId === lead.id && task.status === "OPEN")).length, activeLeads.length),
       };
     });
     return { period: { from: filter.from, to: filter.to }, rows };
