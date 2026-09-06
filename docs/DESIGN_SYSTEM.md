@@ -1,0 +1,1764 @@
+# Kivisense CRM Design System v1.0
+
+Status: FROZEN UI FOUNDATION
+
+Purpose:
+
+本文件定义 Kivisense CRM 的长期 UI / UX Design Language。
+
+所有新增页面、组件、重构和 Codex 开发都必须遵循本文件。
+
+业务 Domain 规则由：
+
+docs/kivisense-crm-maintainer.md
+
+负责。
+
+视觉与交互规则由：
+
+docs/DESIGN_SYSTEM.md
+
+负责。
+
+---
+
+# 1. Design Philosophy
+
+Kivisense CRM 是：
+
+Desktop-first B2B Productivity Product。
+
+不是：
+
+Marketing Website
+Mobile Lifestyle App
+Traditional Admin Template
+Low-code Builder
+
+核心气质：
+
+Calm
+Dense
+Structured
+Fast
+Premium
+
+中文：
+
+克制
+紧凑
+有结构
+高效率
+高级但不过度设计
+
+---
+
+# 2. Primary UI Reference
+
+Primary Reference：
+
+shadcn/ui dashboard-01
+
+https://ui.shadcn.com/blocks#dashboard-01
+
+参考：
+
+- App Shell
+- Sidebar
+- Header
+- Section Cards
+- Charts
+- Data Table
+- Spacing
+- Typography
+- Border
+- Interaction Density
+
+Secondary Inspiration：
+
+Linear
+Attio
+Notion
+Stripe Dashboard
+
+不要直接复制任何品牌。
+
+Kivisense 必须形成自己的产品识别。
+
+---
+
+# 3. Technical Foundation
+
+Preferred UI Stack：
+
+React
+Tailwind CSS
+shadcn/ui
+Lucide
+TanStack Table
+
+优先使用 shadcn 官方组件。
+
+禁止：
+
+为了一个普通 Button / Select / Dialog 自行重新实现一套行为。
+
+自定义应主要发生在：
+
+Composition
+Tokens
+Layout
+Business Components
+
+而不是重新造基础交互组件。
+
+---
+
+# 4. Brand Personality
+
+Kivisense CRM 应该让用户感觉：
+
+专业，但不古板。
+
+现代，但不浮夸。
+
+数据很多，但很好读。
+
+功能很多，但不会感觉复杂。
+
+销售能够快速执行。
+
+老板能够快速判断。
+
+---
+
+# 5. Color System
+
+## Neutral
+
+Background:
+
+#FFFFFF
+
+Subtle Background:
+
+#FAFAFA
+
+Foreground:
+
+#111111
+
+Secondary:
+
+#737373
+
+Muted:
+
+#A3A3A3
+
+Border:
+
+#E8E8E8
+
+Subtle Border:
+
+#F0F0F0
+
+---
+
+## Brand Green
+
+Kivisense Logo：
+
+Brand 500
+#04E06E
+
+Brand 600
+#03C360
+
+辅助：
+
+Brand 50
+#F0FDF5
+
+Brand 100
+#DCFCE8
+
+Brand 200
+#BBF7D0
+
+Brand 700
+#079451
+
+Brand 800
+#087A46
+
+Brand 900
+#075F39
+
+---
+
+# 6. Brand Usage
+
+整体：
+
+90% Neutral
+
+10% Kivisense Emerald
+
+Brand Green 用于：
+
+- Primary CTA
+- Focus Ring
+- Checkbox / Radio
+- Selected State
+- Active Indicator
+- Key Chart Series
+- Small Positive Indicators
+
+禁止：
+
+- 整个 Sidebar 绿色
+- 整页绿色 Header
+- 所有 Status 都绿色
+- 大面积 Brand Background
+
+高饱和品牌色的价值来自：
+
+稀缺使用。
+
+---
+
+# 7. Typography
+
+Font Stack：
+
+中文：
+
+PingFang SC
+system-ui
+
+英文 / Number：
+
+Inter
+Geist
+system-ui
+
+---
+
+Page Title：
+
+24px
+600
+
+Section Title：
+
+16–18px
+600
+
+Card Title：
+
+14–16px
+500–600
+
+Body：
+
+14px
+400
+
+Table：
+
+14px
+
+Secondary：
+
+13px
+
+Metadata：
+
+12px
+
+---
+
+原则：
+
+不要整个系统全部 Semibold。
+
+层级依赖：
+
+Size
+Weight
+Color
+Spacing
+
+共同建立。
+
+---
+
+# 8. Spacing
+
+全站 spacing rhythm：
+
+4
+8
+12
+16
+20
+24
+32
+40
+48
+
+禁止随机：
+
+13
+17
+22
+27
+
+等非体系 spacing。
+
+页面常规 padding：
+
+24px
+
+大屏可略增。
+
+但不要形成 Marketing Site 式大留白。
+
+---
+
+# 9. Radius
+
+Button：
+
+8px
+
+Input：
+
+8px
+
+Select：
+
+8px
+
+Dropdown：
+
+8px
+
+Card：
+
+10px
+
+Dialog：
+
+12px
+
+Drawer：
+
+12px
+
+禁止全站：
+
+16px+
+20px+
+24px+
+
+巨大圆角。
+
+---
+
+# 10. Shadow
+
+原则：
+
+Border First
+Shadow Second
+
+普通：
+
+Card
+Table
+Section
+
+无 Shadow 或极轻 Shadow。
+
+明显 Shadow 仅用于：
+
+Dialog
+Dropdown
+Popover
+Drawer
+Floating UI
+
+---
+
+# 11. App Shell
+
+Desktop Sidebar：
+
+232–248px
+
+Collapsed：
+
+56–64px
+
+Main Content：
+
+充分利用横向空间。
+
+结构：
+
+Sidebar
++
+SidebarInset
++
+SiteHeader
++
+MainContent
+
+Header 高度：
+
+约 48–56px
+
+不要做巨大 Top Nav。
+
+---
+
+# 12. Sidebar
+
+Sidebar 应：
+
+Quiet
+Compact
+Clear
+
+一级菜单有明确 Icon。
+
+Icon：
+
+Lucide
+
+16–18px。
+
+分组标题：
+
+12px
+Muted
+
+Active：
+
+Neutral Dark
+
+或者：
+
+Brand-50 + small green indicator。
+
+禁止：
+
+大绿色 Active Block。
+
+---
+
+# 13. Navigation IA
+
+Dashboard
+
+
+客户管理
+────────
+
+公司
+
+客户联系人
+
+线索
+
+
+客户运营
+────────
+
+客户运营
+
+我的工作台
+
+
+资源
+────────
+
+供应商
+
+
+系统管理
+────────
+
+账户管理
+
+角色与权限
+
+审计日志
+
+---
+
+# 14. Page Header
+
+统一：
+
+Title
+Description（必要时）
+Context
+Primary Action
+
+Example：
+
+公司
+
+管理客户、潜在客户、供应商和合作伙伴。
+
+                     + 新建公司
+
+Description 不应每页都有。
+
+简单页面：
+
+只保留 Title + Action。
+
+---
+
+# 15. Buttons
+
+Hierarchy：
+
+Primary
+
+Secondary
+
+Outline
+
+Ghost
+
+Destructive
+
+---
+
+每个 Page：
+
+原则上只有一个明显 Primary CTA。
+
+例如：
+
++ 新建客户
+
+其余：
+
+Filter
+Export
+Columns
+
+使用：
+
+Outline / Ghost。
+
+禁止：
+
+四五个绿色按钮同时出现。
+
+---
+
+# 16. KPI Card
+
+视觉基准：
+
+shadcn dashboard-01 Section Cards。
+
+结构：
+
+Label
+
+Primary Metric
+
+Optional delta / state
+
+Short supporting context
+
+---
+
+不要：
+
+巨大 Icon
+
+复杂插图
+
+多个背景色
+
+大量说明文字。
+
+Card 高度尽量一致。
+
+Metric 才是视觉焦点。
+
+---
+
+# 17. Dashboard Layout
+
+推荐：
+
+Page Header
+
+↓
+
+KPI Row
+
+↓
+
+Primary Analytics
+
+↓
+
+Secondary Analytics / Matrix
+
+↓
+
+Operational Table
+
+---
+
+Dashboard 首屏：
+
+最多 6 个 KPI。
+
+Kivisense 第一版：
+
+活跃公司
+
+活跃线索
+
+新增线索
+
+待唤醒客户
+
+逾期任务
+
+停滞线索
+
+不展示财务金额。
+
+---
+
+# 18. Charts
+
+图表必须：
+
+Quiet
+Readable
+
+Axis：
+
+Muted
+
+Grid：
+
+Very subtle
+
+Tooltip：
+
+Compact
+
+Legend：
+
+Minimal
+
+Brand Green：
+
+主重点系列。
+
+Secondary series：
+
+Neutral gray scale。
+
+禁止：
+
+彩虹配色。
+
+禁止：
+
+3D Chart
+
+Gauge
+
+Gradient overload。
+
+---
+
+# 19. Table Is First-Class UI
+
+CRM 核心 Page：
+
+Table 是主要工作区域。
+
+结构：
+
+Page Header
+
+Saved Views
+
+Toolbar
+
+Data Table
+
+Pagination
+
+不要：
+
+Page Title
+
+↓
+
+巨大 Filter Form
+
+↓
+
+Cards
+
+↓
+
+终于出现 Table。
+
+---
+
+# 20. Table Toolbar
+
+统一支持：
+
+Search
+
+Filter
+
+Sort
+
+Columns
+
+View
+
+Bulk Actions
+
+Primary CTA
+
+Filter 默认：
+
+Popover
+
+Dropdown
+
+Sheet
+
+不要默认占据一大片页面。
+
+---
+
+# 21. Table Style
+
+Row：
+
+40–44px
+
+Header：
+
+36–40px
+
+Background：
+
+White
+
+Divider：
+
+Subtle
+
+Hover：
+
+Very subtle
+
+Selected：
+
+Clear but quiet
+
+Sticky Header：
+
+大型列表优先。
+
+Metadata：
+
+Muted Text。
+
+---
+
+# 22. Badge
+
+Badge 只用于：
+
+Status
+
+Stage
+
+Priority
+
+Risk
+
+Role（必要时）
+
+不要用于：
+
+Owner
+
+Company
+
+Contact
+
+Date
+
+普通 Category
+
+所有东西都变 Badge 会造成视觉噪音。
+
+Badge：
+
+Small
+Muted
+Low Saturation
+
+---
+
+# 23. Avatar / Logo
+
+Company：
+
+优先 Logo。
+
+无 Logo：
+
+Initial Fallback。
+
+Contact：
+
+Avatar 可选。
+
+没有头像：
+
+姓名 Initial。
+
+尺寸：
+
+List：
+
+24–28px
+
+Detail：
+
+40–48px
+
+不要巨大 Profile Avatar。
+
+---
+
+# 24. Company List
+
+首要信息：
+
+Logo
+
+Company
+
+Lifecycle
+
+Fit
+
+Engagement
+
+Owner
+
+Contacts
+
+Active Leads
+
+Last Interaction
+
+Next Action
+
+Updated
+
+Row Action。
+
+禁止金额。
+
+---
+
+# 25. Company 360
+
+Header：
+
+Logo
+
+Company Name
+
+Role
+
+Lifecycle
+
+Owner
+
+Fit
+
+Engagement
+
+Quick Actions
+
+---
+
+Summary：
+
+Contacts
+
+Active Leads
+
+Latest Interaction
+
+Next Action
+
+---
+
+Tabs：
+
+Overview
+
+Contacts
+
+Leads
+
+Journey
+
+Tasks
+
+Files
+
+Notes
+
+Audit
+
+---
+
+页面目标：
+
+5–10 秒理解：
+
+这家公司是谁？
+
+关系怎么样？
+
+有多少人？
+
+有哪些机会？
+
+最近发生了什么？
+
+下一步是什么？
+
+---
+
+# 26. Contact 360
+
+Header：
+
+Contact Name
+
+Title
+
+Company
+
+Stage
+
+Owner
+
+Contact Methods
+
+Quick Actions
+
+---
+
+右侧核心：
+
+Leads
+
+Customer Journey
+
+Notes
+
+Audit
+
+Contact 页面强调：
+
+Person Relationship。
+
+Company 页面强调：
+
+Organization Relationship。
+
+---
+
+# 27. Lead Detail
+
+Header：
+
+Requirement Summary
+
+Company
+
+Contact
+
+Stage
+
+Priority
+
+Owner
+
+---
+
+必须优先展示：
+
+Latest Progress
+
+Next Action
+
+Next Followup
+
+---
+
+业务 Section：
+
+Requirement
+
+Solution
+
+Quote Context
+
+Project Classification
+
+Team
+
+Milestones
+
+Attachments
+
+Followup Timeline
+
+Audit
+
+---
+
+不要让用户打开 Lead 后先看到：
+
+createdAt
+
+system ID
+
+技术字段。
+
+---
+
+# 28. Customer Journey
+
+Timeline 视觉：
+
+Quiet。
+
+每条：
+
+Date
+
+Event Type
+
+Title
+
+Summary
+
+Actor
+
+Related Record
+
+Attachments
+
+---
+
+不要做：
+
+巨大圆点
+
+粗线
+
+五颜六色 Timeline。
+
+Journey 是业务历史。
+
+Audit 是系统记录。
+
+视觉也必须区分。
+
+---
+
+# 29. Forms
+
+Forms 原则：
+
+Grouped
+
+Compact
+
+Contextual
+
+---
+
+Contact：
+
+3 Tabs
+
+Lead：
+
+5 Tabs
+
+Company：
+
+按业务 Section。
+
+---
+
+Tab 是：
+
+同一个 Form 的 Section Navigation。
+
+切换：
+
+不丢 unsaved state。
+
+保存：
+
+统一 Footer。
+
+Validation：
+
+显示 Error Badge。
+
+Save：
+
+自动定位第一个 Error Tab。
+
+---
+
+# 30. Form Layout
+
+Desktop：
+
+优先两列。
+
+单字段很长：
+
+Full width。
+
+Text Area：
+
+Full width。
+
+File Section：
+
+通常 Full width。
+
+避免：
+
+所有字段都一行一个 Input。
+
+也避免：
+
+四列过密布局。
+
+---
+
+# 31. Contextual Attachments
+
+附件不能孤立。
+
+Example：
+
+需求整理
+
+[ Textarea ]
+
+需求文件
+
+[ Upload ]
+
+
+图片需求说明
+
+[ Textarea ]
+
+图片参考
+
+[ Image Upload ]
+
+
+方案说明
+
+[ Textarea ]
+
+正式方案
+
+[ Upload ]
+
+---
+
+附件 item：
+
+File icon / thumbnail
+
+File name
+
+Type
+
+Size
+
+Uploader
+
+Uploaded time
+
+Actions
+
+---
+
+不要：
+
+每个文件一个巨大 Card。
+
+---
+
+# 32. Tasks / Workbench
+
+Workbench 是：
+
+Execution Surface。
+
+不是 Analytics Dashboard。
+
+顶部：
+
+Overdue
+
+Today
+
+Next 7 Days
+
+High Priority
+
+---
+
+下面：
+
+Task Queue。
+
+每条强调：
+
+What
+
+Who
+
+When
+
+Why
+
+Next Action
+
+---
+
+操作：
+
+Complete
+
+Followup
+
+Postpone
+
+Open Record
+
+必须能直接执行。
+
+---
+
+# 33. Customer Operations
+
+这不是普通 Company List。
+
+应体现运营池：
+
+重点跟进
+
+孵化
+
+待唤醒
+
+沉睡
+
+---
+
+每条 Company 应快速表达：
+
+Company
+
+Fit
+
+Engagement
+
+Lifecycle
+
+Owner
+
+Last Interaction
+
+Dormant Days
+
+Next Touch
+
+Active Lead
+
+Actions
+
+---
+
+页面重点：
+
+识别下一批应该联系谁。
+
+---
+
+# 34. Dialog
+
+Dialog 用于：
+
+Create
+
+Delete confirm
+
+Small edit
+
+Quick actions
+
+---
+
+不要塞超长 Form。
+
+长 Form 使用：
+
+Full Page
+
+或：
+
+Large Sheet / Drawer。
+
+---
+
+# 35. Drawer / Sheet
+
+适合：
+
+Advanced Filter
+
+Quick Detail
+
+Quick Create
+
+Bulk Action
+
+Secondary Form
+
+---
+
+宽度：
+
+根据内容。
+
+不要默认占屏幕 90%。
+
+---
+
+# 36. Empty State
+
+结构：
+
+Small icon
+
+Title
+
+One short description
+
+Optional CTA
+
+禁止：
+
+巨大 Illustration。
+
+Example：
+
+暂无线索
+
+该客户目前还没有关联线索。
+
++ 创建线索
+
+---
+
+# 37. Loading
+
+优先：
+
+Skeleton。
+
+保持和最终 layout 一致。
+
+不要：
+
+全页中央 Spinner
+
+作为主要 loading pattern。
+
+---
+
+# 38. Error
+
+明确：
+
+What happened
+
+What user can do
+
+Retry
+
+不要显示：
+
+Raw Stack
+
+Raw API Error
+
+Database Error
+
+---
+
+# 39. Permission State
+
+无权限：
+
+隐藏 mutation action。
+
+不要：
+
+全部显示但 disabled。
+
+如果用户进入无权限页面：
+
+使用统一 No Permission State。
+
+---
+
+# 40. Destructive Action
+
+删除：
+
+进入 More Menu。
+
+颜色：
+
+仅 Destructive Item 使用红。
+
+删除确认：
+
+明确显示 Entity。
+
+Example：
+
+删除联系人“Anne Yang”？
+
+这是一个可恢复的软删除操作。
+
+---
+
+# 41. Search
+
+全局 Search：
+
+未来可以扩。
+
+当前页面 Search：
+
+Toolbar Inline Search。
+
+Search Input：
+
+不宜超过 280–320px。
+
+---
+
+# 42. Filter
+
+简单 Filter：
+
+Dropdown。
+
+复杂：
+
+Popover / Sheet。
+
+Active filter：
+
+用轻量 Chip 表达。
+
+支持：
+
+Clear All。
+
+不要：
+
+每个筛选都永久占页面。
+
+---
+
+# 43. Saved Views
+
+列表类页面未来推荐：
+
+All
+
+Mine
+
+Active
+
+Dormant
+
+etc.
+
+Tabs 应：
+
+简洁
+
+低视觉重量。
+
+不是巨大 Segment Control。
+
+---
+
+# 44. Motion
+
+允许：
+
+150–220ms
+
+Button feedback
+
+Popover
+
+Dropdown
+
+Drawer
+
+Dialog
+
+Hover
+
+禁止：
+
+Bounce
+
+Large scale
+
+Flashy motion
+
+CRM 是 Productivity Tool。
+
+---
+
+# 45. Responsive
+
+Primary：
+
+1440
+
+1280
+
+1024
+
+Desktop First。
+
+1024：
+
+Sidebar 可以 collapse。
+
+Table：
+
+内部 scroll。
+
+禁止：
+
+Document horizontal overflow。
+
+---
+
+# 46. Accessibility
+
+必须：
+
+Keyboard accessible
+
+Visible focus
+
+Dialog focus trap
+
+ARIA labels
+
+Color contrast
+
+Input label
+
+Error association
+
+不要因为追求高级感牺牲可访问性。
+
+---
+
+# 47. Login
+
+参考 shadcn login blocks。
+
+Kivisense Logo
+
+Minimal Form
+
+Subtle Background
+
+No giant illustration unless necessary
+
+---
+
+# 48. System Pages
+
+Accounts
+
+Roles
+
+Audit
+
+必须仍像同一个 Kivisense 产品。
+
+不能出现：
+
+CRM 页面现代
+
+系统页面突然变传统 Admin。
+
+---
+
+# 49. UI Anti-patterns
+
+绝对禁止：
+
+传统 Ant Design Admin Feel
+
+大面积蓝色 / 绿色
+
+Gradient Dashboard
+
+Card Wall
+
+16px+ Global Radius
+
+Heavy Shadow
+
+Colorful Badge Wall
+
+Emoji Icons
+
+Mixed Icon Libraries
+
+Huge Empty Illustration
+
+Filter Form Wall
+
+Infinite Nested Navigation
+
+Low-code Form Look
+
+Marketing Landing Page whitespace
+
+---
+
+# 50. Codex Implementation Rule
+
+每次新增页面：
+
+先查：
+
+DESIGN_SYSTEM.md
+
+再实现。
+
+不得：
+
+为了单独页面新增随机 Design Token。
+
+如果现有 Design System 无法覆盖：
+
+优先扩展 shared token / component。
+
+禁止 page-local 视觉规则不断累积。
+
+---
+
+# 51. Visual Acceptance
+
+最终页面必须同时满足：
+
+1. 第一眼像现代 SaaS Product
+2. 第二眼明确是 CRM
+3. 长时间使用不会疲劳
+4. 数据很多仍然有秩序
+5. 绿色具有品牌识别，但不喧宾夺主
+6. 不像国产后台模板
+7. 不像低代码平台
+8. 不像 shadcn 默认 Demo 换 Logo
+9. 整套产品有统一 Kivisense identity
+
+---
+
+# 52. Final Principle
+
+Kivisense CRM 的高级感不来自：
+
+More decoration。
+
+而来自：
+
+Less noise
+Better hierarchy
+Better spacing
+Better components
+Better interaction
+Better information architecture
+
+最终公式：
+
+shadcn/ui structural quality
+
++
+
+Kivisense Emerald identity
+
++
+
+B2B CRM information density
+
+=
+
+Kivisense CRM Design Language
