@@ -70,7 +70,14 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
       },
     },
   });
-  await app.register(rateLimit, { max: 180, timeWindow: "1 minute" });
+  await app.register(rateLimit, {
+    max: 180,
+    timeWindow: "1 minute",
+    // Keep the abuse-control budget for API traffic. A browser may load many
+    // immutable chunks, styles and logos at once; those files must not prevent
+    // a second tab or role session from rendering the login page.
+    allowList: (request) => !request.url.startsWith("/api/"),
+  });
   await app.register(multipart, { limits: { fileSize: config.maxAttachmentBytes, files: 1 } });
   installErrorHandler(app);
 

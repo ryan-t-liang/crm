@@ -142,6 +142,19 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core", () => {
     expect(health.json()).toMatchObject({ status: "ok", release: "Kivisense CRM 2.0" });
   });
 
+  it("does not spend the API rate-limit budget on static application assets", async () => {
+    const isolated = await buildApp({ config, prisma, frontendRoot: resolve(process.cwd(), "../frontend") });
+    await isolated.ready();
+    try {
+      for (let request = 0; request < 181; request += 1) {
+        expect((await isolated.inject({ method: "GET", url: "/" })).statusCode).toBe(200);
+      }
+      expect((await isolated.inject({ method: "GET", url: "/api/health" })).statusCode).toBe(200);
+    } finally {
+      await isolated.close();
+    }
+  });
+
   it("销售可创建和编辑客户联系人", async () => {
     const created = await inject({
       method: "POST",

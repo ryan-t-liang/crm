@@ -53,7 +53,7 @@ function safeId(value, label) {
 function databaseQuery(sql) {
   return execFileSync("ssh", [
     "-o", "BatchMode=yes", host,
-    "docker exec -i sowind-crm-test-mysql-1 sh -c 'MYSQL_PWD=\"$MYSQL_ROOT_PASSWORD\" mysql -uroot -N -B kivisense_crm_uat'",
+    "docker exec -i sowind-crm-test-mysql-1 sh -c 'MYSQL_PWD=\"$MYSQL_ROOT_PASSWORD\" mysql --default-character-set=utf8mb4 -uroot -N -B kivisense_crm_uat'",
   ], { input: sql, encoding: "utf8" }).trim();
 }
 
@@ -92,7 +92,7 @@ async function settle(page) {
 async function go(page, hash, readyText) {
   currentCase = `route:${hash}`;
   await page.goto(`${base}/#${hash}`, { waitUntil: "domcontentloaded" });
-  await page.getByText(readyText, { exact: true }).first().waitFor();
+  await page.getByRole("heading", { name: readyText, exact: true }).first().waitFor();
   await settle(page);
 }
 
@@ -128,6 +128,13 @@ async function writeThroughUi(page, name, predicate, action) {
 async function deleteRow(page, family, readyText, placeholder, name, id, menuLabel = "删除") {
   await go(page, family, readyText);
   const search = page.getByPlaceholder(placeholder);
+  try {
+    await search.waitFor({ timeout: 5_000 });
+  } catch {
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await page.getByRole("heading", { name: readyText, exact: true }).first().waitFor();
+    await search.waitFor();
+  }
   await search.fill(name);
   if (family !== "organizations") await search.press("Enter");
   await page.waitForTimeout(700);
