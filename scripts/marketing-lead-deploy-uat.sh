@@ -79,13 +79,14 @@ elif [[ "$mode" = migrate ]]; then
   (cd "$backup" && sha256sum -c SHA256SUMS)
   before=$(<"$backup/migration-count-before.txt")
   test "$before" -ge 7
-  test "$before" -le 8
+  test "$before" -le 9
   docker run --rm --name "kivisense-crm-marketing-migrate-$release_short" --env-file "$app/.env" --network "$network" "$image" npm --workspace backend run prisma:migrate:deploy | tee "$backup/migration-output.txt"
   after=$(migration_count)
-  test "$after" -eq 8
-  docker exec sowind-crm-test-mysql-1 sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot -N kivisense_crm_uat -e "SELECT migration_name FROM _prisma_migrations WHERE migration_name IN ('\''20260907010000_marketing_lead_opportunity_conversion'\'', '\''20260907160000_product_model_v4'\'') AND finished_at IS NOT NULL AND rolled_back_at IS NULL ORDER BY migration_name; SELECT '\''marketing_leads'\'', COUNT(*) FROM marketing_leads UNION ALL SELECT '\''lead_activity_events'\'', COUNT(*) FROM lead_activity_events UNION ALL SELECT '\''lead_score_history'\'', COUNT(*) FROM lead_score_history UNION ALL SELECT '\''lead_status_history'\'', COUNT(*) FROM lead_status_history UNION ALL SELECT '\''assignment_notifications'\'', COUNT(*) FROM assignment_notifications;"' > "$backup/marketing-schema-after.tsv"
+  test "$after" -eq 9
+  docker exec sowind-crm-test-mysql-1 sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql -uroot -N kivisense_crm_uat -e "SELECT migration_name FROM _prisma_migrations WHERE migration_name IN ('\''20260907010000_marketing_lead_opportunity_conversion'\'', '\''20260907160000_product_model_v4'\'', '\''20260907170000_core_delete_permissions'\'') AND finished_at IS NOT NULL AND rolled_back_at IS NULL ORDER BY migration_name; SELECT '\''marketing_leads'\'', COUNT(*) FROM marketing_leads UNION ALL SELECT '\''lead_activity_events'\'', COUNT(*) FROM lead_activity_events UNION ALL SELECT '\''lead_score_history'\'', COUNT(*) FROM lead_score_history UNION ALL SELECT '\''lead_status_history'\'', COUNT(*) FROM lead_status_history UNION ALL SELECT '\''assignment_notifications'\'', COUNT(*) FROM assignment_notifications;"' > "$backup/marketing-schema-after.tsv"
   grep -q '^20260907010000_marketing_lead_opportunity_conversion$' "$backup/marketing-schema-after.tsv"
   grep -q '^20260907160000_product_model_v4$' "$backup/marketing-schema-after.tsv"
+  grep -q '^20260907170000_core_delete_permissions$' "$backup/marketing-schema-after.tsv"
   legacy_counts > "$backup/business-counts-after-migration.tsv"
   diff -u "$backup/business-counts-before.tsv" "$backup/business-counts-after-migration.tsv"
   protected_snapshot > "$backup/production-test-after-migration.txt"

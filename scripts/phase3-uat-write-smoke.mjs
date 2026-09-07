@@ -142,6 +142,34 @@ async function deleteRow(page, family, readyText, placeholder, name, id, menuLab
   await row.waitFor({ state: "hidden" });
 }
 
+async function cleanupStaleQaRecords(page) {
+  const output = databaseQuery([
+    "SELECT 'OPP', id, requirement_summary FROM crm_leads WHERE deleted_at IS NULL AND requirement_summary LIKE 'UAT-V4-商机-%';",
+    "SELECT 'ML', id, full_name FROM marketing_leads WHERE deleted_at IS NULL AND full_name LIKE 'UAT-V4-线索-%';",
+    "SELECT 'CONTACT', id, contact_name FROM contacts WHERE deleted_at IS NULL AND contact_name LIKE 'UAT-V4-线索-%';",
+    "SELECT 'ORG', id, name FROM organizations WHERE deleted_at IS NULL AND name LIKE 'UAT-V4-公司-%';",
+  ].join("\n"));
+  const rows = output
+    ? output.split(/\r?\n/).map((line) => {
+        const [type, id, name] = line.split("\t");
+        return { type, id: safeId(id, `stale ${type} id`), name };
+      })
+    : [];
+  const config = {
+    OPP: ["leads", "商机", "搜索商机、公司", "删除"],
+    ML: ["marketing-leads", "线索", "搜索姓名、公司、Email、Phone 或询盘", "删除"],
+    CONTACT: ["contacts", "联系人", "搜索联系人、公司、Email 或 Phone", "删除"],
+    ORG: ["organizations", "公司", "搜索公司、简称或联系人", "删除公司"],
+  };
+  for (const type of ["OPP", "ML", "CONTACT", "ORG"]) {
+    for (const row of rows.filter((item) => item.type === type)) {
+      const [family, readyText, placeholder, menuLabel] = config[type];
+      await deleteRow(page, family, readyText, placeholder, row.name, row.id, menuLabel);
+    }
+  }
+  pass("UAT stale QA record cleanup", { deletedRecords: rows.length });
+}
+
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const adminContext = await browser.newContext({ viewport: { width: 1440, height: 900 }, acceptDownloads: true });
 const salesContext = await browser.newContext({ viewport: { width: 1440, height: 900 } });
@@ -157,6 +185,7 @@ try {
   const sales = users.find((user) => user.loginAccount === secrets.UAT_SALES_USERNAME);
   assert.ok(admin && sales, "UAT CRM user directory must contain the protected admin and sales accounts");
   pass("UAT SUPER_ADMIN Login");
+  await cleanupStaleQaRecords(adminPage);
 
   await go(adminPage, "marketing-leads", "线索");
   assert.equal(await adminPage.getByRole("button", { name: "开始孵化", exact: true }).count(), 0);
