@@ -1,0 +1,250 @@
+{
+  "verdict": "PASS",
+  "checks": [
+    {
+      "name": "01-dashboard-management-overview-1440",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#dashboard",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "name": "02-dashboard-marketing-funnel-1440",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#dashboard",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "name": "03-dashboard-nurture-scoring-1440",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#dashboard",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "name": "04-marketing-lead-list-1440",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#marketing-leads",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "name": "05-marketing-lead-detail-qualified-1440",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#marketing-leads/cmtqxw1y00027qpwh2nordssj",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "name": "06-activity-entry-dialog-1440",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#marketing-leads/cmtqxw1y00027qpwh2nordssj",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "name": "07-score-breakdown-1440",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#marketing-leads/cmtqxw1y00027qpwh2nordssj",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "name": "08-marketing-lead-mql-1440",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#marketing-leads/cmtqxw2320037qpwh2hnx4p1q",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "name": "09-marketing-lead-sql-1440",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#marketing-leads/cmtqxw2620041qpwh6duygdk0",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "name": "10-convert-dialog-1440",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#marketing-leads/cmtqxw1y00027qpwh2nordssj",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "name": "11-existing-company-match-1440",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#marketing-leads/cmtqxw1y00027qpwh2nordssj",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "name": "12-existing-contact-match-1440",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#marketing-leads/cmtqxw1y00027qpwh2nordssj",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "name": "13-converted-marketing-lead-1440",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#marketing-leads/cmtqxw1y00027qpwh2nordssj",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "name": "14-opportunity-list-1440",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#leads",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "name": "15-opportunity-source-block-1440",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#leads/cmtqxw68x004yqpwh2w0aqgfg",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "name": "16-company-journey-1440",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#organizations/cmtqxdcjd0005qppsa2mujy68",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "name": "17-scoring-rules-1440",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#scoring-rules",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "name": "18-dashboard-management-overview-1280",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#dashboard",
+      "widths": {
+        "body": 1280,
+        "document": 1280,
+        "viewport": 1280
+      }
+    },
+    {
+      "name": "19-marketing-lead-list-1280",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#marketing-leads",
+      "widths": {
+        "body": 1280,
+        "document": 1280,
+        "viewport": 1280
+      }
+    },
+    {
+      "name": "20-opportunity-list-1280",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#leads",
+      "widths": {
+        "body": 1280,
+        "document": 1280,
+        "viewport": 1280
+      }
+    },
+    {
+      "name": "18-dashboard-management-overview-1024",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#dashboard",
+      "widths": {
+        "body": 1024,
+        "document": 1024,
+        "viewport": 1024
+      }
+    },
+    {
+      "name": "19-marketing-lead-list-1024",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#marketing-leads",
+      "widths": {
+        "body": 1024,
+        "document": 1024,
+        "viewport": 1024
+      }
+    },
+    {
+      "name": "20-opportunity-list-1024",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3300/?qa=1788767339230#leads",
+      "widths": {
+        "body": 1024,
+        "document": 1024,
+        "viewport": 1024
+      }
+    }
+  ],
+  "errors": [],
+  "network": [],
+  "expectedNetwork": [
+    {
+      "status": 401,
+      "url": "http://127.0.0.1:3300/api/v1/auth/me"
+    }
+  ],
+  "fixture": {
+    "marketingLeadId": "cmtqxw1y00027qpwh2nordssj",
+    "mqlId": "cmtqxw2320037qpwh2hnx4p1q",
+    "sqlId": "cmtqxw2620041qpwh6duygdk0",
+    "opportunityId": "cmtqxw68x004yqpwh2w0aqgfg",
+    "organizationId": "cmtqxdcjd0005qppsa2mujy68"
+  }
+}

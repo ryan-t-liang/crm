@@ -51,6 +51,129 @@ export type Lead = {
   attachments?: Attachment[];
   nextAction?: string;
   nextFollowupAt?: string;
+  requirementDetail?: string;
+  requirementContext?: string;
+  productInterest?: string;
+  requirementTags?: string[];
+  sourceMarketingLeadId?: string;
+  sourceMarketingLead?: {
+    id: string;
+    fullName: string;
+    companyName?: string;
+    source: string;
+    sourceChannel?: string;
+    sourceDetail?: string;
+    inquiryContent?: string;
+    convertedAt?: string;
+  };
+};
+export type MarketingLeadStatus = "NEW" | "NURTURING" | "MQL" | "SQL" | "QUALIFIED" | "CONVERTED" | "RECYCLED" | "DISQUALIFIED";
+export type MarketingLead = {
+  id: string;
+  fullName: string;
+  email?: string;
+  phone?: string;
+  phoneNormalized?: string;
+  whatsapp?: string;
+  whatsappNormalized?: string;
+  wechat?: string;
+  linkedinUrl?: string;
+  title?: string;
+  department?: string;
+  companyName?: string;
+  companyWebsite?: string;
+  companySize?: string;
+  industry?: string;
+  countryCode?: string;
+  region?: string;
+  city?: string;
+  inquiryType?: string;
+  inquiryContent?: string;
+  productInterest?: string;
+  requirementTags: string[];
+  budgetRange?: string;
+  note?: string;
+  source: string;
+  sourceChannel?: string;
+  sourceDetail?: string;
+  firstTouchAt?: string;
+  status: MarketingLeadStatus;
+  ownerUserId?: string;
+  owner?: CrmUser;
+  assignedAt?: string;
+  mqlAt?: string;
+  sqlAt?: string;
+  qualifiedAt?: string;
+  recycledAt?: string;
+  convertedAt?: string;
+  disqualifiedAt?: string;
+  disqualifiedReason?: string;
+  fitScore: number;
+  fitReason?: string;
+  fitLevel: "LOW" | "MEDIUM" | "HIGH";
+  engagementScoreCached: number;
+  engagementScoreCalculatedAt?: string;
+  engagementLevel: "LOW" | "MEDIUM" | "HIGH";
+  leadLevel: "COLD" | "WARM" | "HOT";
+  lastActivityAt?: string;
+  firstSalesResponseAt?: string;
+  convertedOrganizationId?: string;
+  convertedContactId?: string;
+  convertedOpportunityId?: string;
+  convertedByUserId?: string;
+  convertedBy?: CrmUser;
+  convertedOrganization?: { id: string; name: string; shortName?: string; website?: string };
+  convertedContact?: { id: string; contactName: string; email?: string; phone?: string };
+  convertedOpportunity?: { id: string; requirementSummary: string; status: string; deletedAt?: string };
+  createdBy?: CrmUser;
+  createdAt: string;
+  updatedAt: string;
+  activities?: MarketingLeadActivity[];
+  scoreHistory?: MarketingLeadScoreHistory[];
+  statusHistory?: MarketingLeadStatusHistory[];
+};
+export type MarketingLeadActivity = {
+  id: string;
+  eventType: string;
+  source: string;
+  occurredAt: string;
+  note?: string;
+  engagementDeltaSnapshot: number;
+  fitDeltaSnapshot: number;
+  scoringRule?: LeadScoringRule;
+  actor?: CrmUser;
+};
+export type MarketingLeadScoreHistory = {
+  id: string;
+  dimension: "FIT" | "ENGAGEMENT";
+  previousScore: number;
+  scoreDelta: number;
+  newScore: number;
+  reason?: string;
+  createdAt: string;
+  changedBy?: CrmUser;
+};
+export type MarketingLeadStatusHistory = {
+  id: string;
+  fromStatus?: MarketingLeadStatus;
+  toStatus: MarketingLeadStatus;
+  reason?: string;
+  changedAt: string;
+  changedBy?: CrmUser;
+};
+export type LeadScoringRule = {
+  id: string;
+  code: string;
+  name: string;
+  category: string;
+  scoreDimension: "FIT" | "ENGAGEMENT";
+  scoreDelta: number;
+  repeatable: boolean;
+  maxOccurrences?: number;
+  cooldownHours?: number;
+  enabled: boolean;
+  sortOrder: number;
+  description?: string;
 };
 export type Task = {
   id: string;
@@ -145,7 +268,7 @@ export const roleLabels: Record<string, string> = {
 export const lifecycleLabels: Record<string, string> = {
   TARGET: "目标",
   CONTACTED: "已触达",
-  NURTURING: "孵化中",
+  NURTURING: "客户经营中",
   OPPORTUNITY: "机会中",
   CUSTOMER: "客户",
   DISQUALIFIED: "不合格",
@@ -271,6 +394,8 @@ export function useResource<T>(path: string | null) {
 
 export const migratedRoutes = new Set([
   "dashboard",
+  "marketing-leads",
+  "scoring-rules",
   "organizations",
   "contacts",
   "leads",

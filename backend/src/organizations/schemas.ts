@@ -14,6 +14,8 @@ const organizationFields = {
   website: optionalUrl,
   industry: optionalText(160),
   country: optionalText(120),
+  countryCode: z.preprocess(emptyToNull, z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/, "国家代码必须是 ISO 3166-1 alpha-2").nullable().optional()),
+  companySize: optionalText(80),
   region: optionalText(120),
   city: optionalText(120),
   ownerUserId: optionalId,

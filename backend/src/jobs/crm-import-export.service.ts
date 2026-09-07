@@ -11,9 +11,12 @@ import { ContactService } from "../contacts/service.js";
 import { crmLeadImportSchema, type CrmLeadImportInput } from "../crm-leads/schemas.js";
 import { CrmLeadService } from "../crm-leads/service.js";
 import { CrmAttachmentService } from "../crm-leads/attachments.js";
+import { marketingLeadImportSchema, type MarketingLeadImportInput } from "../marketing-leads/schemas.js";
+import { MarketingLeadService } from "../marketing-leads/service.js";
+import { normalizeInternationalPhone } from "../marketing-leads/phone.js";
 import { organizationCreateSchema } from "../organizations/schemas.js";
 import { normalizeOrganizationName, OrganizationService } from "../organizations/service.js";
-import { crmImportFields, contactExportFields, crmLeadExportFields, organizationExportFields } from "./crm-schema.js";
+import { crmImportFields, contactExportFields, crmLeadExportFields, marketingLeadExportFields, organizationExportFields } from "./crm-schema.js";
 import type { CrmJobObjectType } from "./job-types.js";
 import { fileSha256, parseWorkbook, writeFailureCsv } from "./workbook.js";
 
@@ -49,6 +52,14 @@ const lifecycleAliases = new Map([
   ["TARGET", "TARGET"], ["目标", "TARGET"], ["CONTACTED", "CONTACTED"], ["已触达", "CONTACTED"],
   ["NURTURING", "NURTURING"], ["孵化中", "NURTURING"], ["OPPORTUNITY", "OPPORTUNITY"], ["机会中", "OPPORTUNITY"],
   ["CUSTOMER", "CUSTOMER"], ["客户", "CUSTOMER"], ["DISQUALIFIED", "DISQUALIFIED"], ["不合格", "DISQUALIFIED"],
+]);
+const marketingSourceAliases = new Map([
+  ["WEBSITE", "WEBSITE"], ["网站", "WEBSITE"], ["FORM", "FORM"], ["表单", "FORM"],
+  ["CAMPAIGN", "CAMPAIGN"], ["营销活动", "CAMPAIGN"], ["EVENT", "EVENT"], ["活动", "EVENT"],
+  ["EXHIBITION", "EXHIBITION"], ["展会", "EXHIBITION"], ["REFERRAL", "REFERRAL"], ["转介绍", "REFERRAL"],
+  ["LINKEDIN", "LINKEDIN"], ["WECHAT", "WECHAT"], ["微信", "WECHAT"], ["OUTBOUND", "OUTBOUND"],
+  ["PARTNER", "PARTNER"], ["合作伙伴", "PARTNER"], ["IMPORT", "IMPORT"], ["导入", "IMPORT"],
+  ["MANUAL", "MANUAL"], ["手工", "MANUAL"], ["OTHER", "OTHER"], ["其他", "OTHER"],
 ]);
 
 function auditContext(request: FastifyRequest): AuditActorContext {
@@ -314,6 +325,64 @@ async function preflightLeads(app: FastifyInstance, rows: Array<{ rowNumber: num
   return output;
 }
 
+async function preflightMarketingLeads(app: FastifyInstance, rows: Array<{ rowNumber: number; values: Record<string, string> }>): Promise<CrmPreflightRow[]> {
+  const resolveUser = await userResolver(app);
+  const existing = await app.prisma.marketingLead.findMany({
+    where: { deletedAt: null, OR: [{ email: { not: null } }, { phoneNormalized: { not: null } }, { whatsappNormalized: { not: null } }] },
+    select: { id: true, fullName: true, companyName: true, email: true, phoneNormalized: true, whatsappNormalized: true },
+  });
+  const workbookIdentity = new Map<string, number>();
+  const output: CrmPreflightRow[] = [];
+  for (const row of rows) {
+    const raw = row.values;
+    const errors: ValidationMessage[] = [];
+    const warnings: ValidationMessage[] = [];
+    const countryCode = trimOrNull(raw.countryCode)?.toUpperCase() ?? null;
+    const email = trimOrNull(raw.email)?.toLowerCase() ?? null;
+    const phone = trimOrNull(raw.phone);
+    const whatsapp = trimOrNull(raw.whatsapp);
+    const phoneNormalized = normalizeInternationalPhone(phone, countryCode);
+    const whatsappNormalized = normalizeInternationalPhone(whatsapp, countryCode);
+    if (phone && !phoneNormalized) errors.push({ code: "INVALID_INTERNATIONAL_PHONE", field: "phone", message: "Phone 必须使用有效国际号码，或同时提供 ISO 国家代码" });
+    if (whatsapp && !whatsappNormalized) errors.push({ code: "INVALID_INTERNATIONAL_PHONE", field: "whatsapp", message: "WhatsApp 必须使用有效国际号码，或同时提供 ISO 国家代码" });
+    const fitScore = trimOrNull(raw.fitScore) ? Number(raw.fitScore) : 0;
+    if (!Number.isInteger(fitScore) || fitScore < 0 || fitScore > 100) errors.push({ code: "INVALID_FIT_SCORE", field: "fitScore", message: "fitScore 必须是 0 到 100 的整数" });
+    const candidate = {
+      fullName: String(raw.fullName ?? "").trim(), email, phone, whatsapp, wechat: trimOrNull(raw.wechat),
+      companyName: trimOrNull(raw.companyName), title: trimOrNull(raw.title), countryCode,
+      source: enumValue(raw.source, marketingSourceAliases, "source", "IMPORT", errors),
+      sourceChannel: trimOrNull(raw.sourceChannel), sourceDetail: trimOrNull(raw.sourceDetail),
+      inquiryType: trimOrNull(raw.inquiryType), inquiryContent: trimOrNull(raw.inquiryContent),
+      ownerUserId: resolveUser(raw.owner, "owner", errors), fitScore, note: trimOrNull(raw.note), status: "NEW",
+    };
+    const parsed = marketingLeadImportSchema.safeParse(candidate);
+    if (!parsed.success) errors.push(...schemaErrors(parsed.error));
+    const matches = existing.filter((lead) =>
+      Boolean(
+        (email && lead.email?.toLowerCase() === email) ||
+        (phoneNormalized && lead.phoneNormalized === phoneNormalized) ||
+        (whatsappNormalized && lead.whatsappNormalized === whatsappNormalized),
+      ),
+    );
+    if (matches.length) warnings.push({ code: "POTENTIAL_DUPLICATE", field: email ? "email" : phoneNormalized ? "phone" : "whatsapp", message: `发现 ${matches.length} 条可能重复线索，导入不会自动合并` });
+    for (const identity of [email && `email:${email}`, phoneNormalized && `phone:${phoneNormalized}`, whatsappNormalized && `whatsapp:${whatsappNormalized}`].filter((value): value is string => Boolean(value))) {
+      const previous = workbookIdentity.get(identity);
+      if (previous) warnings.push({ code: "POTENTIAL_DUPLICATE", message: `同一身份信息也出现在工作簿第 ${previous} 行，导入不会自动合并` });
+      else workbookIdentity.set(identity, row.rowNumber);
+    }
+    output.push({
+      rowNumber: row.rowNumber,
+      status: errors.length ? "ERROR" : warnings.length ? "WARNING" : "VALID",
+      identity: [candidate.fullName, candidate.companyName].filter(Boolean).join(" / "),
+      rawData: raw,
+      normalizedData: parsed.success ? serializable(parsed.data) : serializable(candidate),
+      errors,
+      warnings,
+    });
+  }
+  return output;
+}
+
 export function crmPreflightSummary(rows: CrmPreflightRow[]) {
   const validRows = rows.filter((row) => row.status === "VALID").length;
   const warningRows = rows.filter((row) => row.status === "WARNING").length;
@@ -329,6 +398,8 @@ export async function prepareCrmImport(app: FastifyInstance, objectType: CrmJobO
     ? await preflightContacts(app, parsed.rows, options.createMissingOrganization)
     : objectType === "CRM_LEAD"
       ? await preflightLeads(app, parsed.rows)
+      : objectType === "MARKETING_LEAD"
+        ? await preflightMarketingLeads(app, parsed.rows)
       : await preflightOrganizations(app, parsed.rows);
   return { parsed, mapping, rows, summary: crmPreflightSummary(rows) };
 }
@@ -341,9 +412,13 @@ function leadInput(data: Record<string, unknown>): CrmLeadImportInput {
   return crmLeadImportSchema.parse(data);
 }
 
+function marketingLeadInput(data: Record<string, unknown>): MarketingLeadImportInput {
+  return marketingLeadImportSchema.parse(data);
+}
+
 export async function executeCrmImportJob(app: FastifyInstance, request: FastifyRequest, jobId: string) {
   const job = await app.prisma.importJob.findFirst({
-    where: { id: jobId, objectType: { in: ["CONTACT", "CRM_LEAD", "ORGANIZATION"] }, createdBy: request.auth!.userId },
+    where: { id: jobId, objectType: { in: ["CONTACT", "CRM_LEAD", "MARKETING_LEAD", "ORGANIZATION"] }, createdBy: request.auth!.userId },
     include: { rows: { orderBy: { rowNumber: "asc" } } },
   });
   if (!job) throw new ApiError(404, "RESOURCE_NOT_FOUND", "CRM 导入任务不存在或不是当前用户创建");
@@ -358,6 +433,7 @@ export async function executeCrmImportJob(app: FastifyInstance, request: Fastify
 
   const contacts = new ContactService(app.prisma);
   const leads = new CrmLeadService(app.prisma);
+  const marketingLeads = new MarketingLeadService(app.prisma, app.config);
   const organizations = new OrganizationService(app.prisma, app.config);
   const attachments = new CrmAttachmentService(app.prisma, app.config.storageDir, app.config.maxAttachmentBytes);
   let success = 0;
@@ -379,6 +455,8 @@ export async function executeCrmImportJob(app: FastifyInstance, request: Fastify
         ? await contacts.create(contactInput(entityData), request.auth!.userId, auditContext(request))
         : job.objectType === "CRM_LEAD"
           ? await leads.create(leadInput(entityData), request.auth!.userId, auditContext(request))
+          : job.objectType === "MARKETING_LEAD"
+            ? await marketingLeads.create(marketingLeadInput(entityData), request.auth!.userId, auditContext(request))
           : await organizations.create(organizationCreateSchema.parse(entityData), request.auth!.userId, auditContext(request));
       const urlsByField = (importedAttachmentUrls ?? {}) as Record<string, string[]>;
       for (const [fieldKey, urls] of Object.entries(urlsByField)) {
@@ -478,6 +556,26 @@ export async function buildCrmExportWorkbook(app: FastifyInstance, objectType: C
     styleExportSheet(sheet, ["id", "organizationId", "phone", "meetingMinutesFiles"]);
     return { buffer: Buffer.from(await workbook.xlsx.writeBuffer()), rowCount: rows.length, fields: contactExportFields.map(([key]) => key) };
   }
+  if (objectType === "MARKETING_LEAD") {
+    const sheet = workbook.addWorksheet("Marketing Leads", { views: [{ state: "frozen", ySplit: 1 }] });
+    sheet.columns = marketingLeadExportFields.map(([key, header]) => ({ key, header, width: Math.max(14, Math.min(32, header.length + 6)) }));
+    const rows = await app.prisma.marketingLead.findMany({
+      where: { deletedAt: null },
+      include: { owner: { select: { loginAccount: true } }, createdBy: { select: { loginAccount: true } } },
+      orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+    });
+    for (const lead of rows) sheet.addRow({
+      ...lead,
+      owner: lead.owner?.loginAccount ?? null,
+      createdBy: lead.createdBy.loginAccount,
+      engagementScore: lead.engagementScoreCached,
+      firstTouchAt: formatDate(lead.firstTouchAt), lastActivityAt: formatDate(lead.lastActivityAt),
+      mqlAt: formatDate(lead.mqlAt), sqlAt: formatDate(lead.sqlAt), qualifiedAt: formatDate(lead.qualifiedAt), convertedAt: formatDate(lead.convertedAt),
+      createdAt: formatDate(lead.createdAt), updatedAt: formatDate(lead.updatedAt),
+    });
+    styleExportSheet(sheet, ["id", "phone", "whatsapp", "convertedOpportunityId"]);
+    return { buffer: Buffer.from(await workbook.xlsx.writeBuffer()), rowCount: rows.length, fields: marketingLeadExportFields.map(([key]) => key) };
+  }
   const sheet = workbook.addWorksheet("CRM Leads", { views: [{ state: "frozen", ySplit: 1 }] });
   sheet.columns = crmLeadExportFields.map(([key, header]) => ({ key, header, width: Math.max(14, Math.min(32, header.length + 6)) }));
   const [rows, attachmentRows] = await Promise.all([app.prisma.crmLead.findMany({
@@ -526,7 +624,7 @@ export async function persistCrmExport(app: FastifyInstance, request: FastifyReq
     const result = await buildCrmExportWorkbook(app, objectType);
     const directory = join(app.config.storageDir, "exports");
     await mkdir(directory, { recursive: true });
-    const fileName = `${objectType === "CONTACT" ? "kivisense-contacts" : objectType === "CRM_LEAD" ? "kivisense-crm-leads" : "kivisense-organizations"}-${jobNo}.xlsx`;
+    const fileName = `${objectType === "CONTACT" ? "kivisense-contacts" : objectType === "CRM_LEAD" ? "kivisense-opportunities" : objectType === "MARKETING_LEAD" ? "kivisense-marketing-leads" : "kivisense-organizations"}-${jobNo}.xlsx`;
     const storagePath = join(directory, `${job.id}.xlsx`);
     await writeFile(storagePath, result.buffer);
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);

@@ -23,6 +23,9 @@ const participantUserIdsSchema = z.array(z.string().trim().min(1).max(32)).max(5
 
 const leadFields = {
   requirementDetail: optionalText(16_000),
+  requirementContext: optionalText(160),
+  productInterest: optionalText(4_000),
+  requirementTags: z.array(z.string().trim().min(1).max(80)).max(30).transform((values) => [...new Set(values)]).nullable().optional(),
   imageRequirementNote: optionalText(16_000),
   quotationNote: optionalText(16_000),
   leadSource: optionalText(160),

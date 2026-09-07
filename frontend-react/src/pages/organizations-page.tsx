@@ -159,7 +159,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
       ...(can(me, "crm.organization.nurture.manage")
         ? [
             {
-              label: "开始 / 管理孵化",
+              label: "开始 / 管理客户经营计划",
               onClick: () => {
                 void crmApi<{ data: Organization }>(
                   `/api/v1/crm/organizations/${row.id}`,
@@ -270,7 +270,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
       cell: ({ row }) => <UserAvatar name={row.original.owner?.name} />,
     },
     { accessorKey: "contactCount", header: "联系人" },
-    { accessorKey: "activeLeadCount", header: "活跃线索" },
+    { accessorKey: "activeLeadCount", header: "活跃商机" },
     {
       id: "lastInteraction",
       header: "最近互动",
@@ -569,7 +569,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                     variant="outline"
                     onClick={() => setEntityCreate("lead")}
                   >
-                    创建线索
+                    创建商机
                   </Button>
                 )}
                 {can(me, "crm.contact_followup.create") &&
@@ -597,7 +597,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
           <SummaryStrip
             items={[
               { label: "联系人", value: organization.contactCount },
-              { label: "活跃线索", value: organization.activeLeadCount },
+              { label: "活跃商机", value: organization.activeLeadCount },
               {
                 label: "最近互动",
                 value: relativeDate(organization.lastInteractionAt),
@@ -618,7 +618,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
             items={[
               ["overview", "概览"],
               ["contacts", `联系人 ${organization.contacts.length}`],
-              ["leads", `线索 ${organization.leads.length}`],
+              ["leads", `商机 ${organization.leads.length}`],
               ["journey", "客户旅程"],
               ...(can(me, "crm.task.view")
                 ? [["tasks", "任务"] as [string, string]]
@@ -743,7 +743,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                           ),
                         },
                         {
-                          label: "孵化主题",
+                          label: "经营主题",
                           value: organization.nurtures.find(
                             (n) => n.status === "ACTIVE",
                           )?.touchTopic,
@@ -798,16 +798,16 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
             )}
             {tab === "leads" && (
               <DataTable
-                label="公司线索"
+                label="公司商机"
                 columns={leadColumns}
                 rows={organization.leads}
-                emptyTitle="暂无线索"
+                emptyTitle="暂无商机"
                 toolbar={
                   can(me, "crm.lead.create") &&
                   can(me, "crm.contact.view") && (
                     <Button onClick={() => setEntityCreate("lead")}>
                       <Plus />
-                      创建线索
+                      创建商机
                     </Button>
                   )
                 }
@@ -911,7 +911,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
       {deleting && (
         <ConfirmDeleteDialog
           name={deleting.name}
-          description="执行软删除；存在联系人或活跃线索时，系统会阻止删除。"
+          description="执行软删除；存在联系人或活跃商机时，系统会阻止删除。"
           onClose={() => setDeleting(null)}
           onConfirm={async () => {
             await crmApi(`/api/v1/crm/organizations/${deleting.id}`, {

@@ -83,7 +83,7 @@ export function EntitiesPage({
   users: CrmUser[];
 }) {
   const family = kind === "contact" ? "contacts" : "leads",
-    label = kind === "contact" ? "联系人" : "线索",
+    label = kind === "contact" ? "联系人" : "商机",
     endpoint = endpointOf(kind);
   const [filters, setFilters] = useState<Record<string, string>>({}),
     [search, setSearch] = useState(""),
@@ -240,7 +240,7 @@ export function EntitiesPage({
         ]),
     {
       id: "stage",
-      header: kind === "contact" ? "触达阶段" : "线索阶段",
+      header: kind === "contact" ? "触达阶段" : "商机阶段",
       cell: ({ row: { original: r } }) => (
         <StatusBadge>
           {(kind === "contact"
@@ -268,7 +268,7 @@ export function EntitiesPage({
       ),
     },
     ...(kind === "contact"
-      ? [{ accessorKey: "relatedLeadCount", header: "线索数" }]
+      ? [{ accessorKey: "relatedLeadCount", header: "商机数" }]
       : []),
     {
       id: "updated",
@@ -293,7 +293,7 @@ export function EntitiesPage({
       {!id ? (
         <>
           <PageHeader
-            title={kind === "contact" ? "客户联系人" : "销售线索"}
+            title={kind === "contact" ? "客户联系人" : "商机"}
             description={`管理${label}信息与下一步行动`}
             actions={
               <>
@@ -336,7 +336,7 @@ export function EntitiesPage({
                     </button>
                   </form>
                   <FilterControl
-                    label={kind === "contact" ? "触达阶段" : "线索阶段"}
+                    label={kind === "contact" ? "触达阶段" : "商机阶段"}
                     value={
                       filters[kind === "contact" ? "stage" : "status"] || "all"
                     }
@@ -572,7 +572,7 @@ export function EntitiesPage({
                     }
                   >
                     <Plus />
-                    创建线索
+                    创建商机
                   </Button>
                 )}
                 {can(me, `crm.${kind}.delete`) && (
@@ -595,7 +595,7 @@ export function EntitiesPage({
               kind === "contact"
                 ? [
                     { label: "负责人", value: row.owner?.name || "待分配" },
-                    { label: "关联线索", value: row.relatedLeadCount ?? 0 },
+                    { label: "关联商机", value: row.relatedLeadCount ?? 0 },
                     {
                       label: "最近互动",
                       value: dateTime(
@@ -620,6 +620,45 @@ export function EntitiesPage({
                   ]
             }
           />
+          {kind === "lead" && row.sourceMarketingLead && (
+            <Section
+              title="来源线索"
+              action={
+                <Button variant="outline" size="sm" asChild>
+                  <a href={`#marketing-leads/${row.sourceMarketingLead.id}`}>查看原始线索</a>
+                </Button>
+              }
+            >
+              <EntityMeta
+                items={[
+                  {
+                    label: "来源线索",
+                    value: `${row.sourceMarketingLead.fullName}${row.sourceMarketingLead.companyName ? ` · ${row.sourceMarketingLead.companyName}` : ""}`,
+                  },
+                  {
+                    label: "获客来源",
+                    value: [
+                      row.sourceMarketingLead.source,
+                      row.sourceMarketingLead.sourceChannel,
+                      row.sourceMarketingLead.sourceDetail,
+                    ]
+                      .filter(Boolean)
+                      .join(" / "),
+                  },
+                  {
+                    label: "原始询盘",
+                    value:
+                      row.sourceMarketingLead.inquiryContent?.slice(0, 280) ||
+                      "—",
+                  },
+                  {
+                    label: "转商机时间",
+                    value: dateTime(row.sourceMarketingLead.convertedAt),
+                  },
+                ]}
+              />
+            </Section>
+          )}
           <div
             className={
               kind === "contact"
@@ -687,7 +726,7 @@ export function EntitiesPage({
                 [
                   ...(kind === "contact"
                     ? [
-                        ["leads", "关联线索"],
+                        ["leads", "关联商机"],
                         ["journey", "客户旅程"],
                       ]
                     : [
@@ -705,7 +744,7 @@ export function EntitiesPage({
                   <ContactLeads id={row.id} />
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    当前账号没有查看线索的权限。
+                    当前账号没有查看商机的权限。
                   </p>
                 ))}
               {tab === "journey" && kind === "contact" && (
@@ -790,8 +829,8 @@ export function EntitiesPage({
           name={nameOf(deleting)}
           description={
             kind === "contact"
-              ? "联系人将被软删除并移出正常列表，历史记录保留。如果仍有关联的未删除线索，请先处理这些线索。"
-              : "线索将被软删除并从正常列表移除，历史旅程仍保留。"
+              ? "联系人将被软删除并移出正常列表，历史记录保留。如果仍有关联的未删除商机，请先处理这些商机。"
+              : "商机将被软删除并从正常列表移除，历史旅程仍保留。"
           }
           onClose={() => setDeleting(null)}
           onConfirm={async () => {
@@ -815,7 +854,7 @@ function ContactLeads({ id }: { id: string }) {
     return <ErrorState error={result.error} retry={result.reload} />;
   return (
     <DataTable
-      label="关联线索"
+      label="关联商机"
       rows={result.data?.data || []}
       loading={result.loading}
       page={page}

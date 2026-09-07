@@ -47,7 +47,7 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
     headers: { ...(input.headers || {}), cookie },
   });
 
-  async function upload(route: "contacts" | "leads" | "organizations", rows: Array<Record<string, string>>, cookie = adminCookie, query = "") {
+  async function upload(route: "contacts" | "leads" | "marketing-leads" | "organizations", rows: Array<Record<string, string>>, cookie = adminCookie, query = "") {
     const form = multipart(await workbook(rows), `${route}-${runKey}.xlsx`);
     return inject({ method: "POST", url: `/api/v1/crm/imports/${route}${query}`, ...form }, cookie);
   }
@@ -79,6 +79,8 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
       crmDormantDays: 60,
       crmStaleLeadDays: 30,
       crmHighFitUntouchedDays: 30,
+      crmMqlMinFitScore: 40,
+      crmMqlMinEngagementScore: 70,
     };
     const [adminRole, salesRole] = await Promise.all([
       prisma.role.findUniqueOrThrow({ where: { key: "SUPER_ADMIN" } }),
@@ -115,6 +117,11 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
       await prisma.organizationNurture.deleteMany({ where: { createdByUserId: { in: userIds } } });
       await prisma.leadFollowup.deleteMany({ where: { lead: { createdByUserId: { in: userIds } } } });
       await prisma.crmLead.deleteMany({ where: { createdByUserId: { in: userIds } } });
+      const marketingLeadIds = (await prisma.marketingLead.findMany({ where: { createdByUserId: { in: userIds } }, select: { id: true } })).map((row) => row.id);
+      await prisma.leadScoreHistory.deleteMany({ where: { marketingLeadId: { in: marketingLeadIds } } });
+      await prisma.leadActivityEvent.deleteMany({ where: { marketingLeadId: { in: marketingLeadIds } } });
+      await prisma.leadStatusHistory.deleteMany({ where: { marketingLeadId: { in: marketingLeadIds } } });
+      await prisma.marketingLead.deleteMany({ where: { id: { in: marketingLeadIds } } });
       await prisma.contactFollowup.deleteMany({ where: { contact: { createdByUserId: { in: userIds } } } });
       await prisma.contact.deleteMany({ where: { createdByUserId: { in: userIds } } });
       await prisma.organization.deleteMany({ where: { createdByUserId: { in: userIds } } });
@@ -126,10 +133,11 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
     if (storageDir) await rm(storageDir, { recursive: true, force: true });
   }, 30_000);
 
-  it("下载联系人、线索和公司导入模板", async () => {
+  it("下载联系人、商机、线索和公司导入模板", async () => {
     for (const [route, expected, forbidden] of [
       ["contacts", ["contactName", "companyName", "owner", "followupAttention", "meetingMinutesFiles"], ["brandId", "customerId"]],
       ["leads", ["contactId", "requirementSummary", "salesOwner", "participantUsers", "proposalFiles", "wonAt", "nextAction", "imageRequirementNote", "quotationNote"], ["contactName", "email", "brandId"]],
+      ["marketing-leads", ["fullName", "email", "phone", "whatsapp", "companyName", "countryCode", "source", "sourceChannel", "sourceDetail", "inquiryContent", "owner", "fitScore", "note"], ["scoreHistory", "engagementScore", "utmSource", "rawMetadataJson"]],
       ["organizations", ["name", "shortName", "roles", "lifecycle", "fitScore", "fitReason", "logo"], ["competitor", "amount", "revenue"]],
     ] as const) {
       const response = await inject({ method: "GET", url: `/api/v1/crm/templates/${route}` });
@@ -140,6 +148,23 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
       expect(actual).toEqual(expect.arrayContaining([...expected]));
       forbidden.forEach((field) => expect(actual).not.toContain(field));
     }
+  });
+
+  it("营销线索导入保留来源与原始询盘且不导入评分历史", async () => {
+    const response = await upload("marketing-leads", [{ fullName: `Import Naderi ${runKey}`, email: `marketing-import-${runKey}@example.test`, phone: "+98 21 5555 0188", whatsapp: "+98 912 555 0188", companyName: "Dena", title: "Manager", countryCode: "IR", source: "WEBSITE", sourceChannel: "Organic Search", sourceDetail: "Google/Bing", inquiryType: "Not sure yet", inquiryContent: "Original imported inquiry", owner: adminId, fitScore: "40", note: "Import regression" }]);
+    expect(response.statusCode).toBe(201);
+    expect(response.json().data.preflight).toMatchObject({ importableRows: 1, errorRows: 0 });
+    const executed = await inject({ method: "POST", url: `/api/v1/crm/imports/${response.json().data.id}/execute`, payload: {} });
+    expect(executed.statusCode).toBe(200);
+    const lead = await prisma.marketingLead.findFirstOrThrow({ where: { email: `marketing-import-${runKey}@example.test` } });
+    expect(lead).toMatchObject({ companyName: "Dena", source: "WEBSITE", sourceChannel: "ORGANIC_SEARCH", sourceDetail: "Google/Bing", inquiryContent: "Original imported inquiry", fitScore: 40, engagementScoreCached: 0 });
+    expect(await prisma.leadActivityEvent.count({ where: { marketingLeadId: lead.id } })).toBe(0);
+    const exported = await inject({ method: "POST", url: "/api/v1/crm/exports/marketing-leads", payload: {} });
+    expect(exported.statusCode).toBe(201);
+    const download = await inject({ method: "GET", url: exported.json().data.downloadUrl });
+    expect(download.statusCode).toBe(200);
+    const book = new ExcelJS.Workbook(); await book.xlsx.load(download.rawPayload as never);
+    expect(headers(book.worksheets[0]!)).toEqual(expect.arrayContaining(["线索编号", "姓名", "来源", "原始询盘", "Fit Score", "Engagement Score", "商机编号"]));
   });
 
   it("公司导入支持多角色且导出保持统一主档字段", async () => {

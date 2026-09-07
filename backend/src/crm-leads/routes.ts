@@ -92,7 +92,7 @@ export async function crmLeadRoutes(app: FastifyInstance): Promise<void> {
 
   const requireLeadFollowup = async (leadId: string, followupId: string, allowDeletedLeadHistory = false) => {
     const row = await app.prisma.leadFollowup.findFirst({ where: { id: followupId, leadId, lead: allowDeletedLeadHistory ? { contact: { deletedAt: null } } : { deletedAt: null, contact: { deletedAt: null } } }, select: { id: true } });
-    if (!row) throw new ApiError(404, "RESOURCE_NOT_FOUND", "线索跟进不存在");
+    if (!row) throw new ApiError(404, "RESOURCE_NOT_FOUND", "商机跟进不存在");
   };
 
   app.post<{ Params: { id: string; followupId: string; fieldKey: string } }>("/api/v1/crm/leads/:id/followups/:followupId/attachments/:fieldKey", { preHandler: guard("crm.lead_followup.create") }, async (request, reply) => {

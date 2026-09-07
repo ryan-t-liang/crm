@@ -20,7 +20,7 @@ function filter(request: FastifyRequest, forceSelf = false) {
 
 function requireAnyDashboardPermission(request: FastifyRequest) {
   if (!request.auth!.permissions.has("crm.dashboard.management.view") && !request.auth!.permissions.has("crm.dashboard.self.view")) {
-    throw new ApiError(403, "PERMISSION_DENIED", "当前账户没有 Dashboard 权限");
+    throw new ApiError(403, "PERMISSION_DENIED", "当前账户没有数据看板权限");
   }
 }
 

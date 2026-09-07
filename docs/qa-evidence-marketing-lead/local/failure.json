@@ -1,0 +1,8 @@
+{
+  "verdict": "FAIL",
+  "message": "locator.waitFor: Error: strict mode violation: getByText('来源线索', { exact: true }) resolved to 2 elements:\n    1) <h2 class=\"text-base font-semibold\">来源线索</h2> aka getByRole('heading', { name: '来源线索' })\n    2) <dt class=\"text-xs text-muted-foreground\">来源线索</dt> aka getByRole('term').filter({ hasText: '来源线索' })\n\nCall log:\n\u001b[2m  - waiting for getByText('来源线索', { exact: true }) to be visible\u001b[22m\n",
+  "stack": "locator.waitFor: Error: strict mode violation: getByText('来源线索', { exact: true }) resolved to 2 elements:\n    1) <h2 class=\"text-base font-semibold\">来源线索</h2> aka getByRole('heading', { name: '来源线索' })\n    2) <dt class=\"text-xs text-muted-foreground\">来源线索</dt> aka getByRole('term').filter({ hasText: '来源线索' })\n\nCall log:\n\u001b[2m  - waiting for getByText('来源线索', { exact: true }) to be visible\u001b[22m\n\n    at /Users/ryan/Documents/Codex/2026-09-04/files-mentioned-by-the-user-codex/work/crm/scripts/marketing-lead-browser-qa.mjs:173:49",
+  "errors": [],
+  "network": [],
+  "url": "http://127.0.0.1:3300/?qa=1788767275361#leads/cmtqxusfp001vqpwhzysvjwxe"
+}

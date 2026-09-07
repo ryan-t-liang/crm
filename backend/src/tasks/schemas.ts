@@ -14,7 +14,7 @@ export const taskCreateSchema = z.object({
   priority: z.enum(["NORMAL", "HIGH"]).default("NORMAL"),
   dueAt: timezoneAwareDateTimeSchema,
   source: z.enum(["MANUAL", "FOLLOWUP", "NURTURE"]).default("MANUAL"),
-}).strict().refine((value) => Boolean(value.organizationId || value.contactId || value.leadId), { message: "任务必须关联公司、联系人或线索", path: ["organizationId"] });
+}).strict().refine((value) => Boolean(value.organizationId || value.contactId || value.leadId), { message: "任务必须关联公司、联系人或商机", path: ["organizationId"] });
 
 export const taskPatchSchema = z.object({
   title: z.string().trim().min(1).max(300).optional(),

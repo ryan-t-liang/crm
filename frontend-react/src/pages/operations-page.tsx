@@ -115,7 +115,7 @@ export function OperationsPage({
         }}
         items={[
           ["priority", "重点跟进"],
-          ["nurture", "孵化池"],
+          ["nurture", "客户经营计划"],
           ["reactivation", "待唤醒"],
           ["dormant", "沉睡客户"],
         ]}
@@ -128,7 +128,7 @@ export function OperationsPage({
             <ErrorState error={plans.error} retry={plans.reload} />
           ) : (
             <DataTable
-              label="孵化计划"
+              label="客户经营计划"
               rows={(plans.data?.data || []).filter(
                 (p) =>
                   !keyword ||
@@ -158,7 +158,7 @@ export function OperationsPage({
               columns={[
                 {
                   id: "company",
-                  header: "公司 / 孵化原因",
+                  header: "公司 / 经营原因",
                   cell: ({ row: { original: n } }) => (
                     <div className="min-w-48 max-w-80">
                       <a
@@ -221,7 +221,7 @@ export function OperationsPage({
                         ...(can(me, "crm.organization.nurture.manage")
                           ? [
                               {
-                                label: "管理孵化",
+                                label: "管理经营计划",
                                 onClick: () =>
                                   setNurture({
                                     organization: n.organization,
@@ -249,7 +249,7 @@ export function OperationsPage({
                 ? "高 Fit + 高 Engagement，优先推进。"
                 : tab === "reactivation"
                   ? "高 Fit 的沉睡客户，适合重新建立联系。"
-                  : "基于现有互动时间与活跃线索规则动态计算。"}
+                  : "基于现有互动时间与活跃商机规则动态计算。"}
             </p>
             <DataTable
               label="客户运营队列"
@@ -360,7 +360,7 @@ export function OperationsPage({
                     </div>
                   ),
                 },
-                { accessorKey: "activeLeadCount", header: "活跃线索" },
+                { accessorKey: "activeLeadCount", header: "活跃商机" },
                 {
                   id: "actions",
                   header: "操作",
@@ -404,7 +404,7 @@ export function OperationsPage({
                         ...(can(me, "crm.organization.nurture.manage")
                           ? [
                               {
-                                label: "开始 / 管理孵化",
+                                label: "开始 / 管理客户经营计划",
                                 onClick: () => {
                                   void openNurture(o);
                                 },
@@ -415,7 +415,7 @@ export function OperationsPage({
                         can(me, "crm.contact.view")
                           ? [
                               {
-                                label: "创建线索",
+                                label: "创建商机",
                                 onClick: () => setLeadCompany(o),
                               },
                             ]
@@ -649,7 +649,7 @@ function TaskTargetPicker({
   const available = [
     ["organizations", "公司", "crm.organization.view"],
     ["contacts", "联系人", "crm.contact.view"],
-    ["leads", "线索", "crm.lead.view"],
+    ["leads", "商机", "crm.lead.view"],
   ].filter(([, , permission]) => can(me, permission));
   const [kind, setKind] = useState(available[0]?.[0] || ""),
     [value, setValue] = useState(""),
@@ -676,7 +676,7 @@ function TaskTargetPicker({
   return (
     <FormDialog
       title="选择任务关联对象"
-      description="任务需要关联公司、联系人或线索。"
+      description="任务需要关联公司、联系人或商机。"
       onClose={onClose}
       footer={
         <>

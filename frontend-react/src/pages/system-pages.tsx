@@ -555,12 +555,12 @@ function RoleForm({
                 {(
                   {
                     contact: "客户联系人",
-                    lead: "线索",
+                    lead: "商机",
                     organization: "公司",
                     task: "任务",
                     contact_followup: "客户互动",
-                    lead_followup: "线索跟进",
-                    dashboard: "Dashboard",
+                    lead_followup: "商机跟进",
+                    dashboard: "数据看板",
                     account: "账户",
                     role: "角色",
                     audit: "审计",

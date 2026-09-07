@@ -11,6 +11,8 @@ import { EntitiesPage } from "@/pages/entities-page";
 import { OperationsPage, WorkbenchPage } from "@/pages/operations-page";
 import { AccountsPage, RolesPage, AuditPage } from "@/pages/system-pages";
 import { LoginPage, PasswordPage } from "@/pages/auth-page";
+import { MarketingLeadsPage } from "@/pages/marketing-leads-page";
+import { ScoringRulesPage } from "@/pages/scoring-rules-page";
 import { migratedRoutes } from "@/lib/crm";
 import { ErrorState, PageContent } from "@/components/crm/primitives";
 import {
@@ -22,7 +24,7 @@ import {
 } from "@/lib/api";
 
 type NavigationCounts = Partial<
-  Record<"organizations" | "contacts" | "leads", number>
+  Record<"organizations" | "contacts" | "leads" | "marketingLeads", number>
 >;
 
 function currentRoute() {
@@ -101,6 +103,7 @@ export function App() {
             "/api/v1/crm/contacts?page=1&pageSize=1",
           ],
           ["leads", "crm.lead.view", "/api/v1/crm/leads?page=1&pageSize=1"],
+          ["marketingLeads", "crm.marketing_lead.view", "/api/v1/crm/marketing-leads?page=1&pageSize=1"],
           [
             "organizations",
             "crm.organization.view",
@@ -150,10 +153,11 @@ export function App() {
         ["organizations", "organization"],
         ["contacts", "contact"],
         ["leads", "lead"],
+        ["marketingLeads", "marketing_lead"],
       ] as const) {
         if (me.permissions.includes(`crm.${permission}.view`))
           void crmApi<{ meta: { total: number } }>(
-            `/api/v1/crm/${key}?pageSize=1`,
+            `/api/v1/crm/${key === "marketingLeads" ? "marketing-leads" : key}?pageSize=1`,
           )
             .then((r) => setCounts((c) => ({ ...c, [key]: r.meta.total })))
             .catch(() => {});
@@ -213,7 +217,8 @@ export function App() {
     roles: "角色与权限",
     audit: "审计日志",
     security: "账户安全",
-    login: "Dashboard",
+    login: "数据看板",
+    "scoring-rules": "评分规则",
   };
   const entityKind = family === "contacts" ? "contact" : "lead";
   const pageAllowed =
@@ -225,6 +230,10 @@ export function App() {
         )
       : family === "security"
         ? true
+        : family === "scoring-rules"
+          ? me.permissions.includes("crm.marketing.score_rule.view")
+          : family === "marketing-leads"
+            ? me.permissions.includes("crm.marketing_lead.view")
         : ["accounts", "roles", "audit"].includes(family)
           ? me.permissions.includes(
               (
@@ -269,7 +278,7 @@ export function App() {
                   : ["suppliers", "vendors"].includes(family)
                     ? "供应商"
                     : family === "dashboard"
-                      ? "Dashboard"
+                      ? "数据看板"
                       : family === "organizations"
                         ? entityId
                           ? "公司 / Company 360"
@@ -278,16 +287,20 @@ export function App() {
                           ? entityId
                             ? "联系人 / Contact 360"
                             : "客户联系人"
-                          : entityId
-                            ? "线索 / 线索详情"
-                            : "销售线索")
+                          : family === "marketing-leads"
+                            ? entityId
+                              ? "线索 / 线索详情"
+                              : "线索"
+                            : entityId
+                              ? "商机 / 商机详情"
+                              : "商机")
             }
             dashboard={family === "dashboard"}
           />
           {!migratedRoutes.has(family) ? (
             <PageContent>
               <p>页面不存在。</p>
-              <a href="#dashboard">返回 Dashboard</a>
+              <a href="#dashboard">返回数据看板</a>
             </PageContent>
           ) : !pageAllowed ? (
             <PageContent>
@@ -310,6 +323,10 @@ export function App() {
                 void logout();
               }}
             />
+          ) : family === "scoring-rules" ? (
+            <ScoringRulesPage me={me} />
+          ) : family === "marketing-leads" ? (
+            <MarketingLeadsPage me={me} users={users} id={entityId} />
           ) : family === "dashboard" || family === "login" ? (
             <DashboardPage me={me} users={users} />
           ) : family === "operations" ? (

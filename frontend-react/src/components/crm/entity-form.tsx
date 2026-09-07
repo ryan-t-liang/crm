@@ -383,7 +383,7 @@ export function EntityForm({
   }
   return (
     <FormDialog
-      title={`${record ? "编辑" : "新增"}${kind === "contact" ? "联系人" : "线索"}`}
+      title={`${record ? "编辑" : "新增"}${kind === "contact" ? "联系人" : "商机"}`}
       wide
       onClose={onClose}
       busy={busy}
@@ -398,7 +398,7 @@ export function EntityForm({
             }}
             disabled={busy}
           >
-            {busy ? "保存中…" : kind === "contact" ? "保存联系人" : "保存线索"}
+            {busy ? "保存中…" : kind === "contact" ? "保存联系人" : "保存商机"}
           </Button>
         </>
       }

@@ -10,7 +10,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 
-export function SiteHeader({ title = "Dashboard", dashboard = true }: { title?: string; dashboard?: boolean }) {
+export function SiteHeader({ title = "数据看板", dashboard = true }: { title?: string; dashboard?: boolean }) {
   return (
     <header className="flex h-[52px] shrink-0 items-center justify-between gap-3 border-b bg-background px-4 transition-[width,height] ease-linear">
       <div className="flex min-w-0 items-center gap-2">

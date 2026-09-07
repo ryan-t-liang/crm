@@ -1,9 +1,9 @@
 import { ApiError } from "../common/errors.js";
 
-export type CrmJobObjectType = "CONTACT" | "CRM_LEAD" | "ORGANIZATION";
+export type CrmJobObjectType = "CONTACT" | "CRM_LEAD" | "MARKETING_LEAD" | "ORGANIZATION";
 export type JobAction = "import" | "export";
 
-const crmObjectTypes = new Set<string>(["CONTACT", "CRM_LEAD", "ORGANIZATION"]);
+const crmObjectTypes = new Set<string>(["CONTACT", "CRM_LEAD", "MARKETING_LEAD", "ORGANIZATION"]);
 
 export function isCrmJobObjectType(value: string): value is CrmJobObjectType {
   return crmObjectTypes.has(value);
@@ -17,5 +17,5 @@ export function assertCrmJobObjectType(value: string): asserts value is CrmJobOb
 
 export function jobPermission(objectType: string, action: JobAction): string {
   assertCrmJobObjectType(objectType);
-  return `${objectType === "CONTACT" ? "crm.contact" : objectType === "CRM_LEAD" ? "crm.lead" : "crm.organization"}.${action}`;
+  return `${objectType === "CONTACT" ? "crm.contact" : objectType === "CRM_LEAD" ? "crm.lead" : objectType === "MARKETING_LEAD" ? "crm.marketing_lead" : "crm.organization"}.${action}`;
 }

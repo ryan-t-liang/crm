@@ -1,10 +1,10 @@
 export const DASHBOARD_KPIS = [
   { key: "activeOrganizations", label: "活跃公司", description: "当前处于活跃状态" },
-  { key: "activeLeads", label: "活跃线索", description: "正在推进的机会" },
-  { key: "newLeads", label: "新增线索", description: "所选期间内创建" },
+  { key: "activeLeads", label: "活跃商机", description: "正在推进的机会" },
+  { key: "newLeads", label: "新增商机", description: "所选期间内创建" },
   { key: "reactivationCandidates", label: "待唤醒客户", description: "高 Fit 且已沉睡" },
   { key: "overdueTasks", label: "逾期任务", description: "已超过到期时间" },
-  { key: "staleLeads", label: "停滞线索", description: "长期没有新进展" },
+  { key: "staleLeads", label: "停滞商机", description: "长期没有新进展" },
 ] as const
 
 export type DashboardKpiKey = typeof DASHBOARD_KPIS[number]["key"]
@@ -93,7 +93,7 @@ export function containsFinancialKey(value: unknown): boolean {
 export const lifecycleLabels: Record<string, string> = {
   TARGET: "目标",
   CONTACTED: "已触达",
-  NURTURING: "孵化中",
+  NURTURING: "客户经营中",
   OPPORTUNITY: "机会中",
   CUSTOMER: "客户",
 }

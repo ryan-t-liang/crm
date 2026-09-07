@@ -28,6 +28,7 @@ const contactFields = {
   title: optionalText(160),
   email: optionalEmail,
   phone: optionalText(64),
+  whatsapp: optionalText(64),
   wechat: optionalText(191),
   linkedin: optionalUrl,
   website: optionalUrl,

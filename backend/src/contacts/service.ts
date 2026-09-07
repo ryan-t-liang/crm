@@ -5,6 +5,7 @@ import { assertAssignableCrmUser, crmUserSummarySelect, type CrmDbClient } from 
 import { ApiError } from "../common/errors.js";
 import { crmAttachmentSelect } from "../crm-leads/attachments.js";
 import type { ContactCreateInput, ContactFollowupCreateInput, ContactImportInput, ContactPatchInput } from "./schemas.js";
+import { normalizeInternationalPhone } from "../marketing-leads/phone.js";
 
 export type ContactListInput = {
   keyword?: string;
@@ -101,8 +102,10 @@ export class ContactService {
     return this.prisma.$transaction(async (tx) => {
       await assertAssignableCrmUser(tx, input.ownerUserId, "ownerUserId");
       const organizationFields = await organizationSnapshot(tx, input.organizationId);
+      const phoneNormalized = normalizeInternationalPhone(input.phone);
+      const whatsappNormalized = normalizeInternationalPhone(input.whatsapp);
       const row = await tx.contact.create({
-        data: { ...input, ...(organizationFields || {}), createdByUserId },
+        data: { ...input, phoneNormalized, whatsappNormalized, ...(organizationFields || {}), createdByUserId },
         include: contactDetailInclude,
       });
       await appendAuditRecord(tx, audit, {
@@ -134,7 +137,9 @@ export class ContactService {
         throw new ApiError(422, "ORGANIZATION_SOURCE_OF_TRUTH", "联系人已关联公司，公司资料请在公司档案中维护");
       }
       const organizationFields = input.organizationId === undefined ? null : await organizationSnapshot(tx, input.organizationId);
-      const row = await tx.contact.update({ where: { id }, data: { ...input, ...(organizationFields || {}) }, include: contactDetailInclude });
+      const phoneNormalized = input.phone === undefined ? undefined : normalizeInternationalPhone(input.phone);
+      const whatsappNormalized = input.whatsapp === undefined ? undefined : normalizeInternationalPhone(input.whatsapp);
+      const row = await tx.contact.update({ where: { id }, data: { ...input, phoneNormalized, whatsappNormalized, ...(organizationFields || {}) }, include: contactDetailInclude });
       await appendAuditRecord(tx, audit, {
         action: "UPDATE_CONTACT",
         module: "crm",
@@ -155,7 +160,7 @@ export class ContactService {
       });
       if (!contact) throw new ApiError(404, "RESOURCE_NOT_FOUND", "CRM 联系人不存在");
       if (contact._count.leads > 0) {
-        throw new ApiError(409, "CONTACT_HAS_ACTIVE_LEADS", `该联系人仍有 ${contact._count.leads} 条未删除线索，请先删除这些线索后再删除联系人`, {
+        throw new ApiError(409, "CONTACT_HAS_ACTIVE_LEADS", `该联系人仍有 ${contact._count.leads} 条未删除商机，请先删除这些商机后再删除联系人`, {
           relatedLeadCount: contact._count.leads,
         });
       }
@@ -189,7 +194,7 @@ export class ContactService {
       select: { id: true, requirementSummary: true, status: true, createdAt: true, updatedAt: true, wonAt: true, nextFollowupAt: true, deletedAt: true, createdBy: { select: crmUserSummarySelect } },
     });
     const leadIds = leads.map((lead) => lead.id);
-    const [contactFollowups, leadFollowups, attachments, statusAudits] = await Promise.all([
+    const [contactFollowups, leadFollowups, attachments, statusAudits, convertedMarketingLeads] = await Promise.all([
       this.prisma.contactFollowup.findMany({ where: { contactId: id }, include: { owner: { select: crmUserSummarySelect }, createdBy: { select: crmUserSummarySelect } } }),
       this.prisma.leadFollowup.findMany({ where: { leadId: { in: leadIds } }, include: { owner: { select: crmUserSummarySelect }, createdBy: { select: crmUserSummarySelect } } }),
       this.prisma.crmAttachment.findMany({ where: { OR: [
@@ -197,6 +202,14 @@ export class ContactService {
         { entityType: "LEAD", entityId: { in: leadIds } },
       ] }, select: crmAttachmentSelect }),
       this.prisma.auditLog.findMany({ where: { targetType: "crm_lead", targetId: { in: leadIds }, action: "UPDATE_CRM_LEAD" }, orderBy: { createdAt: "asc" } }),
+      this.prisma.marketingLead.findMany({
+        where: { convertedContactId: id, status: "CONVERTED" },
+        include: {
+          statusHistory: { where: { toStatus: { in: ["MQL", "SQL", "CONVERTED"] } }, include: { changedBy: { select: crmUserSummarySelect } }, orderBy: { changedAt: "asc" } },
+          convertedOpportunity: { select: { id: true, requirementSummary: true, deletedAt: true } },
+          convertedBy: { select: crmUserSummarySelect },
+        },
+      }),
     ]);
     const contactFollowupIds = contactFollowups.map((item) => item.id);
     const leadFollowupIds = leadFollowups.map((item) => item.id);
@@ -214,11 +227,11 @@ export class ContactService {
       id: `contact-followup-${item.id}`, occurredAt: item.occurredAt, category: "INTERACTION", type: "CONTACT_FOLLOWUP", title: "客户互动", summary: item.content, actor: item.owner, relatedLead: null, attachments: filesFor("CONTACT_FOLLOWUP", item.id), nextFollowupAt: item.nextFollowupAt,
     });
     for (const lead of leads) events.push({
-      id: `lead-created-${lead.id}`, occurredAt: lead.createdAt, category: "LEAD", type: "LEAD_CREATED", title: "创建线索", summary: lead.requirementSummary, actor: lead.createdBy, relatedLead: { id: lead.id, requirementSummary: lead.requirementSummary, deleted: Boolean(lead.deletedAt) }, attachments: filesFor("LEAD", lead.id),
+      id: `lead-created-${lead.id}`, occurredAt: lead.createdAt, category: "LEAD", type: "LEAD_CREATED", title: "创建商机", summary: lead.requirementSummary, actor: lead.createdBy, relatedLead: { id: lead.id, requirementSummary: lead.requirementSummary, deleted: Boolean(lead.deletedAt) }, attachments: filesFor("LEAD", lead.id),
     });
     for (const item of leadFollowups) {
       const lead = leadById.get(item.leadId)!;
-      events.push({ id: `lead-followup-${item.id}`, occurredAt: item.occurredAt, category: "INTERACTION", type: "LEAD_FOLLOWUP", title: "线索跟进", summary: item.content, progress: item.progress, nextAction: item.nextAction, actor: item.owner, relatedLead: { id: lead.id, requirementSummary: lead.requirementSummary, deleted: Boolean(lead.deletedAt) }, attachments: filesFor("LEAD_FOLLOWUP", item.id), nextFollowupAt: item.nextFollowupAt });
+      events.push({ id: `lead-followup-${item.id}`, occurredAt: item.occurredAt, category: "INTERACTION", type: "LEAD_FOLLOWUP", title: "商机跟进", summary: item.content, progress: item.progress, nextAction: item.nextAction, actor: item.owner, relatedLead: { id: lead.id, requirementSummary: lead.requirementSummary, deleted: Boolean(lead.deletedAt) }, attachments: filesFor("LEAD_FOLLOWUP", item.id), nextFollowupAt: item.nextFollowupAt });
     }
     for (const audit of statusAudits) {
       const details = audit.details as { statusChange?: { from?: string; to?: string } } | null;
@@ -226,14 +239,20 @@ export class ContactService {
       const lead = audit.targetId ? leadById.get(audit.targetId) : undefined;
       if (!change?.to || !lead || change.from === change.to) continue;
       const milestone = ["WON", "LOST"].includes(change.to);
-      events.push({ id: `lead-status-${audit.id}`, occurredAt: audit.createdAt, category: milestone ? "MILESTONE" : "LEAD", type: milestone ? `LEAD_${change.to}` : "LEAD_STAGE_CHANGED", title: milestone ? (change.to === "WON" ? "线索成交" : "线索丢失") : "线索阶段变更", summary: `${change.from || "-"} → ${change.to}`, actor: { id: audit.actorUserId, name: audit.actorName }, relatedLead: { id: lead.id, requirementSummary: lead.requirementSummary, deleted: Boolean(lead.deletedAt) }, attachments: [] });
+      events.push({ id: `lead-status-${audit.id}`, occurredAt: audit.createdAt, category: milestone ? "MILESTONE" : "LEAD", type: milestone ? `LEAD_${change.to}` : "LEAD_STAGE_CHANGED", title: milestone ? (change.to === "WON" ? "商机成交" : "商机丢失") : "商机阶段变更", summary: `${change.from || "-"} → ${change.to}`, actor: { id: audit.actorUserId, name: audit.actorName }, relatedLead: { id: lead.id, requirementSummary: lead.requirementSummary, deleted: Boolean(lead.deletedAt) }, attachments: [] });
     }
     const terminalAuditKeys = new Set(statusAudits.flatMap((audit) => {
       const details = audit.details as { statusChange?: { to?: string } } | null;
       return audit.targetId && details?.statusChange?.to ? [`${audit.targetId}:${details.statusChange.to}`] : [];
     }));
     for (const lead of leads.filter((item) => ["WON", "LOST"].includes(item.status) && !terminalAuditKeys.has(`${item.id}:${item.status}`))) {
-      events.push({ id: `lead-terminal-${lead.id}`, occurredAt: lead.wonAt ?? lead.updatedAt, category: "MILESTONE", type: `LEAD_${lead.status}`, title: lead.status === "WON" ? "线索成交" : "线索丢失", summary: lead.requirementSummary, actor: lead.createdBy, relatedLead: { id: lead.id, requirementSummary: lead.requirementSummary, deleted: Boolean(lead.deletedAt) }, attachments: [] });
+      events.push({ id: `lead-terminal-${lead.id}`, occurredAt: lead.wonAt ?? lead.updatedAt, category: "MILESTONE", type: `LEAD_${lead.status}`, title: lead.status === "WON" ? "商机成交" : "商机丢失", summary: lead.requirementSummary, actor: lead.createdBy, relatedLead: { id: lead.id, requirementSummary: lead.requirementSummary, deleted: Boolean(lead.deletedAt) }, attachments: [] });
+    }
+    for (const marketingLead of convertedMarketingLeads) {
+      for (const history of marketingLead.statusHistory.filter((item) => ["MQL", "SQL"].includes(item.toStatus))) {
+        events.push({ id: `marketing-${history.id}`, occurredAt: history.changedAt, category: "MILESTONE", type: `MARKETING_LEAD_${history.toStatus}`, title: `Marketing Lead → ${history.toStatus}`, summary: `${marketingLead.fullName}${marketingLead.companyName ? ` · ${marketingLead.companyName}` : ""}`, actor: history.changedBy, relatedLead: null, attachments: [] });
+      }
+      if (marketingLead.convertedAt) events.push({ id: `marketing-converted-${marketingLead.id}`, occurredAt: marketingLead.convertedAt, category: "MILESTONE", type: "MARKETING_LEAD_CONVERTED", title: "Marketing Lead Converted", summary: marketingLead.convertedOpportunity?.requirementSummary || marketingLead.fullName, actor: marketingLead.convertedBy, relatedLead: marketingLead.convertedOpportunity ? { id: marketingLead.convertedOpportunity.id, requirementSummary: marketingLead.convertedOpportunity.requirementSummary, deleted: Boolean(marketingLead.convertedOpportunity.deletedAt) } : null, attachments: [] });
     }
     const legacyFiles = filesFor("CONTACT", id).filter((item) => item.fieldKey === "meetingMinutesFiles");
     const firstLegacyFile = legacyFiles[0];

@@ -8,7 +8,7 @@ export function ExecutionHealth({ data }: { data: DashboardData }) {
     ["下一动作覆盖", `${data.execution.nextActionCoverage.percent}%`, `${data.execution.nextActionCoverage.numerator}/${data.execution.nextActionCoverage.denominator}`],
     ["任务完成率", `${data.execution.followupCompletion.percent}%`, `${data.execution.followupCompletion.numerator}/${data.execution.followupCompletion.denominator}`],
     ["客户覆盖率", `${data.execution.customerCoverage.percent}%`, `${data.execution.customerCoverage.numerator}/${data.execution.customerCoverage.denominator}`],
-    ["孵化转线索", `${data.execution.nurtureConversion.percent}%`, `${data.execution.nurtureConversion.numerator}/${data.execution.nurtureConversion.denominator}`],
+    ["经营计划转商机", `${data.execution.nurtureConversion.percent}%`, `${data.execution.nurtureConversion.numerator}/${data.execution.nurtureConversion.denominator}`],
     ["唤醒公司", String(data.execution.reactivation.count), "所选期间"],
     ["高 Fit 未触达", String(data.execution.highFitUntouched), "需要优先行动"],
   ]

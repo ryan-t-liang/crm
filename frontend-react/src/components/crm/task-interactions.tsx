@@ -364,7 +364,7 @@ export function NurtureForm({
       !values.nextTouchAt ||
       !values.ownerUserId
     ) {
-      setError("请补全孵化原因、目标、触达主题、负责人和下次触达时间。");
+      setError("请补全经营原因、目标、触达主题、负责人和下次触达时间。");
       return;
     }
     setBusy(true);
@@ -394,7 +394,7 @@ export function NurtureForm({
   }
   return (
     <FormDialog
-      title={nurture ? "管理孵化" : "开始孵化"}
+      title={nurture ? "管理客户经营计划" : "新建客户经营计划"}
       description={organization.name}
       onClose={onClose}
       busy={busy}
@@ -409,7 +409,7 @@ export function NurtureForm({
             }}
             disabled={busy}
           >
-            保存孵化计划
+            保存客户经营计划
           </Button>
         </>
       }
@@ -440,8 +440,8 @@ export function NurtureForm({
         </Field>
         {(
           [
-            ["reason", "孵化原因"],
-            ["objective", "孵化目标"],
+            ["reason", "经营原因"],
+            ["objective", "经营目标"],
           ] as const
         ).map(([key, label]) => (
           <Field key={key} label={label} required wide>

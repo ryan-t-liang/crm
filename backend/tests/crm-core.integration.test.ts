@@ -80,6 +80,8 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core", () => {
       crmDormantDays: 60,
       crmStaleLeadDays: 30,
       crmHighFitUntouchedDays: 30,
+      crmMqlMinFitScore: 40,
+      crmMqlMinEngagementScore: 70,
     };
     const [adminRole, salesRole, viewerRole] = await Promise.all([
       prisma.role.findUniqueOrThrow({ where: { key: "SUPER_ADMIN" } }),

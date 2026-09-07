@@ -42,7 +42,7 @@ export const contactSummarySelect = {
   region: true,
   stage: true,
   organizationId: true,
-  organization: { select: { id: true, name: true, shortName: true, lifecycleStage: true, fitScore: true, roles: true } },
+  organization: { select: { id: true, name: true, shortName: true, website: true, lifecycleStage: true, fitScore: true, roles: true } },
   owner: { select: crmUserSummarySelect },
 } satisfies Prisma.ContactSelect;
 
@@ -57,11 +57,24 @@ export const crmLeadDetailInclude = {
   ...crmLeadListInclude,
   createdBy: { select: crmUserSummarySelect },
   participants: { select: { user: { select: crmUserSummarySelect } }, orderBy: { createdAt: "asc" as const } },
+  sourceMarketingLead: {
+    select: {
+      id: true,
+      fullName: true,
+      companyName: true,
+      source: true,
+      sourceChannel: true,
+      sourceDetail: true,
+      firstTouchAt: true,
+      inquiryContent: true,
+      convertedAt: true,
+    },
+  },
 } satisfies Prisma.CrmLeadInclude;
 
 async function requireCrmLead(db: CrmDbClient, id: string) {
   const lead = await db.crmLead.findFirst({ where: { id, deletedAt: null } });
-  if (!lead) throw new ApiError(404, "RESOURCE_NOT_FOUND", "线索不存在");
+  if (!lead) throw new ApiError(404, "RESOURCE_NOT_FOUND", "商机不存在");
   return lead;
 }
 
@@ -144,7 +157,7 @@ export class CrmLeadService {
 
   async create(input: CrmLeadCreateInput | CrmLeadImportInput, createdByUserId: string, audit: AuditActorContext) {
     return this.prisma.$transaction(async (tx) => {
-      const { participantUserIds, ...fields } = input;
+      const { participantUserIds, requirementTags, ...fields } = input;
       const contact = await requireContactForLead(tx, input.contactId);
       await Promise.all([
         assertAssignableCrmUser(tx, input.salesOwnerUserId, "salesOwnerUserId"),
@@ -155,6 +168,7 @@ export class CrmLeadService {
       const row = await tx.crmLead.create({
         data: {
           ...fields,
+          requirementTags: requirementTags === undefined ? undefined : requirementTags === null ? Prisma.JsonNull : requirementTags,
           estimatedQuote: input.estimatedQuote == null ? input.estimatedQuote : new Prisma.Decimal(input.estimatedQuote),
           wonAt: input.wonAt ?? (input.status === "WON" ? new Date() : undefined),
           closedAt: ["WON", "LOST"].includes(input.status) ? input.wonAt ?? new Date() : undefined,
@@ -183,14 +197,14 @@ export class CrmLeadService {
       this.prisma.crmLead.findFirst({ where: { id, deletedAt: null }, include: crmLeadDetailInclude }),
       this.prisma.crmAttachment.findMany({ where: { entityType: "LEAD", entityId: id }, select: crmAttachmentSelect, orderBy: [{ createdAt: "desc" }, { id: "desc" }] }),
     ]);
-    if (!row) throw new ApiError(404, "RESOURCE_NOT_FOUND", "线索不存在");
+    if (!row) throw new ApiError(404, "RESOURCE_NOT_FOUND", "商机不存在");
     return { ...row, attachments };
   }
 
   async update(id: string, input: CrmLeadPatchInput, audit: AuditActorContext) {
     return this.prisma.$transaction(async (tx) => {
       const existing = await requireCrmLead(tx, id);
-      const { participantUserIds, ...fields } = input;
+      const { participantUserIds, requirementTags, ...fields } = input;
       await Promise.all([
         input.salesOwnerUserId === undefined
           ? Promise.resolve()
@@ -207,6 +221,7 @@ export class CrmLeadService {
         where: { id },
         data: {
           ...fields,
+          requirementTags: requirementTags === undefined ? undefined : requirementTags === null ? Prisma.JsonNull : requirementTags,
           estimatedQuote: input.estimatedQuote === undefined
             ? undefined
             : input.estimatedQuote === null
@@ -260,7 +275,7 @@ export class CrmLeadService {
           requirementSummary: true,
         },
       });
-      if (!lead) throw new ApiError(404, "RESOURCE_NOT_FOUND", "线索不存在");
+      if (!lead) throw new ApiError(404, "RESOURCE_NOT_FOUND", "商机不存在");
       const deletedAt = new Date();
       await tx.crmLead.update({ where: { id }, data: { deletedAt, deletedByUserId: audit.actorUserId } });
       await appendAuditRecord(tx, audit, {
@@ -306,7 +321,7 @@ export class LeadFollowupService {
   async create(leadId: string, input: LeadFollowupCreateInput, createdByUserId: string, audit: AuditActorContext) {
     return this.prisma.$transaction(async (tx) => {
       const lead = await tx.crmLead.findFirst({ where: { id: leadId, deletedAt: null }, include: { contact: { select: { organizationId: true } } } });
-      if (!lead) throw new ApiError(404, "RESOURCE_NOT_FOUND", "线索不存在");
+      if (!lead) throw new ApiError(404, "RESOURCE_NOT_FOUND", "商机不存在");
       const ownerUserId = input.ownerUserId ?? createdByUserId;
       await assertAssignableCrmUser(tx, ownerUserId, "ownerUserId");
       const { currentTaskId, ...followupInput } = input;

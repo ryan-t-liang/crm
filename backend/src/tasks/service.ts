@@ -50,10 +50,10 @@ async function validateRelations(db: CrmDbClient, input: Pick<TaskCreateInput, "
   ]);
   if (input.organizationId && !organization) throw new ApiError(422, "INVALID_TASK_RELATION", "关联公司不存在");
   if (input.contactId && !contact) throw new ApiError(422, "INVALID_TASK_RELATION", "关联联系人不存在");
-  if (input.leadId && !lead) throw new ApiError(422, "INVALID_TASK_RELATION", "关联线索不存在");
-  if (input.contactId && input.leadId && lead?.contactId !== input.contactId) throw new ApiError(422, "TASK_RELATION_CONFLICT", "任务的联系人与线索不一致");
+  if (input.leadId && !lead) throw new ApiError(422, "INVALID_TASK_RELATION", "关联商机不存在");
+  if (input.contactId && input.leadId && lead?.contactId !== input.contactId) throw new ApiError(422, "TASK_RELATION_CONFLICT", "任务的联系人与商机不一致");
   const derivedOrganizationId = contact?.organizationId ?? lead?.contact.organizationId ?? null;
-  if (input.organizationId && derivedOrganizationId && input.organizationId !== derivedOrganizationId) throw new ApiError(422, "TASK_RELATION_CONFLICT", "任务的公司与联系人/线索不一致");
+  if (input.organizationId && derivedOrganizationId && input.organizationId !== derivedOrganizationId) throw new ApiError(422, "TASK_RELATION_CONFLICT", "任务的公司与联系人/商机不一致");
   return { organizationId: input.organizationId ?? derivedOrganizationId, contactId: input.contactId ?? lead?.contactId ?? null };
 }
 

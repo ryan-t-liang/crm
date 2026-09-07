@@ -43,7 +43,7 @@ export function ImportExport({
   me,
   onChanged,
 }: {
-  kind: "organizations" | "contacts" | "leads";
+  kind: "organizations" | "contacts" | "leads" | "marketing-leads";
   me: SessionUser;
   onChanged: () => void;
 }) {
@@ -52,7 +52,9 @@ export function ImportExport({
       ? "organization"
       : kind === "contacts"
         ? "contact"
-        : "lead";
+        : kind === "marketing-leads"
+          ? "marketing_lead"
+          : "lead";
   const [mode, setMode] = useState<"import" | "export" | null>(null);
   return (
     <>
@@ -156,6 +158,8 @@ function JobDialog({
             ? "CONTACT"
             : kind === "leads"
               ? "CRM_LEAD"
+              : kind === "marketing-leads"
+                ? "MARKETING_LEAD"
               : "ORGANIZATION";
         const response = await crmApi<{ data: ImportJob[] }>(
           `/api/v1/crm/imports?objectType=${objectType}&pageSize=50`,

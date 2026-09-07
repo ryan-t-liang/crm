@@ -61,7 +61,7 @@ export function Timeline({
                   className="hover:underline"
                   href={`#leads/${event.relatedLeadId}`}
                 >
-                  关联线索
+                  关联商机
                 </a>
               )}
             </div>

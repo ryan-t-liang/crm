@@ -121,7 +121,7 @@ export class CrmAnalyticsService {
         key: `${fitLevel}_${engagementLevel}`,
         fitLevel,
         engagementLevel,
-        label: fitLevel === "HIGH" ? engagementLevel === "HIGH" ? "A1 重点跟进" : engagementLevel === "MEDIUM" ? "A2 持续孵化" : "A3 优先唤醒" : `${fitLevel[0]}-${engagementLevel[0]}`,
+        label: fitLevel === "HIGH" ? engagementLevel === "HIGH" ? "A1 重点跟进" : engagementLevel === "MEDIUM" ? "A2 持续经营" : "A3 优先唤醒" : `${fitLevel[0]}-${engagementLevel[0]}`,
         count: organizations.filter((row) => row.fitLevel === fitLevel && row.engagementLevel === engagementLevel).length,
       }))),
     };

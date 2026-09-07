@@ -47,6 +47,31 @@ enum CrmLeadStatus {
   LOST
 }
 
+enum MarketingLeadStatus {
+  NEW
+  NURTURING
+  MQL
+  SQL
+  QUALIFIED
+  CONVERTED
+  RECYCLED
+  DISQUALIFIED
+}
+
+enum LeadScoreDimension {
+  FIT
+  ENGAGEMENT
+}
+
+enum LeadActivitySource {
+  WEB
+  CRM
+  SYSTEM
+  IMPORT
+  CAMPAIGN
+  EVENT
+}
+
 enum CrmFollowupType {
   GENERAL
   MEETING
@@ -191,6 +216,13 @@ model User {
   completedCrmTasks       CrmTask[]                      @relation("CrmTaskCompletedBy")
   leadStageChanges        LeadStageHistory[]             @relation("LeadStageChangedBy")
   lifecycleChanges        OrganizationLifecycleHistory[] @relation("OrganizationLifecycleChangedBy")
+  ownedMarketingLeads     MarketingLead[]                @relation("MarketingLeadOwner")
+  createdMarketingLeads   MarketingLead[]                @relation("MarketingLeadCreatedBy")
+  deletedMarketingLeads   MarketingLead[]                @relation("MarketingLeadDeletedBy")
+  convertedMarketingLeads MarketingLead[]                @relation("MarketingLeadConvertedBy")
+  marketingLeadActivities LeadActivityEvent[]            @relation("LeadActivityActor")
+  marketingScoreChanges   LeadScoreHistory[]             @relation("LeadScoreChangedBy")
+  marketingStatusChanges  LeadStatusHistory[]            @relation("LeadStatusChangedBy")
 
   @@index([status])
   @@map("users")
@@ -237,41 +269,45 @@ model AuditLog {
 }
 
 model Contact {
-  id                String            @id @default(cuid()) @db.VarChar(32)
-  contactName       String            @map("contact_name") @db.VarChar(160)
-  companyShortName  String?           @map("company_short_name") @db.VarChar(120)
-  companyName       String?           @map("company_name") @db.VarChar(240)
-  department        String?           @db.VarChar(160)
-  title             String?           @db.VarChar(160)
-  email             String?           @db.VarChar(191)
-  phone             String?           @db.VarChar(64)
-  wechat            String?           @db.VarChar(191)
-  linkedin          String?           @db.VarChar(500)
-  website           String?           @db.VarChar(500)
-  industry          String?           @db.VarChar(160)
-  source            String?           @db.VarChar(160)
-  country           String?           @db.VarChar(120)
-  city              String?           @db.VarChar(120)
-  region            String?           @db.VarChar(120)
-  stage             CrmContactStage   @default(INITIAL)
-  ownerUserId       String?           @map("owner_user_id") @db.VarChar(32)
-  nextFollowupAt    DateTime?         @map("next_followup_at") @db.DateTime(3)
-  initialContext    String?           @map("initial_context") @db.Text
-  followupAttention String?           @map("followup_attention") @db.Text
-  remark            String?           @db.Text
-  createdAt         DateTime          @default(now()) @map("created_at") @db.DateTime(3)
-  updatedAt         DateTime          @updatedAt @map("updated_at") @db.DateTime(3)
-  createdByUserId   String            @map("created_by_user_id") @db.VarChar(32)
-  deletedAt         DateTime?         @map("deleted_at") @db.DateTime(3)
-  deletedByUserId   String?           @map("deleted_by_user_id") @db.VarChar(32)
-  organizationId    String?           @map("organization_id") @db.VarChar(32)
-  owner             User?             @relation("ContactOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  createdBy         User              @relation("ContactCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  deletedBy         User?             @relation("ContactDeletedBy", fields: [deletedByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  organization      Organization?     @relation(fields: [organizationId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  followups         ContactFollowup[]
-  leads             CrmLead[]
-  tasks             CrmTask[]
+  id                      String            @id @default(cuid()) @db.VarChar(32)
+  contactName             String            @map("contact_name") @db.VarChar(160)
+  companyShortName        String?           @map("company_short_name") @db.VarChar(120)
+  companyName             String?           @map("company_name") @db.VarChar(240)
+  department              String?           @db.VarChar(160)
+  title                   String?           @db.VarChar(160)
+  email                   String?           @db.VarChar(191)
+  phone                   String?           @db.VarChar(64)
+  phoneNormalized         String?           @map("phone_normalized") @db.VarChar(32)
+  whatsapp                String?           @db.VarChar(64)
+  whatsappNormalized      String?           @map("whatsapp_normalized") @db.VarChar(32)
+  wechat                  String?           @db.VarChar(191)
+  linkedin                String?           @db.VarChar(500)
+  website                 String?           @db.VarChar(500)
+  industry                String?           @db.VarChar(160)
+  source                  String?           @db.VarChar(160)
+  country                 String?           @db.VarChar(120)
+  city                    String?           @db.VarChar(120)
+  region                  String?           @db.VarChar(120)
+  stage                   CrmContactStage   @default(INITIAL)
+  ownerUserId             String?           @map("owner_user_id") @db.VarChar(32)
+  nextFollowupAt          DateTime?         @map("next_followup_at") @db.DateTime(3)
+  initialContext          String?           @map("initial_context") @db.Text
+  followupAttention       String?           @map("followup_attention") @db.Text
+  remark                  String?           @db.Text
+  createdAt               DateTime          @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt               DateTime          @updatedAt @map("updated_at") @db.DateTime(3)
+  createdByUserId         String            @map("created_by_user_id") @db.VarChar(32)
+  deletedAt               DateTime?         @map("deleted_at") @db.DateTime(3)
+  deletedByUserId         String?           @map("deleted_by_user_id") @db.VarChar(32)
+  organizationId          String?           @map("organization_id") @db.VarChar(32)
+  owner                   User?             @relation("ContactOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdBy               User              @relation("ContactCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  deletedBy               User?             @relation("ContactDeletedBy", fields: [deletedByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  organization            Organization?     @relation(fields: [organizationId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  followups               ContactFollowup[]
+  leads                   CrmLead[]
+  tasks                   CrmTask[]
+  convertedMarketingLeads MarketingLead[]   @relation("MarketingLeadConvertedContact")
 
   @@index([stage, updatedAt])
   @@index([ownerUserId, updatedAt])
@@ -279,6 +315,8 @@ model Contact {
   @@index([deletedAt, updatedAt])
   @@index([deletedByUserId])
   @@index([organizationId, updatedAt])
+  @@index([phoneNormalized])
+  @@index([whatsappNormalized])
   @@map("contacts")
 }
 
@@ -303,52 +341,58 @@ model ContactFollowup {
 }
 
 model CrmLead {
-  id                   String               @id @default(cuid()) @db.VarChar(32)
-  contactId            String               @map("contact_id") @db.VarChar(32)
-  requirementSummary   String               @map("requirement_summary") @db.VarChar(200)
-  requirementDetail    String?              @map("requirement_detail") @db.Text
-  latestProgress       String?              @map("latest_progress") @db.Text
-  nextAction           String?              @map("next_action") @db.Text
-  imageRequirementNote String?              @map("image_requirement_note") @db.Text
-  quotationNote        String?              @map("quotation_note") @db.Text
-  leadSource           String?              @map("lead_source") @db.VarChar(160)
-  priority             CrmLeadPriority      @default(MEDIUM)
-  estimatedQuote       Decimal?             @map("estimated_quote") @db.Decimal(18, 2)
-  currency             String?              @db.Char(3)
-  projectDomain        String?              @map("project_domain") @db.VarChar(160)
-  projectType          String?              @map("project_type") @db.VarChar(160)
-  technologyType       String?              @map("technology_type") @db.Text
-  productType          String?              @map("product_type") @db.VarChar(160)
-  productName          String?              @map("product_name") @db.VarChar(240)
-  resourceRequirement  String?              @map("resource_requirement") @db.Text
-  collaborationGroups  String?              @map("collaboration_groups") @db.Text
-  followMode           String?              @map("follow_mode") @db.VarChar(160)
-  solution             String?              @db.Text
-  remark               String?              @db.Text
-  status               CrmLeadStatus        @default(NEW)
-  salesOwnerUserId     String?              @map("sales_owner_user_id") @db.VarChar(32)
-  followupOwnerUserId  String?              @map("followup_owner_user_id") @db.VarChar(32)
-  nextFollowupAt       DateTime?            @map("next_followup_at") @db.DateTime(3)
-  lastFollowupAt       DateTime?            @map("last_followup_at") @db.DateTime(3)
-  wonAt                DateTime?            @map("won_at") @db.DateTime(3)
-  closedAt             DateTime?            @map("closed_at") @db.DateTime(3)
-  deliveryFollowupAt   DateTime?            @map("delivery_followup_at") @db.DateTime(3)
-  contractRenewalAt    DateTime?            @map("contract_renewal_at") @db.DateTime(3)
-  paymentReceivedAt    DateTime?            @map("payment_received_at") @db.DateTime(3)
-  createdAt            DateTime             @default(now()) @map("created_at") @db.DateTime(3)
-  updatedAt            DateTime             @updatedAt @map("updated_at") @db.DateTime(3)
-  createdByUserId      String               @map("created_by_user_id") @db.VarChar(32)
-  deletedAt            DateTime?            @map("deleted_at") @db.DateTime(3)
-  deletedByUserId      String?              @map("deleted_by_user_id") @db.VarChar(32)
-  contact              Contact              @relation(fields: [contactId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  salesOwner           User?                @relation("CrmLeadSalesOwner", fields: [salesOwnerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  followupOwner        User?                @relation("CrmLeadFollowupOwner", fields: [followupOwnerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  createdBy            User                 @relation("CrmLeadCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  deletedBy            User?                @relation("CrmLeadDeletedBy", fields: [deletedByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  followups            LeadFollowup[]
-  participants         CrmLeadParticipant[]
-  stageHistory         LeadStageHistory[]
-  tasks                CrmTask[]
+  id                         String               @id @default(cuid()) @db.VarChar(32)
+  contactId                  String               @map("contact_id") @db.VarChar(32)
+  requirementSummary         String               @map("requirement_summary") @db.VarChar(200)
+  requirementDetail          String?              @map("requirement_detail") @db.Text
+  requirementContext         String?              @map("requirement_context") @db.VarChar(160)
+  productInterest            String?              @map("product_interest") @db.Text
+  requirementTags            Json?                @map("requirement_tags")
+  latestProgress             String?              @map("latest_progress") @db.Text
+  nextAction                 String?              @map("next_action") @db.Text
+  imageRequirementNote       String?              @map("image_requirement_note") @db.Text
+  quotationNote              String?              @map("quotation_note") @db.Text
+  leadSource                 String?              @map("lead_source") @db.VarChar(160)
+  priority                   CrmLeadPriority      @default(MEDIUM)
+  estimatedQuote             Decimal?             @map("estimated_quote") @db.Decimal(18, 2)
+  currency                   String?              @db.Char(3)
+  projectDomain              String?              @map("project_domain") @db.VarChar(160)
+  projectType                String?              @map("project_type") @db.VarChar(160)
+  technologyType             String?              @map("technology_type") @db.Text
+  productType                String?              @map("product_type") @db.VarChar(160)
+  productName                String?              @map("product_name") @db.VarChar(240)
+  resourceRequirement        String?              @map("resource_requirement") @db.Text
+  collaborationGroups        String?              @map("collaboration_groups") @db.Text
+  followMode                 String?              @map("follow_mode") @db.VarChar(160)
+  solution                   String?              @db.Text
+  remark                     String?              @db.Text
+  status                     CrmLeadStatus        @default(NEW)
+  salesOwnerUserId           String?              @map("sales_owner_user_id") @db.VarChar(32)
+  followupOwnerUserId        String?              @map("followup_owner_user_id") @db.VarChar(32)
+  nextFollowupAt             DateTime?            @map("next_followup_at") @db.DateTime(3)
+  lastFollowupAt             DateTime?            @map("last_followup_at") @db.DateTime(3)
+  wonAt                      DateTime?            @map("won_at") @db.DateTime(3)
+  closedAt                   DateTime?            @map("closed_at") @db.DateTime(3)
+  deliveryFollowupAt         DateTime?            @map("delivery_followup_at") @db.DateTime(3)
+  contractRenewalAt          DateTime?            @map("contract_renewal_at") @db.DateTime(3)
+  paymentReceivedAt          DateTime?            @map("payment_received_at") @db.DateTime(3)
+  createdAt                  DateTime             @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt                  DateTime             @updatedAt @map("updated_at") @db.DateTime(3)
+  createdByUserId            String               @map("created_by_user_id") @db.VarChar(32)
+  deletedAt                  DateTime?            @map("deleted_at") @db.DateTime(3)
+  deletedByUserId            String?              @map("deleted_by_user_id") @db.VarChar(32)
+  sourceMarketingLeadId      String?              @unique @map("source_marketing_lead_id") @db.VarChar(32)
+  contact                    Contact              @relation(fields: [contactId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  sourceMarketingLead        MarketingLead?       @relation("OpportunitySourceMarketingLead", fields: [sourceMarketingLeadId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  convertedFromMarketingLead MarketingLead?       @relation("MarketingLeadConvertedOpportunity")
+  salesOwner                 User?                @relation("CrmLeadSalesOwner", fields: [salesOwnerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  followupOwner              User?                @relation("CrmLeadFollowupOwner", fields: [followupOwnerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdBy                  User                 @relation("CrmLeadCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  deletedBy                  User?                @relation("CrmLeadDeletedBy", fields: [deletedByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  followups                  LeadFollowup[]
+  participants               CrmLeadParticipant[]
+  stageHistory               LeadStageHistory[]
+  tasks                      CrmTask[]
 
   @@index([contactId, updatedAt])
   @@index([status, updatedAt])
@@ -398,35 +442,204 @@ model CrmLeadParticipant {
   @@map("crm_lead_participants")
 }
 
+model MarketingLead {
+  id                          String              @id @default(cuid()) @db.VarChar(32)
+  fullName                    String              @map("full_name") @db.VarChar(160)
+  email                       String?             @db.VarChar(191)
+  phone                       String?             @db.VarChar(64)
+  phoneNormalized             String?             @map("phone_normalized") @db.VarChar(32)
+  whatsapp                    String?             @db.VarChar(64)
+  whatsappNormalized          String?             @map("whatsapp_normalized") @db.VarChar(32)
+  wechat                      String?             @db.VarChar(191)
+  linkedinUrl                 String?             @map("linkedin_url") @db.VarChar(500)
+  title                       String?             @db.VarChar(160)
+  department                  String?             @db.VarChar(160)
+  companyName                 String?             @map("company_name") @db.VarChar(240)
+  companyWebsite              String?             @map("company_website") @db.VarChar(500)
+  companyDomain               String?             @map("company_domain") @db.VarChar(191)
+  companySize                 String?             @map("company_size") @db.VarChar(80)
+  industry                    String?             @db.VarChar(160)
+  countryCode                 String?             @map("country_code") @db.Char(2)
+  region                      String?             @db.VarChar(120)
+  city                        String?             @db.VarChar(120)
+  inquiryType                 String?             @map("inquiry_type") @db.VarChar(160)
+  inquiryContent              String?             @map("inquiry_content") @db.Text
+  productInterest             String?             @map("product_interest") @db.Text
+  requirementTags             Json?               @map("requirement_tags")
+  budgetRange                 String?             @map("budget_range") @db.VarChar(160)
+  note                        String?             @db.Text
+  source                      String              @db.VarChar(40)
+  sourceChannel               String?             @map("source_channel") @db.VarChar(120)
+  sourceDetail                String?             @map("source_detail") @db.VarChar(240)
+  firstTouchAt                DateTime?           @map("first_touch_at") @db.DateTime(3)
+  status                      MarketingLeadStatus @default(NEW)
+  ownerUserId                 String?             @map("owner_user_id") @db.VarChar(32)
+  assignedAt                  DateTime?           @map("assigned_at") @db.DateTime(3)
+  mqlAt                       DateTime?           @map("mql_at") @db.DateTime(3)
+  sqlAt                       DateTime?           @map("sql_at") @db.DateTime(3)
+  qualifiedAt                 DateTime?           @map("qualified_at") @db.DateTime(3)
+  recycledAt                  DateTime?           @map("recycled_at") @db.DateTime(3)
+  convertedAt                 DateTime?           @map("converted_at") @db.DateTime(3)
+  disqualifiedAt              DateTime?           @map("disqualified_at") @db.DateTime(3)
+  disqualifiedReason          String?             @map("disqualified_reason") @db.Text
+  fitScore                    Int                 @default(0) @map("fit_score") @db.UnsignedTinyInt
+  fitReason                   String?             @map("fit_reason") @db.Text
+  engagementScoreCached       Int                 @default(0) @map("engagement_score_cached") @db.UnsignedTinyInt
+  engagementScoreCalculatedAt DateTime?           @map("engagement_score_calculated_at") @db.DateTime(3)
+  lastActivityAt              DateTime?           @map("last_activity_at") @db.DateTime(3)
+  firstSalesResponseAt        DateTime?           @map("first_sales_response_at") @db.DateTime(3)
+  convertedOrganizationId     String?             @map("converted_organization_id") @db.VarChar(32)
+  convertedContactId          String?             @map("converted_contact_id") @db.VarChar(32)
+  convertedOpportunityId      String?             @unique @map("converted_opportunity_id") @db.VarChar(32)
+  convertedByUserId           String?             @map("converted_by_user_id") @db.VarChar(32)
+  createdByUserId             String              @map("created_by_user_id") @db.VarChar(32)
+  createdAt                   DateTime            @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt                   DateTime            @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt                   DateTime?           @map("deleted_at") @db.DateTime(3)
+  deletedByUserId             String?             @map("deleted_by_user_id") @db.VarChar(32)
+  owner                       User?               @relation("MarketingLeadOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdBy                   User                @relation("MarketingLeadCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  deletedBy                   User?               @relation("MarketingLeadDeletedBy", fields: [deletedByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  convertedBy                 User?               @relation("MarketingLeadConvertedBy", fields: [convertedByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  convertedOrganization       Organization?       @relation("MarketingLeadConvertedOrganization", fields: [convertedOrganizationId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  convertedContact            Contact?            @relation("MarketingLeadConvertedContact", fields: [convertedContactId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  convertedOpportunity        CrmLead?            @relation("MarketingLeadConvertedOpportunity", fields: [convertedOpportunityId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  sourcedOpportunity          CrmLead?            @relation("OpportunitySourceMarketingLead")
+  activities                  LeadActivityEvent[]
+  scoreHistory                LeadScoreHistory[]
+  statusHistory               LeadStatusHistory[]
+
+  @@index([status, createdAt])
+  @@index([ownerUserId, status, updatedAt])
+  @@index([source, createdAt])
+  @@index([email])
+  @@index([phoneNormalized])
+  @@index([whatsappNormalized])
+  @@index([companyDomain])
+  @@index([convertedOrganizationId])
+  @@index([convertedContactId])
+  @@index([convertedByUserId])
+  @@index([deletedAt, updatedAt])
+  @@map("marketing_leads")
+}
+
+model LeadScoringRule {
+  id             String              @id @default(cuid()) @db.VarChar(32)
+  code           String              @unique @db.VarChar(80)
+  name           String              @db.VarChar(160)
+  category       String              @db.VarChar(80)
+  scoreDimension LeadScoreDimension  @map("score_dimension")
+  scoreDelta     Int                 @map("score_delta") @db.SmallInt
+  repeatable     Boolean             @default(true)
+  maxOccurrences Int?                @map("max_occurrences") @db.UnsignedSmallInt
+  cooldownHours  Int?                @map("cooldown_hours") @db.UnsignedSmallInt
+  enabled        Boolean             @default(true)
+  sortOrder      Int                 @default(0) @map("sort_order")
+  description    String?             @db.VarChar(500)
+  createdAt      DateTime            @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt      DateTime            @updatedAt @map("updated_at") @db.DateTime(3)
+  activities     LeadActivityEvent[]
+
+  @@index([enabled, sortOrder])
+  @@index([scoreDimension, enabled])
+  @@map("lead_scoring_rules")
+}
+
+model LeadActivityEvent {
+  id                      String             @id @default(cuid()) @db.VarChar(32)
+  marketingLeadId         String             @map("marketing_lead_id") @db.VarChar(32)
+  scoringRuleId           String?            @map("scoring_rule_id") @db.VarChar(32)
+  eventType               String             @map("event_type") @db.VarChar(80)
+  source                  LeadActivitySource
+  occurredAt              DateTime           @map("occurred_at") @db.DateTime(3)
+  actorUserId             String?            @map("actor_user_id") @db.VarChar(32)
+  note                    String?            @db.Text
+  engagementDeltaSnapshot Int                @default(0) @map("engagement_delta_snapshot") @db.SmallInt
+  fitDeltaSnapshot        Int                @default(0) @map("fit_delta_snapshot") @db.SmallInt
+  createdAt               DateTime           @default(now()) @map("created_at") @db.DateTime(3)
+  marketingLead           MarketingLead      @relation(fields: [marketingLeadId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  scoringRule             LeadScoringRule?   @relation(fields: [scoringRuleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  actor                   User?              @relation("LeadActivityActor", fields: [actorUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  scoreHistory            LeadScoreHistory[]
+
+  @@index([marketingLeadId, occurredAt])
+  @@index([scoringRuleId, occurredAt])
+  @@index([eventType, occurredAt])
+  @@index([actorUserId, occurredAt])
+  @@map("lead_activity_events")
+}
+
+model LeadScoreHistory {
+  id              String             @id @default(cuid()) @db.VarChar(32)
+  marketingLeadId String             @map("marketing_lead_id") @db.VarChar(32)
+  activityEventId String?            @map("activity_event_id") @db.VarChar(32)
+  dimension       LeadScoreDimension
+  previousScore   Int                @map("previous_score") @db.UnsignedTinyInt
+  scoreDelta      Int                @map("score_delta") @db.SmallInt
+  newScore        Int                @map("new_score") @db.UnsignedTinyInt
+  reason          String?            @db.VarChar(300)
+  changedByUserId String?            @map("changed_by_user_id") @db.VarChar(32)
+  createdAt       DateTime           @default(now()) @map("created_at") @db.DateTime(3)
+  marketingLead   MarketingLead      @relation(fields: [marketingLeadId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  activityEvent   LeadActivityEvent? @relation(fields: [activityEventId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  changedBy       User?              @relation("LeadScoreChangedBy", fields: [changedByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([marketingLeadId, createdAt])
+  @@index([activityEventId])
+  @@index([dimension, createdAt])
+  @@index([changedByUserId, createdAt])
+  @@map("lead_score_history")
+}
+
+model LeadStatusHistory {
+  id              String               @id @default(cuid()) @db.VarChar(32)
+  marketingLeadId String               @map("marketing_lead_id") @db.VarChar(32)
+  fromStatus      MarketingLeadStatus? @map("from_status")
+  toStatus        MarketingLeadStatus  @map("to_status")
+  reason          String?              @db.VarChar(500)
+  changedAt       DateTime             @default(now()) @map("changed_at") @db.DateTime(3)
+  changedByUserId String               @map("changed_by_user_id") @db.VarChar(32)
+  marketingLead   MarketingLead        @relation(fields: [marketingLeadId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  changedBy       User                 @relation("LeadStatusChangedBy", fields: [changedByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([marketingLeadId, changedAt])
+  @@index([toStatus, changedAt])
+  @@index([changedByUserId, changedAt])
+  @@map("lead_status_history")
+}
+
 model Organization {
-  id               String                         @id @default(cuid()) @db.VarChar(32)
-  name             String                         @db.VarChar(240)
-  normalizedName   String                         @map("normalized_name") @db.VarChar(240)
-  shortName        String?                        @map("short_name") @db.VarChar(120)
-  website          String?                        @db.VarChar(500)
-  websiteDomain    String?                        @map("website_domain") @db.VarChar(191)
-  industry         String?                        @db.VarChar(160)
-  country          String?                        @db.VarChar(120)
-  region           String?                        @db.VarChar(120)
-  city             String?                        @db.VarChar(120)
-  ownerUserId      String?                        @map("owner_user_id") @db.VarChar(32)
-  lifecycleStage   OrganizationLifecycle          @default(TARGET) @map("lifecycle_stage")
-  fitScore         Int                            @default(0) @map("fit_score") @db.UnsignedTinyInt
-  fitReason        String?                        @map("fit_reason") @db.Text
-  note             String?                        @db.Text
-  createdByUserId  String                         @map("created_by_user_id") @db.VarChar(32)
-  createdAt        DateTime                       @default(now()) @map("created_at") @db.DateTime(3)
-  updatedAt        DateTime                       @updatedAt @map("updated_at") @db.DateTime(3)
-  deletedAt        DateTime?                      @map("deleted_at") @db.DateTime(3)
-  deletedByUserId  String?                        @map("deleted_by_user_id") @db.VarChar(32)
-  owner            User?                          @relation("OrganizationOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  createdBy        User                           @relation("OrganizationCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  deletedBy        User?                          @relation("OrganizationDeletedBy", fields: [deletedByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  roles            OrganizationRole[]
-  contacts         Contact[]
-  nurtures         OrganizationNurture[]
-  tasks            CrmTask[]
-  lifecycleHistory OrganizationLifecycleHistory[]
+  id                      String                         @id @default(cuid()) @db.VarChar(32)
+  name                    String                         @db.VarChar(240)
+  normalizedName          String                         @map("normalized_name") @db.VarChar(240)
+  shortName               String?                        @map("short_name") @db.VarChar(120)
+  website                 String?                        @db.VarChar(500)
+  websiteDomain           String?                        @map("website_domain") @db.VarChar(191)
+  industry                String?                        @db.VarChar(160)
+  country                 String?                        @db.VarChar(120)
+  region                  String?                        @db.VarChar(120)
+  city                    String?                        @db.VarChar(120)
+  countryCode             String?                        @map("country_code") @db.Char(2)
+  companySize             String?                        @map("company_size") @db.VarChar(80)
+  ownerUserId             String?                        @map("owner_user_id") @db.VarChar(32)
+  lifecycleStage          OrganizationLifecycle          @default(TARGET) @map("lifecycle_stage")
+  fitScore                Int                            @default(0) @map("fit_score") @db.UnsignedTinyInt
+  fitReason               String?                        @map("fit_reason") @db.Text
+  note                    String?                        @db.Text
+  createdByUserId         String                         @map("created_by_user_id") @db.VarChar(32)
+  createdAt               DateTime                       @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt               DateTime                       @updatedAt @map("updated_at") @db.DateTime(3)
+  deletedAt               DateTime?                      @map("deleted_at") @db.DateTime(3)
+  deletedByUserId         String?                        @map("deleted_by_user_id") @db.VarChar(32)
+  owner                   User?                          @relation("OrganizationOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdBy               User                           @relation("OrganizationCreatedBy", fields: [createdByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  deletedBy               User?                          @relation("OrganizationDeletedBy", fields: [deletedByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  roles                   OrganizationRole[]
+  contacts                Contact[]
+  nurtures                OrganizationNurture[]
+  tasks                   CrmTask[]
+  lifecycleHistory        OrganizationLifecycleHistory[]
+  convertedMarketingLeads MarketingLead[]                @relation("MarketingLeadConvertedOrganization")
 
   @@index([normalizedName])
   @@index([websiteDomain])

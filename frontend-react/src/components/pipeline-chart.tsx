@@ -15,7 +15,7 @@ const pipelineLabels: Record<string, string> = {
 
 const chartConfig = {
   count: {
-    label: "线索数量",
+    label: "商机数量",
     color: "var(--color-primary)",
   },
 } satisfies ChartConfig

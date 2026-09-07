@@ -36,6 +36,8 @@ const schema = z.object({
   CRM_DORMANT_DAYS: z.coerce.number().int().min(2).max(730).default(60),
   CRM_STALE_LEAD_DAYS: z.coerce.number().int().min(1).max(365).default(30),
   CRM_HIGH_FIT_UNTOUCHED_DAYS: z.coerce.number().int().min(1).max(365).default(30),
+  CRM_MQL_MIN_FIT_SCORE: z.coerce.number().int().min(0).max(100).default(40),
+  CRM_MQL_MIN_ENGAGEMENT_SCORE: z.coerce.number().int().min(0).max(100).default(70),
   STORAGE_DIR: z.string().default("../storage"),
 });
 
@@ -60,6 +62,8 @@ export type AppConfig = {
   crmDormantDays: number;
   crmStaleLeadDays: number;
   crmHighFitUntouchedDays: number;
+  crmMqlMinFitScore: number;
+  crmMqlMinEngagementScore: number;
 };
 
 export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
@@ -85,6 +89,8 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     crmDormantDays: env.CRM_DORMANT_DAYS,
     crmStaleLeadDays: env.CRM_STALE_LEAD_DAYS,
     crmHighFitUntouchedDays: env.CRM_HIGH_FIT_UNTOUCHED_DAYS,
+    crmMqlMinFitScore: env.CRM_MQL_MIN_FIT_SCORE,
+    crmMqlMinEngagementScore: env.CRM_MQL_MIN_ENGAGEMENT_SCORE,
   };
   return { ...config, ...overrides };
 }
