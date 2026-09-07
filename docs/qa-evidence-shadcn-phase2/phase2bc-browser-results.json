@@ -1,0 +1,140 @@
+{
+  "checks": [
+    {
+      "name": "09-contact-list-1440",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#contacts"
+    },
+    {
+      "name": "09-contact-list-1280",
+      "status": "PASS",
+      "widths": {
+        "body": 1280,
+        "document": 1280,
+        "viewport": 1280
+      },
+      "url": "http://127.0.0.1:3310/#contacts"
+    },
+    {
+      "name": "09-contact-list-1024",
+      "status": "PASS",
+      "widths": {
+        "body": 1024,
+        "document": 1024,
+        "viewport": 1024
+      },
+      "url": "http://127.0.0.1:3310/#contacts"
+    },
+    {
+      "name": "10-contact-360",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#contacts/cmtqqtqiq00f2qpo6egail28p"
+    },
+    {
+      "name": "contact-create-company-select-edit-tab-state",
+      "status": "PASS",
+      "contactId": "cmtqqtqiq00f2qpo6egail28p"
+    },
+    {
+      "name": "11-lead-list-1440",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#leads"
+    },
+    {
+      "name": "11-lead-list-1280",
+      "status": "PASS",
+      "widths": {
+        "body": 1280,
+        "document": 1280,
+        "viewport": 1280
+      },
+      "url": "http://127.0.0.1:3310/#leads"
+    },
+    {
+      "name": "11-lead-list-1024",
+      "status": "PASS",
+      "widths": {
+        "body": 1024,
+        "document": 1024,
+        "viewport": 1024
+      },
+      "url": "http://127.0.0.1:3310/#leads"
+    },
+    {
+      "name": "12-lead-create-combobox",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#leads"
+    },
+    {
+      "name": "13-lead-detail",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#leads/cmtqqtss400f6qpo609pfv6bo"
+    },
+    {
+      "name": "14-lead-edit",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#leads/cmtqqtss400f6qpo609pfv6bo"
+    },
+    {
+      "name": "15-lead-followup",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#leads/cmtqqtss400f6qpo609pfv6bo"
+    },
+    {
+      "name": "lead-create-fuzzy-selector-attachment-edit-followup-task-loop",
+      "status": "PASS",
+      "leadId": "cmtqqtss400f6qpo609pfv6bo"
+    },
+    {
+      "name": "16-contact-journey",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#contacts/cmtqqtqiq00f2qpo6egail28p"
+    },
+    {
+      "name": "no-app-shell-reload-across-contact-lead-routes",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "network": []
+}

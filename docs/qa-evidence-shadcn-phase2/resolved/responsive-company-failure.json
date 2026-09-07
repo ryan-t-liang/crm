@@ -1,0 +1,6 @@
+{
+  "message": "locator.click: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '更多操作：手工公司 1788755024921', exact: true })\u001b[22m\n",
+  "errors": [],
+  "network": [],
+  "text": "KIVISENSE\nCRM 2.0\n概览\nDashboard\n客户管理\n公司\n13\n客户联系人\n15\n线索\n7\n客户运营\n客户运营\n我的工作台\n资源\n供应商\n系统管理\n账户管理\n角色与权限\n审计日志\nK\nKivisense 管理员\n超级管理员\nToggle Sidebar\nKivisense CRM\n公司 / Company 360\n返回公司\n手工公司 1788755024921\n手工验收\n潜在客户\n目标\nK\nKivisense 管理员\n新增联系人\n创建线索\n新增互动\n联系人\n0\n活跃线索\n0\n最近互动\n暂无互动\n—\n下一步行动\n暂无下一步行动\n概览\n联系人 0\n线索 0\n客户旅程\n任务\n文件\n备注\n操作记录\n公司信息\n公司全称\n手工公司 1788755024921\n行业\n—\n网站\n—\n地区\n—\n负责人\nKivisense 管理员\n生命周期\n目标\n最近活动\n创建公司\n2026/09/07 12:23\n\n手工公司 1788755024921\n\n公司生命周期变更\n2026/09/07 12:23\n\n- → TARGET\n\nKivisense 管理员\nFit & Engagement\nFit\n76\nHIGH\n\n尚未填写 Fit 理由\n\nEngagement\n0\nLOW\n最近互动\n0\n30 天互动\n0\n活跃线索\n0\n30 天内会议\n0\n开放下一步任务\n0\n逾期任务\n0\n运营状态\n活跃状态\n沉睡\n距离最近互动\n尚无互动\n下一次触达\n—\n孵化主题\n—\n下一步行动\n创建任务\n\n尚未安排下一步行动\n\n—"
+}

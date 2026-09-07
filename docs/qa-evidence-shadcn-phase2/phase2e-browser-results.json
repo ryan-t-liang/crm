@@ -1,0 +1,128 @@
+{
+  "checks": [
+    {
+      "name": "23-login",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#dashboard"
+    },
+    {
+      "name": "24-accounts",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#accounts"
+    },
+    {
+      "name": "account-create-edit-disable-enable-reset",
+      "status": "PASS"
+    },
+    {
+      "name": "25-roles",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#roles"
+    },
+    {
+      "name": "26-role-permissions",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#roles"
+    },
+    {
+      "name": "role-permission-read-save-current-policy-no-business-change",
+      "status": "PASS"
+    },
+    {
+      "name": "27-audit",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#audit"
+    },
+    {
+      "name": "audit-list-detail",
+      "status": "PASS"
+    },
+    {
+      "name": "28-force-password",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#dashboard"
+    },
+    {
+      "name": "first-login-password-change-stays-react",
+      "status": "PASS"
+    },
+    {
+      "name": "29-sales-permission-surface",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#suppliers"
+    },
+    {
+      "name": "sales-navigation-rbac",
+      "status": "PASS"
+    },
+    {
+      "name": "29-viewer-permission-surface",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#suppliers"
+    },
+    {
+      "name": "viewer-navigation-rbac",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "network": [],
+  "expectedUnauthorizedOnLogin": [
+    {
+      "status": 401,
+      "url": "http://127.0.0.1:3310/api/v1/auth/me"
+    },
+    {
+      "status": 401,
+      "url": "http://127.0.0.1:3310/api/v1/auth/me"
+    },
+    {
+      "status": 401,
+      "url": "http://127.0.0.1:3310/api/v1/auth/me"
+    },
+    {
+      "status": 401,
+      "url": "http://127.0.0.1:3310/api/v1/auth/me"
+    }
+  ]
+}

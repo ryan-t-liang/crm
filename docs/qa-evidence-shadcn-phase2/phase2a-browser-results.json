@@ -1,0 +1,114 @@
+{
+  "checks": [
+    {
+      "name": "01-dashboard-1440",
+      "status": "PASS",
+      "widths": {
+        "document": 1440,
+        "body": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#dashboard"
+    },
+    {
+      "name": "02-company-list-1440",
+      "status": "PASS",
+      "widths": {
+        "document": 1440,
+        "body": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#organizations"
+    },
+    {
+      "name": "02-company-list-1280",
+      "status": "PASS",
+      "widths": {
+        "document": 1280,
+        "body": 1280,
+        "viewport": 1280
+      },
+      "url": "http://127.0.0.1:3310/#organizations"
+    },
+    {
+      "name": "02-company-list-1024",
+      "status": "PASS",
+      "widths": {
+        "document": 1024,
+        "body": 1024,
+        "viewport": 1024
+      },
+      "url": "http://127.0.0.1:3310/#organizations"
+    },
+    {
+      "name": "03-company-filter-high-fit",
+      "status": "PASS",
+      "widths": {
+        "document": 1440,
+        "body": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#organizations"
+    },
+    {
+      "name": "04-company-360-overview",
+      "status": "PASS",
+      "widths": {
+        "document": 1440,
+        "body": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#organizations/cmtqopfl10004qpt1r0u79g9g"
+    },
+    {
+      "name": "05-company-journey",
+      "status": "PASS",
+      "widths": {
+        "document": 1440,
+        "body": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#organizations/cmtqopfl10004qpt1r0u79g9g"
+    },
+    {
+      "name": "06-company-tasks",
+      "status": "PASS",
+      "widths": {
+        "document": 1440,
+        "body": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#organizations/cmtqopfl10004qpt1r0u79g9g"
+    },
+    {
+      "name": "07-company-task-dialog",
+      "status": "PASS",
+      "widths": {
+        "document": 1440,
+        "body": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#organizations/cmtqopfl10004qpt1r0u79g9g"
+    },
+    {
+      "name": "create-task-persisted",
+      "status": "PASS"
+    },
+    {
+      "name": "08-company-contact-form",
+      "status": "PASS",
+      "widths": {
+        "document": 1440,
+        "body": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#organizations/cmtqopfl10004qpt1r0u79g9g"
+    },
+    {
+      "name": "company-contact-create-and-tab-state",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "network": []
+}

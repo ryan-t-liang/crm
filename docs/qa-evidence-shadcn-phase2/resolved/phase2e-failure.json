@@ -1,0 +1,7 @@
+{
+  "message": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel('密码', { exact: true })\u001b[22m\n",
+  "errors": [],
+  "network": [],
+  "url": "http://127.0.0.1:3310/#dashboard",
+  "text": "KIVISENSE\n\nCRM 2.0\n\n登录\n\n使用工作账号继续。\n\n登录账号\n*\n密码\n*\n登录\n\n忘记密码？请联系系统管理员重置。"
+}

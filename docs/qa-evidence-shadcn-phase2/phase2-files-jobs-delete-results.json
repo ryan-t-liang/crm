@@ -1,0 +1,100 @@
+{
+  "checks": [
+    {
+      "name": "30-organizations-import-preview",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3310/#organizations"
+    },
+    {
+      "name": "31-organizations-import-result",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3310/#organizations"
+    },
+    {
+      "name": "organizations-template-preflight-execute",
+      "status": "PASS"
+    },
+    {
+      "name": "30-contacts-import-preview",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3310/#contacts"
+    },
+    {
+      "name": "31-contacts-import-result",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3310/#contacts"
+    },
+    {
+      "name": "contacts-template-preflight-execute",
+      "status": "PASS"
+    },
+    {
+      "name": "30-leads-import-preview",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3310/#leads"
+    },
+    {
+      "name": "31-leads-import-result",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3310/#leads"
+    },
+    {
+      "name": "leads-template-preflight-execute",
+      "status": "PASS"
+    },
+    {
+      "name": "organizations-export-download-content",
+      "status": "PASS"
+    },
+    {
+      "name": "contacts-export-download-content",
+      "status": "PASS"
+    },
+    {
+      "name": "leads-export-download-content",
+      "status": "PASS"
+    },
+    {
+      "name": "32-contextual-attachments",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3310/#leads/cmtqqqd0300e1qpo6ja2f61q4"
+    },
+    {
+      "name": "document-image-real-webm-upload-download-byte-parity",
+      "status": "PASS"
+    },
+    {
+      "name": "attachment-delete",
+      "status": "PASS"
+    },
+    {
+      "name": "34-leads-delete-confirm",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3310/#leads"
+    },
+    {
+      "name": "leads-row-soft-delete",
+      "status": "PASS"
+    },
+    {
+      "name": "34-contacts-delete-confirm",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3310/#contacts"
+    },
+    {
+      "name": "contacts-row-soft-delete",
+      "status": "PASS"
+    },
+    {
+      "name": "34-organizations-delete-confirm",
+      "status": "PASS",
+      "url": "http://127.0.0.1:3310/#organizations"
+    },
+    {
+      "name": "organizations-row-soft-delete",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "network": []
+}

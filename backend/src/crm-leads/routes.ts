@@ -13,6 +13,7 @@ import { CrmLeadService, LeadFollowupService } from "./service.js";
 const leadListQuery = paginationSchema.extend({
   keyword: z.string().trim().max(200).optional(),
   contactId: z.string().trim().min(1).max(32).optional(),
+  organizationId: z.string().trim().min(1).max(32).optional(),
   status: z.enum(["NEW", "QUALIFIED", "SOLUTION", "QUOTATION", "WON", "LOST"]).optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "URGENT"]).optional(),
   salesOwnerUserId: z.string().trim().min(1).max(32).optional(),

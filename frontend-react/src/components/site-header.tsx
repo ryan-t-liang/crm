@@ -10,7 +10,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 
-export function SiteHeader() {
+export function SiteHeader({ title = "Dashboard", dashboard = true }: { title?: string; dashboard?: boolean }) {
   return (
     <header className="flex h-[52px] shrink-0 items-center justify-between gap-3 border-b bg-background px-4 transition-[width,height] ease-linear">
       <div className="flex min-w-0 items-center gap-2">
@@ -21,15 +21,15 @@ export function SiteHeader() {
             <BreadcrumbItem className="hidden sm:block">Kivisense CRM</BreadcrumbItem>
             <BreadcrumbSeparator className="hidden sm:block" />
             <BreadcrumbItem>
-              <BreadcrumbPage>Dashboard</BreadcrumbPage>
+              <BreadcrumbPage>{title}</BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
       </div>
-      <div className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex">
+      {dashboard && <div className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex">
         <CircleCheck className="size-3.5 text-primary" />
         非金额运营视图
-      </div>
+      </div>}
     </header>
   )
 }

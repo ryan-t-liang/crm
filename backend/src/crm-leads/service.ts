@@ -11,6 +11,7 @@ import { transitionOrganizationLifecycle } from "../organizations/service.js";
 export type CrmLeadListInput = {
   keyword?: string;
   contactId?: string;
+  organizationId?: string;
   status?: "NEW" | "QUALIFIED" | "SOLUTION" | "QUOTATION" | "WON" | "LOST";
   priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
   salesOwnerUserId?: string;
@@ -97,7 +98,7 @@ export class CrmLeadService {
   async list(input: CrmLeadListInput) {
     const where: Prisma.CrmLeadWhereInput = {
       deletedAt: null,
-      contact: { is: { deletedAt: null } },
+      contact: { is: { deletedAt: null, organizationId: input.organizationId } },
       contactId: input.contactId,
       status: input.status,
       priority: input.priority,

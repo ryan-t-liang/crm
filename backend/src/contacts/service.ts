@@ -8,6 +8,8 @@ import type { ContactCreateInput, ContactFollowupCreateInput, ContactImportInput
 
 export type ContactListInput = {
   keyword?: string;
+  organizationId?: string;
+  source?: string;
   stage?: "INITIAL" | "ONE_TO_ONE" | "SOLUTION" | "CONVENTION";
   ownerUserId?: string;
   nextFollowupFrom?: Date;
@@ -64,6 +66,8 @@ export class ContactService {
     const where: Prisma.ContactWhereInput = {
       deletedAt: null,
       stage: input.stage,
+      organizationId: input.organizationId,
+      source: input.source,
       ownerUserId: input.ownerUserId,
       nextFollowupAt: input.nextFollowupFrom || input.nextFollowupTo
         ? { gte: input.nextFollowupFrom, lte: input.nextFollowupTo }

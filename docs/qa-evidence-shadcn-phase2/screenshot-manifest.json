@@ -1,0 +1,1338 @@
+[
+  {
+    "file": "01-dashboard-1440.png",
+    "sha256": "e07988cf4765a7ab6f1d7dade29fa4d1938a2469ffec53ae957a1826cf85568e",
+    "width": 1440,
+    "height": 1586,
+    "checks": [
+      {
+        "name": "01-dashboard-1440",
+        "status": "PASS",
+        "widths": {
+          "document": 1440,
+          "body": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#dashboard"
+      }
+    ]
+  },
+  {
+    "file": "02-company-list-1024.png",
+    "sha256": "2605592cc61ae896daafa6c2821a95210da8a7c4daf507f4bf6a88c7bc8ee190",
+    "width": 1024,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "02-company-list-1024",
+        "status": "PASS",
+        "widths": {
+          "document": 1024,
+          "body": 1024,
+          "viewport": 1024
+        },
+        "url": "http://127.0.0.1:3310/#organizations"
+      }
+    ]
+  },
+  {
+    "file": "02-company-list-1280.png",
+    "sha256": "4e018f424aa706eab946cd14d6e5938b9b80bb9b018897324aee6536105e0dfb",
+    "width": 1280,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "02-company-list-1280",
+        "status": "PASS",
+        "widths": {
+          "document": 1280,
+          "body": 1280,
+          "viewport": 1280
+        },
+        "url": "http://127.0.0.1:3310/#organizations"
+      }
+    ]
+  },
+  {
+    "file": "02-company-list-1440.png",
+    "sha256": "af37e9f6698553984562a3625b1575f74f122d0746e1dd54bf36a26a2b667793",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "02-company-list-1440",
+        "status": "PASS",
+        "widths": {
+          "document": 1440,
+          "body": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#organizations"
+      }
+    ]
+  },
+  {
+    "file": "03-company-filter-high-fit.png",
+    "sha256": "1c1efd37b56451e6b5d420b2e1e6ade40ea16886afbb23cf4eec615a0a861149",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "03-company-filter-high-fit",
+        "status": "PASS",
+        "widths": {
+          "document": 1440,
+          "body": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#organizations"
+      }
+    ]
+  },
+  {
+    "file": "04-company-360-overview.png",
+    "sha256": "7cd2acad75f5d6037f5c1507c1f2fe0048379414c6925a76c17a0a29a01c1296",
+    "width": 1440,
+    "height": 1113,
+    "checks": [
+      {
+        "name": "04-company-360-overview",
+        "status": "PASS",
+        "widths": {
+          "document": 1440,
+          "body": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#organizations/cmtqopfl10004qpt1r0u79g9g"
+      }
+    ]
+  },
+  {
+    "file": "05-company-journey.png",
+    "sha256": "25c287c63eb505630c932ad3d1b522580c32441537193f09e333c02262a6c6a8",
+    "width": 1440,
+    "height": 2126,
+    "checks": [
+      {
+        "name": "05-company-journey",
+        "status": "PASS",
+        "widths": {
+          "document": 1440,
+          "body": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#organizations/cmtqopfl10004qpt1r0u79g9g"
+      }
+    ]
+  },
+  {
+    "file": "06-company-tasks.png",
+    "sha256": "c145cf29951b93f00b2d89d6a4ee636ac2415ae3b53656dfc8c54ab7765ff5d5",
+    "width": 1440,
+    "height": 1030,
+    "checks": [
+      {
+        "name": "06-company-tasks",
+        "status": "PASS",
+        "widths": {
+          "document": 1440,
+          "body": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#organizations/cmtqopfl10004qpt1r0u79g9g"
+      }
+    ]
+  },
+  {
+    "file": "07-company-task-dialog.png",
+    "sha256": "0f4abfd721bb2a197590189af468e57680d668e18289cfe3bd66549dc3f43ab0",
+    "width": 1440,
+    "height": 1030,
+    "checks": [
+      {
+        "name": "07-company-task-dialog",
+        "status": "PASS",
+        "widths": {
+          "document": 1440,
+          "body": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#organizations/cmtqopfl10004qpt1r0u79g9g"
+      }
+    ]
+  },
+  {
+    "file": "08-company-contact-form.png",
+    "sha256": "cb64ca8f8d4125aabf79b4e1bf00e084fb45e20fcd5be66ad3f62fb8500bb442",
+    "width": 1440,
+    "height": 1133,
+    "checks": [
+      {
+        "name": "08-company-contact-form",
+        "status": "PASS",
+        "widths": {
+          "document": 1440,
+          "body": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#organizations/cmtqopfl10004qpt1r0u79g9g"
+      }
+    ]
+  },
+  {
+    "file": "09-contact-list-1024.png",
+    "sha256": "63dda6a6aa784b7965a6323848472f2056da0832921bf9f7123624567bddf969",
+    "width": 1024,
+    "height": 1233,
+    "checks": [
+      {
+        "name": "09-contact-list-1024",
+        "status": "PASS",
+        "widths": {
+          "body": 1024,
+          "document": 1024,
+          "viewport": 1024
+        },
+        "url": "http://127.0.0.1:3310/#contacts"
+      }
+    ]
+  },
+  {
+    "file": "09-contact-list-1280.png",
+    "sha256": "a41822b1d5103ce9b326db95d950b2c4a9d72711ac88194bc60a3bc6d3da6c39",
+    "width": 1280,
+    "height": 1189,
+    "checks": [
+      {
+        "name": "09-contact-list-1280",
+        "status": "PASS",
+        "widths": {
+          "body": 1280,
+          "document": 1280,
+          "viewport": 1280
+        },
+        "url": "http://127.0.0.1:3310/#contacts"
+      }
+    ]
+  },
+  {
+    "file": "09-contact-list-1440.png",
+    "sha256": "a0b640396e106fc8d80f72f71f8ab0f5665ddb5bf2ceba5dd20326689830fac6",
+    "width": 1440,
+    "height": 1189,
+    "checks": [
+      {
+        "name": "09-contact-list-1440",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#contacts"
+      }
+    ]
+  },
+  {
+    "file": "10-contact-360.png",
+    "sha256": "b1d4fb48c404d1caf7f313d64bca1a9925edcc57f9d2ae0e56b4a7c49c6413e4",
+    "width": 1440,
+    "height": 1248,
+    "checks": [
+      {
+        "name": "10-contact-360",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#contacts/cmtqqtqiq00f2qpo6egail28p"
+      }
+    ]
+  },
+  {
+    "file": "11-lead-list-1024.png",
+    "sha256": "d42cf7b338a3db29446c5b5ba00f7e518df8bc1aeb916177aaab35572c1dc90c",
+    "width": 1024,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "11-lead-list-1024",
+        "status": "PASS",
+        "widths": {
+          "body": 1024,
+          "document": 1024,
+          "viewport": 1024
+        },
+        "url": "http://127.0.0.1:3310/#leads"
+      }
+    ]
+  },
+  {
+    "file": "11-lead-list-1280.png",
+    "sha256": "e99917910dc5153ded2c3b402f157f36a4610311718aee0396ee359823e58d08",
+    "width": 1280,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "11-lead-list-1280",
+        "status": "PASS",
+        "widths": {
+          "body": 1280,
+          "document": 1280,
+          "viewport": 1280
+        },
+        "url": "http://127.0.0.1:3310/#leads"
+      }
+    ]
+  },
+  {
+    "file": "11-lead-list-1440.png",
+    "sha256": "38eff3ae811c326596ce6670bb3c5f7eb59a2caf1ce5350ca8348857ff57f35c",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "11-lead-list-1440",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#leads"
+      }
+    ]
+  },
+  {
+    "file": "12-lead-create-combobox.png",
+    "sha256": "e05a302bff9cf6f008f01ad546cb62389fd6472b38d33a6dfadc945d65423226",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "12-lead-create-combobox",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#leads"
+      }
+    ]
+  },
+  {
+    "file": "13-lead-detail.png",
+    "sha256": "aaa4ff19888a8a9379230956d31e5dff8cd70d603be5911dd6d1c8f133a3ab10",
+    "width": 1440,
+    "height": 1631,
+    "checks": [
+      {
+        "name": "13-lead-detail",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#leads/cmtqqtss400f6qpo609pfv6bo"
+      }
+    ]
+  },
+  {
+    "file": "14-lead-edit.png",
+    "sha256": "bc8308c20af1998884601e6b9eb5406438f45ffd681a0af7456be46ca72d5298",
+    "width": 1440,
+    "height": 1631,
+    "checks": [
+      {
+        "name": "14-lead-edit",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#leads/cmtqqtss400f6qpo609pfv6bo"
+      }
+    ]
+  },
+  {
+    "file": "15-lead-followup.png",
+    "sha256": "0a39723020f0dfc8fce4ae160f2242ff7f8f5ad92edff408f87791de557d37fa",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "15-lead-followup",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#leads/cmtqqtss400f6qpo609pfv6bo"
+      }
+    ]
+  },
+  {
+    "file": "16-contact-journey.png",
+    "sha256": "5714f751c8ac21cc45324622be5a19b35adb8a64ff3989f740fda052f7b74b6d",
+    "width": 1440,
+    "height": 1248,
+    "checks": [
+      {
+        "name": "16-contact-journey",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#contacts/cmtqqtqiq00f2qpo6egail28p"
+      }
+    ]
+  },
+  {
+    "file": "17-customer-operations.png",
+    "sha256": "d768277eb5f4a407d6e1f75877273a2ad70fe69891b280cf135addc6398cfb28",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "17-customer-operations",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#operations"
+      }
+    ]
+  },
+  {
+    "file": "18-reactivation.png",
+    "sha256": "988c000d135f901a4d60dd53437343f0e36592896cba60244a024b2270e7661f",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "18-reactivation",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#operations"
+      }
+    ]
+  },
+  {
+    "file": "19-nurture.png",
+    "sha256": "e5f41491bcc55c05b73e5c0b0f1ff6f798cc800680e38137709164bfba747c76",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "19-nurture",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#operations"
+      }
+    ]
+  },
+  {
+    "file": "20-nurture-pool.png",
+    "sha256": "c41afe29ac187a7c7147a2acd4af96443187ece699c3586f9a39747c013d4928",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "20-nurture-pool",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#operations"
+      }
+    ]
+  },
+  {
+    "file": "21-workbench.png",
+    "sha256": "253b730f449f0ef48deef206306412fff0e44d007cd026d5f6101bb63b4f5f52",
+    "width": 1440,
+    "height": 2344,
+    "checks": [
+      {
+        "name": "21-workbench",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#workbench"
+      }
+    ]
+  },
+  {
+    "file": "22-suppliers-1024.png",
+    "sha256": "df123edd42a998e628fd83c4258fcd5799f35bb711c1af0a0ff72ec5507c68b7",
+    "width": 1024,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "22-suppliers-1024",
+        "status": "PASS",
+        "widths": {
+          "body": 1024,
+          "document": 1024,
+          "viewport": 1024
+        },
+        "url": "http://127.0.0.1:3310/#suppliers"
+      }
+    ]
+  },
+  {
+    "file": "22-suppliers-1280.png",
+    "sha256": "89856f897de6739c364fad1c20297c3140204f82dc0bb1866b8cc3a775f449da",
+    "width": 1280,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "22-suppliers-1280",
+        "status": "PASS",
+        "widths": {
+          "body": 1280,
+          "document": 1280,
+          "viewport": 1280
+        },
+        "url": "http://127.0.0.1:3310/#suppliers"
+      }
+    ]
+  },
+  {
+    "file": "22-suppliers-1440.png",
+    "sha256": "9f54feea67290cc905ac8dd6b4d653df49ec2a285c30bf30b218307ef7780a7f",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "22-suppliers-1440",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#suppliers"
+      }
+    ]
+  },
+  {
+    "file": "23-login.png",
+    "sha256": "81ecee43fc361a9d2afc912e238bcfb9a227534dcc5d2768324764b0ddbc0817",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "23-login",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#dashboard"
+      }
+    ]
+  },
+  {
+    "file": "24-accounts.png",
+    "sha256": "f3f50a31c1f3ae57aa5c392f451dc22d5799e133adb3730195f06257025ebc42",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "24-accounts",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#accounts"
+      }
+    ]
+  },
+  {
+    "file": "25-roles.png",
+    "sha256": "c1db98a67ea5a739471d37940603f213551c5964ee46f19f693b900d47bdf4ed",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "25-roles",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#roles"
+      }
+    ]
+  },
+  {
+    "file": "26-role-permissions.png",
+    "sha256": "ec9034447734ed7b0398d07c338512cf5544622de022c68cc4fe0d97d6ac1802",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "26-role-permissions",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#roles"
+      }
+    ]
+  },
+  {
+    "file": "27-audit.png",
+    "sha256": "efbf32c52eedd091234f980a15e16370bee79c73f4a2cb70d3efaa20011acce0",
+    "width": 1440,
+    "height": 1321,
+    "checks": [
+      {
+        "name": "27-audit",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#audit"
+      }
+    ]
+  },
+  {
+    "file": "28-force-password.png",
+    "sha256": "c2f9f1648ba4cf7c4ceb225fceaf17518a1dc8640a494e0b7b3ee7b704c0c2a0",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "28-force-password",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#dashboard"
+      }
+    ]
+  },
+  {
+    "file": "29-sales-permission-surface.png",
+    "sha256": "b4fcd35ca4288ca404f5b87a173b7b2e209ce6220ebaae9ff06172510ae0fc75",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "29-sales-permission-surface",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#suppliers"
+      }
+    ]
+  },
+  {
+    "file": "29-viewer-permission-surface.png",
+    "sha256": "b4b412f3eecdd8e291519820b7f66148e1a6cb8b3e63252b48429a53e5a94b8b",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "29-viewer-permission-surface",
+        "status": "PASS",
+        "widths": {
+          "body": 1440,
+          "document": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#suppliers"
+      }
+    ]
+  },
+  {
+    "file": "30-contacts-import-preview.png",
+    "sha256": "3e301fbacc91680343599c4b82483d64bdec4ce0be00e85ca2c86ff11aa69b67",
+    "width": 1440,
+    "height": 1189,
+    "checks": [
+      {
+        "name": "30-contacts-import-preview",
+        "status": "PASS",
+        "url": "http://127.0.0.1:3310/#contacts"
+      }
+    ]
+  },
+  {
+    "file": "30-leads-import-preview.png",
+    "sha256": "bf1d80502cd2d2586afd9ce85c2ac4e8b7dda84aa79e8c137de98eefc4e45784",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "30-leads-import-preview",
+        "status": "PASS",
+        "url": "http://127.0.0.1:3310/#leads"
+      }
+    ]
+  },
+  {
+    "file": "30-organizations-import-preview.png",
+    "sha256": "1e53d033dca988679240590023a2bff1c73cd1bdcea1a2a70e523a848db09bf2",
+    "width": 1440,
+    "height": 1150,
+    "checks": [
+      {
+        "name": "30-organizations-import-preview",
+        "status": "PASS",
+        "url": "http://127.0.0.1:3310/#organizations"
+      }
+    ]
+  },
+  {
+    "file": "31-contacts-import-result.png",
+    "sha256": "05de9d34a9e4e69cab7c4b8f7883bcae303ad162fcc4792db8d252dd8d62b440",
+    "width": 1440,
+    "height": 1242,
+    "checks": [
+      {
+        "name": "31-contacts-import-result",
+        "status": "PASS",
+        "url": "http://127.0.0.1:3310/#contacts"
+      }
+    ]
+  },
+  {
+    "file": "31-leads-import-result.png",
+    "sha256": "ba1e45162bb5867c252b8fd9ec817d327ce597d2230c1e999a99e84198c50cc0",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "31-leads-import-result",
+        "status": "PASS",
+        "url": "http://127.0.0.1:3310/#leads"
+      }
+    ]
+  },
+  {
+    "file": "31-organizations-import-result.png",
+    "sha256": "8bbb25474a4758455ee91a95f69fa890b1144bce64c5e3989026598d6d5a9785",
+    "width": 1440,
+    "height": 1203,
+    "checks": [
+      {
+        "name": "31-organizations-import-result",
+        "status": "PASS",
+        "url": "http://127.0.0.1:3310/#organizations"
+      }
+    ]
+  },
+  {
+    "file": "32-contextual-attachments.png",
+    "sha256": "7dc748b9716d1f7c48a1481c25693539ae8c359fbfd71d86921d9780b4299e04",
+    "width": 1440,
+    "height": 1651,
+    "checks": [
+      {
+        "name": "32-contextual-attachments",
+        "status": "PASS",
+        "url": "http://127.0.0.1:3310/#leads/cmtqqqd0300e1qpo6ja2f61q4"
+      }
+    ]
+  },
+  {
+    "file": "34-contacts-delete-confirm.png",
+    "sha256": "f4f2ed8c6ff7706c6441a99eb0e09dbf215b80d5f17e2d95d2987cd3ebff80b4",
+    "width": 1440,
+    "height": 1242,
+    "checks": [
+      {
+        "name": "34-contacts-delete-confirm",
+        "status": "PASS",
+        "url": "http://127.0.0.1:3310/#contacts"
+      }
+    ]
+  },
+  {
+    "file": "34-leads-delete-confirm.png",
+    "sha256": "e8de02ac49a029215285e54d7a5be577747e573557b4d27f97adad24ac39f1aa",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "34-leads-delete-confirm",
+        "status": "PASS",
+        "url": "http://127.0.0.1:3310/#leads"
+      }
+    ]
+  },
+  {
+    "file": "34-organizations-delete-confirm.png",
+    "sha256": "d80e7327adb49764e1593bfbd99809a944ce60cb55efbce4f928f655bdcdfe39",
+    "width": 1440,
+    "height": 1203,
+    "checks": [
+      {
+        "name": "34-organizations-delete-confirm",
+        "status": "PASS",
+        "url": "http://127.0.0.1:3310/#organizations"
+      }
+    ]
+  },
+  {
+    "file": "35-company-form-notes-logo.png",
+    "sha256": "9a983ff37a4ada2c067775a50d61274c42513368bd041f597e8476c8b976d318",
+    "width": 1440,
+    "height": 1042,
+    "checks": [
+      {
+        "name": "35-company-form-notes-logo",
+        "status": "PASS",
+        "widths": {
+          "document": 1440,
+          "body": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#organizations"
+      }
+    ]
+  },
+  {
+    "file": "36-company-files.png",
+    "sha256": "007519249b0c4d8d579937dfdc5bfc333fe3ef18b7041782a0c2537c27972c57",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "36-company-files",
+        "status": "PASS",
+        "widths": {
+          "document": 1440,
+          "body": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#organizations/cmtqql5z300beqpo6kblas8j3"
+      }
+    ]
+  },
+  {
+    "file": "37-accounts-1024.png",
+    "sha256": "df93d0082107c839e716a03cd32d9c61a5e7a6c8dd75124d088186a254463211",
+    "width": 1024,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "37-accounts-1024",
+        "status": "PASS",
+        "widths": {
+          "document": 1024,
+          "body": 1024,
+          "viewport": 1024
+        },
+        "url": "http://127.0.0.1:3310/#accounts"
+      }
+    ]
+  },
+  {
+    "file": "37-accounts-1280.png",
+    "sha256": "b3b5a91c630fde8f990b9d7c947d52402e6580979fdd21564bf4d92eb9b634b9",
+    "width": 1280,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "37-accounts-1280",
+        "status": "PASS",
+        "widths": {
+          "document": 1280,
+          "body": 1280,
+          "viewport": 1280
+        },
+        "url": "http://127.0.0.1:3310/#accounts"
+      }
+    ]
+  },
+  {
+    "file": "37-accounts-1440.png",
+    "sha256": "81716196969faef466afdc0037359aaf2a072b07ed8d2d807d292f7bb7d94172",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "37-accounts-1440",
+        "status": "PASS",
+        "widths": {
+          "document": 1440,
+          "body": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#accounts"
+      }
+    ]
+  },
+  {
+    "file": "37-audit-1024.png",
+    "sha256": "8c0e64d4b76ad219fef85de1a5f2346e6c80679b9bd4d422c356755536c68a9f",
+    "width": 1024,
+    "height": 1321,
+    "checks": [
+      {
+        "name": "37-audit-1024",
+        "status": "PASS",
+        "widths": {
+          "document": 1024,
+          "body": 1024,
+          "viewport": 1024
+        },
+        "url": "http://127.0.0.1:3310/#audit"
+      }
+    ]
+  },
+  {
+    "file": "37-audit-1280.png",
+    "sha256": "5105c129c45d009be43839ce1a05235a5c5b47698f4b0e3cb019f6be4f26b801",
+    "width": 1280,
+    "height": 1321,
+    "checks": [
+      {
+        "name": "37-audit-1280",
+        "status": "PASS",
+        "widths": {
+          "document": 1280,
+          "body": 1280,
+          "viewport": 1280
+        },
+        "url": "http://127.0.0.1:3310/#audit"
+      }
+    ]
+  },
+  {
+    "file": "37-audit-1440.png",
+    "sha256": "d5ccde7701f368ab1b695ffea570b81195fab4e6786432869f38827e016f3c27",
+    "width": 1440,
+    "height": 1321,
+    "checks": [
+      {
+        "name": "37-audit-1440",
+        "status": "PASS",
+        "widths": {
+          "document": 1440,
+          "body": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#audit"
+      }
+    ]
+  },
+  {
+    "file": "37-contacts-1024.png",
+    "sha256": "a64a23da1968de2fd58363a29473ba73a8bf82b0b34b1b958ca2cd837281476b",
+    "width": 1024,
+    "height": 1256,
+    "checks": [
+      {
+        "name": "37-contacts-1024",
+        "status": "PASS",
+        "widths": {
+          "document": 1024,
+          "body": 1024,
+          "viewport": 1024
+        },
+        "url": "http://127.0.0.1:3310/#contacts/cmtqqiwhv00aeqpo6k9o4aq1t"
+      }
+    ]
+  },
+  {
+    "file": "37-contacts-1280.png",
+    "sha256": "0f792afc12d9121b33b2922135162f43c754a2ce9bcebc4713b25cc28365e2ee",
+    "width": 1280,
+    "height": 1228,
+    "checks": [
+      {
+        "name": "37-contacts-1280",
+        "status": "PASS",
+        "widths": {
+          "document": 1280,
+          "body": 1280,
+          "viewport": 1280
+        },
+        "url": "http://127.0.0.1:3310/#contacts/cmtqqiwhv00aeqpo6k9o4aq1t"
+      }
+    ]
+  },
+  {
+    "file": "37-contacts-1440.png",
+    "sha256": "03661030e668eca266d6394ccfc8c38697255434778fe3f51c81c1d824fdc6d7",
+    "width": 1440,
+    "height": 1228,
+    "checks": [
+      {
+        "name": "37-contacts-1440",
+        "status": "PASS",
+        "widths": {
+          "document": 1440,
+          "body": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#contacts/cmtqqiwhv00aeqpo6k9o4aq1t"
+      }
+    ]
+  },
+  {
+    "file": "37-dashboard-1024.png",
+    "sha256": "ea056e84a77a2e0b3ea549a1c1ca282091f2c47989498e91d296033efbb95652",
+    "width": 1024,
+    "height": 2216,
+    "checks": [
+      {
+        "name": "37-dashboard-1024",
+        "status": "PASS",
+        "widths": {
+          "document": 1024,
+          "body": 1024,
+          "viewport": 1024
+        },
+        "url": "http://127.0.0.1:3310/#dashboard"
+      }
+    ]
+  },
+  {
+    "file": "37-dashboard-1280.png",
+    "sha256": "6411abf0a9881a19f9f60a96fba9475af32a2d9e15cb3cbc7b4f19ecec09d9fc",
+    "width": 1280,
+    "height": 1586,
+    "checks": [
+      {
+        "name": "37-dashboard-1280",
+        "status": "PASS",
+        "widths": {
+          "document": 1280,
+          "body": 1280,
+          "viewport": 1280
+        },
+        "url": "http://127.0.0.1:3310/#dashboard"
+      }
+    ]
+  },
+  {
+    "file": "37-dashboard-1440.png",
+    "sha256": "5df76f3c726630f5ffee768c90f4b6c2be5eaa72662fb4ce1cdfd2781b4e215b",
+    "width": 1440,
+    "height": 1586,
+    "checks": [
+      {
+        "name": "37-dashboard-1440",
+        "status": "PASS",
+        "widths": {
+          "document": 1440,
+          "body": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#dashboard"
+      }
+    ]
+  },
+  {
+    "file": "37-leads-1024.png",
+    "sha256": "fca25123da8957803d31381821c9f4a0b740455762d7430e3f3e78702fe66798",
+    "width": 1024,
+    "height": 2316,
+    "checks": [
+      {
+        "name": "37-leads-1024",
+        "status": "PASS",
+        "widths": {
+          "document": 1024,
+          "body": 1024,
+          "viewport": 1024
+        },
+        "url": "http://127.0.0.1:3310/#leads/cmtqqiu5d009uqpo6lo9f1x0v"
+      }
+    ]
+  },
+  {
+    "file": "37-leads-1280.png",
+    "sha256": "82c48aa1a68cbd5e1beaad80da88332225b5402a4168f111da4b4d57230dd9ea",
+    "width": 1280,
+    "height": 1631,
+    "checks": [
+      {
+        "name": "37-leads-1280",
+        "status": "PASS",
+        "widths": {
+          "document": 1280,
+          "body": 1280,
+          "viewport": 1280
+        },
+        "url": "http://127.0.0.1:3310/#leads/cmtqqiu5d009uqpo6lo9f1x0v"
+      }
+    ]
+  },
+  {
+    "file": "37-leads-1440.png",
+    "sha256": "8642a5dfc43551d4b9a8e4b8c23d2f7dcb34244a11099bc4c9d167572dddee9f",
+    "width": 1440,
+    "height": 1631,
+    "checks": [
+      {
+        "name": "37-leads-1440",
+        "status": "PASS",
+        "widths": {
+          "document": 1440,
+          "body": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#leads/cmtqqiu5d009uqpo6lo9f1x0v"
+      }
+    ]
+  },
+  {
+    "file": "37-operations-1024.png",
+    "sha256": "b38fa3ba72e13383efbb71643180a31acba3c276d5b61bbeef103e6fa16db7b2",
+    "width": 1024,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "37-operations-1024",
+        "status": "PASS",
+        "widths": {
+          "document": 1024,
+          "body": 1024,
+          "viewport": 1024
+        },
+        "url": "http://127.0.0.1:3310/#operations"
+      }
+    ]
+  },
+  {
+    "file": "37-operations-1280.png",
+    "sha256": "5ac071050e7d5c11ee365978a38c1eadf2b66c0614632176fc7596f452cfd045",
+    "width": 1280,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "37-operations-1280",
+        "status": "PASS",
+        "widths": {
+          "document": 1280,
+          "body": 1280,
+          "viewport": 1280
+        },
+        "url": "http://127.0.0.1:3310/#operations"
+      }
+    ]
+  },
+  {
+    "file": "37-operations-1440.png",
+    "sha256": "69a543ef5ca9b4f7bf68ba3e40ed795b27572ff2bf1c4d53a427542553b4ef09",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "37-operations-1440",
+        "status": "PASS",
+        "widths": {
+          "document": 1440,
+          "body": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#operations"
+      }
+    ]
+  },
+  {
+    "file": "37-organizations-1024.png",
+    "sha256": "3a2849931fd4b6045202545b6368af6b41db9fa3e2bdafd3c349819dc204adf2",
+    "width": 1024,
+    "height": 1732,
+    "checks": [
+      {
+        "name": "37-organizations-1024",
+        "status": "PASS",
+        "widths": {
+          "document": 1024,
+          "body": 1024,
+          "viewport": 1024
+        },
+        "url": "http://127.0.0.1:3310/#organizations/cmtqql5z300beqpo6kblas8j3"
+      }
+    ]
+  },
+  {
+    "file": "37-organizations-1280.png",
+    "sha256": "cb6e6de9f76fb1bf7cf688dc5ff819fce455e7833b1c94f7dd70f2df06d9f126",
+    "width": 1280,
+    "height": 1103,
+    "checks": [
+      {
+        "name": "37-organizations-1280",
+        "status": "PASS",
+        "widths": {
+          "document": 1280,
+          "body": 1280,
+          "viewport": 1280
+        },
+        "url": "http://127.0.0.1:3310/#organizations/cmtqql5z300beqpo6kblas8j3"
+      }
+    ]
+  },
+  {
+    "file": "37-organizations-1440.png",
+    "sha256": "95ffcf42182551006675b89d7c53fce9005426cf221b2bf09643f6474fd168d6",
+    "width": 1440,
+    "height": 1103,
+    "checks": [
+      {
+        "name": "37-organizations-1440",
+        "status": "PASS",
+        "widths": {
+          "document": 1440,
+          "body": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#organizations/cmtqql5z300beqpo6kblas8j3"
+      }
+    ]
+  },
+  {
+    "file": "37-roles-1024.png",
+    "sha256": "8ef5d4402a4acbc10b9d7480b3ac35b71df61f3644a43d50847aa30e6659dfde",
+    "width": 1024,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "37-roles-1024",
+        "status": "PASS",
+        "widths": {
+          "document": 1024,
+          "body": 1024,
+          "viewport": 1024
+        },
+        "url": "http://127.0.0.1:3310/#roles"
+      }
+    ]
+  },
+  {
+    "file": "37-roles-1280.png",
+    "sha256": "37ddeebe7a728f4dd74c4877bccbebaaa7d45dc425b6c0269e8d40336dd24f8d",
+    "width": 1280,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "37-roles-1280",
+        "status": "PASS",
+        "widths": {
+          "document": 1280,
+          "body": 1280,
+          "viewport": 1280
+        },
+        "url": "http://127.0.0.1:3310/#roles"
+      }
+    ]
+  },
+  {
+    "file": "37-roles-1440.png",
+    "sha256": "00543bc6cd83cf20293fd4456a9110b2b795623e8597a121f3c1c0b54dd21fd6",
+    "width": 1440,
+    "height": 1000,
+    "checks": [
+      {
+        "name": "37-roles-1440",
+        "status": "PASS",
+        "widths": {
+          "document": 1440,
+          "body": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#roles"
+      }
+    ]
+  },
+  {
+    "file": "37-workbench-1024.png",
+    "sha256": "2cbbbf1c1ec33e21f9a1e9f1b2361cfbfbabc34eb94f1fc6100e7e5e49e6fb0e",
+    "width": 1024,
+    "height": 2138,
+    "checks": [
+      {
+        "name": "37-workbench-1024",
+        "status": "PASS",
+        "widths": {
+          "document": 1024,
+          "body": 1024,
+          "viewport": 1024
+        },
+        "url": "http://127.0.0.1:3310/#workbench"
+      }
+    ]
+  },
+  {
+    "file": "37-workbench-1280.png",
+    "sha256": "ec3564d461a8907695c99850fa40fda50ae80d713757dec6d6b71c7c7c7f1776",
+    "width": 1280,
+    "height": 2138,
+    "checks": [
+      {
+        "name": "37-workbench-1280",
+        "status": "PASS",
+        "widths": {
+          "document": 1280,
+          "body": 1280,
+          "viewport": 1280
+        },
+        "url": "http://127.0.0.1:3310/#workbench"
+      }
+    ]
+  },
+  {
+    "file": "37-workbench-1440.png",
+    "sha256": "26dcd95b2c17a22a57250a0c0c2a1e0be5b54ecc9724360581e44e42edc4de92",
+    "width": 1440,
+    "height": 2138,
+    "checks": [
+      {
+        "name": "37-workbench-1440",
+        "status": "PASS",
+        "widths": {
+          "document": 1440,
+          "body": 1440,
+          "viewport": 1440
+        },
+        "url": "http://127.0.0.1:3310/#workbench"
+      }
+    ]
+  }
+]

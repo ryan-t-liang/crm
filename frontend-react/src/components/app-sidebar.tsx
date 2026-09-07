@@ -38,6 +38,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { assetUrl, legacyUrl, type SessionUser } from "@/lib/api"
+import { migratedRoutes } from "@/lib/crm"
 
 type NavItem = {
   label: string
@@ -75,7 +76,7 @@ const navGroups: Array<{ label: string; items: NavItem[] }> = [
   {
     label: "资源",
     items: [
-      { label: "供应商", route: "vendors", icon: Truck, permission: "crm.organization.view" },
+      { label: "供应商", route: "suppliers", icon: Truck, permission: "crm.organization.view" },
     ],
   },
   {
@@ -94,7 +95,7 @@ function allowed(item: NavItem, permissions: Set<string>) {
   return true
 }
 
-export function AppSidebar({ me, counts, onLogout }: { me: SessionUser; counts: NavigationCounts; onLogout: () => void }) {
+export function AppSidebar({ me, counts, onLogout, route = "dashboard" }: { me: SessionUser; counts: NavigationCounts; onLogout: () => void; route?: string }) {
   const permissions = new Set(me.permissions)
   const initials = me.name.trim().slice(0, 1).toUpperCase() || "K"
 
@@ -131,12 +132,12 @@ export function AppSidebar({ me, counts, onLogout }: { me: SessionUser; counts: 
                 <SidebarMenu>
                   {items.map((item) => {
                     const Icon = item.icon
-                    const isDashboard = item.route === "dashboard"
+                    const isActive = item.route === route
                     const count = item.countKey ? counts[item.countKey] : undefined
                     return (
                       <SidebarMenuItem key={item.route}>
-                        <SidebarMenuButton asChild isActive={isDashboard} tooltip={item.label} className="h-9 rounded-[8px]">
-                          <a href={isDashboard ? "#dashboard" : legacyUrl(item.route)}>
+                        <SidebarMenuButton asChild isActive={isActive} tooltip={item.label} className="h-9 rounded-[8px]">
+                          <a href={migratedRoutes.has(item.route) ? `#${item.route}` : legacyUrl(item.route)}>
                             <Icon />
                             <span>{item.label}</span>
                           </a>
@@ -176,6 +177,7 @@ export function AppSidebar({ me, counts, onLogout }: { me: SessionUser; counts: 
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild><a href="#security"><ShieldCheck />账户安全</a></DropdownMenuItem>
                 <DropdownMenuItem onSelect={onLogout}>
                   <LogOut />
                   退出登录

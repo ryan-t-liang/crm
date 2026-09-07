@@ -1,0 +1,7 @@
+{
+  "message": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('textbox', { name: '客户联系人', exact: true })\u001b[22m\n",
+  "errors": [],
+  "network": [],
+  "url": "http://127.0.0.1:3310/#organizations/cmtqopfl10004qpt1r0u79g9g",
+  "text": "KIVISENSE\nCRM 2.0\n概览\nDashboard\n客户管理\n公司\n5\n客户联系人\n5\n线索\n2\n客户运营\n客户运营\n我的工作台\n资源\n供应商\n系统管理\n账户管理\n角色与权限\n审计日志\nK\nKivisense 管理员\n超级管理员\nToggle Sidebar\nKivisense CRM\n公司 / Company 360\n返回公司\n星河\n星河科技 phase2\n星河\npriority-phase2.example.test\n潜在客户 · 合作伙伴\n机会中\nK\nKivisense 管理员\n新增联系人\n创建线索\n新增互动\n联系人\n1\n活跃线索\n1\n最近互动\n2 天前\n2026/09/05 10:00\n下一步行动\n准备一期范围确认材料\n2026/09/07 16:00\n概览\n联系人 1\n线索 1\n客户旅程\n任务\n文件\n备注\n操作记录\n任务\n创建任务\n\n准备一期范围确认材料\n\n林睿\n\n2026/09/07 16:00\nKivisense 管理员\n待完成\n高优先级\n跟进\n推迟一天\n完成\n\n确认一期实施范围\n\n林睿\n\n2026/09/08 10:00\nKivisense 管理员\n待完成\n跟进\n推迟一天\n完成\n\n确认技术演示时间\n\n下一步行动\n\n2026/09/08 11:33\nKivisense 管理员\n待完成\n推迟一天\n完成\n0\n新增联系人\n\n填写完成后统一保存。\n\n基本资料\nCRM 状态\n备注与附件\n所属公司\n星河科技 phase2\n清除关联公司\n客户联系人\n*\n职位\n部门\nEmail\nPhone\n微信\nLinkedIn\n取消\n保存联系人\nClose"
+}

@@ -1,0 +1,7 @@
+{
+  "message": "locator.fill: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByLabel('下次跟进时间', { exact: true })\u001b[22m\n",
+  "errors": [],
+  "network": [],
+  "url": "http://127.0.0.1:3310/#leads/cmtqp9tps0008qpo6ezlbomxd",
+  "text": "KIVISENSE\nCRM 2.0\n概览\nDashboard\n客户管理\n公司\n5\n客户联系人\n7\n线索\n3\n客户运营\n客户运营\n我的工作台\n资源\n供应商\n系统管理\n账户管理\n角色与权限\n审计日志\nK\nKivisense 管理员\n超级管理员\nToggle Sidebar\nKivisense CRM\n线索 / 线索详情\n返回线索列表\nUI验收线索 1788752863290\n新建\n中\nUI验收联系人 1788752863290\n星河科技 phase2\n编辑\n记录跟进\n最新进展\n暂无进展\n下一步行动\n待安排\n下次跟进\n—\n最近沟通\n—\n需求与方案\n跟进记录\n备注\n操作记录\n需求信息\n需求整理 / 详细需求\n\n为展厅提供互动产品体验，需要支持移动端与大屏联动。\n\n需求附件\n上传文件\nrequirement.txt\n\n1 KB · Kivisense 管理员 · 2026/09/07 11:47\n\n图片需求说明\n\n—\n\n图片参考\n上传文件\n暂无附件\n\n可上传文件，或将文件拖放到这里。\n\n项目领域\n\n—\n\n项目类型\n\n—\n\n技术类型\n\n—\n\n产品类型\n\n—\n\n产品名称\n\n—\n\n资源需求\n\n—\n\n方案与报价\n方案说明\n\n第一阶段：需求确认与交互原型。\n\n正式方案\n上传文件\n暂无附件\n\n可上传文件，或将文件拖放到这里。\n\n报价说明\n\n—\n\n报价文件\n上传文件\n暂无附件\n\n可上传文件，或将文件拖放到这里。\n\n预计报价\n\n—\n\n币种\n\n—\n\n团队协作\n跟进对接人\nKivisense 管理员\nLeads 参与人员\n—\n跟单模式\n—\n对接群\n—\n里程碑\n成交日期\n—\n交付跟进日期\n—\n合同续约日期\n—\n收款日期\n—\n新增跟进\n\nUI验收线索 1788752863290\n\n互动时间\n*\n方式\n一般\n负责人\nKivisense 管理员\n重要跟进\n互动内容\n*\n当前进展\n下一步行动\n下次跟进\n互动附件\n取消\n保存互动\nClose"
+}

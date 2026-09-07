@@ -19,6 +19,8 @@ import { ContactFollowupService, ContactService } from "./service.js";
 
 const contactListQuery = paginationSchema.extend({
   keyword: z.string().trim().max(200).optional(),
+  organizationId: z.string().trim().min(1).max(32).optional(),
+  source: z.string().trim().max(200).optional(),
   stage: z.enum(["INITIAL", "ONE_TO_ONE", "SOLUTION", "CONVENTION"]).optional(),
   ownerUserId: z.string().trim().min(1).max(32).optional(),
   nextFollowupFrom: timezoneAwareDateTimeSchema.optional(),

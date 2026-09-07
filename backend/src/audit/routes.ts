@@ -10,6 +10,7 @@ export async function auditRoutes(app: FastifyInstance): Promise<void> {
       module: z.string().optional(),
       action: z.string().optional(),
       actorUserId: z.string().optional(),
+      targetId: z.string().trim().min(1).max(64).optional(),
       from: z.coerce.date().optional(),
       to: z.coerce.date().optional(),
     }).parse(request.query);
@@ -17,6 +18,7 @@ export async function auditRoutes(app: FastifyInstance): Promise<void> {
       module: query.module,
       action: query.action,
       actorUserId: query.actorUserId,
+      targetId: query.targetId,
       createdAt: query.from || query.to ? { gte: query.from, lte: query.to } : undefined,
     };
     const [total, rows] = await app.prisma.$transaction([

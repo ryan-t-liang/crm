@@ -395,6 +395,24 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core", () => {
     expect(team.json().data.rows.find((row: { user: { id: string } }) => row.user.id === salesId).leadsWithNextActionPercent).toBe(0);
   });
 
+  it("迁移视图的公司、来源与对象审计筛选在服务端生效", async () => {
+    const contacts = await inject({ method: "GET", url: `/api/v1/crm/contacts?organizationId=${organizationId}` });
+    expect(contacts.statusCode).toBe(200);
+    expect(contacts.json().data.length).toBeGreaterThan(0);
+    expect(contacts.json().data.every((r: { organizationId: string }) => r.organizationId === organizationId)).toBe(true);
+    expect((await inject({ method: "GET", url: "/api/v1/crm/contacts?organizationId=missing-company" })).json().meta.total).toBe(0);
+    expect((await inject({ method: "GET", url: `/api/v1/crm/contacts?source=${runKey}` })).json().meta.total).toBe(0);
+    const leads = await inject({ method: "GET", url: `/api/v1/crm/leads?organizationId=${organizationId}` });
+    expect(leads.json().data.length).toBeGreaterThan(0);
+    expect(leads.json().data.every((r: { contact: { organizationId: string } }) => r.contact.organizationId === organizationId)).toBe(true);
+    expect((await inject({ method: "GET", url: "/api/v1/crm/leads?organizationId=missing-company" })).json().meta.total).toBe(0);
+    const audit = await inject({ method: "GET", url: `/api/v1/audit-logs?targetId=${contactId}` }, adminCookie);
+    expect(audit.statusCode).toBe(200);
+    expect(audit.json().data.length).toBeGreaterThan(0);
+    expect(audit.json().data.every((r: { targetId: string }) => r.targetId === contactId)).toBe(true);
+    expect((await inject({ method: "GET", url: `/api/v1/audit-logs?targetId=${contactId}` }, viewerCookie)).statusCode).toBe(403);
+  });
+
   it("删除受权限和关联关系保护，并以软删除保留历史跟进与附件", async () => {
     const blockedContact = await inject({ method: "DELETE", url: `/api/v1/crm/contacts/${contactId}` });
     expect(blockedContact.statusCode).toBe(409);

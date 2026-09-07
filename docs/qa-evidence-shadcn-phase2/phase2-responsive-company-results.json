@@ -1,0 +1,300 @@
+{
+  "checks": [
+    {
+      "name": "35-company-form-notes-logo",
+      "status": "PASS",
+      "widths": {
+        "document": 1440,
+        "body": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#organizations"
+    },
+    {
+      "name": "36-company-files",
+      "status": "PASS",
+      "widths": {
+        "document": 1440,
+        "body": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#organizations/cmtqql5z300beqpo6kblas8j3"
+    },
+    {
+      "name": "company-create-edit-validation-tab-state-logo-files",
+      "status": "PASS"
+    },
+    {
+      "name": "37-dashboard-1440",
+      "status": "PASS",
+      "widths": {
+        "document": 1440,
+        "body": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#dashboard"
+    },
+    {
+      "name": "37-dashboard-1280",
+      "status": "PASS",
+      "widths": {
+        "document": 1280,
+        "body": 1280,
+        "viewport": 1280
+      },
+      "url": "http://127.0.0.1:3310/#dashboard"
+    },
+    {
+      "name": "37-dashboard-1024",
+      "status": "PASS",
+      "widths": {
+        "document": 1024,
+        "body": 1024,
+        "viewport": 1024
+      },
+      "url": "http://127.0.0.1:3310/#dashboard"
+    },
+    {
+      "name": "37-organizations-1440",
+      "status": "PASS",
+      "widths": {
+        "document": 1440,
+        "body": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#organizations/cmtqql5z300beqpo6kblas8j3"
+    },
+    {
+      "name": "37-organizations-1280",
+      "status": "PASS",
+      "widths": {
+        "document": 1280,
+        "body": 1280,
+        "viewport": 1280
+      },
+      "url": "http://127.0.0.1:3310/#organizations/cmtqql5z300beqpo6kblas8j3"
+    },
+    {
+      "name": "37-organizations-1024",
+      "status": "PASS",
+      "widths": {
+        "document": 1024,
+        "body": 1024,
+        "viewport": 1024
+      },
+      "url": "http://127.0.0.1:3310/#organizations/cmtqql5z300beqpo6kblas8j3"
+    },
+    {
+      "name": "37-contacts-1440",
+      "status": "PASS",
+      "widths": {
+        "document": 1440,
+        "body": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#contacts/cmtqqiwhv00aeqpo6k9o4aq1t"
+    },
+    {
+      "name": "37-contacts-1280",
+      "status": "PASS",
+      "widths": {
+        "document": 1280,
+        "body": 1280,
+        "viewport": 1280
+      },
+      "url": "http://127.0.0.1:3310/#contacts/cmtqqiwhv00aeqpo6k9o4aq1t"
+    },
+    {
+      "name": "37-contacts-1024",
+      "status": "PASS",
+      "widths": {
+        "document": 1024,
+        "body": 1024,
+        "viewport": 1024
+      },
+      "url": "http://127.0.0.1:3310/#contacts/cmtqqiwhv00aeqpo6k9o4aq1t"
+    },
+    {
+      "name": "37-leads-1440",
+      "status": "PASS",
+      "widths": {
+        "document": 1440,
+        "body": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#leads/cmtqqiu5d009uqpo6lo9f1x0v"
+    },
+    {
+      "name": "37-leads-1280",
+      "status": "PASS",
+      "widths": {
+        "document": 1280,
+        "body": 1280,
+        "viewport": 1280
+      },
+      "url": "http://127.0.0.1:3310/#leads/cmtqqiu5d009uqpo6lo9f1x0v"
+    },
+    {
+      "name": "37-leads-1024",
+      "status": "PASS",
+      "widths": {
+        "document": 1024,
+        "body": 1024,
+        "viewport": 1024
+      },
+      "url": "http://127.0.0.1:3310/#leads/cmtqqiu5d009uqpo6lo9f1x0v"
+    },
+    {
+      "name": "37-operations-1440",
+      "status": "PASS",
+      "widths": {
+        "document": 1440,
+        "body": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#operations"
+    },
+    {
+      "name": "37-operations-1280",
+      "status": "PASS",
+      "widths": {
+        "document": 1280,
+        "body": 1280,
+        "viewport": 1280
+      },
+      "url": "http://127.0.0.1:3310/#operations"
+    },
+    {
+      "name": "37-operations-1024",
+      "status": "PASS",
+      "widths": {
+        "document": 1024,
+        "body": 1024,
+        "viewport": 1024
+      },
+      "url": "http://127.0.0.1:3310/#operations"
+    },
+    {
+      "name": "37-workbench-1440",
+      "status": "PASS",
+      "widths": {
+        "document": 1440,
+        "body": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#workbench"
+    },
+    {
+      "name": "37-workbench-1280",
+      "status": "PASS",
+      "widths": {
+        "document": 1280,
+        "body": 1280,
+        "viewport": 1280
+      },
+      "url": "http://127.0.0.1:3310/#workbench"
+    },
+    {
+      "name": "37-workbench-1024",
+      "status": "PASS",
+      "widths": {
+        "document": 1024,
+        "body": 1024,
+        "viewport": 1024
+      },
+      "url": "http://127.0.0.1:3310/#workbench"
+    },
+    {
+      "name": "37-accounts-1440",
+      "status": "PASS",
+      "widths": {
+        "document": 1440,
+        "body": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#accounts"
+    },
+    {
+      "name": "37-accounts-1280",
+      "status": "PASS",
+      "widths": {
+        "document": 1280,
+        "body": 1280,
+        "viewport": 1280
+      },
+      "url": "http://127.0.0.1:3310/#accounts"
+    },
+    {
+      "name": "37-accounts-1024",
+      "status": "PASS",
+      "widths": {
+        "document": 1024,
+        "body": 1024,
+        "viewport": 1024
+      },
+      "url": "http://127.0.0.1:3310/#accounts"
+    },
+    {
+      "name": "37-roles-1440",
+      "status": "PASS",
+      "widths": {
+        "document": 1440,
+        "body": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#roles"
+    },
+    {
+      "name": "37-roles-1280",
+      "status": "PASS",
+      "widths": {
+        "document": 1280,
+        "body": 1280,
+        "viewport": 1280
+      },
+      "url": "http://127.0.0.1:3310/#roles"
+    },
+    {
+      "name": "37-roles-1024",
+      "status": "PASS",
+      "widths": {
+        "document": 1024,
+        "body": 1024,
+        "viewport": 1024
+      },
+      "url": "http://127.0.0.1:3310/#roles"
+    },
+    {
+      "name": "37-audit-1440",
+      "status": "PASS",
+      "widths": {
+        "document": 1440,
+        "body": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#audit"
+    },
+    {
+      "name": "37-audit-1280",
+      "status": "PASS",
+      "widths": {
+        "document": 1280,
+        "body": 1280,
+        "viewport": 1280
+      },
+      "url": "http://127.0.0.1:3310/#audit"
+    },
+    {
+      "name": "37-audit-1024",
+      "status": "PASS",
+      "widths": {
+        "document": 1024,
+        "body": 1024,
+        "viewport": 1024
+      },
+      "url": "http://127.0.0.1:3310/#audit"
+    }
+  ],
+  "errors": [],
+  "network": []
+}

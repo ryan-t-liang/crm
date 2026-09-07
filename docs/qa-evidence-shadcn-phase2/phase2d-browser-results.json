@@ -1,0 +1,98 @@
+{
+  "checks": [
+    {
+      "name": "17-customer-operations",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#operations"
+    },
+    {
+      "name": "18-reactivation",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#operations"
+    },
+    {
+      "name": "19-nurture",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#operations"
+    },
+    {
+      "name": "20-nurture-pool",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#operations"
+    },
+    {
+      "name": "operations-four-pools-task-nurture",
+      "status": "PASS"
+    },
+    {
+      "name": "21-workbench",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#workbench"
+    },
+    {
+      "name": "workbench-postpone-followup-completes-current-and-creates-next-complete",
+      "status": "PASS"
+    },
+    {
+      "name": "22-suppliers-1440",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      },
+      "url": "http://127.0.0.1:3310/#suppliers"
+    },
+    {
+      "name": "22-suppliers-1280",
+      "status": "PASS",
+      "widths": {
+        "body": 1280,
+        "document": 1280,
+        "viewport": 1280
+      },
+      "url": "http://127.0.0.1:3310/#suppliers"
+    },
+    {
+      "name": "22-suppliers-1024",
+      "status": "PASS",
+      "widths": {
+        "body": 1024,
+        "document": 1024,
+        "viewport": 1024
+      },
+      "url": "http://127.0.0.1:3310/#suppliers"
+    },
+    {
+      "name": "supplier-shares-company-detail",
+      "status": "PASS"
+    }
+  ],
+  "errors": [],
+  "network": []
+}

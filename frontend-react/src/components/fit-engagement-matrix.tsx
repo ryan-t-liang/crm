@@ -2,13 +2,12 @@ import { ArrowUpRight } from "lucide-react"
 import { cn } from "cn"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { legacyUrl } from "@/lib/api"
 import type { MatrixData } from "@/lib/dashboard"
 
 export function FitEngagementMatrix({ matrix }: { matrix: MatrixData }) {
   function openOrganizations(fitLevel: string, engagementLevel: string) {
     sessionStorage.setItem("kivisense.crm.organization.filters", JSON.stringify({ fitLevel, engagementLevel }))
-    window.location.href = legacyUrl("organizations")
+    window.location.hash = "organizations"
   }
 
   return (

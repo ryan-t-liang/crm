@@ -1,0 +1,34 @@
+{
+  "message": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByText('确认下一预算 1788754969972', { exact: true }) to be visible\u001b[22m\n",
+  "errors": [
+    "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+    "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+    "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+    "Failed to load resource: the server responded with a status of 429 (Too Many Requests)",
+    "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+  ],
+  "network": [
+    {
+      "status": 429,
+      "url": "http://127.0.0.1:3310/api/v1/crm/tasks?ownerUserId=cmtqoo63z0017qpovykf3fhrm&status=OPEN&dueTo=2026-09-07T04%3A22%3A54.402Z&pageSize=1"
+    },
+    {
+      "status": 429,
+      "url": "http://127.0.0.1:3310/api/v1/crm/tasks?ownerUserId=cmtqoo63z0017qpovykf3fhrm&status=OPEN&page=1&pageSize=20"
+    },
+    {
+      "status": 429,
+      "url": "http://127.0.0.1:3310/api/v1/crm/tasks?ownerUserId=cmtqoo63z0017qpovykf3fhrm&status=OPEN&dueFrom=2026-09-07T04%3A22%3A54.403Z&dueTo=2026-09-07T15%3A59%3A59.999Z&pageSize=1"
+    },
+    {
+      "status": 429,
+      "url": "http://127.0.0.1:3310/api/v1/crm/tasks?ownerUserId=cmtqoo63z0017qpovykf3fhrm&status=OPEN&dueFrom=2026-09-07T16%3A00%3A00.000Z&dueTo=2026-09-14T04%3A22%3A54.403Z&pageSize=1"
+    },
+    {
+      "status": 429,
+      "url": "http://127.0.0.1:3310/api/v1/crm/tasks?ownerUserId=cmtqoo63z0017qpovykf3fhrm&status=OPEN&priority=HIGH&pageSize=1"
+    }
+  ],
+  "url": "http://127.0.0.1:3310/#workbench",
+  "text": "KIVISENSE\nCRM 2.0\n概览\nDashboard\n客户管理\n公司\n12\n客户联系人\n15\n线索\n7\n客户运营\n客户运营\n我的工作台\n资源\n供应商\n系统管理\n账户管理\n角色与权限\n审计日志\nK\nKivisense 管理员\n超级管理员\nToggle Sidebar\nKivisense CRM\n我的工作台\n我的工作台\n\n今天要联系谁、为什么联系、下一步做什么。\n\n创建任务\n已逾期\n—\n今天\n—\n未来 7 天\n—\n高优先级\n2\n待完成\nKivisense 管理员\n任务队列\n加载失败\nRate limit exceeded, retry in 41 seconds\n请重试\n共 16 条 · 第 1 页\n上一页\n下一页"
+}
