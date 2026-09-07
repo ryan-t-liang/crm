@@ -13,15 +13,15 @@ export function FitEngagementMatrix({ matrix }: { matrix: MatrixData }) {
   return (
     <Card className="gap-4 border-border/90 py-0 shadow-none">
       <CardHeader className="border-b px-5 py-4">
-        <CardTitle className="text-base">Fit × Engagement</CardTitle>
+        <CardTitle className="text-base">客户匹配度 × 互动活跃度</CardTitle>
         <CardDescription>{matrix.total} 家公司，点击矩阵进入对应运营池</CardDescription>
       </CardHeader>
       <CardContent className="px-5 pb-5">
         <div className="mb-2 grid grid-cols-[54px_repeat(3,minmax(0,1fr))] items-center gap-2 text-center text-[11px] font-medium text-muted-foreground">
           <span />
-          <span>高 Fit</span>
-          <span>中 Fit</span>
-          <span>低 Fit</span>
+          <span>高匹配</span>
+          <span>中匹配</span>
+          <span>低匹配</span>
         </div>
         <div className="grid grid-cols-[54px_repeat(3,minmax(0,1fr))] gap-2">
           {["HIGH", "MEDIUM", "LOW"].flatMap((engagement, rowIndex) => {

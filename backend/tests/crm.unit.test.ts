@@ -9,6 +9,8 @@ import { organizationCreateSchema, nurtureCreateSchema } from "../src/organizati
 import { calculateEngagement, engagementState, scoreBand } from "../src/organizations/scoring.js";
 import { taskCreateSchema } from "../src/tasks/schemas.js";
 import { qualifiesAsReactivation } from "../src/analytics/service.js";
+import { enqueueAssignmentNotification } from "../src/common/assignment-notifications.js";
+import { marketingLeadCreateSchema, marketingLeadTransitionSchema } from "../src/marketing-leads/schemas.js";
 
 describe("Kivisense CRM 2.0 core unit contracts", () => {
   it("validates and normalizes contact fields", () => {
@@ -16,9 +18,36 @@ describe("Kivisense CRM 2.0 core unit contracts", () => {
       contactName: "  Naderi  ",
       email: "NADERI@EXAMPLE.COM",
       stage: "ONE_TO_ONE",
+      contactType: "BUSINESS",
     });
-    expect(contact).toMatchObject({ contactName: "Naderi", email: "naderi@example.com", stage: "ONE_TO_ONE" });
+    expect(contact).toMatchObject({ contactName: "Naderi", email: "naderi@example.com", stage: "ONE_TO_ONE", contactType: "BUSINESS" });
     expect(contactCreateSchema.safeParse({ contactName: "Naderi", stage: "INVALID" }).success).toBe(false);
+  });
+
+  it("keeps Marketing Lead creation and lifecycle actions product-owned", () => {
+    expect(marketingLeadCreateSchema.parse({ fullName: "Naderi", source: "MANUAL" })).not.toHaveProperty("status");
+    expect(marketingLeadCreateSchema.safeParse({ fullName: "Naderi", source: "MANUAL", status: "NURTURING" }).success).toBe(false);
+    expect(marketingLeadCreateSchema.safeParse({ fullName: "Naderi", source: "MANUAL", fitScore: 40 }).success).toBe(false);
+    expect(marketingLeadTransitionSchema.safeParse({ action: "START_NURTURING" }).success).toBe(false);
+    expect(marketingLeadTransitionSchema.safeParse({ action: "QUALIFY" }).success).toBe(false);
+    expect(marketingLeadTransitionSchema.safeParse({ action: "RECYCLE", reason: "等待预算" }).success).toBe(true);
+  });
+
+  it("does not enqueue duplicate notification when the assignee is unchanged", async () => {
+    const db = {
+      user: { findFirst: () => { throw new Error("recipient lookup should not run"); } },
+      assignmentNotification: { create: () => { throw new Error("notification create should not run"); } },
+    };
+    await expect(enqueueAssignmentNotification(db as never, {
+      entityType: "OPPORTUNITY",
+      entityId: "opportunity-1",
+      entityLabel: "商机：测试",
+      fieldKey: "salesOwnerUserId",
+      fromUserId: "sales-1",
+      toUserId: "sales-1",
+      assignedByUserId: "admin-1",
+      path: "/crm_kivisense/#leads/opportunity-1",
+    })).resolves.toBeNull();
   });
 
   it("requires timezone-aware, append-only followup input", () => {

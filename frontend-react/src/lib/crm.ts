@@ -19,6 +19,7 @@ export type Attachment = {
 export type Contact = {
   id: string;
   contactName: string;
+  contactType: "BUSINESS" | "INDIVIDUAL";
   title?: string;
   email?: string;
   phone?: string;
@@ -209,9 +210,15 @@ export type Organization = {
   shortName?: string;
   website?: string;
   industry?: string;
+  industryCode?: string;
+  industryCustom?: string;
   country?: string;
+  countryCode?: string;
   region?: string;
+  regionCode?: string;
   city?: string;
+  cityCode?: string;
+  cityCustom?: string;
   note?: string;
   ownerUserId?: string;
   owner?: CrmUser;
@@ -260,11 +267,19 @@ export type JourneyEvent = {
   attachments?: Attachment[];
 };
 export const roleLabels: Record<string, string> = {
-  PROSPECT: "潜在客户",
-  CUSTOMER: "客户",
+  PROSPECT: "客户（未成交）",
+  CUSTOMER: "客户（已成交）",
   VENDOR: "供应商",
   PARTNER: "合作伙伴",
 };
+export function businessRelationText(roleKeys: string[]): string {
+  const labels = [
+    ...(roleKeys.some((role) => role === "PROSPECT" || role === "CUSTOMER") ? ["客户"] : []),
+    ...(roleKeys.includes("VENDOR") ? ["供应商"] : []),
+    ...(roleKeys.includes("PARTNER") ? ["合作伙伴"] : []),
+  ];
+  return labels.join(" · ") || "—";
+}
 export const lifecycleLabels: Record<string, string> = {
   TARGET: "目标",
   CONTACTED: "已触达",
@@ -285,6 +300,7 @@ export const stageLabels: Record<string, string> = {
   CONVENTION: "Convention",
 };
 export const levelLabels: Record<string, string> = {
+  URGENT: "紧急",
   HIGH: "高",
   MEDIUM: "中",
   LOW: "低",

@@ -90,6 +90,41 @@ export function PageHeader({
     </div>
   );
 }
+export function PageToolbar({ left, right }: { left?: ReactNode; right?: ReactNode }) {
+  return (
+    <div role="toolbar" className="flex flex-wrap items-center gap-2 border-y bg-background py-3">
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">{left}</div>
+      <div className="flex flex-wrap items-center gap-2">{right}</div>
+    </div>
+  );
+}
+export function CopyValue({ value, label = "复制" }: { value: string; label?: string }) {
+  const [copied, setCopied] = useState(false);
+  return <button type="button" className="font-mono text-xs text-muted-foreground underline-offset-4 hover:underline" title={`${label} ${value}`} onClick={() => { void navigator.clipboard.writeText(value).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1200); }); }}>{copied ? "已复制" : value}</button>;
+}
+
+export function focusFirstInvalidField() {
+  window.setTimeout(() => {
+    const field = document.querySelector<HTMLElement>('[aria-invalid="true"]');
+    field?.focus();
+    field?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, 0);
+}
+export function SystemIdField({ value, label = "系统编号" }: { value: string; label?: string }) {
+  return <span className="inline-flex items-center gap-2"><span>{label}</span><CopyValue value={value} /></span>;
+}
+export const RecordHeader = EntityHeader;
+export const RecordHighlights = SummaryStrip;
+export const MetricStrip = SummaryStrip;
+export const DetailSection = Section;
+export const SectionHeader = PageHeader;
+export const CompactEmptyState = EmptyState;
+export function StagePath({ stages, current }: { stages: Array<{ key: string; label: string }>; current: string }) {
+  const currentIndex = stages.findIndex((stage) => stage.key === current);
+  return <ol aria-label="阶段路径" className="flex min-w-0 overflow-x-auto border-y bg-muted/20 px-3 py-2">{stages.map((stage, index) => <li key={stage.key} className={cn("flex min-w-28 items-center gap-2 text-xs", index <= currentIndex ? "font-medium text-foreground" : "text-muted-foreground")}><span className={cn("flex size-5 items-center justify-center rounded-full border", index <= currentIndex && "border-foreground bg-foreground text-background")}>{index + 1}</span><span>{stage.label}</span>{index < stages.length - 1 && <span className="ml-auto text-border">—</span>}</li>)}</ol>;
+}
+export const FieldGrid = ({ children }: { children: ReactNode }) => <div className="grid gap-4 sm:grid-cols-2">{children}</div>;
+export const RecordActions = ({ children }: { children: ReactNode }) => <div className="flex flex-wrap items-center gap-2">{children}</div>;
 export function EmptyState({
   title = "暂无记录",
   description,
@@ -188,6 +223,7 @@ export function CompanyLogo({
   return (
     <Avatar className={cn("shrink-0 rounded-md", large ? "size-11" : "size-7")}>
       <AvatarImage
+        className="bg-white object-contain p-0.5"
         src={
           organization.logo
             ? appUrl(

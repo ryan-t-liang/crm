@@ -1,5 +1,4 @@
 import {
-  Activity,
   Building2,
   ChevronsUpDown,
   ContactRound,
@@ -57,22 +56,16 @@ const navGroups: Array<{ label: string; items: NavItem[] }> = [
     label: "概览",
     items: [
       { label: "数据看板", route: "dashboard", icon: LayoutDashboard, anyPermissions: ["crm.dashboard.self.view", "crm.dashboard.management.view"] },
+      { label: "我的工作台", route: "workbench", icon: ListTodo, permission: "crm.task.view" },
     ],
   },
   {
     label: "客户管理",
     items: [
       { label: "公司", route: "organizations", icon: Building2, permission: "crm.organization.view", countKey: "organizations" },
-      { label: "客户联系人", route: "contacts", icon: ContactRound, permission: "crm.contact.view", countKey: "contacts" },
+      { label: "联系人", route: "contacts", icon: ContactRound, permission: "crm.contact.view", countKey: "contacts" },
       { label: "线索", route: "marketing-leads", icon: Goal, permission: "crm.marketing_lead.view", countKey: "marketingLeads" },
       { label: "商机", route: "leads", icon: Gauge, permission: "crm.lead.view", countKey: "leads" },
-    ],
-  },
-  {
-    label: "客户运营",
-    items: [
-      { label: "客户运营", route: "operations", icon: Activity, permission: "crm.organization.view" },
-      { label: "我的工作台", route: "workbench", icon: ListTodo, permission: "crm.task.view" },
     ],
   },
   {
@@ -82,12 +75,12 @@ const navGroups: Array<{ label: string; items: NavItem[] }> = [
     ],
   },
   {
-    label: "系统管理",
+    label: "系统",
     items: [
       { label: "账户管理", route: "accounts", icon: UsersRound, permission: "account.view" },
       { label: "角色与权限", route: "roles", icon: ShieldCheck, permission: "roles.view" },
-      { label: "审计日志", route: "audit", icon: ScrollText, permission: "audit.view" },
       { label: "评分规则", route: "scoring-rules", icon: Goal, permission: "crm.marketing.score_rule.view" },
+      { label: "审计日志", route: "audit", icon: ScrollText, permission: "audit.view" },
     ],
   },
 ]
@@ -103,7 +96,7 @@ export function AppSidebar({ me, counts, onLogout, route = "dashboard" }: { me: 
   const initials = me.name.trim().slice(0, 1).toUpperCase() || "K"
 
   return (
-    <Sidebar collapsible="icon" variant="inset" aria-label="主导航">
+    <Sidebar collapsible="icon" variant="sidebar" aria-label="主导航">
       <SidebarHeader className="border-b border-sidebar-border px-2 py-2">
         <SidebarMenu>
           <SidebarMenuItem>

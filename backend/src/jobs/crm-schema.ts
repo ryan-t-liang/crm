@@ -12,6 +12,7 @@ export type CrmImportField = {
 
 const contactFields: CrmImportField[] = [
   { key: "contactName", label: "联系人姓名", type: "text", required: true, example: "Naderi" },
+  { key: "contactType", label: "联系人类型", type: "enum", required: false, options: ["BUSINESS", "INDIVIDUAL"], example: "BUSINESS" },
   { key: "organizationId", label: "公司编号", type: "text", required: false, example: "cmxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" },
   { key: "organizationName", label: "公司名称", type: "text", required: false, example: "Dena Technologies Co., Ltd." },
   { key: "companyShortName", label: "公司简称", type: "text", required: false, example: "Dena" },
@@ -55,14 +56,14 @@ const organizationFields: CrmImportField[] = [
 ];
 
 const leadFields: CrmImportField[] = [
-  { key: "contactId", label: "所属客户联系人编号", type: "text", required: true, example: "cmxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" },
+  { key: "contactId", label: "关联联系人编号", type: "text", required: true, example: "cmxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" },
   { key: "requirementSummary", label: "项目需求简述", type: "text", required: true, example: "AR application and service cooperation for our products" },
   { key: "requirementDetail", label: "需求详情", type: "text", required: false, example: "Build an AR product presentation experience." },
   { key: "latestProgress", label: "最近进展", type: "text", required: false, example: "Product samples received." },
   { key: "nextAction", label: "下一步动作", type: "text", required: false, example: "Confirm the revised scope with the customer." },
   { key: "imageRequirementNote", label: "图片需求说明", type: "text", required: false, example: "Use clean front-facing pack shots." },
   { key: "leadSource", label: "客户来源", type: "text", required: false, example: "Kiviman" },
-  { key: "priority", label: "优先级", type: "enum", required: false, options: ["LOW", "MEDIUM", "HIGH", "URGENT"], example: "HIGH" },
+  { key: "priority", label: "商机优先级", type: "enum", required: false, options: ["LOW", "MEDIUM", "HIGH", "URGENT"], example: "HIGH" },
   { key: "estimatedQuote", label: "预计报价", type: "decimal", required: false, example: "120000.00" },
   { key: "currency", label: "币种", type: "text", required: false, example: "CNY" },
   { key: "projectDomain", label: "项目领域", type: "text", required: false, example: "AR commerce" },
@@ -106,7 +107,7 @@ const marketingLeadFields: CrmImportField[] = [
   { key: "inquiryType", label: "询盘类型", type: "text", required: false, example: "Not sure yet" },
   { key: "inquiryContent", label: "原始询盘", type: "text", required: false, example: "We interest to add AR app and service on our products." },
   { key: "owner", label: "负责人账号或用户编号", type: "owner", required: false, example: "sales@example.com" },
-  { key: "fitScore", label: "Fit Score", type: "decimal", required: false, example: "40" },
+  { key: "fitScore", label: "线索匹配度", type: "decimal", required: false, example: "40" },
   { key: "note", label: "备注", type: "text", required: false, example: "Imported from exhibition follow-up." },
 ];
 
@@ -123,7 +124,7 @@ export async function crmTemplateWorkbook(objectType: CrmJobObjectType): Promise
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Kivisense CRM";
   workbook.created = new Date("2026-09-03T00:00:00.000Z");
-  const sheetName = objectType === "CONTACT" ? "客户联系人" : objectType === "CRM_LEAD" ? "商机" : objectType === "MARKETING_LEAD" ? "线索" : "公司";
+  const sheetName = objectType === "CONTACT" ? "联系人" : objectType === "CRM_LEAD" ? "商机" : objectType === "MARKETING_LEAD" ? "线索" : "公司";
   const sheet = workbook.addWorksheet(sheetName, { views: [{ state: "frozen", ySplit: 2 }] });
   fields.forEach((field, index) => {
     const column = index + 1;
@@ -160,7 +161,7 @@ export async function crmTemplateWorkbook(objectType: CrmJobObjectType): Promise
     ["负责人", "只接受启用账号的登录账号或用户编号精确匹配；多人员字段每行填写一个账号或用户编号。"],
     ["枚举", "只接受模板下拉中的标准枚举；系统同时接受需求中明确列出的中文别名。"],
     ["时间", "建议使用 YYYY-MM-DD HH:mm:ss 或带时区的 ISO 8601 时间。"],
-    ["关联", objectType === "CONTACT" ? "商机、合同和项目关联由系统管理；Meeting Minutes 只接受外部 HTTP/HTTPS URL，或留空后在 CRM 上传。" : objectType === "CRM_LEAD" ? "只通过 contactId 关联现有客户联系人；附件列只接受外部 HTTP/HTTPS URL，或留空后在 CRM 上传。" : objectType === "MARKETING_LEAD" ? "导入只创建线索主档，不导入评分历史或行为历史。" : "公司关联由系统主档管理。"],
+    ["关联", objectType === "CONTACT" ? "商机、合同和项目关联由系统管理；Meeting Minutes 只接受外部 HTTP/HTTPS URL，或留空后在 CRM 上传。" : objectType === "CRM_LEAD" ? "只通过 contactId 关联现有联系人；附件列只接受外部 HTTP/HTTPS URL，或留空后在 CRM 上传。" : objectType === "MARKETING_LEAD" ? "导入只创建线索主档，不导入评分历史或行为历史。" : "公司关联由系统主档管理。"],
     ["附件", "每行可填写多个外部 URL，以换行分隔。仅填写本地文件名会在预检中提示 ATTACHMENT_FILE_NOT_AVAILABLE，且不会伪造上传记录。"],
     ["跟进", "本模板不创建历史跟进时间线；仅导入当前字段和下一次跟进时间。"],
   ]);
@@ -172,7 +173,7 @@ export async function crmTemplateWorkbook(objectType: CrmJobObjectType): Promise
 }
 
 export const contactExportFields = [
-  ["id", "客户联系人编号"], ["contactName", "联系人姓名"], ["organizationId", "公司编号"], ["organizationName", "公司主档名称"], ["companyShortName", "公司简称"],
+  ["id", "联系人编号"], ["contactName", "联系人姓名"], ["contactType", "联系人类型"], ["organizationId", "公司编号"], ["organizationName", "公司主档名称"], ["companyShortName", "公司简称"],
   ["companyName", "公司全称"], ["department", "部门"], ["title", "职位"], ["email", "电子邮箱"],
   ["phone", "电话"], ["wechat", "微信"], ["linkedin", "领英"], ["website", "网站"],
   ["industry", "行业"], ["source", "来源"], ["country", "国家"], ["city", "城市"], ["region", "区域"],
@@ -182,13 +183,13 @@ export const contactExportFields = [
 ] as const;
 
 export const crmLeadExportFields = [
-  ["id", "商机编号"], ["contactId", "客户联系人编号"], ["requirementSummary", "项目需求简述"],
-  ["requirementDetail", "需求详情"], ["imageRequirementNote", "图片需求说明"], ["leadSource", "客户来源"], ["latestProgress", "最近进展"], ["nextAction", "下一步动作"], ["priority", "优先级"],
+  ["id", "商机编号"], ["contactId", "联系人编号"], ["requirementSummary", "项目需求简述"],
+  ["requirementDetail", "需求详情"], ["imageRequirementNote", "图片需求说明"], ["leadSource", "客户来源"], ["latestProgress", "最近进展"], ["nextAction", "下一步动作"], ["priority", "商机优先级"],
   ["estimatedQuote", "预计报价"], ["currency", "币种"], ["projectDomain", "项目领域"],
   ["projectType", "项目类型"], ["technologyType", "技术类型"], ["productType", "产品类型"],
   ["productName", "产品名称"], ["resourceRequirement", "资源需求"], ["collaborationGroups", "对接群"], ["followMode", "跟单模式"], ["solution", "方案说明"], ["quotationNote", "报价说明"],
   ["requirementFiles", "需求 / 签署文件"], ["requirementImages", "图片需求"], ["proposalFiles", "正式方案文件"], ["quotationFiles", "报价单"],
-  ["remark", "备注"], ["status", "状态"], ["salesOwner", "销售对接人"], ["followupOwner", "跟进对接人"], ["participantUsers", "Leads 参与人员"],
+  ["remark", "备注"], ["status", "商机阶段"], ["salesOwner", "商机负责人"], ["followupOwner", "跟进负责人"], ["participantUsers", "商机协作成员"],
   ["nextFollowupAt", "下一次跟进"], ["lastFollowupAt", "最近沟通"], ["wonAt", "成交日期"], ["deliveryFollowupAt", "交付跟进日期"],
   ["contractRenewalAt", "合同续约日期"], ["paymentReceivedAt", "收款日期"], ["contactName", "联系人姓名"],
   ["company", "公司"], ["contactEmail", "联系人电子邮箱"], ["contactPhone", "联系人电话"], ["contactWechat", "联系人微信"],
@@ -200,7 +201,7 @@ export const marketingLeadExportFields = [
   ["whatsapp", "WhatsApp"], ["wechat", "WeChat"], ["companyName", "公司"], ["title", "职位"],
   ["countryCode", "国家代码"], ["source", "来源"], ["sourceChannel", "来源渠道"], ["sourceDetail", "来源详情"],
   ["inquiryType", "询盘类型"], ["inquiryContent", "原始询盘"], ["status", "状态"], ["owner", "负责人"],
-  ["fitScore", "Fit Score"], ["engagementScore", "Engagement Score"], ["note", "备注"],
+  ["fitScore", "线索匹配度"], ["engagementScore", "互动活跃度"], ["note", "备注"],
   ["firstTouchAt", "首次触达"], ["lastActivityAt", "最近行为"], ["mqlAt", "MQL 时间"], ["sqlAt", "SQL 时间"],
   ["qualifiedAt", "确认机会时间"], ["convertedAt", "转商机时间"], ["convertedOpportunityId", "商机编号"],
   ["createdBy", "创建人"], ["createdAt", "创建时间"], ["updatedAt", "更新时间"],
@@ -209,6 +210,6 @@ export const marketingLeadExportFields = [
 export const organizationExportFields = [
   ["id", "公司编号"], ["name", "公司名称"], ["shortName", "公司简称"], ["website", "网站"],
   ["industry", "行业"], ["country", "国家"], ["region", "区域"], ["city", "城市"],
-  ["roles", "公司角色"], ["lifecycle", "生命周期"], ["owner", "负责人"], ["fitScore", "适配评分"],
+  ["roles", "业务关系"], ["lifecycle", "客户阶段"], ["owner", "负责人"], ["fitScore", "客户匹配度"],
   ["fitReason", "评分原因"], ["note", "备注"], ["logo", "Logo"], ["createdAt", "创建时间"], ["updatedAt", "更新时间"],
 ] as const;

@@ -52,6 +52,20 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
     return inject({ method: "POST", url: `/api/v1/crm/imports/${route}${query}`, ...form }, cookie);
   }
 
+  async function completedExport(response: Awaited<ReturnType<typeof inject>>, cookie = adminCookie) {
+    expect(response.statusCode).toBe(202);
+    expect(response.json().data.downloadUrl).toBeNull();
+    const statusUrl = response.json().data.statusUrl as string;
+    for (let attempt = 0; attempt < 100; attempt += 1) {
+      const statusResponse = await inject({ method: "GET", url: statusUrl }, cookie);
+      expect(statusResponse.statusCode).toBe(200);
+      if (statusResponse.json().data.status === "FAILED") throw new Error(statusResponse.json().data.error || "Export failed");
+      if (statusResponse.json().data.status === "COMPLETED") return statusResponse.json().data as { downloadUrl: string; rowCount: number };
+      await new Promise((resolveDelay) => setTimeout(resolveDelay, 10));
+    }
+    throw new Error("Export did not complete within the integration-test timeout");
+  }
+
   beforeAll(async () => {
     const databaseUrl = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
     if (!databaseUrl) throw new Error("TEST_DATABASE_URL or DATABASE_URL is required");
@@ -126,6 +140,7 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
       await prisma.contact.deleteMany({ where: { createdByUserId: { in: userIds } } });
       await prisma.organization.deleteMany({ where: { createdByUserId: { in: userIds } } });
       await prisma.auditLog.deleteMany({ where: { actorUserId: { in: userIds } } });
+      await prisma.assignmentNotification.deleteMany({ where: { OR: [{ toUserId: { in: userIds } }, { assignedByUserId: { in: userIds } }] } });
       await prisma.session.deleteMany({ where: { userId: { in: userIds } } });
       await prisma.user.deleteMany({ where: { id: { in: userIds } } });
       await prisma.$disconnect();
@@ -135,7 +150,7 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
 
   it("下载联系人、商机、线索和公司导入模板", async () => {
     for (const [route, expected, forbidden] of [
-      ["contacts", ["contactName", "companyName", "owner", "followupAttention", "meetingMinutesFiles"], ["brandId", "customerId"]],
+      ["contacts", ["contactName", "contactType", "companyName", "owner", "followupAttention", "meetingMinutesFiles"], ["brandId", "customerId"]],
       ["leads", ["contactId", "requirementSummary", "salesOwner", "participantUsers", "proposalFiles", "wonAt", "nextAction", "imageRequirementNote", "quotationNote"], ["contactName", "email", "brandId"]],
       ["marketing-leads", ["fullName", "email", "phone", "whatsapp", "companyName", "countryCode", "source", "sourceChannel", "sourceDetail", "inquiryContent", "owner", "fitScore", "note"], ["scoreHistory", "engagementScore", "utmSource", "rawMetadataJson"]],
       ["organizations", ["name", "shortName", "roles", "lifecycle", "fitScore", "fitReason", "logo"], ["competitor", "amount", "revenue"]],
@@ -160,11 +175,11 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
     expect(lead).toMatchObject({ companyName: "Dena", source: "WEBSITE", sourceChannel: "ORGANIC_SEARCH", sourceDetail: "Google/Bing", inquiryContent: "Original imported inquiry", fitScore: 40, engagementScoreCached: 0 });
     expect(await prisma.leadActivityEvent.count({ where: { marketingLeadId: lead.id } })).toBe(0);
     const exported = await inject({ method: "POST", url: "/api/v1/crm/exports/marketing-leads", payload: {} });
-    expect(exported.statusCode).toBe(201);
-    const download = await inject({ method: "GET", url: exported.json().data.downloadUrl });
+    const completed = await completedExport(exported);
+    const download = await inject({ method: "GET", url: completed.downloadUrl });
     expect(download.statusCode).toBe(200);
     const book = new ExcelJS.Workbook(); await book.xlsx.load(download.rawPayload as never);
-    expect(headers(book.worksheets[0]!)).toEqual(expect.arrayContaining(["线索编号", "姓名", "来源", "原始询盘", "Fit Score", "Engagement Score", "商机编号"]));
+    expect(headers(book.worksheets[0]!)).toEqual(expect.arrayContaining(["线索编号", "姓名", "来源", "原始询盘", "线索匹配度", "互动活跃度", "商机编号"]));
   });
 
   it("公司导入支持多角色且导出保持统一主档字段", async () => {
@@ -179,17 +194,17 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
     expect(organization.roles.map((item) => item.role).sort()).toEqual(["PROSPECT", "VENDOR"]);
 
     const exported = await inject({ method: "POST", url: "/api/v1/crm/exports/organizations", payload: {} });
-    expect(exported.statusCode).toBe(201);
-    const download = await inject({ method: "GET", url: exported.json().data.downloadUrl });
+    const completed = await completedExport(exported);
+    const download = await inject({ method: "GET", url: completed.downloadUrl });
     expect(download.statusCode).toBe(200);
     const book = new ExcelJS.Workbook();
     await book.xlsx.load(download.rawPayload as never);
-    expect(headers(book.worksheets[0]!)).toEqual(expect.arrayContaining(["公司编号", "公司名称", "公司角色", "生命周期", "适配评分", "评分原因", "Logo"]));
+    expect(headers(book.worksheets[0]!)).toEqual(expect.arrayContaining(["公司编号", "公司名称", "业务关系", "客户阶段", "客户匹配度", "评分原因", "Logo"]));
   });
 
   it("联系人导入执行预检并生成失败明细", async () => {
     const response = await upload("contacts", [
-      { contactName: `导入联系人 ${runKey}`, organizationName: `批量公司 ${runKey}`, email: `imported-${runKey}@example.test`, stage: "1v1", owner: adminId, followupAttention: "持续确认素材", meetingMinutesFiles: "保密协议.pdf" },
+      { contactName: `导入联系人 ${runKey}`, contactType: "BUSINESS", organizationName: `批量公司 ${runKey}`, email: `imported-${runKey}@example.test`, stage: "1v1", owner: adminId, followupAttention: "持续确认素材", meetingMinutesFiles: "保密协议.pdf" },
       { contactName: "", email: `invalid-${runKey}@example.test` },
     ]);
     expect(response.statusCode).toBe(201);
@@ -201,7 +216,7 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
     expect(executed.statusCode).toBe(200);
     expect(executed.json().data.job).toMatchObject({ status: "COMPLETED_WITH_ERRORS", successCount: 1, failedCount: 1 });
     const importedContact = await prisma.contact.findFirstOrThrow({ where: { email: `imported-${runKey}@example.test`, stage: "ONE_TO_ONE" } });
-    expect(importedContact).toMatchObject({ createdByUserId: adminId, followupAttention: "持续确认素材", organizationId: expect.any(String) });
+    expect(importedContact).toMatchObject({ contactType: "BUSINESS", createdByUserId: adminId, followupAttention: "持续确认素材", organizationId: expect.any(String) });
     expect((await inject({ method: "GET", url: `/api/v1/crm/imports/${job.id}/failures` })).statusCode).toBe(200);
   });
 
@@ -240,25 +255,59 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
 
   it("联系人和线索导出包含实时关联信息", async () => {
     const contactExport = await inject({ method: "POST", url: "/api/v1/crm/exports/contacts", payload: {} });
-    expect(contactExport.statusCode).toBe(201);
+    const completedContactExport = await completedExport(contactExport);
     expect(contactExport.json().data).not.toHaveProperty("brandId");
-    expect((await inject({ method: "GET", url: contactExport.json().data.downloadUrl })).statusCode).toBe(200);
+    const contactDownload = await inject({ method: "GET", url: completedContactExport.downloadUrl });
+    expect(contactDownload.statusCode).toBe(200);
+    const contactBook = new ExcelJS.Workbook();
+    await contactBook.xlsx.load(contactDownload.rawPayload as never);
+    expect(headers(contactBook.worksheets[0]!)).toContain("联系人类型");
 
     const newEmail = `fresh-${runKey}@example.test`;
     await prisma.contact.update({ where: { id: contactId }, data: { email: newEmail } });
     const leadExport = await inject({ method: "POST", url: "/api/v1/crm/exports/leads", payload: {} });
-    const download = await inject({ method: "GET", url: leadExport.json().data.downloadUrl });
+    const completedLeadExport = await completedExport(leadExport);
+    const download = await inject({ method: "GET", url: completedLeadExport.downloadUrl });
     expect(download.statusCode).toBe(200);
     const book = new ExcelJS.Workbook();
     await book.xlsx.load(download.rawPayload as never);
     const sheet = book.worksheets[0]!;
     const header = headers(sheet);
-    expect(header).toEqual(expect.arrayContaining(["客户来源", "正式方案文件", "Leads 参与人员", "创建人", "成交日期", "下一步动作", "图片需求说明", "报价说明"]));
-    const contactColumn = header.indexOf("客户联系人编号") + 1;
+    expect(header).toEqual(expect.arrayContaining(["客户来源", "正式方案文件", "商机协作成员", "创建人", "成交日期", "下一步动作", "图片需求说明", "报价说明"]));
+    const contactColumn = header.indexOf("联系人编号") + 1;
     const emailColumn = header.indexOf("联系人电子邮箱") + 1;
     const row = Array.from({ length: sheet.rowCount - 1 }, (_, index) => index + 2).find((number) => String(sheet.getCell(number, contactColumn).value) === contactId);
     expect(row).toBeDefined();
     expect(sheet.getCell(row!, emailColumn).value).toBe(newEmail);
+  });
+
+  it("异步导出支持所选、筛选、权限范围、历史与重新生成", async () => {
+    const selectedRequest = { scope: "SELECTED", format: "XLSX", selectedIds: [contactId], filters: {} };
+    const selectedEstimate = await inject({ method: "POST", url: "/api/v1/crm/exports/contacts/estimate", payload: selectedRequest });
+    expect(selectedEstimate.statusCode).toBe(200);
+    expect(selectedEstimate.json().data).toMatchObject({ count: 1, scope: "SELECTED", format: "XLSX" });
+    const selectedJob = await completedExport(await inject({ method: "POST", url: "/api/v1/crm/exports/contacts", payload: selectedRequest }));
+    expect(selectedJob.rowCount).toBe(1);
+
+    const filteredRequest = { scope: "FILTERED", format: "XLSX", selectedIds: [], filters: { keyword: `no-match-${runKey}` } };
+    const filteredJob = await completedExport(await inject({ method: "POST", url: "/api/v1/crm/exports/contacts", payload: filteredRequest }));
+    expect(filteredJob.rowCount).toBe(0);
+
+    const allJob = await completedExport(await inject({ method: "POST", url: "/api/v1/crm/exports/contacts", payload: { scope: "ALL_CURRENT_PERMISSION", format: "XLSX", selectedIds: [], filters: {} } }));
+    expect(allJob.rowCount).toBeGreaterThanOrEqual(1);
+
+    const history = await inject({ method: "GET", url: "/api/v1/crm/exports?objectType=CONTACT&pageSize=50" });
+    expect(history.statusCode).toBe(200);
+    expect(history.json().data).toEqual(expect.arrayContaining([
+      expect.objectContaining({ status: "COMPLETED", scope: "SELECTED", format: "XLSX", operatorName: expect.stringMatching(/导入管理员/) }),
+      expect.objectContaining({ status: "COMPLETED", scope: "FILTERED", format: "XLSX" }),
+      expect.objectContaining({ status: "COMPLETED", scope: "ALL_CURRENT_PERMISSION", format: "XLSX" }),
+    ]));
+    expect(history.json().data.every((row: Record<string, unknown>) => !("storagePath" in row))).toBe(true);
+
+    const regenerated = await inject({ method: "POST", url: `/api/v1/crm/exports/${history.json().data[0].id}/regenerate`, payload: {} });
+    const regeneratedJob = await completedExport(regenerated);
+    expect(regeneratedJob.rowCount).toBe(history.json().data[0].rowCount);
   });
 
   it("SALES 默认不能导入或导出", async () => {

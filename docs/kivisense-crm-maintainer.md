@@ -28,10 +28,19 @@ Do not create a second company or supplier master. `OrganizationRole` expresses 
 
 - Fit and Engagement are separate 0–100 dimensions. Bands are LOW 0–39, MEDIUM 40–69, and HIGH 70–100; do not present an ambiguous combined 200-point total.
 - Scoring changes come from `LeadScoringRule`. Each activity stores its Fit/Engagement delta snapshots, so later rule edits never rewrite history.
-- Automatic MQL applies only from `NURTURING` when both configured thresholds pass. MQL → SQL and SQL → Qualified are explicit sales actions.
+- Automatic MQL evaluation applies from `NEW`, `NURTURING`, and `RECYCLED` when both configured thresholds pass. Nurturing is an ongoing scoring/engagement process, not an ordinary user action; never restore a “开始孵化” button.
+- MQL → SQL is the explicit sales acceptance action. SQL converts directly to Opportunity in one command; `QUALIFIED` may remain only as an internal compatibility transition inside that command.
 - Conversion is one serializable backend command. Matching is backend-owned, candidates are suggestions, and no fuzzy match may auto-merge.
 - `CrmLead.sourceMarketingLeadId` is a real unique foreign key. One Marketing Lead may create at most one converted opportunity; retries return the existing conversion.
 - Converted Marketing Leads remain as read-mostly marketing records. See `docs/lead-conversion-contract.md` for the complete contract and attribution rule.
+
+## Product and navigation boundaries
+
+- Ordinary UI exposes only Company / 公司, Contact / 联系人, MarketingLead / 线索, Opportunity / 商机, Task / 任务, Followup / 跟进记录, Customer Journey / 客户旅程, Supplier / 供应商, and AuditLog / 操作记录.
+- `/api/v1/crm/leads`, `CrmLead`, and `#leads` are compatibility identifiers for Opportunity. Do not derive new user-facing “线索” language from them.
+- Navigation is fixed to 概览 (数据看板, 我的工作台), 客户管理 (公司, 联系人, 线索, 商机), 资源 (供应商), and 系统. Do not restore 客户运营 as a top-level module.
+- 我的工作台 is the personal action center. It must combine MQL acceptance, task time buckets, stale Opportunities, active Opportunities without a next action, and only rule-backed Company reconnect candidates.
+- Dashboard is limited to 管理概览, 营销与转化, 商机推进, 团队表现. Owner attribution uses `MarketingLead.ownerUserId` and `CrmLead.salesOwnerUserId`; never intersect Opportunity ownership with Company ownership.
 
 ## Customer operations rules
 
@@ -51,6 +60,9 @@ Do not create a second company or supplier master. `OrganizationRole` expresses 
 - Keep management and self Dashboard permissions separate. Sales users may manage only tasks they own unless explicit management authority is granted.
 - Attachment downloads remain authenticated and entity-scoped. Organization logo accepts images only and has one active file.
 - Import never fuzzy-merges Organizations. Contact import may link by exact normalized Organization name; creating a missing Organization requires an explicit opt-in that defaults off.
+- Core list exports use the existing job architecture with explicit `SELECTED`, `FILTERED`, or `ALL_CURRENT_PERMISSION` scope. The original permission boundary must be rechecked for history downloads and regeneration.
+- Owner changes enqueue `AssignmentNotification` in the same database transaction. Only a real assignee change creates an outbox row; worker failure must not roll back the business update and duplicate notifications must be suppressed.
+- SMTP or another transport is configuration, not business state. UI may confirm that assignment was saved, but may claim email delivery only after the outbox reaches `SENT`.
 
 ## Change and verification gates
 

@@ -119,6 +119,7 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core", () => {
     await prisma.contact.deleteMany({ where: { id: { in: contactIds } } });
     await prisma.organization.deleteMany({ where: { createdByUserId: { in: userIds } } });
     await prisma.auditLog.deleteMany({ where: { OR: [{ actorUserId: { in: userIds } }, { targetId: { in: [...contactIds, ...leadIds] } }] } });
+    await prisma.assignmentNotification.deleteMany({ where: { OR: [{ toUserId: { in: userIds } }, { assignedByUserId: { in: userIds } }] } });
     await prisma.session.deleteMany({ where: { userId: { in: userIds } } });
     await prisma.user.deleteMany({ where: { id: { in: userIds } } });
     await app?.close();
@@ -160,6 +161,27 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core", () => {
     const updated = await inject({ method: "PATCH", url: `/api/v1/crm/contacts/${contactId}`, payload: { stage: "ONE_TO_ONE", title: "业务发展总监", followupAttention: "持续关注交付时间" } });
     expect(updated.statusCode).toBe(200);
     expect(updated.json().data).toMatchObject({ stage: "ONE_TO_ONE", title: "业务发展总监", followupAttention: "持续关注交付时间" });
+  });
+
+  it("联系人支持企业快速建公司和无公司的个人联系人", async () => {
+    const business = await inject({ method: "POST", url: "/api/v1/crm/contacts", payload: {
+      contactName: `Quick Company Contact ${runKey}`,
+      contactType: "BUSINESS",
+      ownerUserId: salesId,
+      newOrganization: { name: `Quick Company ${runKey}`, website: `https://quick-${runKey}.example.test`, country: "中国", region: "上海", city: "上海" },
+    } });
+    expect(business.statusCode).toBe(201);
+    expect(business.json().data).toMatchObject({ contactType: "BUSINESS", organization: { name: `Quick Company ${runKey}` } });
+    expect(await prisma.organization.count({ where: { name: `Quick Company ${runKey}` } })).toBe(1);
+
+    const individual = await inject({ method: "POST", url: "/api/v1/crm/contacts", payload: {
+      contactName: `Individual Contact ${runKey}`,
+      contactType: "INDIVIDUAL",
+      ownerUserId: salesId,
+    } });
+    expect(individual.statusCode).toBe(201);
+    expect(individual.json().data).toMatchObject({ contactType: "INDIVIDUAL", organizationId: null });
+    expect((await inject({ method: "POST", url: "/api/v1/crm/contacts", payload: { contactName: "Invalid Individual", contactType: "INDIVIDUAL", newOrganization: { name: "Must not exist" } } })).statusCode).toBe(422);
   });
 
   it("公司主档支持多角色、重复预警、联系人关联、孵化和任务闭环", async () => {
@@ -389,12 +411,45 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 core", () => {
     const management = await inject({ method: "GET", url: "/api/v1/crm/analytics/management" }, adminCookie);
     expect(management.statusCode).toBe(200);
     expect(management.json().data).toHaveProperty("execution.winRate.denominator");
-    expect(management.json().data.execution.customerCoverage).toMatchObject({ numerator: 1, denominator: 1, percent: 100 });
+    expect(management.json().data.execution.customerCoverage).toMatchObject({ numerator: 1, denominator: 2, percent: 50 });
     expect(JSON.stringify(management.json())).not.toMatch(/estimatedQuote|quotationNote|paymentReceivedAt|revenue|amount/i);
     const team = await inject({ method: "GET", url: "/api/v1/crm/analytics/team" }, adminCookie);
     expect(team.statusCode).toBe(200);
     expect(team.json().data.rows.some((row: { user: { id: string } }) => row.user.id === salesId)).toBe(true);
     expect(team.json().data.rows.find((row: { user: { id: string } }) => row.user.id === salesId).leadsWithNextActionPercent).toBe(0);
+  });
+
+  it("负责人筛选按商机负责人归属，不要求同时拥有公司", async () => {
+    const from = encodeURIComponent(new Date(Date.now() - 86_400_000).toISOString());
+    const to = encodeURIComponent(new Date(Date.now() + 86_400_000).toISOString());
+    const before = await inject({ method: "GET", url: `/api/v1/crm/analytics/management?ownerUserId=${salesId}&from=${from}&to=${to}` }, adminCookie);
+    expect(before.statusCode).toBe(200);
+
+    const organization = await inject({ method: "POST", url: "/api/v1/crm/organizations", payload: {
+      name: `跨负责人公司 ${runKey}`,
+      roles: ["PROSPECT"],
+      ownerUserId: adminId,
+    } }, adminCookie);
+    const contact = await inject({ method: "POST", url: "/api/v1/crm/contacts", payload: {
+      contactName: `跨负责人联系人 ${runKey}`,
+      contactType: "BUSINESS",
+      organizationId: organization.json().data.id,
+      ownerUserId: adminId,
+    } }, adminCookie);
+    const opportunity = await inject({ method: "POST", url: "/api/v1/crm/leads", payload: {
+      contactId: contact.json().data.id,
+      requirementSummary: `跨负责人商机 ${runKey}`,
+      status: "NEW",
+      salesOwnerUserId: salesId,
+      followupOwnerUserId: salesId,
+    } }, adminCookie);
+    expect(opportunity.statusCode).toBe(201);
+
+    const after = await inject({ method: "GET", url: `/api/v1/crm/analytics/management?ownerUserId=${salesId}&from=${from}&to=${to}` }, adminCookie);
+    expect(after.statusCode).toBe(200);
+    expect(after.json().data.kpis.newLeads).toBe(before.json().data.kpis.newLeads + 1);
+    expect(after.json().data.pipeline.find((row: { status: string }) => row.status === "NEW").count)
+      .toBe(before.json().data.pipeline.find((row: { status: string }) => row.status === "NEW").count + 1);
   });
 
   it("迁移视图的公司、来源与对象审计筛选在服务端生效", async () => {

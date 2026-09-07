@@ -1,13 +1,13 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { basename, join } from "node:path";
-import type { Prisma } from "@prisma/client";
+import type { ExportJob, Prisma } from "@prisma/client";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { z } from "zod";
 import { appendAudit } from "../common/audit.js";
 import { guard } from "../common/auth.js";
 import { ApiError } from "../common/errors.js";
 import { jobNumber } from "../common/ids.js";
-import { executeCrmImportJob, persistCrmExport, prepareCrmImport } from "./crm-import-export.service.js";
+import { createCrmExportJob, estimateCrmExportCount, executeCrmImportJob, processCrmExportJob, prepareCrmImport, type CrmExportRequestInput } from "./crm-import-export.service.js";
 import { crmImportFields, crmTemplateFilename, crmTemplateWorkbook } from "./crm-schema.js";
 import { jobPermission, type CrmJobObjectType } from "./job-types.js";
 import { fileSha256 } from "./workbook.js";
@@ -18,6 +18,15 @@ const historyQuerySchema = z.object({
   objectType: crmObjectTypeSchema.optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
+});
+const exportRequestSchema = z.object({
+  scope: z.enum(["SELECTED", "FILTERED", "ALL_CURRENT_PERMISSION"]).default("ALL_CURRENT_PERMISSION"),
+  format: z.literal("XLSX").default("XLSX"),
+  selectedIds: z.array(z.string().trim().min(1).max(32)).max(5000).default([]).transform((values) => [...new Set(values)]),
+  filters: z.record(z.string(), z.string().trim().max(500)).default({}),
+  requestedFields: z.array(z.string().trim().min(1).max(80)).max(100).optional(),
+}).strict().superRefine((value, context) => {
+  if (value.scope === "SELECTED" && !value.selectedIds.length) context.addIssue({ code: "custom", path: ["selectedIds"], message: "导出选中项时至少选择一条记录" });
 });
 
 function filenameHeader(filename: string): string {
@@ -36,6 +45,21 @@ function routeObjectType(routeObject: "contacts" | "leads" | "marketing-leads" |
 
 function allowedCrmObjectTypes(request: FastifyRequest, action: "import" | "export"): CrmJobObjectType[] {
   return (["CONTACT", "CRM_LEAD", "MARKETING_LEAD", "ORGANIZATION"] as const).filter((objectType) => request.auth!.permissions.has(jobPermission(objectType, action)));
+}
+
+function exportJobResponse(job: ExportJob, operatorName?: string) {
+  const { storagePath: _storagePath, requestJson, ...safe } = job;
+  const expired = job.status === "COMPLETED" && Boolean(job.expiresAt && job.expiresAt <= new Date());
+  const format = typeof requestJson === "object" && requestJson && !Array.isArray(requestJson) && "format" in requestJson
+    ? String((requestJson as Prisma.JsonObject).format || "XLSX")
+    : "XLSX";
+  return {
+    ...safe,
+    status: expired ? "EXPIRED" : job.status,
+    format,
+    operatorName,
+    downloadUrl: job.status === "COMPLETED" && !expired ? `/api/v1/crm/exports/${job.id}/download` : null,
+  };
 }
 
 export async function crmImportExportRoutes(app: FastifyInstance): Promise<void> {
@@ -109,9 +133,16 @@ export async function crmImportExportRoutes(app: FastifyInstance): Promise<void>
     });
 
     app.post(`/api/v1/crm/exports/${routeObject}`, { preHandler: guard(exportPermission) }, async (request, reply) => {
-      z.object({}).strict().parse(request.body ?? {});
-      const job = await persistCrmExport(app, request, objectType);
-      return reply.status(201).send({ data: { ...job, downloadUrl: `/api/v1/crm/exports/${job.id}/download` } });
+      const input = exportRequestSchema.parse(request.body ?? {}) as CrmExportRequestInput;
+      const job = await createCrmExportJob(app, request, objectType, input);
+      setImmediate(() => void processCrmExportJob(app, job.id, { userId: request.auth!.userId, roleKey: request.auth!.roleKey }).catch((error) => app.log.error({ error, exportJobId: job.id }, "CRM export processing failed")));
+      return reply.status(202).send({ data: { ...exportJobResponse(job, request.auth!.name), statusUrl: `/api/v1/crm/exports/${job.id}` } });
+    });
+
+    app.post(`/api/v1/crm/exports/${routeObject}/estimate`, { preHandler: guard(exportPermission) }, async (request) => {
+      const input = exportRequestSchema.parse(request.body ?? {}) as CrmExportRequestInput;
+      const count = await estimateCrmExportCount(app, objectType, input, { userId: request.auth!.userId, roleKey: request.auth!.roleKey });
+      return { data: { count, format: input.format, scope: input.scope } };
     });
   }
 
@@ -165,19 +196,29 @@ export async function crmImportExportRoutes(app: FastifyInstance): Promise<void>
     if (query.objectType) assertPermission(request, query.objectType, "export");
     const objectTypes = query.objectType ? [query.objectType] : allowedCrmObjectTypes(request, "export");
     if (!objectTypes.length) throw new ApiError(403, "PERMISSION_DENIED", "当前账户没有 CRM Export 权限");
-    const where = { objectType: { in: objectTypes } } satisfies Prisma.ExportJobWhereInput;
+    const where = { objectType: { in: objectTypes }, createdBy: request.auth!.userId } satisfies Prisma.ExportJobWhereInput;
     const [total, rows] = await app.prisma.$transaction([
       app.prisma.exportJob.count({ where }),
       app.prisma.exportJob.findMany({ where, orderBy: { createdAt: "desc" }, skip: (query.page - 1) * query.pageSize, take: query.pageSize }),
     ]);
-    return { data: rows, meta: { page: query.page, pageSize: query.pageSize, total, pageCount: Math.ceil(total / query.pageSize) } };
+    return { data: rows.map((row) => exportJobResponse(row, request.auth!.name)), meta: { page: query.page, pageSize: query.pageSize, total, pageCount: Math.ceil(total / query.pageSize) } };
   });
 
   app.get<{ Params: { id: string } }>("/api/v1/crm/exports/:id", { preHandler: guard() }, async (request) => {
-    const job = await app.prisma.exportJob.findFirst({ where: { id: request.params.id, objectType: { in: ["CONTACT", "CRM_LEAD", "MARKETING_LEAD", "ORGANIZATION"] } } });
+    const job = await app.prisma.exportJob.findFirst({ where: { id: request.params.id, createdBy: request.auth!.userId, objectType: { in: ["CONTACT", "CRM_LEAD", "MARKETING_LEAD", "ORGANIZATION"] } } });
     if (!job) throw new ApiError(404, "RESOURCE_NOT_FOUND", "CRM 导出任务不存在");
     assertPermission(request, job.objectType, "export");
-    return { data: { ...job, downloadUrl: job.status === "COMPLETED" ? `/api/v1/crm/exports/${job.id}/download` : null } };
+    return { data: exportJobResponse(job, request.auth!.name) };
+  });
+
+  app.post<{ Params: { id: string } }>("/api/v1/crm/exports/:id/regenerate", { preHandler: guard() }, async (request, reply) => {
+    const original = await app.prisma.exportJob.findFirst({ where: { id: request.params.id, createdBy: request.auth!.userId, objectType: { in: ["CONTACT", "CRM_LEAD", "MARKETING_LEAD", "ORGANIZATION"] } } });
+    if (!original) throw new ApiError(404, "RESOURCE_NOT_FOUND", "CRM 导出任务不存在");
+    assertPermission(request, original.objectType, "export");
+    const input = exportRequestSchema.parse(original.requestJson) as CrmExportRequestInput;
+    const job = await createCrmExportJob(app, request, original.objectType as CrmJobObjectType, input);
+    setImmediate(() => void processCrmExportJob(app, job.id, { userId: request.auth!.userId, roleKey: request.auth!.roleKey }).catch((error) => app.log.error({ error, exportJobId: job.id }, "CRM export regeneration failed")));
+    return reply.status(202).send({ data: { ...exportJobResponse(job, request.auth!.name), statusUrl: `/api/v1/crm/exports/${job.id}` } });
   });
 
   app.get<{ Params: { id: string } }>("/api/v1/crm/exports/:id/download", { preHandler: guard() }, async (request, reply) => {

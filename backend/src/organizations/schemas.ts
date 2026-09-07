@@ -13,8 +13,13 @@ const organizationFields = {
   shortName: optionalText(120),
   website: optionalUrl,
   industry: optionalText(160),
+  industryCode: optionalText(80),
+  industryCustom: optionalText(160),
   country: optionalText(120),
   countryCode: z.preprocess(emptyToNull, z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/, "国家代码必须是 ISO 3166-1 alpha-2").nullable().optional()),
+  regionCode: optionalText(80),
+  cityCode: optionalText(80),
+  cityCustom: optionalText(120),
   companySize: optionalText(80),
   region: optionalText(120),
   city: optionalText(120),
@@ -31,12 +36,18 @@ export const organizationCreateSchema = z.object({
   ...organizationFields,
   roles: z.array(organizationRoleSchema).min(1).max(4).transform((values) => [...new Set(values)]).default(["PROSPECT"]),
   confirmDuplicate: z.boolean().default(false),
-}).strict();
+}).strict().superRefine((value, context) => {
+  if (value.industryCode === "OTHER" && !value.industryCustom) context.addIssue({ code: "custom", path: ["industryCustom"], message: "选择其他行业时请填写行业" });
+  if (value.cityCode === "OTHER" && !value.cityCustom) context.addIssue({ code: "custom", path: ["cityCustom"], message: "选择其他城市时请填写城市" });
+});
 
 export const organizationPatchSchema = z.object({
   name: z.string().trim().min(1).max(240).optional(),
   ...organizationFields,
-}).strict().refine((value) => Object.keys(value).length > 0, { message: "至少提供一个需要修改的字段" });
+}).strict().superRefine((value, context) => {
+  if (value.industryCode === "OTHER" && !value.industryCustom) context.addIssue({ code: "custom", path: ["industryCustom"], message: "选择其他行业时请填写行业" });
+  if (value.cityCode === "OTHER" && !value.cityCustom) context.addIssue({ code: "custom", path: ["cityCustom"], message: "选择其他城市时请填写城市" });
+}).refine((value) => Object.keys(value).length > 0, { message: "至少提供一个需要修改的字段" });
 
 export const nurtureCreateSchema = z.object({
   ownerUserId: z.string().trim().min(1).max(32),

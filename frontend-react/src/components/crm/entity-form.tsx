@@ -24,6 +24,7 @@ import {
   EntityCombobox,
   Field,
   FilterControl,
+  focusFirstInvalidField,
   FormDialog,
 } from "./primitives";
 import { AttachmentList, attachmentAccept } from "./attachment-list";
@@ -41,6 +42,12 @@ const companyFields = new Set([
   "country",
   "region",
   "city",
+]);
+const postSalesOpportunityFields = new Set([
+  "wonAt",
+  "deliveryFollowupAt",
+  "contractRenewalAt",
+  "paymentReceivedAt",
 ]);
 const attachmentFields: Record<
   string,
@@ -79,12 +86,18 @@ export function EntityForm({
   onClose: () => void;
   onSaved: (row: EntityRecord) => void;
 }) {
-  const definitions = kind === "contact" ? CONTACT_FIELDS : LEAD_FIELDS;
+  const definitions = (
+    kind === "contact"
+      ? CONTACT_FIELDS.filter((d) => d.key !== "stage").map((d) =>
+          d.tab === "crm" ? { ...d, tab: "followup" } : d,
+        )
+      : LEAD_FIELDS.filter((d) => !postSalesOpportunityFields.has(d.key))
+  ) as FieldDefinition[];
   const tabs: [string, string][] =
     kind === "contact"
       ? [
           ["basic", "基本资料"],
-          ["crm", "CRM 状态"],
+          ["followup", "跟进信息"],
           ["notes", "备注与附件"],
         ]
       : [
@@ -92,7 +105,6 @@ export function EntityForm({
           ["requirement", "需求信息"],
           ["commercial", "方案与报价"],
           ["team", "团队协作"],
-          ["milestones", "里程碑"],
         ];
   const [tab, setTab] = useState("basic"),
     [values, setValues] = useState<Record<string, string | string[]>>(() =>
@@ -140,6 +152,17 @@ export function EntityForm({
         ? organization?.name || String(record?.companyName || "")
         : contact?.contactName ||
             String((record?.contact as Contact | undefined)?.contactName || ""),
+    ),
+    [contactMode, setContactMode] = useState<
+      "linked" | "create" | "unconfirmed" | "individual"
+    >(() =>
+      kind !== "contact"
+        ? "linked"
+        : record?.contactType === "INDIVIDUAL"
+          ? "individual"
+          : organization?.id || record?.organizationId
+            ? "linked"
+            : "unconfirmed",
     ),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
@@ -193,22 +216,35 @@ export function EntityForm({
         errors[d.key] = "请输入完整 http:// 或 https:// 地址";
     }
     if (kind === "lead" && !relationId) errors.contactId = "请选择关联联系人";
+    if (kind === "contact" && contactMode === "linked" && !relationId)
+      errors.organizationId = "请选择已存在的公司";
+    if (
+      kind === "contact" &&
+      ["create", "unconfirmed"].includes(contactMode) &&
+      !String(values.companyName || "").trim()
+    )
+      errors.companyName = contactMode === "create" ? "请填写新公司名称" : "请填写待确认公司名称";
     if (kind === "lead" && values.estimatedQuote && !values.currency)
       errors.currency = "填写报价时必须选择币种";
     setFieldErrors(errors);
     if (Object.keys(errors).length) {
       setTab(definitions.find((d) => errors[d.key])?.tab || "basic");
       setError("请检查标记的必填项或格式。");
+      focusFirstInvalidField();
       return;
     }
     setBusy(true);
     setError("");
     try {
-      const payload = Object.fromEntries(
+      const payload: Record<string, unknown> = Object.fromEntries(
         definitions
           .filter(
             (d) =>
-              !(kind === "contact" && relationId && companyFields.has(d.key)),
+              !(
+                kind === "contact" &&
+                companyFields.has(d.key) &&
+                !["create", "unconfirmed"].includes(contactMode)
+              ),
           )
           .map((d) => [
             d.key,
@@ -221,7 +257,23 @@ export function EntityForm({
                 : null,
           ]),
       );
-      if (kind === "contact") payload.organizationId = relationId || null;
+      if (kind === "contact") {
+        payload.contactType =
+          contactMode === "individual" ? "INDIVIDUAL" : "BUSINESS";
+        payload.organizationId = contactMode === "linked" ? relationId : null;
+        if (contactMode === "create") {
+          payload.newOrganization = {
+            name: payload.companyName,
+            shortName: payload.companyShortName,
+            website: payload.website,
+            industry: payload.industry,
+            country: payload.country,
+            region: payload.region,
+            city: payload.city,
+          };
+          for (const key of companyFields) delete payload[key];
+        }
+      }
       if (kind === "lead" && !savedId) payload.contactId = relationId;
       const response = await crmApi<{ data: EntityRecord }>(
         `${endpoint}${savedId ? `/${savedId}` : ""}`,
@@ -256,6 +308,7 @@ export function EntityForm({
         );
         setFieldErrors(errors);
         setTab(definitions.find((d) => errors[d.key])?.tab || "basic");
+        focusFirstInvalidField();
       }
       setError(friendlyError(e));
     } finally {
@@ -408,15 +461,64 @@ export function EntityForm({
         onChange={setTab}
         items={tabs.map(([key, label]) => [
           key,
-          `${label}${definitions.some((d) => d.tab === key && fieldErrors[d.key]) ? " · 有错误" : ""}`,
+          `${label}${definitions.some((d) => d.tab === key && fieldErrors[d.key]) || (key === "basic" && (fieldErrors.contactId || fieldErrors.organizationId)) ? " · 有错误" : ""}`,
         ])}
       >
         <div className="grid gap-6 sm:grid-cols-2">
-          {tab === "basic" && (
+          {tab === "basic" && kind === "contact" && (
+            <Field label="联系人类型" required wide>
+              {() => (
+                <FilterControl
+                  label="联系人类型"
+                  value={contactMode === "individual" ? "individual" : "business"}
+                  all={false}
+                  className="w-full"
+                  options={{
+                    business: "企业联系人",
+                    individual: "个人联系人",
+                  }}
+                  onChange={(value) => {
+                    const mode = value === "individual" ? "individual" : contactMode === "individual" ? "linked" : contactMode;
+                    setContactMode(mode);
+                    if (mode !== "linked") {
+                      setRelationId("");
+                      setRelationLabel("");
+                    }
+                  }}
+                />
+              )}
+            </Field>
+          )}
+          {tab === "basic" && kind === "contact" && contactMode !== "individual" && (
+            <Field label="公司关联方式" required wide>
+              {() => (
+                <FilterControl
+                  label="公司关联方式"
+                  value={contactMode}
+                  all={false}
+                  className="w-full"
+                  options={{ linked: "选择已有公司", create: "快速创建公司", unconfirmed: "公司暂未确认" }}
+                  onChange={(value) => {
+                    const mode = value as typeof contactMode;
+                    setContactMode(mode);
+                    setRelationId("");
+                    setRelationLabel("");
+                  }}
+                />
+              )}
+            </Field>
+          )}
+          {tab === "basic" &&
+            (kind === "lead" ||
+              (kind === "contact" && contactMode === "linked")) && (
             <Field
               label={kind === "contact" ? "所属公司" : "关联联系人"}
-              required={kind === "lead"}
-              error={fieldErrors.contactId}
+              required
+              error={
+                kind === "contact"
+                  ? fieldErrors.organizationId
+                  : fieldErrors.contactId
+              }
               wide
             >
               {() =>
@@ -438,28 +540,27 @@ export function EntityForm({
                       }}
                       load={loadRelation}
                     />
-                    {kind === "contact" && relationId && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setRelationId("");
-                          setRelationLabel("");
-                        }}
-                      >
-                        清除关联公司
-                      </Button>
-                    )}
                   </>
                 )
               }
             </Field>
           )}
+          {tab === "basic" &&
+            kind === "contact" &&
+            contactMode === "individual" && (
+              <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm text-muted-foreground sm:col-span-2">
+                个人联系人不关联公司，公司相关字段将保持为空。
+              </div>
+            )}
           {definitions
             .filter(
               (d) =>
                 d.tab === tab &&
-                !(kind === "contact" && relationId && companyFields.has(d.key)),
+                !(
+                  kind === "contact" &&
+                  companyFields.has(d.key) &&
+                  !["create", "unconfirmed"].includes(contactMode)
+                ),
             )
             .map((d) => (
               <div

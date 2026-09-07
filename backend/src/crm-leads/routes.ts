@@ -25,6 +25,7 @@ const leadListQuery = paginationSchema.extend({
   path: ["nextFollowupTo"],
   message: "结束时间不能早于开始时间",
 });
+const batchAssignSchema = z.object({ ids: z.array(z.string().trim().min(1).max(32)).min(1).max(500), ownerUserId: z.string().trim().min(1).max(32) }).strict();
 
 export async function crmLeadRoutes(app: FastifyInstance): Promise<void> {
   const leads = new CrmLeadService(app.prisma);
@@ -43,6 +44,11 @@ export async function crmLeadRoutes(app: FastifyInstance): Promise<void> {
     const body = crmLeadCreateSchema.parse(request.body);
     const row = await leads.create(body, request.auth!.userId, auditActorContext(request));
     return reply.status(201).send({ data: crmLeadResponse(row) });
+  });
+
+  app.post("/api/v1/crm/leads/batch-assign", { preHandler: guard("crm.lead.edit") }, async (request) => {
+    const body = batchAssignSchema.parse(request.body);
+    return { data: await leads.batchAssign([...new Set(body.ids)], body.ownerUserId, auditActorContext(request)) };
   });
 
   app.get<{ Params: { id: string } }>("/api/v1/crm/leads/:id", { preHandler: guard("crm.lead.view") }, async (request) => ({

@@ -19,7 +19,12 @@ const taskListSchema = paginationSchema.extend({
 }).refine((value) => !value.dueFrom || !value.dueTo || value.dueFrom <= value.dueTo, { path: ["dueTo"], message: "结束时间不能早于开始时间" });
 
 export async function crmTaskRoutes(app: FastifyInstance): Promise<void> {
-  const tasks = new CrmTaskService(app.prisma);
+  const tasks = new CrmTaskService(app.prisma, app.config);
+
+  app.get("/api/v1/crm/workbench", { preHandler: guard("crm.task.view") }, async (request) => {
+    const query = z.object({ ownerUserId: z.string().trim().max(32).optional() }).parse(request.query);
+    return { data: await tasks.workbench(query.ownerUserId, request.auth!) };
+  });
 
   app.get("/api/v1/crm/tasks", { preHandler: guard("crm.task.view") }, async (request) => {
     const query = taskListSchema.parse(request.query);

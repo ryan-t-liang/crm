@@ -4,7 +4,6 @@ import { AlertCircle, RefreshCw } from "lucide-react"
 import { ExecutionHealth } from "@/components/execution-health"
 import { FitEngagementMatrix } from "@/components/fit-engagement-matrix"
 import { PipelineChart } from "@/components/pipeline-chart"
-import { SectionCards } from "@/components/section-cards"
 import { TeamExecutionTable } from "@/components/team-execution-table"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
@@ -15,6 +14,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { getData, type CrmUser, type SessionUser } from "@/lib/api"
+import { marketingActivityLabel, marketingSourceLabel, marketingSourceLabels } from "@/lib/product-language"
 import {
   containsFinancialKey,
   customDateRange,
@@ -26,7 +26,7 @@ import {
 } from "@/lib/dashboard"
 
 type Period = "7" | "30" | "90" | "custom"
-type DashboardView = "management" | "marketing" | "scoring" | "opportunity" | "team"
+type DashboardView = "management" | "marketing" | "opportunity" | "team"
 type MarketingFunnel = {
   tracking: { visitorTracking: false; message: string }
   stages: Array<{ key: string; label: string; count: number }>
@@ -129,7 +129,7 @@ export function DashboardPage({ me, users }: { me: SessionUser; users: CrmUser[]
         <header className="flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
           <div>
             <p className="mb-1 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
-              {management ? "Management Overview" : "Personal Overview"}
+              {management ? "管理视图" : "个人视图"}
             </p>
             <h1 className="text-2xl font-semibold tracking-tight">数据看板</h1>
             <p className="mt-1 text-sm text-muted-foreground">用非金额指标判断客户资产、机会推进与团队执行是否健康。</p>
@@ -168,22 +168,22 @@ export function DashboardPage({ me, users }: { me: SessionUser; users: CrmUser[]
               </label>
             ) : null}
             <label className="grid gap-1 text-[11px] text-muted-foreground">
-              公司角色
+              客户范围
               <Select value={organizationRole} onValueChange={setOrganizationRole}>
                 <SelectTrigger className="h-9 w-[142px] rounded-[8px] bg-background text-[13px]"><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">潜客 + 客户</SelectItem>
-                  <SelectItem value="PROSPECT">潜在客户</SelectItem>
-                  <SelectItem value="CUSTOMER">客户</SelectItem>
+                  <SelectItem value="all">全部客户阶段</SelectItem>
+                  <SelectItem value="PROSPECT">尚未成交</SelectItem>
+                  <SelectItem value="CUSTOMER">已成交客户</SelectItem>
                 </SelectContent>
               </Select>
             </label>
-            {me.permissions.includes("crm.marketing.analytics.view") && ["marketing", "scoring"].includes(view) ? (
+            {me.permissions.includes("crm.marketing.analytics.view") && view === "marketing" ? (
               <label className="grid gap-1 text-[11px] text-muted-foreground">
                 线索来源
                 <Select value={source} onValueChange={setSource}>
                   <SelectTrigger className="h-9 w-[142px] rounded-[8px] bg-background text-[13px]"><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="all">全部来源</SelectItem>{["WEBSITE", "FORM", "CAMPAIGN", "EVENT", "EXHIBITION", "REFERRAL", "LINKEDIN", "WECHAT", "OUTBOUND", "PARTNER", "IMPORT", "MANUAL", "OTHER"].map((value) => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent>
+                  <SelectContent><SelectItem value="all">全部来源</SelectItem>{Object.entries(marketingSourceLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent>
                 </Select>
               </label>
             ) : null}
@@ -194,9 +194,9 @@ export function DashboardPage({ me, users }: { me: SessionUser; users: CrmUser[]
           <div className="max-w-full overflow-x-auto border-b">
             <TabsList variant="line" className="h-10">
               <TabsTrigger value="management">管理概览</TabsTrigger>
-              {me.permissions.includes("crm.marketing.analytics.view") ? <><TabsTrigger value="marketing">营销漏斗</TabsTrigger><TabsTrigger value="scoring">孵化与评分</TabsTrigger></> : null}
+              {me.permissions.includes("crm.marketing.analytics.view") ? <TabsTrigger value="marketing">营销与转化</TabsTrigger> : null}
               <TabsTrigger value="opportunity">商机推进</TabsTrigger>
-              {management ? <TabsTrigger value="team">团队执行</TabsTrigger> : null}
+              {management ? <TabsTrigger value="team">团队表现</TabsTrigger> : null}
             </TabsList>
           </div>
         </Tabs>
@@ -215,9 +215,8 @@ export function DashboardPage({ me, users }: { me: SessionUser; users: CrmUser[]
 
         {data && matrix && !error ? (
           <>
-            {view === "management" ? <><SectionCards data={data} /><section className="grid gap-4 xl:grid-cols-[1.05fr_.95fr]"><FitEngagementMatrix matrix={matrix} /><ExecutionHealth data={data} /></section></> : null}
-            {view === "marketing" && marketingFunnel ? <MarketingFunnelView funnel={marketingFunnel} sources={marketingSources} /> : null}
-            {view === "scoring" && marketingScoring ? <MarketingScoringView scoring={marketingScoring} sources={marketingSources} /> : null}
+            {view === "management" ? <><MetricCards items={[{ label: "新增线索", value: marketingFunnel?.kpis.newLeads ?? "—" }, { label: "新增商机", value: data.kpis.newLeads }, { label: "活跃商机", value: data.kpis.activeLeads }, { label: "成交商机", value: data.pipeline.find((stage) => stage.status === "WON")?.count ?? 0 }, { label: "逾期任务", value: data.kpis.overdueTasks }, { label: "停滞商机", value: data.kpis.staleLeads }]} /><ExecutionHealth data={data} /><section className="max-w-3xl"><FitEngagementMatrix matrix={matrix} /></section></> : null}
+            {view === "marketing" && marketingFunnel ? <div className="space-y-4"><MarketingFunnelView funnel={marketingFunnel} sources={marketingSources} />{marketingScoring ? <MarketingScoringView scoring={marketingScoring} sources={null} /> : null}</div> : null}
             {view === "opportunity" ? <><PipelineChart pipeline={data.pipeline} /><ExecutionHealth data={data} /></> : null}
             {view === "team" ? <TeamExecutionTable rows={team.rows} /> : null}
           </>
@@ -231,18 +230,21 @@ function MetricCards({ items }: { items: Array<{ label: string; value: string | 
   return <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{items.map((item) => <Card key={item.label} className="gap-2 py-5 shadow-none"><CardHeader className="px-5"><CardTitle className="text-xs font-medium text-muted-foreground">{item.label}</CardTitle></CardHeader><CardContent className="px-5"><p className="text-2xl font-semibold tabular-nums">{item.value}</p>{item.detail ? <p className="mt-1 text-xs text-muted-foreground">{item.detail}</p> : null}</CardContent></Card>)}</div>
 }
 
-function hours(value: number | null) { return value == null ? "—" : `${value} h` }
+function hours(value: number | null) { return value == null ? "—" : `${value} 小时` }
+const scoreLevelLabels: Record<string, string> = { HIGH: "高", MEDIUM: "中", LOW: "低" }
 
 function MarketingFunnelView({ funnel, sources }: { funnel: MarketingFunnel; sources: MarketingSources | null }) {
   const kpi = funnel.kpis
-  return <div className="space-y-4"><Alert><AlertTitle>Visitor</AlertTitle><AlertDescription>{funnel.tracking.message}</AlertDescription></Alert><section className="grid gap-3 md:grid-cols-4">{funnel.stages.map((stage, index) => <Card key={stage.key} className="relative gap-2 py-5 shadow-none"><CardHeader className="px-5"><CardTitle className="text-sm text-muted-foreground">{stage.label}</CardTitle></CardHeader><CardContent className="px-5"><p className="text-3xl font-semibold tabular-nums">{stage.count}</p></CardContent>{index < funnel.stages.length - 1 ? <span className="absolute -right-3 top-1/2 z-10 hidden text-muted-foreground md:block">→</span> : null}</Card>)}</section><MetricCards items={[{ label: "New Leads", value: kpi.newLeads }, { label: "MQL Count", value: kpi.mqlCount }, { label: "MQL Rate", value: `${kpi.mqlRate.percent}%`, detail: `${kpi.mqlRate.numerator}/${kpi.mqlRate.denominator}` }, { label: "MQL → SQL", value: `${kpi.mqlToSqlRate.percent}%`, detail: `${kpi.mqlToSqlRate.numerator}/${kpi.mqlToSqlRate.denominator}` }, { label: "SQL → Opportunity", value: `${kpi.sqlToOpportunityRate.percent}%` }, { label: "Lead → Opportunity", value: `${kpi.leadToOpportunityRate.percent}%` }, { label: "Avg Lead → MQL", value: hours(kpi.avgLeadToMqlHours) }, { label: "Avg MQL → SQL", value: hours(kpi.avgMqlToSqlHours) }, { label: "Avg Lead → Opportunity", value: hours(kpi.avgLeadToOpportunityHours) }, { label: "MQL Response Time", value: hours(kpi.mqlResponseHours) }]} />{sources ? <SourceQualityTable sources={sources} /> : null}</div>
+  const labels: Record<string, string> = { LEAD: "线索", MQL: "营销合格", SQL: "销售合格", OPPORTUNITY: "商机" }
+  const conversions = [null, kpi.mqlRate.percent, kpi.mqlToSqlRate.percent, kpi.sqlToOpportunityRate.percent]
+  return <div className="space-y-4"><Alert className="py-2"><AlertTitle className="text-sm">网站访客追踪尚未接入</AlertTitle><AlertDescription className="text-xs">{funnel.tracking.message}</AlertDescription></Alert><section className="grid gap-3 md:grid-cols-4">{funnel.stages.map((stage, index) => <Card key={stage.key} className="relative gap-2 py-5 shadow-none"><CardHeader className="px-5"><CardTitle className="text-sm text-muted-foreground">{labels[stage.key] || stage.label}</CardTitle></CardHeader><CardContent className="px-5"><p className="text-3xl font-semibold tabular-nums">{stage.count}</p>{conversions[index] != null ? <p className="mt-1 text-xs text-muted-foreground">上一步转化 {conversions[index]}%</p> : null}</CardContent>{index < funnel.stages.length - 1 ? <span className="absolute -right-3 top-1/2 z-10 hidden text-muted-foreground md:block">→</span> : null}</Card>)}</section><MetricCards items={[{ label: "新增线索", value: kpi.newLeads }, { label: "营销合格线索", value: kpi.mqlCount }, { label: "MQL 转化率", value: `${kpi.mqlRate.percent}%`, detail: `${kpi.mqlRate.numerator}/${kpi.mqlRate.denominator}` }, { label: "MQL → SQL", value: `${kpi.mqlToSqlRate.percent}%`, detail: `${kpi.mqlToSqlRate.numerator}/${kpi.mqlToSqlRate.denominator}` }, { label: "SQL → 商机", value: `${kpi.sqlToOpportunityRate.percent}%` }, { label: "线索 → 商机", value: `${kpi.leadToOpportunityRate.percent}%` }, { label: "平均线索 → MQL", value: hours(kpi.avgLeadToMqlHours) }, { label: "平均 MQL → SQL", value: hours(kpi.avgMqlToSqlHours) }, { label: "平均线索 → 商机", value: hours(kpi.avgLeadToOpportunityHours) }, { label: "MQL 响应时间", value: hours(kpi.mqlResponseHours) }]} />{sources ? <SourceQualityTable sources={sources} /> : null}</div>
 }
 
 function MarketingScoringView({ scoring, sources }: { scoring: MarketingScoring; sources: MarketingSources | null }) {
   const summary = scoring.summary
-  return <div className="space-y-4"><MetricCards items={[{ label: "Active Leads", value: summary.activeLeads }, { label: "MQL", value: summary.mql }, { label: "Hot Leads", value: summary.hotLeads }, { label: "Warm Leads", value: summary.warmLeads }, { label: "Cold Leads", value: summary.coldLeads }, { label: "High-score Untouched", value: summary.highScoreUntouched }, { label: "Recycled Leads", value: summary.recycledLeads }]} /><div className="grid gap-4 xl:grid-cols-2"><Card className="gap-3 py-5 shadow-none"><CardHeader className="px-5"><CardTitle>Score Distribution</CardTitle></CardHeader><CardContent className="grid grid-cols-3 gap-2 px-5">{scoring.distribution.map((cell) => <div key={`${cell.fitLevel}-${cell.engagementLevel}`} className="rounded-lg border bg-muted/20 p-3"><p className="text-xs text-muted-foreground">Fit {cell.fitLevel}<br />Eng {cell.engagementLevel}</p><p className="mt-2 text-xl font-semibold">{cell.count}</p></div>)}</CardContent></Card><Card className="gap-3 py-5 shadow-none"><CardHeader className="px-5"><CardTitle>Top Scoring Signals</CardTitle></CardHeader><CardContent className="px-5"><Table><TableHeader><TableRow><TableHead>Signal</TableHead><TableHead>次数</TableHead><TableHead>Engagement</TableHead></TableRow></TableHeader><TableBody>{scoring.topSignals.map((signal) => <TableRow key={signal.eventType}><TableCell className="font-medium">{signal.eventType}</TableCell><TableCell>{signal.count}</TableCell><TableCell>{signal.engagementDelta > 0 ? "+" : ""}{signal.engagementDelta}</TableCell></TableRow>)}</TableBody></Table></CardContent></Card></div>{sources ? <SourceQualityTable sources={sources} /> : null}</div>
+  return <div className="space-y-4"><MetricCards items={[{ label: "活跃线索", value: summary.activeLeads }, { label: "待处理 MQL", value: summary.mql }, { label: "高活跃线索", value: summary.hotLeads }, { label: "中活跃线索", value: summary.warmLeads }, { label: "低活跃线索", value: summary.coldLeads }, { label: "高匹配未触达", value: summary.highScoreUntouched }, { label: "重新培育线索", value: summary.recycledLeads }]} /><div className="grid gap-4 xl:grid-cols-2"><Card className="gap-3 py-5 shadow-none"><CardHeader className="px-5"><CardTitle>评分分布</CardTitle></CardHeader><CardContent className="grid grid-cols-3 gap-2 px-5">{scoring.distribution.map((cell) => <div key={`${cell.fitLevel}-${cell.engagementLevel}`} className="rounded-lg border bg-muted/20 p-3"><p className="text-xs text-muted-foreground">匹配度 {scoreLevelLabels[cell.fitLevel] || "未知"}<br />活跃度 {scoreLevelLabels[cell.engagementLevel] || "未知"}</p><p className="mt-2 text-xl font-semibold">{cell.count}</p></div>)}</CardContent></Card><Card className="gap-3 py-5 shadow-none"><CardHeader className="px-5"><CardTitle>主要评分信号</CardTitle></CardHeader><CardContent className="px-5"><Table><TableHeader><TableRow><TableHead>行为信号</TableHead><TableHead>次数</TableHead><TableHead>活跃度变化</TableHead></TableRow></TableHeader><TableBody>{scoring.topSignals.map((signal) => <TableRow key={signal.eventType}><TableCell className="font-medium">{marketingActivityLabel(signal.eventType)}</TableCell><TableCell>{signal.count}</TableCell><TableCell>{signal.engagementDelta > 0 ? "+" : ""}{signal.engagementDelta}</TableCell></TableRow>)}</TableBody></Table></CardContent></Card></div>{sources ? <SourceQualityTable sources={sources} /> : null}</div>
 }
 
 function SourceQualityTable({ sources }: { sources: MarketingSources }) {
-  return <Card className="gap-3 py-5 shadow-none"><CardHeader className="px-5"><CardTitle>Lead Source Quality</CardTitle></CardHeader><CardContent className="overflow-x-auto px-5"><Table><TableHeader><TableRow>{["Source", "Lead Count", "MQL", "MQL Rate", "SQL", "SQL Rate", "Opportunity", "Lead → Opportunity", "Avg Conversion"].map((label) => <TableHead key={label}>{label}</TableHead>)}</TableRow></TableHeader><TableBody>{sources.rows.map((row) => <TableRow key={row.source}><TableCell className="font-medium">{row.source}</TableCell><TableCell>{row.leadCount}</TableCell><TableCell>{row.mqlCount}</TableCell><TableCell>{row.mqlRate}%</TableCell><TableCell>{row.sqlCount}</TableCell><TableCell>{row.sqlRate}%</TableCell><TableCell>{row.opportunityCount}</TableCell><TableCell>{row.leadToOpportunityRate}%</TableCell><TableCell>{hours(row.avgConversionHours)}</TableCell></TableRow>)}</TableBody></Table></CardContent></Card>
+  return <Card className="gap-3 py-5 shadow-none"><CardHeader className="px-5"><CardTitle>线索来源质量</CardTitle></CardHeader><CardContent className="overflow-x-auto px-5"><Table><TableHeader><TableRow>{["来源", "线索数", "MQL", "MQL 转化率", "SQL", "SQL 转化率", "商机", "线索 → 商机", "平均转化时间"].map((label) => <TableHead key={label}>{label}</TableHead>)}</TableRow></TableHeader><TableBody>{sources.rows.map((row) => <TableRow key={row.source}><TableCell className="font-medium">{marketingSourceLabel(row.source)}</TableCell><TableCell>{row.leadCount}</TableCell><TableCell>{row.mqlCount}</TableCell><TableCell>{row.mqlRate}%</TableCell><TableCell>{row.sqlCount}</TableCell><TableCell>{row.sqlRate}%</TableCell><TableCell>{row.opportunityCount}</TableCell><TableCell>{row.leadToOpportunityRate}%</TableCell><TableCell>{hours(row.avgConversionHours)}</TableCell></TableRow>)}</TableBody></Table></CardContent></Card>
 }

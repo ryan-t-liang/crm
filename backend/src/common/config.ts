@@ -38,6 +38,14 @@ const schema = z.object({
   CRM_HIGH_FIT_UNTOUCHED_DAYS: z.coerce.number().int().min(1).max(365).default(30),
   CRM_MQL_MIN_FIT_SCORE: z.coerce.number().int().min(0).max(100).default(40),
   CRM_MQL_MIN_ENGAGEMENT_SCORE: z.coerce.number().int().min(0).max(100).default(70),
+  ASSIGNMENT_NOTIFICATION_ENABLED: booleanFromEnv.default(false),
+  SMTP_HOST: z.string().trim().min(1).optional(),
+  SMTP_PORT: z.coerce.number().int().min(1).max(65_535).default(1025),
+  SMTP_SECURE: booleanFromEnv.default(false),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASSWORD: z.string().optional(),
+  MAIL_FROM_NAME: z.string().trim().min(1).default("Kivisense CRM"),
+  MAIL_FROM_ADDRESS: z.string().email().default("crm@kivisense.local"),
   STORAGE_DIR: z.string().default("../storage"),
 });
 
@@ -64,6 +72,14 @@ export type AppConfig = {
   crmHighFitUntouchedDays: number;
   crmMqlMinFitScore: number;
   crmMqlMinEngagementScore: number;
+  assignmentNotificationEnabled?: boolean;
+  smtpHost?: string;
+  smtpPort?: number;
+  smtpSecure?: boolean;
+  smtpUser?: string;
+  smtpPassword?: string;
+  mailFromName?: string;
+  mailFromAddress?: string;
 };
 
 export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
@@ -91,6 +107,14 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     crmHighFitUntouchedDays: env.CRM_HIGH_FIT_UNTOUCHED_DAYS,
     crmMqlMinFitScore: env.CRM_MQL_MIN_FIT_SCORE,
     crmMqlMinEngagementScore: env.CRM_MQL_MIN_ENGAGEMENT_SCORE,
+    assignmentNotificationEnabled: env.ASSIGNMENT_NOTIFICATION_ENABLED,
+    smtpHost: env.SMTP_HOST,
+    smtpPort: env.SMTP_PORT,
+    smtpSecure: env.SMTP_SECURE,
+    smtpUser: env.SMTP_USER,
+    smtpPassword: env.SMTP_PASSWORD,
+    mailFromName: env.MAIL_FROM_NAME,
+    mailFromAddress: env.MAIL_FROM_ADDRESS,
   };
   return { ...config, ...overrides };
 }

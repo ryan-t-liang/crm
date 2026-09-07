@@ -23,6 +23,7 @@ import { organizationRoutes } from "./organizations/routes.js";
 import { crmTaskRoutes } from "./tasks/routes.js";
 import { analyticsRoutes } from "./analytics/routes.js";
 import { marketingLeadRoutes } from "./marketing-leads/routes.js";
+import { dispatchAssignmentNotifications } from "./common/assignment-notifications.js";
 
 export type BuildAppOptions = {
   config?: AppConfig;
@@ -102,12 +103,22 @@ export async function buildApp(options: BuildAppOptions = {}): Promise<FastifyIn
   await app.register(auditRoutes);
   await app.register(crmImportExportRoutes);
 
+  let assignmentTimer: NodeJS.Timeout | undefined;
+  app.addHook("onReady", async () => {
+    if (!config.assignmentNotificationEnabled || !config.smtpHost) return;
+    const dispatch = () => void dispatchAssignmentNotifications(prisma, config).catch((error) => app.log.error({ error }, "assignment notification dispatch failed"));
+    dispatch();
+    assignmentTimer = setInterval(dispatch, 15_000);
+    assignmentTimer.unref();
+  });
+
   await app.register(staticPlugin, { root: options.frontendRoot ?? inferFrontendRoot(), prefix: "/" });
   app.setNotFoundHandler((request, reply) => {
     if (request.url.startsWith("/api/")) return reply.status(404).send({ error: { code: "RESOURCE_NOT_FOUND", message: "接口不存在" }, traceId: request.id });
     return reply.sendFile("index.html");
   });
   app.addHook("onClose", async () => {
+    if (assignmentTimer) clearInterval(assignmentTimer);
     if (!options.prisma) await prisma.$disconnect();
   });
   return app;

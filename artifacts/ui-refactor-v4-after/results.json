@@ -1,0 +1,5151 @@
+{
+  "runId": 1788798302722,
+  "base": "http://127.0.0.1:3311",
+  "account": "admin@phase3.example.test",
+  "completedAt": "2026-09-07T16:28:44.229Z",
+  "tests": [
+    {
+      "name": "UI 登录",
+      "status": "PASS",
+      "http": 200,
+      "role": "SUPER_ADMIN"
+    },
+    {
+      "name": "公司 Smart Views",
+      "status": "PASS"
+    },
+    {
+      "name": "Company Create",
+      "status": "PASS",
+      "id": "cmtrgbqtu0058qpwch977qgee",
+      "layers": [
+        "UI",
+        "HTTP",
+        "DB",
+        "reload"
+      ]
+    },
+    {
+      "name": "Company Edit",
+      "status": "PASS"
+    },
+    {
+      "name": "Company Industry / Location Selector",
+      "status": "PASS"
+    },
+    {
+      "name": "Company Logo object-contain",
+      "status": "PASS"
+    },
+    {
+      "name": "Company ID Copy",
+      "status": "PASS"
+    },
+    {
+      "name": "Contact BUSINESS Create",
+      "status": "PASS",
+      "id": "cmtrgbtgm005jqpwchaikgs29",
+      "layers": [
+        "UI",
+        "HTTP",
+        "DB",
+        "reload"
+      ]
+    },
+    {
+      "name": "Contact Edit",
+      "status": "PASS"
+    },
+    {
+      "name": "Contact Fuzzy Company Linking",
+      "status": "PASS"
+    },
+    {
+      "name": "Contact ID Copy",
+      "status": "PASS"
+    },
+    {
+      "name": "Contact INDIVIDUAL Create",
+      "status": "PASS",
+      "id": "cmtrgbv8k005pqpwcnb8my431",
+      "layers": [
+        "UI",
+        "HTTP",
+        "DB",
+        "reload"
+      ]
+    },
+    {
+      "name": "MarketingLead Create",
+      "status": "PASS",
+      "id": "cmtrgd89l005uqpwcafubqx2n",
+      "layers": [
+        "UI",
+        "HTTP",
+        "DB",
+        "reload"
+      ]
+    },
+    {
+      "name": "MarketingLead Edit",
+      "status": "PASS"
+    },
+    {
+      "name": "MarketingLead → MQL",
+      "status": "PASS",
+      "scores": [
+        40,
+        70
+      ]
+    },
+    {
+      "name": "MarketingLead ID Copy",
+      "status": "PASS"
+    },
+    {
+      "name": "No START_NURTURING UI",
+      "status": "PASS"
+    },
+    {
+      "name": "MQL → SQL",
+      "status": "PASS",
+      "layers": [
+        "Workbench UI",
+        "HTTP",
+        "DB",
+        "reload"
+      ]
+    },
+    {
+      "name": "SQL → Opportunity",
+      "status": "PASS",
+      "id": "cmtrgde7z006xqpwcsumyaonv",
+      "layers": [
+        "UI",
+        "HTTP",
+        "DB",
+        "reload"
+      ]
+    },
+    {
+      "name": "Opportunity Create manually",
+      "status": "PASS",
+      "id": "cmtrgdfg4007cqpwcfysja7wq",
+      "layers": [
+        "UI",
+        "HTTP",
+        "DB",
+        "reload"
+      ]
+    },
+    {
+      "name": "Opportunity Attachment",
+      "status": "PASS"
+    },
+    {
+      "name": "Opportunity Stage",
+      "status": "PASS",
+      "stages": [
+        "NEW",
+        "SOLUTION",
+        "LOST"
+      ]
+    },
+    {
+      "name": "Opportunity Followup + Task",
+      "status": "PASS"
+    },
+    {
+      "name": "Opportunity ID Copy",
+      "status": "PASS"
+    },
+    {
+      "name": "Assignment Notification",
+      "status": "PASS",
+      "outboxStatus": "PENDING",
+      "duplicateSuppressed": true
+    },
+    {
+      "name": "Opportunity WON system date + Company CUSTOMER",
+      "status": "PASS"
+    },
+    {
+      "name": "Export Filtered",
+      "status": "PASS",
+      "id": "cmtrgg6qw0087qpwc8mnjfqzk",
+      "rows": 2,
+      "xlsxRows": 2
+    },
+    {
+      "name": "Export All",
+      "status": "PASS",
+      "id": "cmtrgg7me008aqpwcp9q9zdno",
+      "rows": 2,
+      "xlsxRows": 2
+    },
+    {
+      "name": "Export Selected",
+      "status": "PASS",
+      "id": "cmtrgg5tp0084qpwcpvury2h6",
+      "rows": 1,
+      "file": "artifacts/ui-refactor-v4-after/downloads/contacts-selected-1788798302722.xlsx",
+      "layers": [
+        "UI",
+        "HTTP",
+        "DB",
+        "download",
+        "XLSX"
+      ]
+    },
+    {
+      "name": "Export History",
+      "status": "PASS"
+    },
+    {
+      "name": "Import",
+      "status": "PASS",
+      "id": "cmtrgg8u6008dqpwcjarv0h4a",
+      "layers": [
+        "UI template download",
+        "UI upload",
+        "HTTP",
+        "DB",
+        "reload"
+      ]
+    },
+    {
+      "name": "Supplier Create",
+      "status": "PASS",
+      "id": "cmtrgg9v7008mqpwcmspbh4ye",
+      "model": "Organization + VENDOR"
+    },
+    {
+      "name": "Supplier Empty State + Toolbar",
+      "status": "PASS"
+    },
+    {
+      "name": "Dashboard 4 Views + Owner Metrics",
+      "status": "PASS"
+    },
+    {
+      "name": "Workbench Aggregation",
+      "status": "PASS"
+    },
+    {
+      "name": "RBAC VIEWER read-only controls hidden",
+      "status": "PASS"
+    },
+    {
+      "name": "Unexpected console/network errors = 0",
+      "status": "PASS"
+    }
+  ],
+  "writes": [
+    {
+      "name": "Company Create",
+      "method": "POST",
+      "url": "http://127.0.0.1:3311/api/v1/crm/organizations",
+      "status": 201,
+      "response": {
+        "data": {
+          "id": "cmtrgbqtu0058qpwch977qgee",
+          "name": "V4-UI-公司-1788798302722",
+          "normalizedName": "v4-ui-公司-1788798302722",
+          "shortName": "V4-1788798302722",
+          "website": "https://v4-1788798302722.example.test",
+          "websiteDomain": "v4-1788798302722.example.test",
+          "industry": "软件与 SaaS",
+          "industryCode": "TECH.SOFTWARE",
+          "industryCustom": null,
+          "country": "中国",
+          "region": "上海市",
+          "city": "上海",
+          "countryCode": "CN",
+          "regionCode": "CN-31",
+          "cityCode": "CN-31-SHANGHAI",
+          "cityCustom": null,
+          "companySize": null,
+          "ownerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "lifecycleStage": "TARGET",
+          "fitScore": 0,
+          "fitReason": null,
+          "note": null,
+          "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "createdAt": "2026-09-07T16:25:06.451Z",
+          "updatedAt": "2026-09-07T16:25:06.451Z",
+          "deletedAt": null,
+          "deletedByUserId": null,
+          "owner": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "roles": [
+            {
+              "organizationId": "cmtrgbqtu0058qpwch977qgee",
+              "role": "PROSPECT",
+              "createdAt": "2026-09-07T16:25:06.451Z"
+            }
+          ],
+          "roleKeys": [
+            "PROSPECT"
+          ],
+          "fitLevel": "LOW",
+          "engagementScore": 0,
+          "engagementLevel": "LOW",
+          "engagementState": "DORMANT",
+          "engagementBreakdown": [
+            {
+              "key": "interactionRecency",
+              "label": "最近互动",
+              "points": 0
+            },
+            {
+              "key": "interactionFrequency",
+              "label": "30 天互动",
+              "points": 0
+            },
+            {
+              "key": "activeLead",
+              "label": "活跃商机",
+              "points": 0
+            },
+            {
+              "key": "recentMeeting",
+              "label": "30 天内会议",
+              "points": 0
+            },
+            {
+              "key": "nextAction",
+              "label": "开放下一步任务",
+              "points": 0
+            },
+            {
+              "key": "overdue",
+              "label": "逾期任务",
+              "points": 0
+            }
+          ],
+          "dormantDays": null,
+          "contactCount": 0,
+          "activeLeadCount": 0,
+          "wonLeadCount": 0,
+          "lastInteractionAt": null,
+          "nextActionAt": null,
+          "nextTask": null,
+          "logo": null
+        }
+      }
+    },
+    {
+      "name": "Company Edit",
+      "method": "PATCH",
+      "url": "http://127.0.0.1:3311/api/v1/crm/organizations/cmtrgbqtu0058qpwch977qgee",
+      "status": 200,
+      "response": {
+        "data": {
+          "id": "cmtrgbqtu0058qpwch977qgee",
+          "name": "V4-UI-公司-1788798302722",
+          "normalizedName": "v4-ui-公司-1788798302722",
+          "shortName": "V4-EDIT-1788798302722",
+          "website": "https://v4-1788798302722.example.test",
+          "websiteDomain": "v4-1788798302722.example.test",
+          "industry": "软件与 SaaS",
+          "industryCode": "TECH.SOFTWARE",
+          "industryCustom": null,
+          "country": "中国",
+          "region": "上海市",
+          "city": "上海",
+          "countryCode": "CN",
+          "regionCode": "CN-31",
+          "cityCode": "CN-31-SHANGHAI",
+          "cityCustom": null,
+          "companySize": null,
+          "ownerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "lifecycleStage": "TARGET",
+          "fitScore": 0,
+          "fitReason": null,
+          "note": null,
+          "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "createdAt": "2026-09-07T16:25:06.451Z",
+          "updatedAt": "2026-09-07T16:25:07.808Z",
+          "deletedAt": null,
+          "deletedByUserId": null,
+          "owner": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "roles": [
+            {
+              "organizationId": "cmtrgbqtu0058qpwch977qgee",
+              "role": "PROSPECT",
+              "createdAt": "2026-09-07T16:25:07.808Z"
+            }
+          ],
+          "roleKeys": [
+            "PROSPECT"
+          ],
+          "fitLevel": "LOW",
+          "engagementScore": 0,
+          "engagementLevel": "LOW",
+          "engagementState": "DORMANT",
+          "engagementBreakdown": [
+            {
+              "key": "interactionRecency",
+              "label": "最近互动",
+              "points": 0
+            },
+            {
+              "key": "interactionFrequency",
+              "label": "30 天互动",
+              "points": 0
+            },
+            {
+              "key": "activeLead",
+              "label": "活跃商机",
+              "points": 0
+            },
+            {
+              "key": "recentMeeting",
+              "label": "30 天内会议",
+              "points": 0
+            },
+            {
+              "key": "nextAction",
+              "label": "开放下一步任务",
+              "points": 0
+            },
+            {
+              "key": "overdue",
+              "label": "逾期任务",
+              "points": 0
+            }
+          ],
+          "dormantDays": null,
+          "contactCount": 0,
+          "activeLeadCount": 0,
+          "wonLeadCount": 0,
+          "lastInteractionAt": null,
+          "nextActionAt": null,
+          "nextTask": null,
+          "logo": {
+            "id": "271c31dfa1352bf6515e66af85865928",
+            "entityType": "ORGANIZATION",
+            "entityId": "cmtrgbqtu0058qpwch977qgee",
+            "fieldKey": "logo",
+            "storageType": "LOCAL",
+            "originalName": "wide-logo-1788798302722.png",
+            "mimeType": "image/png",
+            "kind": "IMAGE",
+            "fileSize": 10637,
+            "externalUrl": null,
+            "createdAt": "2026-09-07T16:25:06.481Z",
+            "uploadedBy": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "Contact BUSINESS Create",
+      "method": "POST",
+      "url": "http://127.0.0.1:3311/api/v1/crm/contacts",
+      "status": 201,
+      "response": {
+        "data": {
+          "id": "cmtrgbtgm005jqpwchaikgs29",
+          "contactName": "V4-UI-企业联系人-1788798302722",
+          "contactType": "BUSINESS",
+          "companyShortName": "V4-EDIT-1788798302722",
+          "companyName": "V4-UI-公司-1788798302722",
+          "department": null,
+          "title": null,
+          "email": "business-1788798302722@example.test",
+          "phone": null,
+          "phoneNormalized": null,
+          "whatsapp": null,
+          "whatsappNormalized": null,
+          "wechat": null,
+          "linkedin": null,
+          "website": "https://v4-1788798302722.example.test",
+          "industry": "软件与 SaaS",
+          "source": null,
+          "country": "中国",
+          "city": "上海",
+          "region": "上海市",
+          "stage": "INITIAL",
+          "ownerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "nextFollowupAt": null,
+          "initialContext": null,
+          "followupAttention": null,
+          "remark": null,
+          "createdAt": "2026-09-07T16:25:09.863Z",
+          "updatedAt": "2026-09-07T16:25:09.863Z",
+          "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "deletedAt": null,
+          "deletedByUserId": null,
+          "organizationId": "cmtrgbqtu0058qpwch977qgee",
+          "owner": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "organization": {
+            "id": "cmtrgbqtu0058qpwch977qgee",
+            "name": "V4-UI-公司-1788798302722",
+            "normalizedName": "v4-ui-公司-1788798302722",
+            "shortName": "V4-EDIT-1788798302722",
+            "website": "https://v4-1788798302722.example.test",
+            "websiteDomain": "v4-1788798302722.example.test",
+            "industry": "软件与 SaaS",
+            "industryCode": "TECH.SOFTWARE",
+            "industryCustom": null,
+            "country": "中国",
+            "region": "上海市",
+            "city": "上海",
+            "countryCode": "CN",
+            "regionCode": "CN-31",
+            "cityCode": "CN-31-SHANGHAI",
+            "cityCustom": null,
+            "companySize": null,
+            "ownerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+            "lifecycleStage": "TARGET",
+            "fitScore": 0,
+            "fitReason": null,
+            "note": null,
+            "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+            "createdAt": "2026-09-07T16:25:06.451Z",
+            "updatedAt": "2026-09-07T16:25:07.808Z",
+            "deletedAt": null,
+            "deletedByUserId": null,
+            "roles": [
+              {
+                "organizationId": "cmtrgbqtu0058qpwch977qgee",
+                "role": "PROSPECT",
+                "createdAt": "2026-09-07T16:25:07.808Z"
+              }
+            ]
+          },
+          "createdBy": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "attachments": [],
+          "relatedLeadCount": 0
+        }
+      }
+    },
+    {
+      "name": "Contact Edit",
+      "method": "PATCH",
+      "url": "http://127.0.0.1:3311/api/v1/crm/contacts/cmtrgbtgm005jqpwchaikgs29",
+      "status": 200,
+      "response": {
+        "data": {
+          "id": "cmtrgbtgm005jqpwchaikgs29",
+          "contactName": "V4-UI-企业联系人-1788798302722",
+          "contactType": "BUSINESS",
+          "companyShortName": "V4-EDIT-1788798302722",
+          "companyName": "V4-UI-公司-1788798302722",
+          "department": null,
+          "title": "Phase 3 采购负责人",
+          "email": "business-1788798302722@example.test",
+          "phone": null,
+          "phoneNormalized": null,
+          "whatsapp": null,
+          "whatsappNormalized": null,
+          "wechat": null,
+          "linkedin": null,
+          "website": "https://v4-1788798302722.example.test",
+          "industry": "软件与 SaaS",
+          "source": null,
+          "country": "中国",
+          "city": "上海",
+          "region": "上海市",
+          "stage": "INITIAL",
+          "ownerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "nextFollowupAt": null,
+          "initialContext": null,
+          "followupAttention": null,
+          "remark": null,
+          "createdAt": "2026-09-07T16:25:09.863Z",
+          "updatedAt": "2026-09-07T16:25:10.826Z",
+          "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "deletedAt": null,
+          "deletedByUserId": null,
+          "organizationId": "cmtrgbqtu0058qpwch977qgee",
+          "owner": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "organization": {
+            "id": "cmtrgbqtu0058qpwch977qgee",
+            "name": "V4-UI-公司-1788798302722",
+            "normalizedName": "v4-ui-公司-1788798302722",
+            "shortName": "V4-EDIT-1788798302722",
+            "website": "https://v4-1788798302722.example.test",
+            "websiteDomain": "v4-1788798302722.example.test",
+            "industry": "软件与 SaaS",
+            "industryCode": "TECH.SOFTWARE",
+            "industryCustom": null,
+            "country": "中国",
+            "region": "上海市",
+            "city": "上海",
+            "countryCode": "CN",
+            "regionCode": "CN-31",
+            "cityCode": "CN-31-SHANGHAI",
+            "cityCustom": null,
+            "companySize": null,
+            "ownerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+            "lifecycleStage": "TARGET",
+            "fitScore": 0,
+            "fitReason": null,
+            "note": null,
+            "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+            "createdAt": "2026-09-07T16:25:06.451Z",
+            "updatedAt": "2026-09-07T16:25:07.808Z",
+            "deletedAt": null,
+            "deletedByUserId": null,
+            "roles": [
+              {
+                "organizationId": "cmtrgbqtu0058qpwch977qgee",
+                "role": "PROSPECT",
+                "createdAt": "2026-09-07T16:25:07.808Z"
+              }
+            ]
+          },
+          "createdBy": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "attachments": [],
+          "relatedLeadCount": 0
+        }
+      }
+    },
+    {
+      "name": "Contact INDIVIDUAL Create",
+      "method": "POST",
+      "url": "http://127.0.0.1:3311/api/v1/crm/contacts",
+      "status": 201,
+      "response": {
+        "data": {
+          "id": "cmtrgbv8k005pqpwcnb8my431",
+          "contactName": "V4-UI-个人联系人-1788798302722",
+          "contactType": "INDIVIDUAL",
+          "companyShortName": null,
+          "companyName": null,
+          "department": null,
+          "title": null,
+          "email": "individual-1788798302722@example.test",
+          "phone": null,
+          "phoneNormalized": null,
+          "whatsapp": null,
+          "whatsappNormalized": null,
+          "wechat": null,
+          "linkedin": null,
+          "website": null,
+          "industry": null,
+          "source": null,
+          "country": null,
+          "city": null,
+          "region": null,
+          "stage": "INITIAL",
+          "ownerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "nextFollowupAt": null,
+          "initialContext": null,
+          "followupAttention": null,
+          "remark": null,
+          "createdAt": "2026-09-07T16:25:12.164Z",
+          "updatedAt": "2026-09-07T16:25:12.164Z",
+          "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "deletedAt": null,
+          "deletedByUserId": null,
+          "organizationId": null,
+          "owner": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "organization": null,
+          "createdBy": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "attachments": [],
+          "relatedLeadCount": 0
+        }
+      }
+    },
+    {
+      "name": "MarketingLead Create",
+      "method": "POST",
+      "url": "http://127.0.0.1:3311/api/v1/crm/marketing-leads",
+      "status": 201,
+      "response": {
+        "data": {
+          "id": "cmtrgd89l005uqpwcafubqx2n",
+          "fullName": "V4-UI-线索-1788798302722",
+          "email": "business-1788798302722@example.test",
+          "phone": null,
+          "phoneNormalized": null,
+          "whatsapp": null,
+          "whatsappNormalized": null,
+          "wechat": null,
+          "linkedinUrl": null,
+          "title": null,
+          "department": null,
+          "companyName": "V4-UI-公司-1788798302722",
+          "companyWebsite": "https://v4-1788798302722.example.test",
+          "companyDomain": "v4-1788798302722.example.test",
+          "companySize": null,
+          "industry": null,
+          "countryCode": "CN",
+          "region": null,
+          "city": null,
+          "inquiryType": null,
+          "inquiryContent": "Phase 3 原始询盘：需要一套可扩展的企业级 3D 产品体验与销售协同方案。",
+          "productInterest": "WebAR 与 3D 商务展示",
+          "requirementTags": [],
+          "budgetRange": null,
+          "note": null,
+          "source": "FORM",
+          "sourceChannel": "ORGANIC_SEARCH",
+          "sourceDetail": null,
+          "firstTouchAt": "2026-09-07T16:26:15.704Z",
+          "status": "NEW",
+          "ownerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "assignedAt": "2026-09-07T16:26:15.704Z",
+          "mqlAt": null,
+          "sqlAt": null,
+          "qualifiedAt": null,
+          "recycledAt": null,
+          "convertedAt": null,
+          "disqualifiedAt": null,
+          "disqualifiedReason": null,
+          "fitScore": 0,
+          "fitReason": null,
+          "engagementScoreCached": 0,
+          "engagementScoreCalculatedAt": null,
+          "lastActivityAt": null,
+          "firstSalesResponseAt": null,
+          "convertedOrganizationId": null,
+          "convertedContactId": null,
+          "convertedOpportunityId": null,
+          "convertedByUserId": null,
+          "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "createdAt": "2026-09-07T16:26:15.705Z",
+          "updatedAt": "2026-09-07T16:26:15.705Z",
+          "deletedAt": null,
+          "deletedByUserId": null,
+          "owner": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "convertedBy": null,
+          "convertedOrganization": null,
+          "convertedContact": null,
+          "convertedOpportunity": null,
+          "fitLevel": "LOW",
+          "engagementLevel": "LOW",
+          "leadLevel": "COLD"
+        }
+      }
+    },
+    {
+      "name": "MarketingLead Edit",
+      "method": "PATCH",
+      "url": "http://127.0.0.1:3311/api/v1/crm/marketing-leads/cmtrgd89l005uqpwcafubqx2n",
+      "status": 200,
+      "response": {
+        "data": {
+          "id": "cmtrgd89l005uqpwcafubqx2n",
+          "fullName": "V4-UI-线索-1788798302722",
+          "email": "business-1788798302722@example.test",
+          "phone": null,
+          "phoneNormalized": null,
+          "whatsapp": null,
+          "whatsappNormalized": null,
+          "wechat": null,
+          "linkedinUrl": null,
+          "title": null,
+          "department": null,
+          "companyName": "V4-UI-公司-1788798302722",
+          "companyWebsite": "https://v4-1788798302722.example.test",
+          "companyDomain": "v4-1788798302722.example.test",
+          "companySize": null,
+          "industry": null,
+          "countryCode": "CN",
+          "region": null,
+          "city": null,
+          "inquiryType": null,
+          "inquiryContent": "Phase 3 原始询盘：需要一套可扩展的企业级 3D 产品体验与销售协同方案。",
+          "productInterest": "WebAR 与 3D 商务展示",
+          "requirementTags": [],
+          "budgetRange": null,
+          "note": "Phase 3 UI 编辑已验证",
+          "source": "FORM",
+          "sourceChannel": "ORGANIC_SEARCH",
+          "sourceDetail": null,
+          "firstTouchAt": "2026-09-07T16:26:15.704Z",
+          "status": "NEW",
+          "ownerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "assignedAt": "2026-09-07T16:26:16.451Z",
+          "mqlAt": null,
+          "sqlAt": null,
+          "qualifiedAt": null,
+          "recycledAt": null,
+          "convertedAt": null,
+          "disqualifiedAt": null,
+          "disqualifiedReason": null,
+          "fitScore": 0,
+          "fitReason": null,
+          "engagementScoreCached": 0,
+          "engagementScoreCalculatedAt": null,
+          "lastActivityAt": null,
+          "firstSalesResponseAt": null,
+          "convertedOrganizationId": null,
+          "convertedContactId": null,
+          "convertedOpportunityId": null,
+          "convertedByUserId": null,
+          "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "createdAt": "2026-09-07T16:26:15.705Z",
+          "updatedAt": "2026-09-07T16:26:16.452Z",
+          "deletedAt": null,
+          "deletedByUserId": null,
+          "owner": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "convertedBy": null,
+          "convertedOrganization": null,
+          "convertedContact": null,
+          "convertedOpportunity": null,
+          "createdBy": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "activities": [],
+          "scoreHistory": [],
+          "statusHistory": [
+            {
+              "id": "cmtrgd89s005wqpwcisr01ayo",
+              "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+              "fromStatus": null,
+              "toStatus": "NEW",
+              "reason": "Marketing lead created",
+              "changedAt": "2026-09-07T16:26:15.705Z",
+              "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+              "changedBy": {
+                "id": "cmtrdogg40001qpd1ylwn9ctr",
+                "name": "Phase 3 测试管理员",
+                "loginAccount": "admin@phase3.example.test",
+                "status": "ACTIVE"
+              }
+            }
+          ],
+          "fitLevel": "LOW",
+          "engagementLevel": "LOW",
+          "leadLevel": "COLD"
+        }
+      }
+    },
+    {
+      "name": "MarketingLead Activity 符合目标客户画像",
+      "method": "POST",
+      "url": "http://127.0.0.1:3311/api/v1/crm/marketing-leads/cmtrgd89l005uqpwcafubqx2n/activities",
+      "status": 201,
+      "response": {
+        "data": {
+          "activity": {
+            "id": "cmtrgd9g50062qpwc7fvbhwys",
+            "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+            "scoringRuleId": "81ecded6aaca11f1ac08960791467044",
+            "eventType": "ICP_PROFILE_MATCH",
+            "source": "CRM",
+            "occurredAt": "2026-09-07T16:26:17.237Z",
+            "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+            "note": null,
+            "engagementDeltaSnapshot": 0,
+            "fitDeltaSnapshot": 40,
+            "createdAt": "2026-09-07T16:26:17.238Z",
+            "scoringRule": {
+              "id": "81ecded6aaca11f1ac08960791467044",
+              "code": "ICP_PROFILE_MATCH",
+              "name": "符合目标客户画像",
+              "category": "QUALIFICATION",
+              "scoreDimension": "FIT",
+              "scoreDelta": 40,
+              "repeatable": false,
+              "maxOccurrences": 1,
+              "cooldownHours": null,
+              "enabled": true,
+              "sortOrder": 45,
+              "description": "已确认客户画像与目标市场、行业或应用场景匹配",
+              "createdAt": "2026-09-07T14:43:36.509Z",
+              "updatedAt": "2026-09-07T14:43:36.509Z"
+            },
+            "actor": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            }
+          },
+          "lead": {
+            "id": "cmtrgd89l005uqpwcafubqx2n",
+            "fullName": "V4-UI-线索-1788798302722",
+            "email": "business-1788798302722@example.test",
+            "phone": null,
+            "phoneNormalized": null,
+            "whatsapp": null,
+            "whatsappNormalized": null,
+            "wechat": null,
+            "linkedinUrl": null,
+            "title": null,
+            "department": null,
+            "companyName": "V4-UI-公司-1788798302722",
+            "companyWebsite": "https://v4-1788798302722.example.test",
+            "companyDomain": "v4-1788798302722.example.test",
+            "companySize": null,
+            "industry": null,
+            "countryCode": "CN",
+            "region": null,
+            "city": null,
+            "inquiryType": null,
+            "inquiryContent": "Phase 3 原始询盘：需要一套可扩展的企业级 3D 产品体验与销售协同方案。",
+            "productInterest": "WebAR 与 3D 商务展示",
+            "requirementTags": [],
+            "budgetRange": null,
+            "note": "Phase 3 UI 编辑已验证",
+            "source": "FORM",
+            "sourceChannel": "ORGANIC_SEARCH",
+            "sourceDetail": null,
+            "firstTouchAt": "2026-09-07T16:26:15.704Z",
+            "status": "NEW",
+            "ownerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+            "assignedAt": "2026-09-07T16:26:16.451Z",
+            "mqlAt": null,
+            "sqlAt": null,
+            "qualifiedAt": null,
+            "recycledAt": null,
+            "convertedAt": null,
+            "disqualifiedAt": null,
+            "disqualifiedReason": null,
+            "fitScore": 40,
+            "fitReason": null,
+            "engagementScoreCached": 0,
+            "engagementScoreCalculatedAt": "2026-09-07T16:26:17.244Z",
+            "lastActivityAt": "2026-09-07T16:26:17.237Z",
+            "firstSalesResponseAt": null,
+            "convertedOrganizationId": null,
+            "convertedContactId": null,
+            "convertedOpportunityId": null,
+            "convertedByUserId": null,
+            "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+            "createdAt": "2026-09-07T16:26:15.705Z",
+            "updatedAt": "2026-09-07T16:26:17.245Z",
+            "deletedAt": null,
+            "deletedByUserId": null,
+            "owner": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            },
+            "convertedBy": null,
+            "convertedOrganization": null,
+            "convertedContact": null,
+            "convertedOpportunity": null,
+            "createdBy": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            },
+            "activities": [
+              {
+                "id": "cmtrgd9g50062qpwc7fvbhwys",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "scoringRuleId": "81ecded6aaca11f1ac08960791467044",
+                "eventType": "ICP_PROFILE_MATCH",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T16:26:17.237Z",
+                "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "note": null,
+                "engagementDeltaSnapshot": 0,
+                "fitDeltaSnapshot": 40,
+                "createdAt": "2026-09-07T16:26:17.238Z",
+                "scoringRule": {
+                  "id": "81ecded6aaca11f1ac08960791467044",
+                  "code": "ICP_PROFILE_MATCH",
+                  "name": "符合目标客户画像",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "FIT",
+                  "scoreDelta": 40,
+                  "repeatable": false,
+                  "maxOccurrences": 1,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 45,
+                  "description": "已确认客户画像与目标市场、行业或应用场景匹配",
+                  "createdAt": "2026-09-07T14:43:36.509Z",
+                  "updatedAt": "2026-09-07T14:43:36.509Z"
+                },
+                "actor": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "scoreHistory": [
+              {
+                "id": "cmtrgd9ga0064qpwcfdyxpe9x",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "activityEventId": "cmtrgd9g50062qpwc7fvbhwys",
+                "dimension": "FIT",
+                "previousScore": 0,
+                "scoreDelta": 40,
+                "newScore": 40,
+                "reason": "ICP_PROFILE_MATCH",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "createdAt": "2026-09-07T16:26:17.243Z",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "statusHistory": [
+              {
+                "id": "cmtrgd89s005wqpwcisr01ayo",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "fromStatus": null,
+                "toStatus": "NEW",
+                "reason": "Marketing lead created",
+                "changedAt": "2026-09-07T16:26:15.705Z",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "fitLevel": "MEDIUM",
+            "engagementLevel": "LOW",
+            "leadLevel": "COLD"
+          }
+        }
+      }
+    },
+    {
+      "name": "MarketingLead Activity 完成会议",
+      "method": "POST",
+      "url": "http://127.0.0.1:3311/api/v1/crm/marketing-leads/cmtrgd89l005uqpwcafubqx2n/activities",
+      "status": 201,
+      "response": {
+        "data": {
+          "activity": {
+            "id": "cmtrgda9l0067qpwccplct736",
+            "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+            "scoringRuleId": "81dfe1f6aaca11f1ac08960791467044",
+            "eventType": "MEETING_COMPLETED",
+            "source": "CRM",
+            "occurredAt": "2026-09-07T16:26:18.296Z",
+            "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+            "note": null,
+            "engagementDeltaSnapshot": 15,
+            "fitDeltaSnapshot": 0,
+            "createdAt": "2026-09-07T16:26:18.297Z",
+            "scoringRule": {
+              "id": "81dfe1f6aaca11f1ac08960791467044",
+              "code": "MEETING_COMPLETED",
+              "name": "完成会议",
+              "category": "SALES",
+              "scoreDimension": "ENGAGEMENT",
+              "scoreDelta": 15,
+              "repeatable": true,
+              "maxOccurrences": null,
+              "cooldownHours": null,
+              "enabled": true,
+              "sortOrder": 90,
+              "description": "会议已实际完成",
+              "createdAt": "2026-09-07T14:43:36.423Z",
+              "updatedAt": "2026-09-07T14:43:36.423Z"
+            },
+            "actor": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            }
+          },
+          "lead": {
+            "id": "cmtrgd89l005uqpwcafubqx2n",
+            "fullName": "V4-UI-线索-1788798302722",
+            "email": "business-1788798302722@example.test",
+            "phone": null,
+            "phoneNormalized": null,
+            "whatsapp": null,
+            "whatsappNormalized": null,
+            "wechat": null,
+            "linkedinUrl": null,
+            "title": null,
+            "department": null,
+            "companyName": "V4-UI-公司-1788798302722",
+            "companyWebsite": "https://v4-1788798302722.example.test",
+            "companyDomain": "v4-1788798302722.example.test",
+            "companySize": null,
+            "industry": null,
+            "countryCode": "CN",
+            "region": null,
+            "city": null,
+            "inquiryType": null,
+            "inquiryContent": "Phase 3 原始询盘：需要一套可扩展的企业级 3D 产品体验与销售协同方案。",
+            "productInterest": "WebAR 与 3D 商务展示",
+            "requirementTags": [],
+            "budgetRange": null,
+            "note": "Phase 3 UI 编辑已验证",
+            "source": "FORM",
+            "sourceChannel": "ORGANIC_SEARCH",
+            "sourceDetail": null,
+            "firstTouchAt": "2026-09-07T16:26:15.704Z",
+            "status": "NEW",
+            "ownerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+            "assignedAt": "2026-09-07T16:26:16.451Z",
+            "mqlAt": null,
+            "sqlAt": null,
+            "qualifiedAt": null,
+            "recycledAt": null,
+            "convertedAt": null,
+            "disqualifiedAt": null,
+            "disqualifiedReason": null,
+            "fitScore": 40,
+            "fitReason": null,
+            "engagementScoreCached": 15,
+            "engagementScoreCalculatedAt": "2026-09-07T16:26:18.302Z",
+            "lastActivityAt": "2026-09-07T16:26:18.296Z",
+            "firstSalesResponseAt": null,
+            "convertedOrganizationId": null,
+            "convertedContactId": null,
+            "convertedOpportunityId": null,
+            "convertedByUserId": null,
+            "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+            "createdAt": "2026-09-07T16:26:15.705Z",
+            "updatedAt": "2026-09-07T16:26:18.302Z",
+            "deletedAt": null,
+            "deletedByUserId": null,
+            "owner": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            },
+            "convertedBy": null,
+            "convertedOrganization": null,
+            "convertedContact": null,
+            "convertedOpportunity": null,
+            "createdBy": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            },
+            "activities": [
+              {
+                "id": "cmtrgda9l0067qpwccplct736",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "scoringRuleId": "81dfe1f6aaca11f1ac08960791467044",
+                "eventType": "MEETING_COMPLETED",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T16:26:18.296Z",
+                "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "note": null,
+                "engagementDeltaSnapshot": 15,
+                "fitDeltaSnapshot": 0,
+                "createdAt": "2026-09-07T16:26:18.297Z",
+                "scoringRule": {
+                  "id": "81dfe1f6aaca11f1ac08960791467044",
+                  "code": "MEETING_COMPLETED",
+                  "name": "完成会议",
+                  "category": "SALES",
+                  "scoreDimension": "ENGAGEMENT",
+                  "scoreDelta": 15,
+                  "repeatable": true,
+                  "maxOccurrences": null,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 90,
+                  "description": "会议已实际完成",
+                  "createdAt": "2026-09-07T14:43:36.423Z",
+                  "updatedAt": "2026-09-07T14:43:36.423Z"
+                },
+                "actor": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgd9g50062qpwc7fvbhwys",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "scoringRuleId": "81ecded6aaca11f1ac08960791467044",
+                "eventType": "ICP_PROFILE_MATCH",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T16:26:17.237Z",
+                "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "note": null,
+                "engagementDeltaSnapshot": 0,
+                "fitDeltaSnapshot": 40,
+                "createdAt": "2026-09-07T16:26:17.238Z",
+                "scoringRule": {
+                  "id": "81ecded6aaca11f1ac08960791467044",
+                  "code": "ICP_PROFILE_MATCH",
+                  "name": "符合目标客户画像",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "FIT",
+                  "scoreDelta": 40,
+                  "repeatable": false,
+                  "maxOccurrences": 1,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 45,
+                  "description": "已确认客户画像与目标市场、行业或应用场景匹配",
+                  "createdAt": "2026-09-07T14:43:36.509Z",
+                  "updatedAt": "2026-09-07T14:43:36.509Z"
+                },
+                "actor": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "scoreHistory": [
+              {
+                "id": "cmtrgda9p0069qpwcajdi5ngt",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "activityEventId": "cmtrgda9l0067qpwccplct736",
+                "dimension": "ENGAGEMENT",
+                "previousScore": 0,
+                "scoreDelta": 15,
+                "newScore": 15,
+                "reason": "MEETING_COMPLETED",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "createdAt": "2026-09-07T16:26:18.301Z",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgd9ga0064qpwcfdyxpe9x",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "activityEventId": "cmtrgd9g50062qpwc7fvbhwys",
+                "dimension": "FIT",
+                "previousScore": 0,
+                "scoreDelta": 40,
+                "newScore": 40,
+                "reason": "ICP_PROFILE_MATCH",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "createdAt": "2026-09-07T16:26:17.243Z",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "statusHistory": [
+              {
+                "id": "cmtrgd89s005wqpwcisr01ayo",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "fromStatus": null,
+                "toStatus": "NEW",
+                "reason": "Marketing lead created",
+                "changedAt": "2026-09-07T16:26:15.705Z",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "fitLevel": "MEDIUM",
+            "engagementLevel": "LOW",
+            "leadLevel": "COLD"
+          }
+        }
+      }
+    },
+    {
+      "name": "MarketingLead Activity 明确兴趣",
+      "method": "POST",
+      "url": "http://127.0.0.1:3311/api/v1/crm/marketing-leads/cmtrgd89l005uqpwcafubqx2n/activities",
+      "status": 201,
+      "response": {
+        "data": {
+          "activity": {
+            "id": "cmtrgdb2j006cqpwcxv1kbzbx",
+            "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+            "scoringRuleId": "81dfe236aaca11f1ac08960791467044",
+            "eventType": "EXPLICIT_INTEREST",
+            "source": "CRM",
+            "occurredAt": "2026-09-07T16:26:19.339Z",
+            "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+            "note": null,
+            "engagementDeltaSnapshot": 15,
+            "fitDeltaSnapshot": 0,
+            "createdAt": "2026-09-07T16:26:19.339Z",
+            "scoringRule": {
+              "id": "81dfe236aaca11f1ac08960791467044",
+              "code": "EXPLICIT_INTEREST",
+              "name": "明确兴趣",
+              "category": "QUALIFICATION",
+              "scoreDimension": "ENGAGEMENT",
+              "scoreDelta": 15,
+              "repeatable": true,
+              "maxOccurrences": 3,
+              "cooldownHours": null,
+              "enabled": true,
+              "sortOrder": 100,
+              "description": "客户明确表达兴趣",
+              "createdAt": "2026-09-07T14:43:36.423Z",
+              "updatedAt": "2026-09-07T14:43:36.423Z"
+            },
+            "actor": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            }
+          },
+          "lead": {
+            "id": "cmtrgd89l005uqpwcafubqx2n",
+            "fullName": "V4-UI-线索-1788798302722",
+            "email": "business-1788798302722@example.test",
+            "phone": null,
+            "phoneNormalized": null,
+            "whatsapp": null,
+            "whatsappNormalized": null,
+            "wechat": null,
+            "linkedinUrl": null,
+            "title": null,
+            "department": null,
+            "companyName": "V4-UI-公司-1788798302722",
+            "companyWebsite": "https://v4-1788798302722.example.test",
+            "companyDomain": "v4-1788798302722.example.test",
+            "companySize": null,
+            "industry": null,
+            "countryCode": "CN",
+            "region": null,
+            "city": null,
+            "inquiryType": null,
+            "inquiryContent": "Phase 3 原始询盘：需要一套可扩展的企业级 3D 产品体验与销售协同方案。",
+            "productInterest": "WebAR 与 3D 商务展示",
+            "requirementTags": [],
+            "budgetRange": null,
+            "note": "Phase 3 UI 编辑已验证",
+            "source": "FORM",
+            "sourceChannel": "ORGANIC_SEARCH",
+            "sourceDetail": null,
+            "firstTouchAt": "2026-09-07T16:26:15.704Z",
+            "status": "NEW",
+            "ownerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+            "assignedAt": "2026-09-07T16:26:16.451Z",
+            "mqlAt": null,
+            "sqlAt": null,
+            "qualifiedAt": null,
+            "recycledAt": null,
+            "convertedAt": null,
+            "disqualifiedAt": null,
+            "disqualifiedReason": null,
+            "fitScore": 40,
+            "fitReason": null,
+            "engagementScoreCached": 30,
+            "engagementScoreCalculatedAt": "2026-09-07T16:26:19.346Z",
+            "lastActivityAt": "2026-09-07T16:26:19.339Z",
+            "firstSalesResponseAt": null,
+            "convertedOrganizationId": null,
+            "convertedContactId": null,
+            "convertedOpportunityId": null,
+            "convertedByUserId": null,
+            "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+            "createdAt": "2026-09-07T16:26:15.705Z",
+            "updatedAt": "2026-09-07T16:26:19.346Z",
+            "deletedAt": null,
+            "deletedByUserId": null,
+            "owner": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            },
+            "convertedBy": null,
+            "convertedOrganization": null,
+            "convertedContact": null,
+            "convertedOpportunity": null,
+            "createdBy": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            },
+            "activities": [
+              {
+                "id": "cmtrgdb2j006cqpwcxv1kbzbx",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "scoringRuleId": "81dfe236aaca11f1ac08960791467044",
+                "eventType": "EXPLICIT_INTEREST",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T16:26:19.339Z",
+                "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "note": null,
+                "engagementDeltaSnapshot": 15,
+                "fitDeltaSnapshot": 0,
+                "createdAt": "2026-09-07T16:26:19.339Z",
+                "scoringRule": {
+                  "id": "81dfe236aaca11f1ac08960791467044",
+                  "code": "EXPLICIT_INTEREST",
+                  "name": "明确兴趣",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "ENGAGEMENT",
+                  "scoreDelta": 15,
+                  "repeatable": true,
+                  "maxOccurrences": 3,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 100,
+                  "description": "客户明确表达兴趣",
+                  "createdAt": "2026-09-07T14:43:36.423Z",
+                  "updatedAt": "2026-09-07T14:43:36.423Z"
+                },
+                "actor": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgda9l0067qpwccplct736",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "scoringRuleId": "81dfe1f6aaca11f1ac08960791467044",
+                "eventType": "MEETING_COMPLETED",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T16:26:18.296Z",
+                "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "note": null,
+                "engagementDeltaSnapshot": 15,
+                "fitDeltaSnapshot": 0,
+                "createdAt": "2026-09-07T16:26:18.297Z",
+                "scoringRule": {
+                  "id": "81dfe1f6aaca11f1ac08960791467044",
+                  "code": "MEETING_COMPLETED",
+                  "name": "完成会议",
+                  "category": "SALES",
+                  "scoreDimension": "ENGAGEMENT",
+                  "scoreDelta": 15,
+                  "repeatable": true,
+                  "maxOccurrences": null,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 90,
+                  "description": "会议已实际完成",
+                  "createdAt": "2026-09-07T14:43:36.423Z",
+                  "updatedAt": "2026-09-07T14:43:36.423Z"
+                },
+                "actor": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgd9g50062qpwc7fvbhwys",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "scoringRuleId": "81ecded6aaca11f1ac08960791467044",
+                "eventType": "ICP_PROFILE_MATCH",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T16:26:17.237Z",
+                "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "note": null,
+                "engagementDeltaSnapshot": 0,
+                "fitDeltaSnapshot": 40,
+                "createdAt": "2026-09-07T16:26:17.238Z",
+                "scoringRule": {
+                  "id": "81ecded6aaca11f1ac08960791467044",
+                  "code": "ICP_PROFILE_MATCH",
+                  "name": "符合目标客户画像",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "FIT",
+                  "scoreDelta": 40,
+                  "repeatable": false,
+                  "maxOccurrences": 1,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 45,
+                  "description": "已确认客户画像与目标市场、行业或应用场景匹配",
+                  "createdAt": "2026-09-07T14:43:36.509Z",
+                  "updatedAt": "2026-09-07T14:43:36.509Z"
+                },
+                "actor": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "scoreHistory": [
+              {
+                "id": "cmtrgdb2o006eqpwcnr8rdgpw",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "activityEventId": "cmtrgdb2j006cqpwcxv1kbzbx",
+                "dimension": "ENGAGEMENT",
+                "previousScore": 15,
+                "scoreDelta": 15,
+                "newScore": 30,
+                "reason": "EXPLICIT_INTEREST",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "createdAt": "2026-09-07T16:26:19.344Z",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgda9p0069qpwcajdi5ngt",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "activityEventId": "cmtrgda9l0067qpwccplct736",
+                "dimension": "ENGAGEMENT",
+                "previousScore": 0,
+                "scoreDelta": 15,
+                "newScore": 15,
+                "reason": "MEETING_COMPLETED",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "createdAt": "2026-09-07T16:26:18.301Z",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgd9ga0064qpwcfdyxpe9x",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "activityEventId": "cmtrgd9g50062qpwc7fvbhwys",
+                "dimension": "FIT",
+                "previousScore": 0,
+                "scoreDelta": 40,
+                "newScore": 40,
+                "reason": "ICP_PROFILE_MATCH",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "createdAt": "2026-09-07T16:26:17.243Z",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "statusHistory": [
+              {
+                "id": "cmtrgd89s005wqpwcisr01ayo",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "fromStatus": null,
+                "toStatus": "NEW",
+                "reason": "Marketing lead created",
+                "changedAt": "2026-09-07T16:26:15.705Z",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "fitLevel": "MEDIUM",
+            "engagementLevel": "LOW",
+            "leadLevel": "COLD"
+          }
+        }
+      }
+    },
+    {
+      "name": "MarketingLead Activity 明确需求",
+      "method": "POST",
+      "url": "http://127.0.0.1:3311/api/v1/crm/marketing-leads/cmtrgd89l005uqpwcafubqx2n/activities",
+      "status": 201,
+      "response": {
+        "data": {
+          "activity": {
+            "id": "cmtrgdbw7006hqpwc88c31tli",
+            "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+            "scoringRuleId": "81dfe276aaca11f1ac08960791467044",
+            "eventType": "EXPLICIT_REQUIREMENT",
+            "source": "CRM",
+            "occurredAt": "2026-09-07T16:26:20.407Z",
+            "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+            "note": null,
+            "engagementDeltaSnapshot": 20,
+            "fitDeltaSnapshot": 0,
+            "createdAt": "2026-09-07T16:26:20.407Z",
+            "scoringRule": {
+              "id": "81dfe276aaca11f1ac08960791467044",
+              "code": "EXPLICIT_REQUIREMENT",
+              "name": "明确需求",
+              "category": "QUALIFICATION",
+              "scoreDimension": "ENGAGEMENT",
+              "scoreDelta": 20,
+              "repeatable": true,
+              "maxOccurrences": 3,
+              "cooldownHours": null,
+              "enabled": true,
+              "sortOrder": 110,
+              "description": "客户明确说明业务需求",
+              "createdAt": "2026-09-07T14:43:36.423Z",
+              "updatedAt": "2026-09-07T14:43:36.423Z"
+            },
+            "actor": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            }
+          },
+          "lead": {
+            "id": "cmtrgd89l005uqpwcafubqx2n",
+            "fullName": "V4-UI-线索-1788798302722",
+            "email": "business-1788798302722@example.test",
+            "phone": null,
+            "phoneNormalized": null,
+            "whatsapp": null,
+            "whatsappNormalized": null,
+            "wechat": null,
+            "linkedinUrl": null,
+            "title": null,
+            "department": null,
+            "companyName": "V4-UI-公司-1788798302722",
+            "companyWebsite": "https://v4-1788798302722.example.test",
+            "companyDomain": "v4-1788798302722.example.test",
+            "companySize": null,
+            "industry": null,
+            "countryCode": "CN",
+            "region": null,
+            "city": null,
+            "inquiryType": null,
+            "inquiryContent": "Phase 3 原始询盘：需要一套可扩展的企业级 3D 产品体验与销售协同方案。",
+            "productInterest": "WebAR 与 3D 商务展示",
+            "requirementTags": [],
+            "budgetRange": null,
+            "note": "Phase 3 UI 编辑已验证",
+            "source": "FORM",
+            "sourceChannel": "ORGANIC_SEARCH",
+            "sourceDetail": null,
+            "firstTouchAt": "2026-09-07T16:26:15.704Z",
+            "status": "NEW",
+            "ownerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+            "assignedAt": "2026-09-07T16:26:16.451Z",
+            "mqlAt": null,
+            "sqlAt": null,
+            "qualifiedAt": null,
+            "recycledAt": null,
+            "convertedAt": null,
+            "disqualifiedAt": null,
+            "disqualifiedReason": null,
+            "fitScore": 40,
+            "fitReason": null,
+            "engagementScoreCached": 50,
+            "engagementScoreCalculatedAt": "2026-09-07T16:26:20.415Z",
+            "lastActivityAt": "2026-09-07T16:26:20.407Z",
+            "firstSalesResponseAt": null,
+            "convertedOrganizationId": null,
+            "convertedContactId": null,
+            "convertedOpportunityId": null,
+            "convertedByUserId": null,
+            "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+            "createdAt": "2026-09-07T16:26:15.705Z",
+            "updatedAt": "2026-09-07T16:26:20.416Z",
+            "deletedAt": null,
+            "deletedByUserId": null,
+            "owner": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            },
+            "convertedBy": null,
+            "convertedOrganization": null,
+            "convertedContact": null,
+            "convertedOpportunity": null,
+            "createdBy": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            },
+            "activities": [
+              {
+                "id": "cmtrgdbw7006hqpwc88c31tli",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "scoringRuleId": "81dfe276aaca11f1ac08960791467044",
+                "eventType": "EXPLICIT_REQUIREMENT",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T16:26:20.407Z",
+                "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "note": null,
+                "engagementDeltaSnapshot": 20,
+                "fitDeltaSnapshot": 0,
+                "createdAt": "2026-09-07T16:26:20.407Z",
+                "scoringRule": {
+                  "id": "81dfe276aaca11f1ac08960791467044",
+                  "code": "EXPLICIT_REQUIREMENT",
+                  "name": "明确需求",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "ENGAGEMENT",
+                  "scoreDelta": 20,
+                  "repeatable": true,
+                  "maxOccurrences": 3,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 110,
+                  "description": "客户明确说明业务需求",
+                  "createdAt": "2026-09-07T14:43:36.423Z",
+                  "updatedAt": "2026-09-07T14:43:36.423Z"
+                },
+                "actor": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgdb2j006cqpwcxv1kbzbx",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "scoringRuleId": "81dfe236aaca11f1ac08960791467044",
+                "eventType": "EXPLICIT_INTEREST",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T16:26:19.339Z",
+                "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "note": null,
+                "engagementDeltaSnapshot": 15,
+                "fitDeltaSnapshot": 0,
+                "createdAt": "2026-09-07T16:26:19.339Z",
+                "scoringRule": {
+                  "id": "81dfe236aaca11f1ac08960791467044",
+                  "code": "EXPLICIT_INTEREST",
+                  "name": "明确兴趣",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "ENGAGEMENT",
+                  "scoreDelta": 15,
+                  "repeatable": true,
+                  "maxOccurrences": 3,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 100,
+                  "description": "客户明确表达兴趣",
+                  "createdAt": "2026-09-07T14:43:36.423Z",
+                  "updatedAt": "2026-09-07T14:43:36.423Z"
+                },
+                "actor": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgda9l0067qpwccplct736",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "scoringRuleId": "81dfe1f6aaca11f1ac08960791467044",
+                "eventType": "MEETING_COMPLETED",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T16:26:18.296Z",
+                "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "note": null,
+                "engagementDeltaSnapshot": 15,
+                "fitDeltaSnapshot": 0,
+                "createdAt": "2026-09-07T16:26:18.297Z",
+                "scoringRule": {
+                  "id": "81dfe1f6aaca11f1ac08960791467044",
+                  "code": "MEETING_COMPLETED",
+                  "name": "完成会议",
+                  "category": "SALES",
+                  "scoreDimension": "ENGAGEMENT",
+                  "scoreDelta": 15,
+                  "repeatable": true,
+                  "maxOccurrences": null,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 90,
+                  "description": "会议已实际完成",
+                  "createdAt": "2026-09-07T14:43:36.423Z",
+                  "updatedAt": "2026-09-07T14:43:36.423Z"
+                },
+                "actor": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgd9g50062qpwc7fvbhwys",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "scoringRuleId": "81ecded6aaca11f1ac08960791467044",
+                "eventType": "ICP_PROFILE_MATCH",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T16:26:17.237Z",
+                "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "note": null,
+                "engagementDeltaSnapshot": 0,
+                "fitDeltaSnapshot": 40,
+                "createdAt": "2026-09-07T16:26:17.238Z",
+                "scoringRule": {
+                  "id": "81ecded6aaca11f1ac08960791467044",
+                  "code": "ICP_PROFILE_MATCH",
+                  "name": "符合目标客户画像",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "FIT",
+                  "scoreDelta": 40,
+                  "repeatable": false,
+                  "maxOccurrences": 1,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 45,
+                  "description": "已确认客户画像与目标市场、行业或应用场景匹配",
+                  "createdAt": "2026-09-07T14:43:36.509Z",
+                  "updatedAt": "2026-09-07T14:43:36.509Z"
+                },
+                "actor": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "scoreHistory": [
+              {
+                "id": "cmtrgdbwc006jqpwcqkhfy8zb",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "activityEventId": "cmtrgdbw7006hqpwc88c31tli",
+                "dimension": "ENGAGEMENT",
+                "previousScore": 30,
+                "scoreDelta": 20,
+                "newScore": 50,
+                "reason": "EXPLICIT_REQUIREMENT",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "createdAt": "2026-09-07T16:26:20.412Z",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgdb2o006eqpwcnr8rdgpw",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "activityEventId": "cmtrgdb2j006cqpwcxv1kbzbx",
+                "dimension": "ENGAGEMENT",
+                "previousScore": 15,
+                "scoreDelta": 15,
+                "newScore": 30,
+                "reason": "EXPLICIT_INTEREST",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "createdAt": "2026-09-07T16:26:19.344Z",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgda9p0069qpwcajdi5ngt",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "activityEventId": "cmtrgda9l0067qpwccplct736",
+                "dimension": "ENGAGEMENT",
+                "previousScore": 0,
+                "scoreDelta": 15,
+                "newScore": 15,
+                "reason": "MEETING_COMPLETED",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "createdAt": "2026-09-07T16:26:18.301Z",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgd9ga0064qpwcfdyxpe9x",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "activityEventId": "cmtrgd9g50062qpwc7fvbhwys",
+                "dimension": "FIT",
+                "previousScore": 0,
+                "scoreDelta": 40,
+                "newScore": 40,
+                "reason": "ICP_PROFILE_MATCH",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "createdAt": "2026-09-07T16:26:17.243Z",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "statusHistory": [
+              {
+                "id": "cmtrgd89s005wqpwcisr01ayo",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "fromStatus": null,
+                "toStatus": "NEW",
+                "reason": "Marketing lead created",
+                "changedAt": "2026-09-07T16:26:15.705Z",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "fitLevel": "MEDIUM",
+            "engagementLevel": "MEDIUM",
+            "leadLevel": "WARM"
+          }
+        }
+      }
+    },
+    {
+      "name": "MarketingLead Activity 要求方案",
+      "method": "POST",
+      "url": "http://127.0.0.1:3311/api/v1/crm/marketing-leads/cmtrgd89l005uqpwcafubqx2n/activities",
+      "status": 201,
+      "response": {
+        "data": {
+          "activity": {
+            "id": "cmtrgdcph006mqpwcz342b5iz",
+            "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+            "scoringRuleId": "81dfe2b6aaca11f1ac08960791467044",
+            "eventType": "REQUEST_SOLUTION",
+            "source": "CRM",
+            "occurredAt": "2026-09-07T16:26:21.461Z",
+            "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+            "note": null,
+            "engagementDeltaSnapshot": 20,
+            "fitDeltaSnapshot": 0,
+            "createdAt": "2026-09-07T16:26:21.461Z",
+            "scoringRule": {
+              "id": "81dfe2b6aaca11f1ac08960791467044",
+              "code": "REQUEST_SOLUTION",
+              "name": "要求方案",
+              "category": "QUALIFICATION",
+              "scoreDimension": "ENGAGEMENT",
+              "scoreDelta": 20,
+              "repeatable": true,
+              "maxOccurrences": 3,
+              "cooldownHours": null,
+              "enabled": true,
+              "sortOrder": 120,
+              "description": "客户要求正式方案",
+              "createdAt": "2026-09-07T14:43:36.423Z",
+              "updatedAt": "2026-09-07T14:43:36.423Z"
+            },
+            "actor": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            }
+          },
+          "lead": {
+            "id": "cmtrgd89l005uqpwcafubqx2n",
+            "fullName": "V4-UI-线索-1788798302722",
+            "email": "business-1788798302722@example.test",
+            "phone": null,
+            "phoneNormalized": null,
+            "whatsapp": null,
+            "whatsappNormalized": null,
+            "wechat": null,
+            "linkedinUrl": null,
+            "title": null,
+            "department": null,
+            "companyName": "V4-UI-公司-1788798302722",
+            "companyWebsite": "https://v4-1788798302722.example.test",
+            "companyDomain": "v4-1788798302722.example.test",
+            "companySize": null,
+            "industry": null,
+            "countryCode": "CN",
+            "region": null,
+            "city": null,
+            "inquiryType": null,
+            "inquiryContent": "Phase 3 原始询盘：需要一套可扩展的企业级 3D 产品体验与销售协同方案。",
+            "productInterest": "WebAR 与 3D 商务展示",
+            "requirementTags": [],
+            "budgetRange": null,
+            "note": "Phase 3 UI 编辑已验证",
+            "source": "FORM",
+            "sourceChannel": "ORGANIC_SEARCH",
+            "sourceDetail": null,
+            "firstTouchAt": "2026-09-07T16:26:15.704Z",
+            "status": "MQL",
+            "ownerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+            "assignedAt": "2026-09-07T16:26:16.451Z",
+            "mqlAt": "2026-09-07T16:26:21.472Z",
+            "sqlAt": null,
+            "qualifiedAt": null,
+            "recycledAt": null,
+            "convertedAt": null,
+            "disqualifiedAt": null,
+            "disqualifiedReason": null,
+            "fitScore": 40,
+            "fitReason": null,
+            "engagementScoreCached": 70,
+            "engagementScoreCalculatedAt": "2026-09-07T16:26:21.466Z",
+            "lastActivityAt": "2026-09-07T16:26:21.461Z",
+            "firstSalesResponseAt": null,
+            "convertedOrganizationId": null,
+            "convertedContactId": null,
+            "convertedOpportunityId": null,
+            "convertedByUserId": null,
+            "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+            "createdAt": "2026-09-07T16:26:15.705Z",
+            "updatedAt": "2026-09-07T16:26:21.473Z",
+            "deletedAt": null,
+            "deletedByUserId": null,
+            "owner": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            },
+            "convertedBy": null,
+            "convertedOrganization": null,
+            "convertedContact": null,
+            "convertedOpportunity": null,
+            "createdBy": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            },
+            "activities": [
+              {
+                "id": "cmtrgdcph006mqpwcz342b5iz",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "scoringRuleId": "81dfe2b6aaca11f1ac08960791467044",
+                "eventType": "REQUEST_SOLUTION",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T16:26:21.461Z",
+                "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "note": null,
+                "engagementDeltaSnapshot": 20,
+                "fitDeltaSnapshot": 0,
+                "createdAt": "2026-09-07T16:26:21.461Z",
+                "scoringRule": {
+                  "id": "81dfe2b6aaca11f1ac08960791467044",
+                  "code": "REQUEST_SOLUTION",
+                  "name": "要求方案",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "ENGAGEMENT",
+                  "scoreDelta": 20,
+                  "repeatable": true,
+                  "maxOccurrences": 3,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 120,
+                  "description": "客户要求正式方案",
+                  "createdAt": "2026-09-07T14:43:36.423Z",
+                  "updatedAt": "2026-09-07T14:43:36.423Z"
+                },
+                "actor": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgdbw7006hqpwc88c31tli",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "scoringRuleId": "81dfe276aaca11f1ac08960791467044",
+                "eventType": "EXPLICIT_REQUIREMENT",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T16:26:20.407Z",
+                "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "note": null,
+                "engagementDeltaSnapshot": 20,
+                "fitDeltaSnapshot": 0,
+                "createdAt": "2026-09-07T16:26:20.407Z",
+                "scoringRule": {
+                  "id": "81dfe276aaca11f1ac08960791467044",
+                  "code": "EXPLICIT_REQUIREMENT",
+                  "name": "明确需求",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "ENGAGEMENT",
+                  "scoreDelta": 20,
+                  "repeatable": true,
+                  "maxOccurrences": 3,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 110,
+                  "description": "客户明确说明业务需求",
+                  "createdAt": "2026-09-07T14:43:36.423Z",
+                  "updatedAt": "2026-09-07T14:43:36.423Z"
+                },
+                "actor": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgdb2j006cqpwcxv1kbzbx",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "scoringRuleId": "81dfe236aaca11f1ac08960791467044",
+                "eventType": "EXPLICIT_INTEREST",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T16:26:19.339Z",
+                "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "note": null,
+                "engagementDeltaSnapshot": 15,
+                "fitDeltaSnapshot": 0,
+                "createdAt": "2026-09-07T16:26:19.339Z",
+                "scoringRule": {
+                  "id": "81dfe236aaca11f1ac08960791467044",
+                  "code": "EXPLICIT_INTEREST",
+                  "name": "明确兴趣",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "ENGAGEMENT",
+                  "scoreDelta": 15,
+                  "repeatable": true,
+                  "maxOccurrences": 3,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 100,
+                  "description": "客户明确表达兴趣",
+                  "createdAt": "2026-09-07T14:43:36.423Z",
+                  "updatedAt": "2026-09-07T14:43:36.423Z"
+                },
+                "actor": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgda9l0067qpwccplct736",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "scoringRuleId": "81dfe1f6aaca11f1ac08960791467044",
+                "eventType": "MEETING_COMPLETED",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T16:26:18.296Z",
+                "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "note": null,
+                "engagementDeltaSnapshot": 15,
+                "fitDeltaSnapshot": 0,
+                "createdAt": "2026-09-07T16:26:18.297Z",
+                "scoringRule": {
+                  "id": "81dfe1f6aaca11f1ac08960791467044",
+                  "code": "MEETING_COMPLETED",
+                  "name": "完成会议",
+                  "category": "SALES",
+                  "scoreDimension": "ENGAGEMENT",
+                  "scoreDelta": 15,
+                  "repeatable": true,
+                  "maxOccurrences": null,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 90,
+                  "description": "会议已实际完成",
+                  "createdAt": "2026-09-07T14:43:36.423Z",
+                  "updatedAt": "2026-09-07T14:43:36.423Z"
+                },
+                "actor": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgd9g50062qpwc7fvbhwys",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "scoringRuleId": "81ecded6aaca11f1ac08960791467044",
+                "eventType": "ICP_PROFILE_MATCH",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T16:26:17.237Z",
+                "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "note": null,
+                "engagementDeltaSnapshot": 0,
+                "fitDeltaSnapshot": 40,
+                "createdAt": "2026-09-07T16:26:17.238Z",
+                "scoringRule": {
+                  "id": "81ecded6aaca11f1ac08960791467044",
+                  "code": "ICP_PROFILE_MATCH",
+                  "name": "符合目标客户画像",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "FIT",
+                  "scoreDelta": 40,
+                  "repeatable": false,
+                  "maxOccurrences": 1,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 45,
+                  "description": "已确认客户画像与目标市场、行业或应用场景匹配",
+                  "createdAt": "2026-09-07T14:43:36.509Z",
+                  "updatedAt": "2026-09-07T14:43:36.509Z"
+                },
+                "actor": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "scoreHistory": [
+              {
+                "id": "cmtrgdcpk006oqpwczzom6zyb",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "activityEventId": "cmtrgdcph006mqpwcz342b5iz",
+                "dimension": "ENGAGEMENT",
+                "previousScore": 50,
+                "scoreDelta": 20,
+                "newScore": 70,
+                "reason": "REQUEST_SOLUTION",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "createdAt": "2026-09-07T16:26:21.465Z",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgdbwc006jqpwcqkhfy8zb",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "activityEventId": "cmtrgdbw7006hqpwc88c31tli",
+                "dimension": "ENGAGEMENT",
+                "previousScore": 30,
+                "scoreDelta": 20,
+                "newScore": 50,
+                "reason": "EXPLICIT_REQUIREMENT",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "createdAt": "2026-09-07T16:26:20.412Z",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgdb2o006eqpwcnr8rdgpw",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "activityEventId": "cmtrgdb2j006cqpwcxv1kbzbx",
+                "dimension": "ENGAGEMENT",
+                "previousScore": 15,
+                "scoreDelta": 15,
+                "newScore": 30,
+                "reason": "EXPLICIT_INTEREST",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "createdAt": "2026-09-07T16:26:19.344Z",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgda9p0069qpwcajdi5ngt",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "activityEventId": "cmtrgda9l0067qpwccplct736",
+                "dimension": "ENGAGEMENT",
+                "previousScore": 0,
+                "scoreDelta": 15,
+                "newScore": 15,
+                "reason": "MEETING_COMPLETED",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "createdAt": "2026-09-07T16:26:18.301Z",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgd9ga0064qpwcfdyxpe9x",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "activityEventId": "cmtrgd9g50062qpwc7fvbhwys",
+                "dimension": "FIT",
+                "previousScore": 0,
+                "scoreDelta": 40,
+                "newScore": 40,
+                "reason": "ICP_PROFILE_MATCH",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "createdAt": "2026-09-07T16:26:17.243Z",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "statusHistory": [
+              {
+                "id": "cmtrgdcpv006rqpwcbnjzthzb",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "fromStatus": "NEW",
+                "toStatus": "MQL",
+                "reason": "Automatic MQL: Fit >= 40, Engagement >= 70",
+                "changedAt": "2026-09-07T16:26:21.472Z",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrgd89s005wqpwcisr01ayo",
+                "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+                "fromStatus": null,
+                "toStatus": "NEW",
+                "reason": "Marketing lead created",
+                "changedAt": "2026-09-07T16:26:15.705Z",
+                "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+                "changedBy": {
+                  "id": "cmtrdogg40001qpd1ylwn9ctr",
+                  "name": "Phase 3 测试管理员",
+                  "loginAccount": "admin@phase3.example.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "fitLevel": "MEDIUM",
+            "engagementLevel": "HIGH",
+            "leadLevel": "WARM"
+          }
+        }
+      }
+    },
+    {
+      "name": "MQL → SQL",
+      "method": "POST",
+      "url": "http://127.0.0.1:3311/api/v1/crm/marketing-leads/cmtrgd89l005uqpwcafubqx2n/transition",
+      "status": 200,
+      "response": {
+        "data": {
+          "id": "cmtrgd89l005uqpwcafubqx2n",
+          "fullName": "V4-UI-线索-1788798302722",
+          "email": "business-1788798302722@example.test",
+          "phone": null,
+          "phoneNormalized": null,
+          "whatsapp": null,
+          "whatsappNormalized": null,
+          "wechat": null,
+          "linkedinUrl": null,
+          "title": null,
+          "department": null,
+          "companyName": "V4-UI-公司-1788798302722",
+          "companyWebsite": "https://v4-1788798302722.example.test",
+          "companyDomain": "v4-1788798302722.example.test",
+          "companySize": null,
+          "industry": null,
+          "countryCode": "CN",
+          "region": null,
+          "city": null,
+          "inquiryType": null,
+          "inquiryContent": "Phase 3 原始询盘：需要一套可扩展的企业级 3D 产品体验与销售协同方案。",
+          "productInterest": "WebAR 与 3D 商务展示",
+          "requirementTags": [],
+          "budgetRange": null,
+          "note": "Phase 3 UI 编辑已验证",
+          "source": "FORM",
+          "sourceChannel": "ORGANIC_SEARCH",
+          "sourceDetail": null,
+          "firstTouchAt": "2026-09-07T16:26:15.704Z",
+          "status": "SQL",
+          "ownerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "assignedAt": "2026-09-07T16:26:16.451Z",
+          "mqlAt": "2026-09-07T16:26:21.472Z",
+          "sqlAt": "2026-09-07T16:26:22.790Z",
+          "qualifiedAt": null,
+          "recycledAt": null,
+          "convertedAt": null,
+          "disqualifiedAt": null,
+          "disqualifiedReason": null,
+          "fitScore": 40,
+          "fitReason": null,
+          "engagementScoreCached": 70,
+          "engagementScoreCalculatedAt": "2026-09-07T16:26:21.466Z",
+          "lastActivityAt": "2026-09-07T16:26:21.461Z",
+          "firstSalesResponseAt": "2026-09-07T16:26:22.790Z",
+          "convertedOrganizationId": null,
+          "convertedContactId": null,
+          "convertedOpportunityId": null,
+          "convertedByUserId": null,
+          "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "createdAt": "2026-09-07T16:26:15.705Z",
+          "updatedAt": "2026-09-07T16:26:22.791Z",
+          "deletedAt": null,
+          "deletedByUserId": null,
+          "owner": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "convertedBy": null,
+          "convertedOrganization": null,
+          "convertedContact": null,
+          "convertedOpportunity": null,
+          "createdBy": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "activities": [
+            {
+              "id": "cmtrgdcph006mqpwcz342b5iz",
+              "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+              "scoringRuleId": "81dfe2b6aaca11f1ac08960791467044",
+              "eventType": "REQUEST_SOLUTION",
+              "source": "CRM",
+              "occurredAt": "2026-09-07T16:26:21.461Z",
+              "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+              "note": null,
+              "engagementDeltaSnapshot": 20,
+              "fitDeltaSnapshot": 0,
+              "createdAt": "2026-09-07T16:26:21.461Z",
+              "scoringRule": {
+                "id": "81dfe2b6aaca11f1ac08960791467044",
+                "code": "REQUEST_SOLUTION",
+                "name": "要求方案",
+                "category": "QUALIFICATION",
+                "scoreDimension": "ENGAGEMENT",
+                "scoreDelta": 20,
+                "repeatable": true,
+                "maxOccurrences": 3,
+                "cooldownHours": null,
+                "enabled": true,
+                "sortOrder": 120,
+                "description": "客户要求正式方案",
+                "createdAt": "2026-09-07T14:43:36.423Z",
+                "updatedAt": "2026-09-07T14:43:36.423Z"
+              },
+              "actor": {
+                "id": "cmtrdogg40001qpd1ylwn9ctr",
+                "name": "Phase 3 测试管理员",
+                "loginAccount": "admin@phase3.example.test",
+                "status": "ACTIVE"
+              }
+            },
+            {
+              "id": "cmtrgdbw7006hqpwc88c31tli",
+              "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+              "scoringRuleId": "81dfe276aaca11f1ac08960791467044",
+              "eventType": "EXPLICIT_REQUIREMENT",
+              "source": "CRM",
+              "occurredAt": "2026-09-07T16:26:20.407Z",
+              "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+              "note": null,
+              "engagementDeltaSnapshot": 20,
+              "fitDeltaSnapshot": 0,
+              "createdAt": "2026-09-07T16:26:20.407Z",
+              "scoringRule": {
+                "id": "81dfe276aaca11f1ac08960791467044",
+                "code": "EXPLICIT_REQUIREMENT",
+                "name": "明确需求",
+                "category": "QUALIFICATION",
+                "scoreDimension": "ENGAGEMENT",
+                "scoreDelta": 20,
+                "repeatable": true,
+                "maxOccurrences": 3,
+                "cooldownHours": null,
+                "enabled": true,
+                "sortOrder": 110,
+                "description": "客户明确说明业务需求",
+                "createdAt": "2026-09-07T14:43:36.423Z",
+                "updatedAt": "2026-09-07T14:43:36.423Z"
+              },
+              "actor": {
+                "id": "cmtrdogg40001qpd1ylwn9ctr",
+                "name": "Phase 3 测试管理员",
+                "loginAccount": "admin@phase3.example.test",
+                "status": "ACTIVE"
+              }
+            },
+            {
+              "id": "cmtrgdb2j006cqpwcxv1kbzbx",
+              "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+              "scoringRuleId": "81dfe236aaca11f1ac08960791467044",
+              "eventType": "EXPLICIT_INTEREST",
+              "source": "CRM",
+              "occurredAt": "2026-09-07T16:26:19.339Z",
+              "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+              "note": null,
+              "engagementDeltaSnapshot": 15,
+              "fitDeltaSnapshot": 0,
+              "createdAt": "2026-09-07T16:26:19.339Z",
+              "scoringRule": {
+                "id": "81dfe236aaca11f1ac08960791467044",
+                "code": "EXPLICIT_INTEREST",
+                "name": "明确兴趣",
+                "category": "QUALIFICATION",
+                "scoreDimension": "ENGAGEMENT",
+                "scoreDelta": 15,
+                "repeatable": true,
+                "maxOccurrences": 3,
+                "cooldownHours": null,
+                "enabled": true,
+                "sortOrder": 100,
+                "description": "客户明确表达兴趣",
+                "createdAt": "2026-09-07T14:43:36.423Z",
+                "updatedAt": "2026-09-07T14:43:36.423Z"
+              },
+              "actor": {
+                "id": "cmtrdogg40001qpd1ylwn9ctr",
+                "name": "Phase 3 测试管理员",
+                "loginAccount": "admin@phase3.example.test",
+                "status": "ACTIVE"
+              }
+            },
+            {
+              "id": "cmtrgda9l0067qpwccplct736",
+              "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+              "scoringRuleId": "81dfe1f6aaca11f1ac08960791467044",
+              "eventType": "MEETING_COMPLETED",
+              "source": "CRM",
+              "occurredAt": "2026-09-07T16:26:18.296Z",
+              "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+              "note": null,
+              "engagementDeltaSnapshot": 15,
+              "fitDeltaSnapshot": 0,
+              "createdAt": "2026-09-07T16:26:18.297Z",
+              "scoringRule": {
+                "id": "81dfe1f6aaca11f1ac08960791467044",
+                "code": "MEETING_COMPLETED",
+                "name": "完成会议",
+                "category": "SALES",
+                "scoreDimension": "ENGAGEMENT",
+                "scoreDelta": 15,
+                "repeatable": true,
+                "maxOccurrences": null,
+                "cooldownHours": null,
+                "enabled": true,
+                "sortOrder": 90,
+                "description": "会议已实际完成",
+                "createdAt": "2026-09-07T14:43:36.423Z",
+                "updatedAt": "2026-09-07T14:43:36.423Z"
+              },
+              "actor": {
+                "id": "cmtrdogg40001qpd1ylwn9ctr",
+                "name": "Phase 3 测试管理员",
+                "loginAccount": "admin@phase3.example.test",
+                "status": "ACTIVE"
+              }
+            },
+            {
+              "id": "cmtrgd9g50062qpwc7fvbhwys",
+              "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+              "scoringRuleId": "81ecded6aaca11f1ac08960791467044",
+              "eventType": "ICP_PROFILE_MATCH",
+              "source": "CRM",
+              "occurredAt": "2026-09-07T16:26:17.237Z",
+              "actorUserId": "cmtrdogg40001qpd1ylwn9ctr",
+              "note": null,
+              "engagementDeltaSnapshot": 0,
+              "fitDeltaSnapshot": 40,
+              "createdAt": "2026-09-07T16:26:17.238Z",
+              "scoringRule": {
+                "id": "81ecded6aaca11f1ac08960791467044",
+                "code": "ICP_PROFILE_MATCH",
+                "name": "符合目标客户画像",
+                "category": "QUALIFICATION",
+                "scoreDimension": "FIT",
+                "scoreDelta": 40,
+                "repeatable": false,
+                "maxOccurrences": 1,
+                "cooldownHours": null,
+                "enabled": true,
+                "sortOrder": 45,
+                "description": "已确认客户画像与目标市场、行业或应用场景匹配",
+                "createdAt": "2026-09-07T14:43:36.509Z",
+                "updatedAt": "2026-09-07T14:43:36.509Z"
+              },
+              "actor": {
+                "id": "cmtrdogg40001qpd1ylwn9ctr",
+                "name": "Phase 3 测试管理员",
+                "loginAccount": "admin@phase3.example.test",
+                "status": "ACTIVE"
+              }
+            }
+          ],
+          "scoreHistory": [
+            {
+              "id": "cmtrgdcpk006oqpwczzom6zyb",
+              "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+              "activityEventId": "cmtrgdcph006mqpwcz342b5iz",
+              "dimension": "ENGAGEMENT",
+              "previousScore": 50,
+              "scoreDelta": 20,
+              "newScore": 70,
+              "reason": "REQUEST_SOLUTION",
+              "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+              "createdAt": "2026-09-07T16:26:21.465Z",
+              "changedBy": {
+                "id": "cmtrdogg40001qpd1ylwn9ctr",
+                "name": "Phase 3 测试管理员",
+                "loginAccount": "admin@phase3.example.test",
+                "status": "ACTIVE"
+              }
+            },
+            {
+              "id": "cmtrgdbwc006jqpwcqkhfy8zb",
+              "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+              "activityEventId": "cmtrgdbw7006hqpwc88c31tli",
+              "dimension": "ENGAGEMENT",
+              "previousScore": 30,
+              "scoreDelta": 20,
+              "newScore": 50,
+              "reason": "EXPLICIT_REQUIREMENT",
+              "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+              "createdAt": "2026-09-07T16:26:20.412Z",
+              "changedBy": {
+                "id": "cmtrdogg40001qpd1ylwn9ctr",
+                "name": "Phase 3 测试管理员",
+                "loginAccount": "admin@phase3.example.test",
+                "status": "ACTIVE"
+              }
+            },
+            {
+              "id": "cmtrgdb2o006eqpwcnr8rdgpw",
+              "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+              "activityEventId": "cmtrgdb2j006cqpwcxv1kbzbx",
+              "dimension": "ENGAGEMENT",
+              "previousScore": 15,
+              "scoreDelta": 15,
+              "newScore": 30,
+              "reason": "EXPLICIT_INTEREST",
+              "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+              "createdAt": "2026-09-07T16:26:19.344Z",
+              "changedBy": {
+                "id": "cmtrdogg40001qpd1ylwn9ctr",
+                "name": "Phase 3 测试管理员",
+                "loginAccount": "admin@phase3.example.test",
+                "status": "ACTIVE"
+              }
+            },
+            {
+              "id": "cmtrgda9p0069qpwcajdi5ngt",
+              "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+              "activityEventId": "cmtrgda9l0067qpwccplct736",
+              "dimension": "ENGAGEMENT",
+              "previousScore": 0,
+              "scoreDelta": 15,
+              "newScore": 15,
+              "reason": "MEETING_COMPLETED",
+              "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+              "createdAt": "2026-09-07T16:26:18.301Z",
+              "changedBy": {
+                "id": "cmtrdogg40001qpd1ylwn9ctr",
+                "name": "Phase 3 测试管理员",
+                "loginAccount": "admin@phase3.example.test",
+                "status": "ACTIVE"
+              }
+            },
+            {
+              "id": "cmtrgd9ga0064qpwcfdyxpe9x",
+              "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+              "activityEventId": "cmtrgd9g50062qpwc7fvbhwys",
+              "dimension": "FIT",
+              "previousScore": 0,
+              "scoreDelta": 40,
+              "newScore": 40,
+              "reason": "ICP_PROFILE_MATCH",
+              "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+              "createdAt": "2026-09-07T16:26:17.243Z",
+              "changedBy": {
+                "id": "cmtrdogg40001qpd1ylwn9ctr",
+                "name": "Phase 3 测试管理员",
+                "loginAccount": "admin@phase3.example.test",
+                "status": "ACTIVE"
+              }
+            }
+          ],
+          "statusHistory": [
+            {
+              "id": "cmtrgddqh006uqpwcf31tqkag",
+              "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+              "fromStatus": "MQL",
+              "toStatus": "SQL",
+              "reason": "ACCEPT_SQL",
+              "changedAt": "2026-09-07T16:26:22.790Z",
+              "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+              "changedBy": {
+                "id": "cmtrdogg40001qpd1ylwn9ctr",
+                "name": "Phase 3 测试管理员",
+                "loginAccount": "admin@phase3.example.test",
+                "status": "ACTIVE"
+              }
+            },
+            {
+              "id": "cmtrgdcpv006rqpwcbnjzthzb",
+              "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+              "fromStatus": "NEW",
+              "toStatus": "MQL",
+              "reason": "Automatic MQL: Fit >= 40, Engagement >= 70",
+              "changedAt": "2026-09-07T16:26:21.472Z",
+              "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+              "changedBy": {
+                "id": "cmtrdogg40001qpd1ylwn9ctr",
+                "name": "Phase 3 测试管理员",
+                "loginAccount": "admin@phase3.example.test",
+                "status": "ACTIVE"
+              }
+            },
+            {
+              "id": "cmtrgd89s005wqpwcisr01ayo",
+              "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+              "fromStatus": null,
+              "toStatus": "NEW",
+              "reason": "Marketing lead created",
+              "changedAt": "2026-09-07T16:26:15.705Z",
+              "changedByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+              "changedBy": {
+                "id": "cmtrdogg40001qpd1ylwn9ctr",
+                "name": "Phase 3 测试管理员",
+                "loginAccount": "admin@phase3.example.test",
+                "status": "ACTIVE"
+              }
+            }
+          ],
+          "fitLevel": "MEDIUM",
+          "engagementLevel": "HIGH",
+          "leadLevel": "WARM"
+        }
+      }
+    },
+    {
+      "name": "SQL → Opportunity",
+      "method": "POST",
+      "url": "http://127.0.0.1:3311/api/v1/crm/marketing-leads/cmtrgd89l005uqpwcafubqx2n/convert",
+      "status": 200,
+      "response": {
+        "data": {
+          "idempotent": false,
+          "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+          "organizationId": "cmtrgbqtu0058qpwch977qgee",
+          "contactId": "cmtrgbtgm005jqpwchaikgs29",
+          "opportunityId": "cmtrgde7z006xqpwcsumyaonv"
+        }
+      }
+    },
+    {
+      "name": "Opportunity Create manually",
+      "method": "POST",
+      "url": "http://127.0.0.1:3311/api/v1/crm/leads",
+      "status": 201,
+      "response": {
+        "data": {
+          "id": "cmtrgdfg4007cqpwcfysja7wq",
+          "contactId": "cmtrgbtgm005jqpwchaikgs29",
+          "requirementSummary": "V4-UI-手工商机-1788798302722",
+          "requirementDetail": "Phase 3 手工商机需求正文，可补充说明并同时上传图片、视频或文档。",
+          "requirementContext": null,
+          "productInterest": null,
+          "requirementTags": null,
+          "latestProgress": null,
+          "nextAction": null,
+          "imageRequirementNote": null,
+          "quotationNote": null,
+          "leadSource": null,
+          "priority": "HIGH",
+          "estimatedQuote": null,
+          "currency": null,
+          "projectDomain": null,
+          "projectType": null,
+          "technologyType": null,
+          "productType": null,
+          "productName": null,
+          "resourceRequirement": null,
+          "collaborationGroups": null,
+          "followMode": null,
+          "solution": null,
+          "remark": null,
+          "status": "NEW",
+          "salesOwnerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "followupOwnerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "nextFollowupAt": null,
+          "lastFollowupAt": null,
+          "wonAt": null,
+          "closedAt": null,
+          "deliveryFollowupAt": null,
+          "contractRenewalAt": null,
+          "paymentReceivedAt": null,
+          "createdAt": "2026-09-07T16:26:25.012Z",
+          "updatedAt": "2026-09-07T16:26:25.012Z",
+          "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "deletedAt": null,
+          "deletedByUserId": null,
+          "sourceMarketingLeadId": null,
+          "contact": {
+            "id": "cmtrgbtgm005jqpwchaikgs29",
+            "contactName": "V4-UI-企业联系人-1788798302722",
+            "companyShortName": "V4-EDIT-1788798302722",
+            "companyName": "V4-UI-公司-1788798302722",
+            "department": null,
+            "title": "Phase 3 采购负责人",
+            "email": "business-1788798302722@example.test",
+            "phone": null,
+            "wechat": null,
+            "linkedin": null,
+            "website": "https://v4-1788798302722.example.test",
+            "industry": "软件与 SaaS",
+            "source": null,
+            "country": "中国",
+            "city": "上海",
+            "region": "上海市",
+            "stage": "INITIAL",
+            "organizationId": "cmtrgbqtu0058qpwch977qgee",
+            "organization": {
+              "id": "cmtrgbqtu0058qpwch977qgee",
+              "name": "V4-UI-公司-1788798302722",
+              "shortName": "V4-EDIT-1788798302722",
+              "website": "https://v4-1788798302722.example.test",
+              "lifecycleStage": "OPPORTUNITY",
+              "fitScore": 0,
+              "roles": [
+                {
+                  "organizationId": "cmtrgbqtu0058qpwch977qgee",
+                  "role": "PROSPECT",
+                  "createdAt": "2026-09-07T16:25:07.808Z"
+                }
+              ]
+            },
+            "owner": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            }
+          },
+          "salesOwner": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "followupOwner": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "_count": {
+            "followups": 0,
+            "participants": 0
+          },
+          "createdBy": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "participants": [],
+          "sourceMarketingLead": null,
+          "attachments": []
+        }
+      }
+    },
+    {
+      "name": "Opportunity Stage + Assignment",
+      "method": "PATCH",
+      "url": "http://127.0.0.1:3311/api/v1/crm/leads/cmtrgdfg4007cqpwcfysja7wq",
+      "status": 200,
+      "response": {
+        "data": {
+          "id": "cmtrgdfg4007cqpwcfysja7wq",
+          "contactId": "cmtrgbtgm005jqpwchaikgs29",
+          "requirementSummary": "V4-UI-手工商机-1788798302722",
+          "requirementDetail": "Phase 3 手工商机需求正文，可补充说明并同时上传图片、视频或文档。",
+          "requirementContext": null,
+          "productInterest": null,
+          "requirementTags": null,
+          "latestProgress": null,
+          "nextAction": null,
+          "imageRequirementNote": null,
+          "quotationNote": null,
+          "leadSource": null,
+          "priority": "HIGH",
+          "estimatedQuote": null,
+          "currency": null,
+          "projectDomain": null,
+          "projectType": null,
+          "technologyType": null,
+          "productType": null,
+          "productName": null,
+          "resourceRequirement": null,
+          "collaborationGroups": null,
+          "followMode": null,
+          "solution": null,
+          "remark": null,
+          "status": "SOLUTION",
+          "salesOwnerUserId": "cmtrdogga0003qpd106gecw8a",
+          "followupOwnerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "nextFollowupAt": null,
+          "lastFollowupAt": null,
+          "wonAt": null,
+          "closedAt": null,
+          "deliveryFollowupAt": null,
+          "contractRenewalAt": null,
+          "paymentReceivedAt": null,
+          "createdAt": "2026-09-07T16:26:25.012Z",
+          "updatedAt": "2026-09-07T16:26:27.001Z",
+          "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "deletedAt": null,
+          "deletedByUserId": null,
+          "sourceMarketingLeadId": null,
+          "contact": {
+            "id": "cmtrgbtgm005jqpwchaikgs29",
+            "contactName": "V4-UI-企业联系人-1788798302722",
+            "companyShortName": "V4-EDIT-1788798302722",
+            "companyName": "V4-UI-公司-1788798302722",
+            "department": null,
+            "title": "Phase 3 采购负责人",
+            "email": "business-1788798302722@example.test",
+            "phone": null,
+            "wechat": null,
+            "linkedin": null,
+            "website": "https://v4-1788798302722.example.test",
+            "industry": "软件与 SaaS",
+            "source": null,
+            "country": "中国",
+            "city": "上海",
+            "region": "上海市",
+            "stage": "INITIAL",
+            "organizationId": "cmtrgbqtu0058qpwch977qgee",
+            "organization": {
+              "id": "cmtrgbqtu0058qpwch977qgee",
+              "name": "V4-UI-公司-1788798302722",
+              "shortName": "V4-EDIT-1788798302722",
+              "website": "https://v4-1788798302722.example.test",
+              "lifecycleStage": "OPPORTUNITY",
+              "fitScore": 0,
+              "roles": [
+                {
+                  "organizationId": "cmtrgbqtu0058qpwch977qgee",
+                  "role": "PROSPECT",
+                  "createdAt": "2026-09-07T16:25:07.808Z"
+                }
+              ]
+            },
+            "owner": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            }
+          },
+          "salesOwner": {
+            "id": "cmtrdogga0003qpd106gecw8a",
+            "name": "Phase 3 测试销售",
+            "loginAccount": "sales@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "followupOwner": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "_count": {
+            "followups": 0,
+            "participants": 0
+          },
+          "createdBy": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "participants": [],
+          "sourceMarketingLead": null,
+          "attachments": [
+            {
+              "id": "8175142fcfec97d3901ae8a1a130a188",
+              "entityType": "LEAD",
+              "entityId": "cmtrgdfg4007cqpwcfysja7wq",
+              "fieldKey": "requirementFiles",
+              "storageType": "LOCAL",
+              "originalName": "phase3-requirement-1788798302722.txt",
+              "mimeType": "text/plain",
+              "kind": "DOCUMENT",
+              "fileSize": 30,
+              "externalUrl": null,
+              "createdAt": "2026-09-07T16:26:25.038Z",
+              "uploadedBy": {
+                "id": "cmtrdogg40001qpd1ylwn9ctr",
+                "name": "Phase 3 测试管理员",
+                "loginAccount": "admin@phase3.example.test",
+                "status": "ACTIVE"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Opportunity Duplicate Assignment Save",
+      "method": "PATCH",
+      "url": "http://127.0.0.1:3311/api/v1/crm/leads/cmtrgdfg4007cqpwcfysja7wq",
+      "status": 200,
+      "response": {
+        "data": {
+          "id": "cmtrgdfg4007cqpwcfysja7wq",
+          "contactId": "cmtrgbtgm005jqpwchaikgs29",
+          "requirementSummary": "V4-UI-手工商机-1788798302722",
+          "requirementDetail": "Phase 3 手工商机需求正文，可补充说明并同时上传图片、视频或文档。",
+          "requirementContext": null,
+          "productInterest": null,
+          "requirementTags": null,
+          "latestProgress": null,
+          "nextAction": null,
+          "imageRequirementNote": null,
+          "quotationNote": null,
+          "leadSource": null,
+          "priority": "HIGH",
+          "estimatedQuote": null,
+          "currency": null,
+          "projectDomain": null,
+          "projectType": null,
+          "technologyType": null,
+          "productType": null,
+          "productName": null,
+          "resourceRequirement": null,
+          "collaborationGroups": null,
+          "followMode": null,
+          "solution": null,
+          "remark": null,
+          "status": "SOLUTION",
+          "salesOwnerUserId": "cmtrdogga0003qpd106gecw8a",
+          "followupOwnerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "nextFollowupAt": null,
+          "lastFollowupAt": null,
+          "wonAt": null,
+          "closedAt": null,
+          "deliveryFollowupAt": null,
+          "contractRenewalAt": null,
+          "paymentReceivedAt": null,
+          "createdAt": "2026-09-07T16:26:25.012Z",
+          "updatedAt": "2026-09-07T16:26:27.432Z",
+          "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "deletedAt": null,
+          "deletedByUserId": null,
+          "sourceMarketingLeadId": null,
+          "contact": {
+            "id": "cmtrgbtgm005jqpwchaikgs29",
+            "contactName": "V4-UI-企业联系人-1788798302722",
+            "companyShortName": "V4-EDIT-1788798302722",
+            "companyName": "V4-UI-公司-1788798302722",
+            "department": null,
+            "title": "Phase 3 采购负责人",
+            "email": "business-1788798302722@example.test",
+            "phone": null,
+            "wechat": null,
+            "linkedin": null,
+            "website": "https://v4-1788798302722.example.test",
+            "industry": "软件与 SaaS",
+            "source": null,
+            "country": "中国",
+            "city": "上海",
+            "region": "上海市",
+            "stage": "INITIAL",
+            "organizationId": "cmtrgbqtu0058qpwch977qgee",
+            "organization": {
+              "id": "cmtrgbqtu0058qpwch977qgee",
+              "name": "V4-UI-公司-1788798302722",
+              "shortName": "V4-EDIT-1788798302722",
+              "website": "https://v4-1788798302722.example.test",
+              "lifecycleStage": "OPPORTUNITY",
+              "fitScore": 0,
+              "roles": [
+                {
+                  "organizationId": "cmtrgbqtu0058qpwch977qgee",
+                  "role": "PROSPECT",
+                  "createdAt": "2026-09-07T16:25:07.808Z"
+                }
+              ]
+            },
+            "owner": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            }
+          },
+          "salesOwner": {
+            "id": "cmtrdogga0003qpd106gecw8a",
+            "name": "Phase 3 测试销售",
+            "loginAccount": "sales@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "followupOwner": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "_count": {
+            "followups": 0,
+            "participants": 0
+          },
+          "createdBy": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "participants": [],
+          "sourceMarketingLead": null,
+          "attachments": [
+            {
+              "id": "8175142fcfec97d3901ae8a1a130a188",
+              "entityType": "LEAD",
+              "entityId": "cmtrgdfg4007cqpwcfysja7wq",
+              "fieldKey": "requirementFiles",
+              "storageType": "LOCAL",
+              "originalName": "phase3-requirement-1788798302722.txt",
+              "mimeType": "text/plain",
+              "kind": "DOCUMENT",
+              "fileSize": 30,
+              "externalUrl": null,
+              "createdAt": "2026-09-07T16:26:25.038Z",
+              "uploadedBy": {
+                "id": "cmtrdogg40001qpd1ylwn9ctr",
+                "name": "Phase 3 测试管理员",
+                "loginAccount": "admin@phase3.example.test",
+                "status": "ACTIVE"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Opportunity Followup",
+      "method": "POST",
+      "url": "http://127.0.0.1:3311/api/v1/crm/leads/cmtrgdfg4007cqpwcfysja7wq/followups",
+      "status": 201,
+      "response": {
+        "data": {
+          "id": "cmtrgdhko007sqpwcw0qfagpn",
+          "leadId": "cmtrgdfg4007cqpwcfysja7wq",
+          "occurredAt": "2026-09-07T16:26:00.000Z",
+          "ownerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "type": "GENERAL",
+          "content": "Phase 3 UI 跟进：已确认方案范围。",
+          "progress": "方案范围已确认",
+          "nextAction": "准备演示并发送确认材料",
+          "nextFollowupAt": "2026-09-08T16:26:00.000Z",
+          "important": false,
+          "createdAt": "2026-09-07T16:26:27.769Z",
+          "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "owner": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "createdBy": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "attachments": []
+        }
+      }
+    },
+    {
+      "name": "Opportunity LOST",
+      "method": "PATCH",
+      "url": "http://127.0.0.1:3311/api/v1/crm/leads/cmtrgdfg4007cqpwcfysja7wq",
+      "status": 200,
+      "response": {
+        "data": {
+          "id": "cmtrgdfg4007cqpwcfysja7wq",
+          "contactId": "cmtrgbtgm005jqpwchaikgs29",
+          "requirementSummary": "V4-UI-手工商机-1788798302722",
+          "requirementDetail": "Phase 3 手工商机需求正文，可补充说明并同时上传图片、视频或文档。",
+          "requirementContext": null,
+          "productInterest": null,
+          "requirementTags": null,
+          "latestProgress": "方案范围已确认",
+          "nextAction": "准备演示并发送确认材料",
+          "imageRequirementNote": null,
+          "quotationNote": null,
+          "leadSource": null,
+          "priority": "HIGH",
+          "estimatedQuote": null,
+          "currency": null,
+          "projectDomain": null,
+          "projectType": null,
+          "technologyType": null,
+          "productType": null,
+          "productName": null,
+          "resourceRequirement": null,
+          "collaborationGroups": null,
+          "followMode": null,
+          "solution": null,
+          "remark": null,
+          "status": "LOST",
+          "salesOwnerUserId": "cmtrdogga0003qpd106gecw8a",
+          "followupOwnerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "nextFollowupAt": "2026-09-08T16:26:00.000Z",
+          "lastFollowupAt": "2026-09-07T16:26:00.000Z",
+          "wonAt": null,
+          "closedAt": "2026-09-07T16:26:28.670Z",
+          "deliveryFollowupAt": null,
+          "contractRenewalAt": null,
+          "paymentReceivedAt": null,
+          "createdAt": "2026-09-07T16:26:25.012Z",
+          "updatedAt": "2026-09-07T16:26:28.671Z",
+          "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "deletedAt": null,
+          "deletedByUserId": null,
+          "sourceMarketingLeadId": null,
+          "contact": {
+            "id": "cmtrgbtgm005jqpwchaikgs29",
+            "contactName": "V4-UI-企业联系人-1788798302722",
+            "companyShortName": "V4-EDIT-1788798302722",
+            "companyName": "V4-UI-公司-1788798302722",
+            "department": null,
+            "title": "Phase 3 采购负责人",
+            "email": "business-1788798302722@example.test",
+            "phone": null,
+            "wechat": null,
+            "linkedin": null,
+            "website": "https://v4-1788798302722.example.test",
+            "industry": "软件与 SaaS",
+            "source": null,
+            "country": "中国",
+            "city": "上海",
+            "region": "上海市",
+            "stage": "INITIAL",
+            "organizationId": "cmtrgbqtu0058qpwch977qgee",
+            "organization": {
+              "id": "cmtrgbqtu0058qpwch977qgee",
+              "name": "V4-UI-公司-1788798302722",
+              "shortName": "V4-EDIT-1788798302722",
+              "website": "https://v4-1788798302722.example.test",
+              "lifecycleStage": "OPPORTUNITY",
+              "fitScore": 0,
+              "roles": [
+                {
+                  "organizationId": "cmtrgbqtu0058qpwch977qgee",
+                  "role": "PROSPECT",
+                  "createdAt": "2026-09-07T16:25:07.808Z"
+                }
+              ]
+            },
+            "owner": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            }
+          },
+          "salesOwner": {
+            "id": "cmtrdogga0003qpd106gecw8a",
+            "name": "Phase 3 测试销售",
+            "loginAccount": "sales@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "followupOwner": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "_count": {
+            "followups": 1,
+            "participants": 0
+          },
+          "createdBy": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "participants": [],
+          "sourceMarketingLead": null,
+          "attachments": [
+            {
+              "id": "8175142fcfec97d3901ae8a1a130a188",
+              "entityType": "LEAD",
+              "entityId": "cmtrgdfg4007cqpwcfysja7wq",
+              "fieldKey": "requirementFiles",
+              "storageType": "LOCAL",
+              "originalName": "phase3-requirement-1788798302722.txt",
+              "mimeType": "text/plain",
+              "kind": "DOCUMENT",
+              "fileSize": 30,
+              "externalUrl": null,
+              "createdAt": "2026-09-07T16:26:25.038Z",
+              "uploadedBy": {
+                "id": "cmtrdogg40001qpd1ylwn9ctr",
+                "name": "Phase 3 测试管理员",
+                "loginAccount": "admin@phase3.example.test",
+                "status": "ACTIVE"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Opportunity WON",
+      "method": "PATCH",
+      "url": "http://127.0.0.1:3311/api/v1/crm/leads/cmtrgde7z006xqpwcsumyaonv",
+      "status": 200,
+      "response": {
+        "data": {
+          "id": "cmtrgde7z006xqpwcsumyaonv",
+          "contactId": "cmtrgbtgm005jqpwchaikgs29",
+          "requirementSummary": "WebAR 与 3D 商务展示",
+          "requirementDetail": "Phase 3 原始询盘：需要一套可扩展的企业级 3D 产品体验与销售协同方案。",
+          "requirementContext": null,
+          "productInterest": "WebAR 与 3D 商务展示",
+          "requirementTags": [],
+          "latestProgress": null,
+          "nextAction": null,
+          "imageRequirementNote": null,
+          "quotationNote": null,
+          "leadSource": null,
+          "priority": "MEDIUM",
+          "estimatedQuote": null,
+          "currency": null,
+          "projectDomain": null,
+          "projectType": null,
+          "technologyType": null,
+          "productType": null,
+          "productName": null,
+          "resourceRequirement": null,
+          "collaborationGroups": null,
+          "followMode": null,
+          "solution": null,
+          "remark": null,
+          "status": "WON",
+          "salesOwnerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "followupOwnerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "nextFollowupAt": null,
+          "lastFollowupAt": null,
+          "wonAt": "2026-09-07T16:27:30.764Z",
+          "closedAt": "2026-09-07T16:27:30.764Z",
+          "deliveryFollowupAt": null,
+          "contractRenewalAt": null,
+          "paymentReceivedAt": null,
+          "createdAt": "2026-09-07T16:26:23.423Z",
+          "updatedAt": "2026-09-07T16:27:30.766Z",
+          "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "deletedAt": null,
+          "deletedByUserId": null,
+          "sourceMarketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+          "contact": {
+            "id": "cmtrgbtgm005jqpwchaikgs29",
+            "contactName": "V4-UI-企业联系人-1788798302722",
+            "companyShortName": "V4-EDIT-1788798302722",
+            "companyName": "V4-UI-公司-1788798302722",
+            "department": null,
+            "title": "Phase 3 采购负责人",
+            "email": "business-1788798302722@example.test",
+            "phone": null,
+            "wechat": null,
+            "linkedin": null,
+            "website": "https://v4-1788798302722.example.test",
+            "industry": "软件与 SaaS",
+            "source": null,
+            "country": "中国",
+            "city": "上海",
+            "region": "上海市",
+            "stage": "INITIAL",
+            "organizationId": "cmtrgbqtu0058qpwch977qgee",
+            "organization": {
+              "id": "cmtrgbqtu0058qpwch977qgee",
+              "name": "V4-UI-公司-1788798302722",
+              "shortName": "V4-EDIT-1788798302722",
+              "website": "https://v4-1788798302722.example.test",
+              "lifecycleStage": "OPPORTUNITY",
+              "fitScore": 0,
+              "roles": [
+                {
+                  "organizationId": "cmtrgbqtu0058qpwch977qgee",
+                  "role": "PROSPECT",
+                  "createdAt": "2026-09-07T16:25:07.808Z"
+                }
+              ]
+            },
+            "owner": {
+              "id": "cmtrdogg40001qpd1ylwn9ctr",
+              "name": "Phase 3 测试管理员",
+              "loginAccount": "admin@phase3.example.test",
+              "status": "ACTIVE"
+            }
+          },
+          "salesOwner": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "followupOwner": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "_count": {
+            "followups": 0,
+            "participants": 0
+          },
+          "createdBy": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "participants": [],
+          "sourceMarketingLead": {
+            "id": "cmtrgd89l005uqpwcafubqx2n",
+            "fullName": "V4-UI-线索-1788798302722",
+            "companyName": "V4-UI-公司-1788798302722",
+            "source": "FORM",
+            "sourceChannel": "ORGANIC_SEARCH",
+            "sourceDetail": null,
+            "firstTouchAt": "2026-09-07T16:26:15.704Z",
+            "inquiryContent": "Phase 3 原始询盘：需要一套可扩展的企业级 3D 产品体验与销售协同方案。",
+            "convertedAt": "2026-09-07T16:26:23.449Z"
+          },
+          "attachments": []
+        }
+      }
+    },
+    {
+      "name": "Export Selected",
+      "method": "POST",
+      "url": "http://127.0.0.1:3311/api/v1/crm/exports/contacts",
+      "status": 202,
+      "response": {
+        "data": {
+          "id": "cmtrgg5tp0084qpwcpvury2h6",
+          "jobNo": "EXP-20260907-09D47D36",
+          "objectType": "CONTACT",
+          "status": "PENDING",
+          "scope": "SELECTED",
+          "filterJson": {},
+          "selectedCount": 1,
+          "requestedFields": null,
+          "effectiveFields": null,
+          "fileName": null,
+          "rowCount": 0,
+          "error": null,
+          "createdBy": "cmtrdogg40001qpd1ylwn9ctr",
+          "createdAt": "2026-09-07T16:28:32.509Z",
+          "completedAt": null,
+          "expiresAt": null,
+          "format": "XLSX",
+          "operatorName": "Phase 3 测试管理员",
+          "downloadUrl": null,
+          "statusUrl": "/api/v1/crm/exports/cmtrgg5tp0084qpwcpvury2h6"
+        }
+      }
+    },
+    {
+      "name": "Export Filtered",
+      "method": "POST",
+      "url": "http://127.0.0.1:3311/api/v1/crm/exports/contacts",
+      "status": 202,
+      "response": {
+        "data": {
+          "id": "cmtrgg6qw0087qpwc8mnjfqzk",
+          "jobNo": "EXP-20260907-16DB5538",
+          "objectType": "CONTACT",
+          "status": "PENDING",
+          "scope": "FILTERED",
+          "filterJson": {},
+          "selectedCount": 0,
+          "requestedFields": null,
+          "effectiveFields": null,
+          "fileName": null,
+          "rowCount": 0,
+          "error": null,
+          "createdBy": "cmtrdogg40001qpd1ylwn9ctr",
+          "createdAt": "2026-09-07T16:28:33.705Z",
+          "completedAt": null,
+          "expiresAt": null,
+          "format": "XLSX",
+          "operatorName": "Phase 3 测试管理员",
+          "downloadUrl": null,
+          "statusUrl": "/api/v1/crm/exports/cmtrgg6qw0087qpwc8mnjfqzk"
+        }
+      }
+    },
+    {
+      "name": "Export All",
+      "method": "POST",
+      "url": "http://127.0.0.1:3311/api/v1/crm/exports/contacts",
+      "status": 202,
+      "response": {
+        "data": {
+          "id": "cmtrgg7me008aqpwcp9q9zdno",
+          "jobNo": "EXP-20260907-E9261A9D",
+          "objectType": "CONTACT",
+          "status": "PENDING",
+          "scope": "ALL_CURRENT_PERMISSION",
+          "filterJson": {},
+          "selectedCount": 0,
+          "requestedFields": null,
+          "effectiveFields": null,
+          "fileName": null,
+          "rowCount": 0,
+          "error": null,
+          "createdBy": "cmtrdogg40001qpd1ylwn9ctr",
+          "createdAt": "2026-09-07T16:28:34.838Z",
+          "completedAt": null,
+          "expiresAt": null,
+          "format": "XLSX",
+          "operatorName": "Phase 3 测试管理员",
+          "downloadUrl": null,
+          "statusUrl": "/api/v1/crm/exports/cmtrgg7me008aqpwcp9q9zdno"
+        }
+      }
+    },
+    {
+      "name": "Import Preflight",
+      "method": "POST",
+      "url": "http://127.0.0.1:3311/api/v1/crm/imports/contacts?",
+      "status": 201,
+      "response": {
+        "data": {
+          "id": "cmtrgg8u6008dqpwcjarv0h4a",
+          "jobNo": "IMP-20260907-B3732D8C",
+          "objectType": "CONTACT",
+          "subtype": "CRM_CONTACT",
+          "fileName": "contacts-import-1788798302722.xlsx",
+          "storagePath": "/tmp/kivisense-phase3-storage.QuRCBP/imports/IMP-20260907-B3732D8C.xlsx",
+          "fileHash": "71a63c4c0ac9f4dd384a2a15a1323c1eb8c1724ea65f73f993a2139caf248760",
+          "mappingJson": {
+            "fields": [
+              {
+                "key": "contactName",
+                "type": "text",
+                "label": "联系人姓名",
+                "example": "Naderi",
+                "required": true
+              },
+              {
+                "key": "contactType",
+                "type": "enum",
+                "label": "联系人类型",
+                "example": "BUSINESS",
+                "options": [
+                  "BUSINESS",
+                  "INDIVIDUAL"
+                ],
+                "required": false
+              },
+              {
+                "key": "organizationId",
+                "type": "text",
+                "label": "公司编号",
+                "example": "cmxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                "required": false
+              },
+              {
+                "key": "organizationName",
+                "type": "text",
+                "label": "公司名称",
+                "example": "Dena Technologies Co., Ltd.",
+                "required": false
+              },
+              {
+                "key": "companyShortName",
+                "type": "text",
+                "label": "公司简称",
+                "example": "Dena",
+                "required": false
+              },
+              {
+                "key": "companyName",
+                "type": "text",
+                "label": "公司全称",
+                "example": "Dena Technologies Co., Ltd.",
+                "required": false
+              },
+              {
+                "key": "department",
+                "type": "text",
+                "label": "部门",
+                "example": "Business Development",
+                "required": false
+              },
+              {
+                "key": "title",
+                "type": "text",
+                "label": "职位",
+                "example": "Director",
+                "required": false
+              },
+              {
+                "key": "email",
+                "type": "email",
+                "label": "邮箱",
+                "example": "naderi@example.com",
+                "required": false
+              },
+              {
+                "key": "phone",
+                "type": "text",
+                "label": "电话",
+                "example": "+98 21 5555 0188",
+                "required": false
+              },
+              {
+                "key": "wechat",
+                "type": "text",
+                "label": "微信",
+                "example": "naderi_dena",
+                "required": false
+              },
+              {
+                "key": "linkedin",
+                "type": "url",
+                "label": "领英",
+                "example": "https://linkedin.com/in/naderi",
+                "required": false
+              },
+              {
+                "key": "website",
+                "type": "url",
+                "label": "网站",
+                "example": "https://dena.example.com",
+                "required": false
+              },
+              {
+                "key": "industry",
+                "type": "text",
+                "label": "行业",
+                "example": "Consumer Electronics",
+                "required": false
+              },
+              {
+                "key": "source",
+                "type": "text",
+                "label": "客户来源",
+                "example": "Convention",
+                "required": false
+              },
+              {
+                "key": "country",
+                "type": "text",
+                "label": "国家",
+                "example": "Iran",
+                "required": false
+              },
+              {
+                "key": "city",
+                "type": "text",
+                "label": "城市",
+                "example": "Tehran",
+                "required": false
+              },
+              {
+                "key": "region",
+                "type": "text",
+                "label": "区域",
+                "example": "Middle East",
+                "required": false
+              },
+              {
+                "key": "stage",
+                "type": "enum",
+                "label": "当前跟进阶段",
+                "example": "SOLUTION",
+                "options": [
+                  "INITIAL",
+                  "ONE_TO_ONE",
+                  "SOLUTION",
+                  "CONVENTION"
+                ],
+                "required": false
+              },
+              {
+                "key": "owner",
+                "type": "owner",
+                "label": "负责人账号或用户编号",
+                "example": "sales@example.com",
+                "required": false
+              },
+              {
+                "key": "nextFollowupAt",
+                "type": "datetime",
+                "label": "下一次跟进时间",
+                "example": "2026-09-15 10:00:00",
+                "required": false
+              },
+              {
+                "key": "followupAttention",
+                "type": "text",
+                "label": "跟进注意",
+                "example": "长期跟进时需注意的事项",
+                "required": false
+              },
+              {
+                "key": "initialContext",
+                "type": "text",
+                "label": "初始沟通背景",
+                "example": "Met at an industry convention.",
+                "required": false
+              },
+              {
+                "key": "meetingMinutesFiles",
+                "type": "attachment-url",
+                "label": "Meeting Minutes 外部 URL",
+                "example": "https://files.example.com/meeting-minutes.pdf",
+                "required": false
+              },
+              {
+                "key": "remark",
+                "type": "text",
+                "label": "备注",
+                "example": "Decision maker for digital cooperation.",
+                "required": false
+              }
+            ],
+            "headers": [
+              "contactName",
+              "contactType",
+              "organizationId",
+              "organizationName",
+              "companyShortName",
+              "companyName",
+              "department",
+              "title",
+              "email",
+              "phone",
+              "wechat",
+              "linkedin",
+              "website",
+              "industry",
+              "source",
+              "country",
+              "city",
+              "region",
+              "stage",
+              "owner",
+              "nextFollowupAt",
+              "followupAttention",
+              "initialContext",
+              "meetingMinutesFiles",
+              "remark"
+            ],
+            "mapping": {
+              "city": {
+                "key": "city",
+                "label": "城市",
+                "status": "MATCHED",
+                "required": false
+              },
+              "email": {
+                "key": "email",
+                "label": "邮箱",
+                "status": "MATCHED",
+                "required": false
+              },
+              "owner": {
+                "key": "owner",
+                "label": "负责人账号或用户编号",
+                "status": "MATCHED",
+                "required": false
+              },
+              "phone": {
+                "key": "phone",
+                "label": "电话",
+                "status": "MATCHED",
+                "required": false
+              },
+              "stage": {
+                "key": "stage",
+                "label": "当前跟进阶段",
+                "status": "MATCHED",
+                "required": false
+              },
+              "title": {
+                "key": "title",
+                "label": "职位",
+                "status": "MATCHED",
+                "required": false
+              },
+              "region": {
+                "key": "region",
+                "label": "区域",
+                "status": "MATCHED",
+                "required": false
+              },
+              "remark": {
+                "key": "remark",
+                "label": "备注",
+                "status": "MATCHED",
+                "required": false
+              },
+              "source": {
+                "key": "source",
+                "label": "客户来源",
+                "status": "MATCHED",
+                "required": false
+              },
+              "wechat": {
+                "key": "wechat",
+                "label": "微信",
+                "status": "MATCHED",
+                "required": false
+              },
+              "country": {
+                "key": "country",
+                "label": "国家",
+                "status": "MATCHED",
+                "required": false
+              },
+              "website": {
+                "key": "website",
+                "label": "网站",
+                "status": "MATCHED",
+                "required": false
+              },
+              "industry": {
+                "key": "industry",
+                "label": "行业",
+                "status": "MATCHED",
+                "required": false
+              },
+              "linkedin": {
+                "key": "linkedin",
+                "label": "领英",
+                "status": "MATCHED",
+                "required": false
+              },
+              "department": {
+                "key": "department",
+                "label": "部门",
+                "status": "MATCHED",
+                "required": false
+              },
+              "companyName": {
+                "key": "companyName",
+                "label": "公司全称",
+                "status": "MATCHED",
+                "required": false
+              },
+              "contactName": {
+                "key": "contactName",
+                "label": "联系人姓名",
+                "status": "MATCHED",
+                "required": true
+              },
+              "contactType": {
+                "key": "contactType",
+                "label": "联系人类型",
+                "status": "MATCHED",
+                "required": false
+              },
+              "initialContext": {
+                "key": "initialContext",
+                "label": "初始沟通背景",
+                "status": "MATCHED",
+                "required": false
+              },
+              "nextFollowupAt": {
+                "key": "nextFollowupAt",
+                "label": "下一次跟进时间",
+                "status": "MATCHED",
+                "required": false
+              },
+              "organizationId": {
+                "key": "organizationId",
+                "label": "公司编号",
+                "status": "MATCHED",
+                "required": false
+              },
+              "companyShortName": {
+                "key": "companyShortName",
+                "label": "公司简称",
+                "status": "MATCHED",
+                "required": false
+              },
+              "organizationName": {
+                "key": "organizationName",
+                "label": "公司名称",
+                "status": "MATCHED",
+                "required": false
+              },
+              "followupAttention": {
+                "key": "followupAttention",
+                "label": "跟进注意",
+                "status": "MATCHED",
+                "required": false
+              },
+              "meetingMinutesFiles": {
+                "key": "meetingMinutesFiles",
+                "label": "Meeting Minutes 外部 URL",
+                "status": "MATCHED",
+                "required": false
+              }
+            },
+            "schemaVersion": "CRM_2.0",
+            "preflightSummary": {
+              "errorRows": 0,
+              "totalRows": 1,
+              "validRows": 1,
+              "warningRows": 0,
+              "importableRows": 1
+            },
+            "createMissingOrganization": false
+          },
+          "resultJson": null,
+          "conflictStrategy": null,
+          "unmatchedStrategy": null,
+          "status": "PREFLIGHT_READY",
+          "totalCount": 1,
+          "importableCount": 1,
+          "successCount": 0,
+          "failedCount": 0,
+          "skippedCount": 0,
+          "createdCount": 0,
+          "updatedCount": 0,
+          "failureFilePath": null,
+          "createdBy": "cmtrdogg40001qpd1ylwn9ctr",
+          "createdAt": "2026-09-07T16:28:36.415Z",
+          "preflightedAt": "2026-09-07T16:28:36.424Z",
+          "processingStartedAt": null,
+          "completedAt": null,
+          "mapping": {
+            "contactName": {
+              "key": "contactName",
+              "label": "联系人姓名",
+              "required": true,
+              "status": "MATCHED"
+            },
+            "contactType": {
+              "key": "contactType",
+              "label": "联系人类型",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "organizationId": {
+              "key": "organizationId",
+              "label": "公司编号",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "organizationName": {
+              "key": "organizationName",
+              "label": "公司名称",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "companyShortName": {
+              "key": "companyShortName",
+              "label": "公司简称",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "companyName": {
+              "key": "companyName",
+              "label": "公司全称",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "department": {
+              "key": "department",
+              "label": "部门",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "title": {
+              "key": "title",
+              "label": "职位",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "email": {
+              "key": "email",
+              "label": "邮箱",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "phone": {
+              "key": "phone",
+              "label": "电话",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "wechat": {
+              "key": "wechat",
+              "label": "微信",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "linkedin": {
+              "key": "linkedin",
+              "label": "领英",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "website": {
+              "key": "website",
+              "label": "网站",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "industry": {
+              "key": "industry",
+              "label": "行业",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "source": {
+              "key": "source",
+              "label": "客户来源",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "country": {
+              "key": "country",
+              "label": "国家",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "city": {
+              "key": "city",
+              "label": "城市",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "region": {
+              "key": "region",
+              "label": "区域",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "stage": {
+              "key": "stage",
+              "label": "当前跟进阶段",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "owner": {
+              "key": "owner",
+              "label": "负责人账号或用户编号",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "nextFollowupAt": {
+              "key": "nextFollowupAt",
+              "label": "下一次跟进时间",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "followupAttention": {
+              "key": "followupAttention",
+              "label": "跟进注意",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "initialContext": {
+              "key": "initialContext",
+              "label": "初始沟通背景",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "meetingMinutesFiles": {
+              "key": "meetingMinutesFiles",
+              "label": "Meeting Minutes 外部 URL",
+              "required": false,
+              "status": "MATCHED"
+            },
+            "remark": {
+              "key": "remark",
+              "label": "备注",
+              "required": false,
+              "status": "MATCHED"
+            }
+          },
+          "preflight": {
+            "totalRows": 1,
+            "validRows": 1,
+            "warningRows": 0,
+            "errorRows": 0,
+            "importableRows": 1
+          },
+          "rows": [
+            {
+              "rowNumber": 2,
+              "status": "VALID",
+              "identity": "V4-UI-导入联系人-1788798302722",
+              "rawData": {
+                "contactName": "V4-UI-导入联系人-1788798302722",
+                "contactType": "INDIVIDUAL",
+                "organizationId": "",
+                "organizationName": "",
+                "companyShortName": "",
+                "companyName": "",
+                "department": "",
+                "title": "",
+                "email": "import-1788798302722@example.test",
+                "phone": "",
+                "wechat": "",
+                "linkedin": "",
+                "website": "",
+                "industry": "",
+                "source": "",
+                "country": "",
+                "city": "",
+                "region": "",
+                "stage": "",
+                "owner": "",
+                "nextFollowupAt": "",
+                "followupAttention": "",
+                "initialContext": "",
+                "meetingMinutesFiles": "",
+                "remark": ""
+              },
+              "normalizedData": {
+                "contactName": "V4-UI-导入联系人-1788798302722",
+                "contactType": "INDIVIDUAL",
+                "organizationId": null,
+                "companyShortName": null,
+                "companyName": null,
+                "department": null,
+                "title": null,
+                "email": "import-1788798302722@example.test",
+                "phone": null,
+                "wechat": null,
+                "linkedin": null,
+                "website": null,
+                "industry": null,
+                "source": null,
+                "country": null,
+                "city": null,
+                "region": null,
+                "ownerUserId": null,
+                "initialContext": null,
+                "followupAttention": null,
+                "remark": null,
+                "stage": "INITIAL",
+                "nextFollowupAt": null,
+                "_organizationNameToCreate": null,
+                "attachmentUrls": {
+                  "meetingMinutesFiles": []
+                }
+              },
+              "errors": [],
+              "warnings": []
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Import Execute",
+      "method": "POST",
+      "url": "http://127.0.0.1:3311/api/v1/crm/imports/cmtrgg8u6008dqpwcjarv0h4a/execute",
+      "status": 200,
+      "response": {
+        "data": {
+          "job": {
+            "id": "cmtrgg8u6008dqpwcjarv0h4a",
+            "jobNo": "IMP-20260907-B3732D8C",
+            "objectType": "CONTACT",
+            "subtype": "CRM_CONTACT",
+            "fileName": "contacts-import-1788798302722.xlsx",
+            "storagePath": "/tmp/kivisense-phase3-storage.QuRCBP/imports/IMP-20260907-B3732D8C.xlsx",
+            "fileHash": "71a63c4c0ac9f4dd384a2a15a1323c1eb8c1724ea65f73f993a2139caf248760",
+            "mappingJson": {
+              "fields": [
+                {
+                  "key": "contactName",
+                  "type": "text",
+                  "label": "联系人姓名",
+                  "example": "Naderi",
+                  "required": true
+                },
+                {
+                  "key": "contactType",
+                  "type": "enum",
+                  "label": "联系人类型",
+                  "example": "BUSINESS",
+                  "options": [
+                    "BUSINESS",
+                    "INDIVIDUAL"
+                  ],
+                  "required": false
+                },
+                {
+                  "key": "organizationId",
+                  "type": "text",
+                  "label": "公司编号",
+                  "example": "cmxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+                  "required": false
+                },
+                {
+                  "key": "organizationName",
+                  "type": "text",
+                  "label": "公司名称",
+                  "example": "Dena Technologies Co., Ltd.",
+                  "required": false
+                },
+                {
+                  "key": "companyShortName",
+                  "type": "text",
+                  "label": "公司简称",
+                  "example": "Dena",
+                  "required": false
+                },
+                {
+                  "key": "companyName",
+                  "type": "text",
+                  "label": "公司全称",
+                  "example": "Dena Technologies Co., Ltd.",
+                  "required": false
+                },
+                {
+                  "key": "department",
+                  "type": "text",
+                  "label": "部门",
+                  "example": "Business Development",
+                  "required": false
+                },
+                {
+                  "key": "title",
+                  "type": "text",
+                  "label": "职位",
+                  "example": "Director",
+                  "required": false
+                },
+                {
+                  "key": "email",
+                  "type": "email",
+                  "label": "邮箱",
+                  "example": "naderi@example.com",
+                  "required": false
+                },
+                {
+                  "key": "phone",
+                  "type": "text",
+                  "label": "电话",
+                  "example": "+98 21 5555 0188",
+                  "required": false
+                },
+                {
+                  "key": "wechat",
+                  "type": "text",
+                  "label": "微信",
+                  "example": "naderi_dena",
+                  "required": false
+                },
+                {
+                  "key": "linkedin",
+                  "type": "url",
+                  "label": "领英",
+                  "example": "https://linkedin.com/in/naderi",
+                  "required": false
+                },
+                {
+                  "key": "website",
+                  "type": "url",
+                  "label": "网站",
+                  "example": "https://dena.example.com",
+                  "required": false
+                },
+                {
+                  "key": "industry",
+                  "type": "text",
+                  "label": "行业",
+                  "example": "Consumer Electronics",
+                  "required": false
+                },
+                {
+                  "key": "source",
+                  "type": "text",
+                  "label": "客户来源",
+                  "example": "Convention",
+                  "required": false
+                },
+                {
+                  "key": "country",
+                  "type": "text",
+                  "label": "国家",
+                  "example": "Iran",
+                  "required": false
+                },
+                {
+                  "key": "city",
+                  "type": "text",
+                  "label": "城市",
+                  "example": "Tehran",
+                  "required": false
+                },
+                {
+                  "key": "region",
+                  "type": "text",
+                  "label": "区域",
+                  "example": "Middle East",
+                  "required": false
+                },
+                {
+                  "key": "stage",
+                  "type": "enum",
+                  "label": "当前跟进阶段",
+                  "example": "SOLUTION",
+                  "options": [
+                    "INITIAL",
+                    "ONE_TO_ONE",
+                    "SOLUTION",
+                    "CONVENTION"
+                  ],
+                  "required": false
+                },
+                {
+                  "key": "owner",
+                  "type": "owner",
+                  "label": "负责人账号或用户编号",
+                  "example": "sales@example.com",
+                  "required": false
+                },
+                {
+                  "key": "nextFollowupAt",
+                  "type": "datetime",
+                  "label": "下一次跟进时间",
+                  "example": "2026-09-15 10:00:00",
+                  "required": false
+                },
+                {
+                  "key": "followupAttention",
+                  "type": "text",
+                  "label": "跟进注意",
+                  "example": "长期跟进时需注意的事项",
+                  "required": false
+                },
+                {
+                  "key": "initialContext",
+                  "type": "text",
+                  "label": "初始沟通背景",
+                  "example": "Met at an industry convention.",
+                  "required": false
+                },
+                {
+                  "key": "meetingMinutesFiles",
+                  "type": "attachment-url",
+                  "label": "Meeting Minutes 外部 URL",
+                  "example": "https://files.example.com/meeting-minutes.pdf",
+                  "required": false
+                },
+                {
+                  "key": "remark",
+                  "type": "text",
+                  "label": "备注",
+                  "example": "Decision maker for digital cooperation.",
+                  "required": false
+                }
+              ],
+              "headers": [
+                "contactName",
+                "contactType",
+                "organizationId",
+                "organizationName",
+                "companyShortName",
+                "companyName",
+                "department",
+                "title",
+                "email",
+                "phone",
+                "wechat",
+                "linkedin",
+                "website",
+                "industry",
+                "source",
+                "country",
+                "city",
+                "region",
+                "stage",
+                "owner",
+                "nextFollowupAt",
+                "followupAttention",
+                "initialContext",
+                "meetingMinutesFiles",
+                "remark"
+              ],
+              "mapping": {
+                "city": {
+                  "key": "city",
+                  "label": "城市",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "email": {
+                  "key": "email",
+                  "label": "邮箱",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "owner": {
+                  "key": "owner",
+                  "label": "负责人账号或用户编号",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "phone": {
+                  "key": "phone",
+                  "label": "电话",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "stage": {
+                  "key": "stage",
+                  "label": "当前跟进阶段",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "title": {
+                  "key": "title",
+                  "label": "职位",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "region": {
+                  "key": "region",
+                  "label": "区域",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "remark": {
+                  "key": "remark",
+                  "label": "备注",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "source": {
+                  "key": "source",
+                  "label": "客户来源",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "wechat": {
+                  "key": "wechat",
+                  "label": "微信",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "country": {
+                  "key": "country",
+                  "label": "国家",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "website": {
+                  "key": "website",
+                  "label": "网站",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "industry": {
+                  "key": "industry",
+                  "label": "行业",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "linkedin": {
+                  "key": "linkedin",
+                  "label": "领英",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "department": {
+                  "key": "department",
+                  "label": "部门",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "companyName": {
+                  "key": "companyName",
+                  "label": "公司全称",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "contactName": {
+                  "key": "contactName",
+                  "label": "联系人姓名",
+                  "status": "MATCHED",
+                  "required": true
+                },
+                "contactType": {
+                  "key": "contactType",
+                  "label": "联系人类型",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "initialContext": {
+                  "key": "initialContext",
+                  "label": "初始沟通背景",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "nextFollowupAt": {
+                  "key": "nextFollowupAt",
+                  "label": "下一次跟进时间",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "organizationId": {
+                  "key": "organizationId",
+                  "label": "公司编号",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "companyShortName": {
+                  "key": "companyShortName",
+                  "label": "公司简称",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "organizationName": {
+                  "key": "organizationName",
+                  "label": "公司名称",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "followupAttention": {
+                  "key": "followupAttention",
+                  "label": "跟进注意",
+                  "status": "MATCHED",
+                  "required": false
+                },
+                "meetingMinutesFiles": {
+                  "key": "meetingMinutesFiles",
+                  "label": "Meeting Minutes 外部 URL",
+                  "status": "MATCHED",
+                  "required": false
+                }
+              },
+              "schemaVersion": "CRM_2.0",
+              "preflightSummary": {
+                "errorRows": 0,
+                "totalRows": 1,
+                "validRows": 1,
+                "warningRows": 0,
+                "importableRows": 1
+              },
+              "createMissingOrganization": false
+            },
+            "resultJson": {
+              "failed": 0,
+              "skipped": 0,
+              "imported": 1,
+              "warnings": 0
+            },
+            "conflictStrategy": null,
+            "unmatchedStrategy": null,
+            "status": "COMPLETED",
+            "totalCount": 1,
+            "importableCount": 1,
+            "successCount": 1,
+            "failedCount": 0,
+            "skippedCount": 0,
+            "createdCount": 1,
+            "updatedCount": 0,
+            "failureFilePath": null,
+            "createdBy": "cmtrdogg40001qpd1ylwn9ctr",
+            "createdAt": "2026-09-07T16:28:36.415Z",
+            "preflightedAt": "2026-09-07T16:28:36.424Z",
+            "processingStartedAt": "2026-09-07T16:28:36.698Z",
+            "completedAt": "2026-09-07T16:28:36.719Z"
+          },
+          "result": {
+            "imported": 1,
+            "failed": 0,
+            "skipped": 0,
+            "warnings": 0
+          }
+        }
+      }
+    },
+    {
+      "name": "Supplier Create",
+      "method": "POST",
+      "url": "http://127.0.0.1:3311/api/v1/crm/organizations",
+      "status": 201,
+      "response": {
+        "data": {
+          "id": "cmtrgg9v7008mqpwcmspbh4ye",
+          "name": "V4-UI-供应商-1788798302722",
+          "normalizedName": "v4-ui-供应商-1788798302722",
+          "shortName": null,
+          "website": null,
+          "websiteDomain": null,
+          "industry": null,
+          "industryCode": null,
+          "industryCustom": null,
+          "country": null,
+          "region": null,
+          "city": null,
+          "countryCode": null,
+          "regionCode": null,
+          "cityCode": null,
+          "cityCustom": null,
+          "companySize": null,
+          "ownerUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "lifecycleStage": "TARGET",
+          "fitScore": 0,
+          "fitReason": null,
+          "note": null,
+          "createdByUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "createdAt": "2026-09-07T16:28:37.747Z",
+          "updatedAt": "2026-09-07T16:28:37.747Z",
+          "deletedAt": null,
+          "deletedByUserId": null,
+          "owner": {
+            "id": "cmtrdogg40001qpd1ylwn9ctr",
+            "name": "Phase 3 测试管理员",
+            "loginAccount": "admin@phase3.example.test",
+            "status": "ACTIVE"
+          },
+          "roles": [
+            {
+              "organizationId": "cmtrgg9v7008mqpwcmspbh4ye",
+              "role": "VENDOR",
+              "createdAt": "2026-09-07T16:28:37.747Z"
+            }
+          ],
+          "roleKeys": [
+            "VENDOR"
+          ],
+          "fitLevel": "LOW",
+          "engagementScore": 0,
+          "engagementLevel": "LOW",
+          "engagementState": "DORMANT",
+          "engagementBreakdown": [
+            {
+              "key": "interactionRecency",
+              "label": "最近互动",
+              "points": 0
+            },
+            {
+              "key": "interactionFrequency",
+              "label": "30 天互动",
+              "points": 0
+            },
+            {
+              "key": "activeLead",
+              "label": "活跃商机",
+              "points": 0
+            },
+            {
+              "key": "recentMeeting",
+              "label": "30 天内会议",
+              "points": 0
+            },
+            {
+              "key": "nextAction",
+              "label": "开放下一步任务",
+              "points": 0
+            },
+            {
+              "key": "overdue",
+              "label": "逾期任务",
+              "points": 0
+            }
+          ],
+          "dormantDays": null,
+          "contactCount": 0,
+          "activeLeadCount": 0,
+          "wonLeadCount": 0,
+          "lastInteractionAt": null,
+          "nextActionAt": null,
+          "nextTask": null,
+          "logo": null
+        }
+      }
+    }
+  ],
+  "databaseEvidence": [
+    {
+      "name": "Company Create",
+      "value": {
+        "id": "cmtrgbqtu0058qpwch977qgee",
+        "name": "V4-UI-公司-1788798302722",
+        "industryCode": "TECH.SOFTWARE",
+        "countryCode": "CN",
+        "regionCode": "CN-31",
+        "cityCode": "CN-31-SHANGHAI",
+        "roleKeys": [
+          "PROSPECT"
+        ],
+        "logo": {
+          "originalName": "wide-logo-1788798302722.png",
+          "mimeType": "image/png"
+        }
+      }
+    },
+    {
+      "name": "Contact BUSINESS Create",
+      "value": {
+        "id": "cmtrgbtgm005jqpwchaikgs29",
+        "contactType": "BUSINESS",
+        "organizationId": "cmtrgbqtu0058qpwch977qgee",
+        "email": "business-1788798302722@example.test"
+      }
+    },
+    {
+      "name": "Contact INDIVIDUAL Create",
+      "value": {
+        "id": "cmtrgbv8k005pqpwcnb8my431",
+        "contactType": "INDIVIDUAL",
+        "organizationId": null
+      }
+    },
+    {
+      "name": "MarketingLead auto MQL",
+      "value": {
+        "id": "cmtrgd89l005uqpwcafubqx2n",
+        "status": "MQL",
+        "fitScore": 40,
+        "engagementScore": 70,
+        "mqlAt": "2026-09-07T16:26:21.472Z",
+        "activityCount": 5,
+        "statusHistory": [
+          "NEW",
+          "MQL"
+        ]
+      }
+    },
+    {
+      "name": "MQL → SQL",
+      "value": {
+        "id": "cmtrgd89l005uqpwcafubqx2n",
+        "status": "SQL",
+        "sqlAt": "2026-09-07T16:26:22.790Z",
+        "firstSalesResponseAt": "2026-09-07T16:26:22.790Z"
+      }
+    },
+    {
+      "name": "SQL → Opportunity",
+      "value": {
+        "marketingLeadId": "cmtrgd89l005uqpwcafubqx2n",
+        "status": "CONVERTED",
+        "opportunityId": "cmtrgde7z006xqpwcsumyaonv",
+        "sourceInquiryPreserved": true
+      }
+    },
+    {
+      "name": "Opportunity Create manually",
+      "value": {
+        "id": "cmtrgdfg4007cqpwcfysja7wq",
+        "contactId": "cmtrgbtgm005jqpwchaikgs29",
+        "status": "NEW",
+        "priority": "HIGH",
+        "requirementFile": "phase3-requirement-1788798302722.txt"
+      }
+    },
+    {
+      "name": "Opportunity Assignment Outbox",
+      "value": [
+        {
+          "id": "cmtrgdfgd007eqpwcyoexsem1",
+          "toUserId": "cmtrdogg40001qpd1ylwn9ctr",
+          "status": "PENDING",
+          "attempts": 0
+        },
+        {
+          "id": "cmtrgdgzp007mqpwcry30di2v",
+          "toUserId": "cmtrdogga0003qpd106gecw8a",
+          "status": "PENDING",
+          "attempts": 0
+        }
+      ]
+    },
+    {
+      "name": "Opportunity Followup + Task",
+      "value": {
+        "opportunityId": "cmtrgdfg4007cqpwcfysja7wq",
+        "taskId": "cmtrgdhkz007uqpwciir164zj",
+        "nextAction": "准备演示并发送确认材料",
+        "nextFollowupAt": "2026-09-08T16:26:00.000Z"
+      }
+    },
+    {
+      "name": "Opportunity WON",
+      "value": {
+        "id": "cmtrgde7z006xqpwcsumyaonv",
+        "wonAt": "2026-09-07T16:27:30.764Z",
+        "closedAt": "2026-09-07T16:27:30.764Z",
+        "companyLifecycle": "CUSTOMER"
+      }
+    },
+    {
+      "name": "Export Selected",
+      "value": {
+        "id": "cmtrgg5tp0084qpwcpvury2h6",
+        "scope": "SELECTED",
+        "status": "COMPLETED",
+        "rowCount": 1,
+        "fileName": "kivisense-contacts-EXP-20260907-09D47D36.xlsx"
+      }
+    },
+    {
+      "name": "Import",
+      "value": {
+        "jobId": "cmtrgg8u6008dqpwcjarv0h4a",
+        "contactId": "cmtrgg929008iqpwczw2pqtl6",
+        "contactName": "V4-UI-导入联系人-1788798302722",
+        "contactType": "INDIVIDUAL"
+      }
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "company-detail-1440",
+      "file": "artifacts/ui-refactor-v4-after/screenshots/01-company-detail-1440.png",
+      "dimensions": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "document": [
+          1440,
+          1115
+        ],
+        "overflowX": false
+      },
+      "bytes": 142723,
+      "sha256": "ec358adcfe11020201c61b1db557849fe8d68732ac6ff63974a70b50712399f3"
+    },
+    {
+      "name": "contact-business-detail-1440",
+      "file": "artifacts/ui-refactor-v4-after/screenshots/02-contact-business-detail-1440.png",
+      "dimensions": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "document": [
+          1440,
+          900
+        ],
+        "overflowX": false
+      },
+      "bytes": 102089,
+      "sha256": "4efe5fd033013f7a9a8a9673087405f9f15bad44e9c56071952062cda85d07ef"
+    },
+    {
+      "name": "marketing-lead-mql-detail-1440",
+      "file": "artifacts/ui-refactor-v4-after/screenshots/03-marketing-lead-mql-detail-1440.png",
+      "dimensions": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "document": [
+          1440,
+          1361
+        ],
+        "overflowX": false
+      },
+      "bytes": 172534,
+      "sha256": "f57908f1eaf9355b0b5d0241997269fa3e0bf4157dfc4a44ecdaf3c3aa790061"
+    },
+    {
+      "name": "workbench-mql-1440",
+      "file": "artifacts/ui-refactor-v4-after/screenshots/04-workbench-mql-1440.png",
+      "dimensions": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "document": [
+          1440,
+          900
+        ],
+        "overflowX": false
+      },
+      "bytes": 88688,
+      "sha256": "0cc880ecc886cbed274d816d5737371f1d50fb31a6d8fd5110b8b9fe739acb79"
+    },
+    {
+      "name": "opportunity-detail-1440",
+      "file": "artifacts/ui-refactor-v4-after/screenshots/05-opportunity-detail-1440.png",
+      "dimensions": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "document": [
+          1440,
+          1673
+        ],
+        "overflowX": false
+      },
+      "bytes": 163584,
+      "sha256": "d757fc547536e65df082986f0108f378525d4c6ae80f5aff4e69cbeda4aa96c1"
+    },
+    {
+      "name": "export-history-1440",
+      "file": "artifacts/ui-refactor-v4-after/screenshots/06-export-history-1440.png",
+      "dimensions": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "document": [
+          1440,
+          900
+        ],
+        "overflowX": false
+      },
+      "bytes": 128852,
+      "sha256": "51fd572433fb3f469feb6ff667d687a3f8b39e6502fdffdd7e6d7f62382d8cf1"
+    },
+    {
+      "name": "supplier-empty-toolbar-1440",
+      "file": "artifacts/ui-refactor-v4-after/screenshots/07-supplier-empty-toolbar-1440.png",
+      "dimensions": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "document": [
+          1440,
+          900
+        ],
+        "overflowX": false
+      },
+      "bytes": 73488,
+      "sha256": "777b44ef03a013f1055a3f35dce6896b9f41b6f642636753414eb57f84c8b4c6"
+    },
+    {
+      "name": "dashboard-team-1440",
+      "file": "artifacts/ui-refactor-v4-after/screenshots/08-dashboard-team-1440.png",
+      "dimensions": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "document": [
+          1440,
+          900
+        ],
+        "overflowX": false
+      },
+      "bytes": 98866,
+      "sha256": "bff154afac54cf5529bf871e9e7971157cce07bfe001440626c090999046e543"
+    },
+    {
+      "name": "company-list-1280",
+      "file": "artifacts/ui-refactor-v4-after/screenshots/09-company-list-1280.png",
+      "dimensions": {
+        "viewport": [
+          1280,
+          900
+        ],
+        "document": [
+          1280,
+          900
+        ],
+        "overflowX": false
+      },
+      "bytes": 89744,
+      "sha256": "40444ffc6fd0b438a019a79ab4c8f49116eb7f302c9027d8513e0d7f888abb57"
+    },
+    {
+      "name": "opportunity-detail-1280",
+      "file": "artifacts/ui-refactor-v4-after/screenshots/10-opportunity-detail-1280.png",
+      "dimensions": {
+        "viewport": [
+          1280,
+          900
+        ],
+        "document": [
+          1280,
+          1938
+        ],
+        "overflowX": false
+      },
+      "bytes": 128373,
+      "sha256": "ff9225a19281eb43d6deb626c4468b0483d22c71d7bdcf044a15f20bed1b4614"
+    },
+    {
+      "name": "dashboard-1280",
+      "file": "artifacts/ui-refactor-v4-after/screenshots/11-dashboard-1280.png",
+      "dimensions": {
+        "viewport": [
+          1280,
+          900
+        ],
+        "document": [
+          1280,
+          1422
+        ],
+        "overflowX": false
+      },
+      "bytes": 102967,
+      "sha256": "3ad7cdf317e431f6fd55c0dea4201f041109ab939bd2ed7ce6990b774e288411"
+    },
+    {
+      "name": "company-list-1024",
+      "file": "artifacts/ui-refactor-v4-after/screenshots/12-company-list-1024.png",
+      "dimensions": {
+        "viewport": [
+          1024,
+          900
+        ],
+        "document": [
+          1024,
+          900
+        ],
+        "overflowX": false
+      },
+      "bytes": 82759,
+      "sha256": "3d120539f444aa70269e79e14daad42c9bcdca6e0df0fc98d902eb097d9a1d3b"
+    },
+    {
+      "name": "opportunity-detail-1024",
+      "file": "artifacts/ui-refactor-v4-after/screenshots/13-opportunity-detail-1024.png",
+      "dimensions": {
+        "viewport": [
+          1024,
+          900
+        ],
+        "document": [
+          1024,
+          2567
+        ],
+        "overflowX": false
+      },
+      "bytes": 115294,
+      "sha256": "f6432206204bce5e525f02b9a6d1e4b860ccd0077dc32d9b8e081c8e95a6da80"
+    },
+    {
+      "name": "dashboard-1024",
+      "file": "artifacts/ui-refactor-v4-after/screenshots/14-dashboard-1024.png",
+      "dimensions": {
+        "viewport": [
+          1024,
+          900
+        ],
+        "document": [
+          1024,
+          1494
+        ],
+        "overflowX": false
+      },
+      "bytes": 98001,
+      "sha256": "2a0dd44946429831b9b21e3d6dc137bf8cc9d19896668a0c7aca13f86586b8a3"
+    },
+    {
+      "name": "viewer-read-only-1440",
+      "file": "artifacts/ui-refactor-v4-after/screenshots/15-viewer-read-only-1440.png",
+      "bytes": 68390,
+      "sha256": "920e5e76ecf99513171265329b0bbbe61afd679780bbc936cd2ec1a927655b3c"
+    }
+  ],
+  "generatedFiles": [
+    {
+      "file": "downloads/contacts-all_current_permission-1788798302722.xlsx",
+      "bytes": 7645,
+      "sha256": "79762cd86fdd851da044d4a53cfc657c494140f8349e2b2072906b42f6033959"
+    },
+    {
+      "file": "downloads/contacts-filtered-1788798302722.xlsx",
+      "bytes": 7645,
+      "sha256": "ac705e79de705f1f99d4270cbba7fc7fd894b823a79e0621f653be81ff69cd7c"
+    },
+    {
+      "file": "downloads/contacts-import-1788798302722.xlsx",
+      "bytes": 9214,
+      "sha256": "71a63c4c0ac9f4dd384a2a15a1323c1eb8c1724ea65f73f993a2139caf248760"
+    },
+    {
+      "file": "downloads/contacts-selected-1788798302722.xlsx",
+      "bytes": 7530,
+      "sha256": "52019f4ddcb349d37b06b83675412d0ea938afea1d67f81b8bfd20fbb01e736b"
+    },
+    {
+      "file": "downloads/contacts-template-1788798302722.xlsx",
+      "bytes": 23020,
+      "sha256": "ff5926073253ef2550224b8b92ce22ba1b2940f69cfe902358bf5c66d52e66c0"
+    }
+  ],
+  "consoleEvents": [],
+  "networkEvents": []
+}

@@ -7,6 +7,7 @@ import type { FastifyInstance } from "fastify";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildApp } from "../src/app.js";
 import { SESSION_COOKIE, sessionTokenHash } from "../src/common/auth.js";
+import { dispatchAssignmentNotifications } from "../src/common/assignment-notifications.js";
 import type { AppConfig } from "../src/common/config.js";
 
 const enabled = process.env.RUN_DB_INTEGRATION_TESTS === "true";
@@ -94,6 +95,7 @@ describe.skipIf(!enabled).sequential("Marketing Lead to Opportunity", () => {
     await prisma.importJob.deleteMany({ where: { createdBy: { in: userIds } } });
     await prisma.exportJob.deleteMany({ where: { createdBy: { in: userIds } } });
     await prisma.auditLog.deleteMany({ where: { actorUserId: { in: userIds } } });
+    await prisma.assignmentNotification.deleteMany({ where: { OR: [{ toUserId: { in: userIds } }, { assignedByUserId: { in: userIds } }] } });
     await prisma.session.deleteMany({ where: { userId: { in: userIds } } });
     await prisma.user.deleteMany({ where: { id: { in: userIds } } });
     await app?.close(); await prisma.$disconnect();
@@ -113,24 +115,62 @@ describe.skipIf(!enabled).sequential("Marketing Lead to Opportunity", () => {
     expect((await inject({ method: "GET", url: "/api/v1/crm/marketing/scoring-rules?includeDisabled=true" })).statusCode).toBe(403);
   });
 
-  it("creates the Naderi overseas lead, detects duplicates and records immutable score history", async () => {
+  it("forces a system-owned NEW state, detects duplicates and starts scoring at zero", async () => {
+    const forbiddenInitialState = await inject({ method: "POST", url: "/api/v1/crm/marketing-leads", payload: {
+      fullName: "Invalid Initial State", source: "MANUAL", status: "NURTURING", fitScore: 40,
+    } });
+    expect(forbiddenInitialState.statusCode).toBe(422);
     const created = await inject({ method: "POST", url: "/api/v1/crm/marketing-leads", payload: {
       fullName: "Naderi", companyName: "Dena", title: "Manager", email: `naderi-${runKey}@denaholding.com`,
       phone: "+98 21 5555 0188", whatsapp: "+98 912 555 0188", countryCode: "IR",
       source: "WEBSITE", sourceChannel: "Organic Search", sourceDetail: "Google/Bing", inquiryType: "Not sure yet",
-      inquiryContent: inquiry, status: "NURTURING", ownerUserId: salesId, fitScore: 40, fitReason: "ICP country and company profile",
+      inquiryContent: inquiry, ownerUserId: salesId,
     } });
     expect(created.statusCode).toBe(201);
-    expect(created.json().data).toMatchObject({ status: "NURTURING", phoneNormalized: "+982155550188", whatsappNormalized: "+989125550188", fitLevel: "MEDIUM" });
+    expect(created.json().data).toMatchObject({ status: "NEW", phoneNormalized: "+982155550188", whatsappNormalized: "+989125550188", fitScore: 0, fitLevel: "LOW" });
     marketingLeadId = created.json().data.id;
     const duplicate = await inject({ method: "GET", url: `/api/v1/crm/marketing-leads/duplicate-candidates?email=${encodeURIComponent(`naderi-${runKey}@denaholding.com`)}` });
     expect(duplicate.statusCode).toBe(200);
     expect(duplicate.json().data[0].id).toBe(marketingLeadId);
-    expect(await prisma.leadScoreHistory.findFirstOrThrow({ where: { marketingLeadId, dimension: "FIT" } })).toMatchObject({ previousScore: 0, scoreDelta: 40, newScore: 40 });
+    expect(await prisma.leadScoreHistory.count({ where: { marketingLeadId } })).toBe(0);
   });
 
-  it("applies repeat and cooldown rules, promotes to MQL, then supports SQL, recycle and Qualified", async () => {
+  it("persists assignment notifications, sends through a fake transport, retains assignment on failure and avoids duplicates", async () => {
+    const beforeDuplicateSave = await prisma.assignmentNotification.count({ where: { entityType: "MARKETING_LEAD", entityId: marketingLeadId, fieldKey: "ownerUserId" } });
+    const unchanged = await inject({ method: "PATCH", url: `/api/v1/crm/marketing-leads/${marketingLeadId}`, payload: { ownerUserId: salesId } });
+    expect(unchanged.statusCode).toBe(200);
+    expect(await prisma.assignmentNotification.count({ where: { entityType: "MARKETING_LEAD", entityId: marketingLeadId, fieldKey: "ownerUserId" } })).toBe(beforeDuplicateSave);
+
+    const sentMessages: Array<Record<string, unknown>> = [];
+    const notificationConfig = {
+      assignmentNotificationEnabled: true,
+      smtpHost: "fake.test",
+      smtpPort: 1025,
+      smtpSecure: false,
+      mailFromName: "Kivisense CRM Test",
+      mailFromAddress: "crm@example.test",
+    };
+    const sent = await dispatchAssignmentNotifications(prisma, notificationConfig as AppConfig, 25, {
+      async sendMail(message) { sentMessages.push(message); return { accepted: ["test"] }; },
+    });
+    expect(sent.sent).toBeGreaterThanOrEqual(1);
+    expect(sentMessages.some((message) => String(message.subject).includes("新的线索"))).toBe(true);
+    expect(await prisma.assignmentNotification.count({ where: { entityType: "MARKETING_LEAD", entityId: marketingLeadId, status: "SENT" } })).toBe(1);
+
+    const failedLead = await inject({ method: "POST", url: "/api/v1/crm/marketing-leads", payload: { fullName: `Notification Failure ${runKey}`, source: "MANUAL", ownerUserId: adminId } }, adminCookie);
+    expect(failedLead.statusCode).toBe(201);
+    const failedLeadId = failedLead.json().data.id;
+    const failed = await dispatchAssignmentNotifications(prisma, notificationConfig as AppConfig, 25, {
+      async sendMail() { throw new Error("fake SMTP unavailable"); },
+    });
+    expect(failed.failed).toBeGreaterThanOrEqual(1);
+    expect((await prisma.marketingLead.findUniqueOrThrow({ where: { id: failedLeadId } })).ownerUserId).toBe(adminId);
+    expect(await prisma.assignmentNotification.findFirstOrThrow({ where: { entityType: "MARKETING_LEAD", entityId: failedLeadId } })).toMatchObject({ status: "FAILED", attempts: 1, lastError: "fake SMTP unavailable" });
+  });
+
+  it("scores NEW leads, auto-promotes to MQL, supports accept/recycle and rejects legacy actions", async () => {
     const activity = async (ruleCode: string) => inject({ method: "POST", url: `/api/v1/crm/marketing-leads/${marketingLeadId}/activities`, payload: { ruleCode, source: "CRM", note: `Regression ${ruleCode}` } });
+    expect((await activity("ICP_PROFILE_MATCH")).statusCode).toBe(201);
     expect((await activity("FORM_SUBMIT")).statusCode).toBe(201);
     const repeated = await activity("FORM_SUBMIT");
     expect(repeated.statusCode).toBe(409);
@@ -149,11 +189,13 @@ describe.skipIf(!enabled).sequential("Marketing Lead to Opportunity", () => {
     expect(accept.statusCode).toBe(200); expect(accept.json().data.status).toBe("SQL"); expect(accept.json().data.firstSalesResponseAt).toBeTruthy();
     const recycled = await inject({ method: "POST", url: `/api/v1/crm/marketing-leads/${marketingLeadId}/transition`, payload: { action: "RECYCLE", reason: "Wait for confirmed timing" } });
     expect(recycled.statusCode).toBe(200); expect(recycled.json().data.status).toBe("RECYCLED");
-    const nurturing = await inject({ method: "POST", url: `/api/v1/crm/marketing-leads/${marketingLeadId}/transition`, payload: { action: "START_NURTURING" } });
-    expect(nurturing.statusCode).toBe(200); expect(nurturing.json().data.status).toBe("MQL");
+    const legacyNurturing = await inject({ method: "POST", url: `/api/v1/crm/marketing-leads/${marketingLeadId}/transition`, payload: { action: "START_NURTURING" } });
+    expect(legacyNurturing.statusCode).toBe(422);
+    const rescored = await activity("CUSTOMER_REPLY");
+    expect(rescored.statusCode).toBe(201); expect(rescored.json().data.lead.status).toBe("MQL");
     expect((await inject({ method: "POST", url: `/api/v1/crm/marketing-leads/${marketingLeadId}/transition`, payload: { action: "ACCEPT_SQL" } })).statusCode).toBe(200);
-    const qualified = await inject({ method: "POST", url: `/api/v1/crm/marketing-leads/${marketingLeadId}/transition`, payload: { action: "QUALIFY" } });
-    expect(qualified.statusCode).toBe(200); expect(qualified.json().data.status).toBe("QUALIFIED");
+    const legacyQualified = await inject({ method: "POST", url: `/api/v1/crm/marketing-leads/${marketingLeadId}/transition`, payload: { action: "QUALIFY" } });
+    expect(legacyQualified.statusCode).toBe(422);
   });
 
   it("supports disqualification with a mandatory reason", async () => {

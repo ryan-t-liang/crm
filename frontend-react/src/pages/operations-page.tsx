@@ -44,6 +44,38 @@ import {
 import { EntityForm } from "@/components/crm/entity-form";
 
 type Plan = Nurture & { organization: { id: string; name: string } };
+type WorkbenchFeed = {
+  summary: {
+    newMql: number;
+    todayTasks: number;
+    overdueTasks: number;
+    next7DaysTasks: number;
+    staleOpportunities: number;
+    missingNextAction: number;
+    recontactCompanies: number;
+  };
+  marketingLeads: Array<{
+    id: string;
+    fullName: string;
+    companyName?: string;
+    fitScore: number;
+    engagementScoreCached: number;
+  }>;
+  opportunities: Array<{
+    id: string;
+    requirementSummary: string;
+    status: string;
+    nextAction?: string;
+    reasons: string[];
+    contact: { contactName: string; companyName?: string };
+  }>;
+  organizations: Array<{
+    id: string;
+    name: string;
+    shortName?: string;
+    fitScore: number;
+  }>;
+};
 export function OperationsPage({
   me,
   users,
@@ -246,9 +278,9 @@ export function OperationsPage({
           <div className="space-y-4">
             <p className="text-xs text-muted-foreground">
               {tab === "priority"
-                ? "高 Fit + 高 Engagement，优先推进。"
+                ? "高匹配且高活跃，优先推进。"
                 : tab === "reactivation"
-                  ? "高 Fit 的沉睡客户，适合重新建立联系。"
+                  ? "高匹配的沉睡客户，适合重新建立联系。"
                   : "基于现有互动时间与活跃商机规则动态计算。"}
             </p>
             <DataTable
@@ -305,7 +337,7 @@ export function OperationsPage({
                 },
                 {
                   id: "score",
-                  header: "Fit / Engagement",
+                  header: "匹配度 / 互动活跃度",
                   cell: ({ row }) => (
                     <span className="tabular-nums">
                       {row.original.fitScore}
@@ -485,34 +517,30 @@ export function WorkbenchPage({
     [page, setPage] = useState(1),
     [scope, setScope] = useState(me.id),
     [followup, setFollowup] = useState<FollowupTarget | null>(null),
-    [task, setTask] = useState<TaskTarget | "pick" | null>(null);
+    [task, setTask] = useState<TaskTarget | "pick" | null>(null),
+    [actionError, setActionError] = useState("");
   const result = useResource<PageResult<Task>>(
     `/api/v1/crm/tasks?${queryString({ ownerUserId: scope, status, page, pageSize: 20 })}`,
   );
-  const [now, setNow] = useState(() => new Date()),
-    endToday = new Date(now);
-  endToday.setHours(23, 59, 59, 999);
-  // Each metric requests only a count, with the same date boundaries as the existing workbench.
-  const overdue = useResource<PageResult<Task>>(
-    `/api/v1/crm/tasks?${queryString({ ownerUserId: scope, status: "OPEN", dueTo: new Date(now.getTime() - 1).toISOString(), pageSize: 1 })}`,
-  );
-  const today = useResource<PageResult<Task>>(
-    `/api/v1/crm/tasks?${queryString({ ownerUserId: scope, status: "OPEN", dueFrom: now.toISOString(), dueTo: endToday.toISOString(), pageSize: 1 })}`,
-  );
-  const week = useResource<PageResult<Task>>(
-    `/api/v1/crm/tasks?${queryString({ ownerUserId: scope, status: "OPEN", dueFrom: new Date(endToday.getTime() + 1).toISOString(), dueTo: new Date(now.getTime() + 7 * 86400000).toISOString(), pageSize: 1 })}`,
-  );
-  const high = useResource<PageResult<Task>>(
-    `/api/v1/crm/tasks?${queryString({ ownerUserId: scope, status: "OPEN", priority: "HIGH", pageSize: 1 })}`,
+  const feed = useResource<{ data: WorkbenchFeed }>(
+    `/api/v1/crm/workbench?${queryString({ ownerUserId: scope })}`,
   );
   const refresh = () => {
-    setNow(new Date());
     result.reload();
-    overdue.reload();
-    today.reload();
-    week.reload();
-    high.reload();
+    feed.reload();
     window.dispatchEvent(new Event("crm:data-changed"));
+  };
+  const acceptMql = async (id: string) => {
+    setActionError("");
+    try {
+      await crmApi(`/api/v1/crm/marketing-leads/${id}/transition`, {
+        method: "POST",
+        body: JSON.stringify({ action: "ACCEPT_SQL", reason: null }),
+      });
+      refresh();
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "接受线索失败");
+    }
   };
   return (
     <PageContent>
@@ -530,12 +558,70 @@ export function WorkbenchPage({
       />
       <SummaryStrip
         items={[
-          { label: "已逾期", value: overdue.data?.meta.total ?? "—" },
-          { label: "今天", value: today.data?.meta.total ?? "—" },
-          { label: "未来 7 天", value: week.data?.meta.total ?? "—" },
-          { label: "高优先级", value: high.data?.meta.total ?? "—" },
+          { label: "新 MQL 待接受", value: feed.data?.data.summary.newMql ?? "—" },
+          { label: "逾期任务", value: feed.data?.data.summary.overdueTasks ?? "—" },
+          { label: "今日任务", value: feed.data?.data.summary.todayTasks ?? "—" },
+          { label: "未来 7 天", value: feed.data?.data.summary.next7DaysTasks ?? "—" },
+          { label: "停滞商机", value: feed.data?.data.summary.staleOpportunities ?? "—" },
+          { label: "缺少下一步", value: feed.data?.data.summary.missingNextAction ?? "—" },
         ]}
       />
+      {actionError && (
+        <p role="alert" className="text-sm text-destructive">{actionError}</p>
+      )}
+      {feed.error ? (
+        <ErrorState error={feed.error} retry={feed.reload} />
+      ) : feed.loading ? (
+        <LoadingSkeleton />
+      ) : (
+        <div className="grid items-start gap-5 xl:grid-cols-2">
+          <Section title="新 MQL 待接受">
+            {feed.data?.data.marketingLeads.length ? (
+              <ul className="divide-y">
+                {feed.data.data.marketingLeads.map((lead) => (
+                  <li key={lead.id} className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0">
+                    <div className="min-w-0 flex-1">
+                      <a className="text-sm font-medium hover:underline" href={`#marketing-leads/${lead.id}`}>{lead.fullName}</a>
+                      <p className="truncate text-xs text-muted-foreground">
+                        {lead.companyName || "未填写公司"} · 线索匹配度 {lead.fitScore} · 互动活跃度 {lead.engagementScoreCached}
+                      </p>
+                    </div>
+                    {can(me, "crm.marketing_lead.qualify") && <Button size="sm" onClick={() => void acceptMql(lead.id)}>接受跟进</Button>}
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="text-sm text-muted-foreground">暂无待接受的 MQL。</p>}
+          </Section>
+          <Section title="商机提醒">
+            {feed.data?.data.opportunities.length ? (
+              <ul className="divide-y">
+                {feed.data.data.opportunities.map((opportunity) => (
+                  <li key={opportunity.id} className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0">
+                    <div className="min-w-0 flex-1">
+                      <a className="text-sm font-medium hover:underline" href={`#leads/${opportunity.id}`}>{opportunity.requirementSummary}</a>
+                      <p className="text-xs text-muted-foreground">{opportunity.contact.contactName} · {opportunity.reasons.includes("STALE") ? "停滞" : ""}{opportunity.reasons.length > 1 ? " / " : ""}{opportunity.reasons.includes("NO_NEXT_ACTION") ? "缺少下一步" : ""}</p>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => setFollowup({ kind: "lead", id: opportunity.id, label: opportunity.requirementSummary })}>记录跟进</Button>
+                    <Button variant="outline" size="sm" onClick={() => setTask({ leadId: opportunity.id, label: opportunity.requirementSummary })}>安排下一步</Button>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="text-sm text-muted-foreground">暂无停滞或缺少下一步行动的商机。</p>}
+          </Section>
+          {feed.data?.data.organizations.length ? (
+            <Section title="高价值待重新联系">
+              <ul className="divide-y">
+                {feed.data.data.organizations.map((organization) => (
+                  <li key={organization.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                    <a className="min-w-0 flex-1 truncate text-sm font-medium hover:underline" href={`#organizations/${organization.id}`}>{organization.shortName || organization.name}</a>
+                    <StatusBadge>匹配度 {organization.fitScore}</StatusBadge>
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          ) : null}
+        </div>
+      )}
       <div className="flex flex-wrap gap-2">
         <FilterControl
           label="任务状态"
@@ -553,6 +639,7 @@ export function WorkbenchPage({
             label="负责人"
             value={scope}
             options={Object.fromEntries(users.map((u) => [u.id, u.name]))}
+            all={false}
             onChange={(v) => {
               setScope(v);
               setPage(1);

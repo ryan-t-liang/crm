@@ -274,19 +274,19 @@ export function App() {
               (family === "operations"
                 ? "客户运营"
                 : family === "workbench"
-                  ? "我的工作台"
+                  ? "工作台"
                   : ["suppliers", "vendors"].includes(family)
                     ? "供应商"
                     : family === "dashboard"
                       ? "数据看板"
                       : family === "organizations"
                         ? entityId
-                          ? "公司 / Company 360"
+                          ? "公司 / 公司详情"
                           : "公司"
                         : family === "contacts"
                           ? entityId
                             ? "联系人 / Contact 360"
-                            : "客户联系人"
+                            : "联系人"
                           : family === "marketing-leads"
                             ? entityId
                               ? "线索 / 线索详情"

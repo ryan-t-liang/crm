@@ -31,6 +31,11 @@ enum CrmContactStage {
   CONVENTION
 }
 
+enum ContactType {
+  BUSINESS
+  INDIVIDUAL
+}
+
 enum CrmLeadPriority {
   LOW
   MEDIUM
@@ -139,6 +144,12 @@ enum CrmAttachmentStorageType {
   EXTERNAL_URL
 }
 
+enum AssignmentNotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
 model Role {
   id          String           @id @default(cuid()) @db.VarChar(32)
   key         String           @unique @db.VarChar(64)
@@ -223,6 +234,8 @@ model User {
   marketingLeadActivities LeadActivityEvent[]            @relation("LeadActivityActor")
   marketingScoreChanges   LeadScoreHistory[]             @relation("LeadScoreChangedBy")
   marketingStatusChanges  LeadStatusHistory[]            @relation("LeadStatusChangedBy")
+  assignmentNotifications AssignmentNotification[]       @relation("AssignmentNotificationRecipient")
+  assignedNotifications   AssignmentNotification[]       @relation("AssignmentNotificationActor")
 
   @@index([status])
   @@map("users")
@@ -271,6 +284,7 @@ model AuditLog {
 model Contact {
   id                      String            @id @default(cuid()) @db.VarChar(32)
   contactName             String            @map("contact_name") @db.VarChar(160)
+  contactType             ContactType       @default(BUSINESS) @map("contact_type")
   companyShortName        String?           @map("company_short_name") @db.VarChar(120)
   companyName             String?           @map("company_name") @db.VarChar(240)
   department              String?           @db.VarChar(160)
@@ -315,6 +329,7 @@ model Contact {
   @@index([deletedAt, updatedAt])
   @@index([deletedByUserId])
   @@index([organizationId, updatedAt])
+  @@index([contactType, updatedAt])
   @@index([phoneNormalized])
   @@index([whatsappNormalized])
   @@map("contacts")
@@ -616,10 +631,15 @@ model Organization {
   website                 String?                        @db.VarChar(500)
   websiteDomain           String?                        @map("website_domain") @db.VarChar(191)
   industry                String?                        @db.VarChar(160)
+  industryCode            String?                        @map("industry_code") @db.VarChar(80)
+  industryCustom          String?                        @map("industry_custom") @db.VarChar(160)
   country                 String?                        @db.VarChar(120)
   region                  String?                        @db.VarChar(120)
   city                    String?                        @db.VarChar(120)
   countryCode             String?                        @map("country_code") @db.Char(2)
+  regionCode              String?                        @map("region_code") @db.VarChar(80)
+  cityCode                String?                        @map("city_code") @db.VarChar(80)
+  cityCustom              String?                        @map("city_custom") @db.VarChar(120)
   companySize             String?                        @map("company_size") @db.VarChar(80)
   ownerUserId             String?                        @map("owner_user_id") @db.VarChar(32)
   lifecycleStage          OrganizationLifecycle          @default(TARGET) @map("lifecycle_stage")
@@ -645,6 +665,8 @@ model Organization {
   @@index([websiteDomain])
   @@index([ownerUserId, updatedAt])
   @@index([lifecycleStage, updatedAt])
+  @@index([industryCode, updatedAt])
+  @@index([countryCode, regionCode, cityCode])
   @@index([fitScore, updatedAt])
   @@index([deletedAt, updatedAt])
   @@map("organizations")
@@ -850,4 +872,31 @@ model ExportJob {
   @@index([createdBy, createdAt])
   @@index([objectType, createdAt])
   @@map("export_jobs")
+}
+
+model AssignmentNotification {
+  id               String                       @id @default(cuid()) @db.VarChar(32)
+  entityType       String                       @map("entity_type") @db.VarChar(40)
+  entityId         String                       @map("entity_id") @db.VarChar(32)
+  entityLabel      String                       @map("entity_label") @db.VarChar(300)
+  fieldKey         String                       @map("field_key") @db.VarChar(80)
+  fromUserId       String?                      @map("from_user_id") @db.VarChar(32)
+  toUserId         String                       @map("to_user_id") @db.VarChar(32)
+  assignedByUserId String                       @map("assigned_by_user_id") @db.VarChar(32)
+  recipientEmail   String                       @map("recipient_email") @db.VarChar(191)
+  payload          Json
+  status           AssignmentNotificationStatus @default(PENDING)
+  attempts         Int                          @default(0) @db.UnsignedSmallInt
+  lastError        String?                      @map("last_error") @db.VarChar(1000)
+  nextAttemptAt    DateTime?                    @map("next_attempt_at") @db.DateTime(3)
+  sentAt           DateTime?                    @map("sent_at") @db.DateTime(3)
+  createdAt        DateTime                     @default(now()) @map("created_at") @db.DateTime(3)
+  updatedAt        DateTime                     @updatedAt @map("updated_at") @db.DateTime(3)
+  recipient        User                         @relation("AssignmentNotificationRecipient", fields: [toUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  assignedBy       User                         @relation("AssignmentNotificationActor", fields: [assignedByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([status, nextAttemptAt, createdAt])
+  @@index([toUserId, createdAt])
+  @@index([entityType, entityId, createdAt])
+  @@map("assignment_notifications")
 }

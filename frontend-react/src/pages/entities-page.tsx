@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import {
   LEAD_FIELDS,
-  CONTACT_STAGES,
   LEAD_STATUSES,
   LEAD_PRIORITIES,
   type FieldDefinition,
@@ -18,6 +17,7 @@ import { crmApi, type SessionUser, type CrmUser } from "@/lib/api";
 import {
   can,
   dateTime,
+  friendlyError,
   queryString,
   useResource,
   type Contact,
@@ -39,6 +39,7 @@ import { AttachmentList } from "@/components/crm/attachment-list";
 import { Timeline } from "@/components/crm/timeline";
 import { EntityAudit } from "@/components/crm/entity-audit";
 import { ImportExport } from "@/components/crm/import-export";
+import { marketingSourceChannelLabel, marketingSourceLabel } from "@/lib/product-language";
 import {
   PageContent,
   PageHeader,
@@ -58,14 +59,21 @@ import {
   ErrorState,
   LoadingSkeleton,
   StatusBadge,
+  StagePath,
+  SystemIdField,
 } from "@/components/crm/primitives";
 
 type RecordRow = EntityRecord & Partial<Contact & Lead>;
 const optionMap = (options: { value: string; label: string }[]) =>
   Object.fromEntries(options.map((o) => [o.value, o.label]));
-const contactStages = optionMap(CONTACT_STAGES),
-  leadStatuses = optionMap(LEAD_STATUSES),
+const leadStatuses = optionMap(LEAD_STATUSES),
   priorities = optionMap(LEAD_PRIORITIES);
+const postSalesOpportunityFields = new Set([
+  "wonAt",
+  "deliveryFollowupAt",
+  "contractRenewalAt",
+  "paymentReceivedAt",
+]);
 const nameOf = (r: RecordRow) =>
   String(r.contactName || r.requirementSummary || "记录");
 const endpointOf = (kind: "contact" | "lead") =>
@@ -88,7 +96,11 @@ export function EntitiesPage({
   const [filters, setFilters] = useState<Record<string, string>>({}),
     [search, setSearch] = useState(""),
     [page, setPage] = useState(1),
-    [tab, setTab] = useState(kind === "contact" ? "leads" : "requirement");
+    [tab, setTab] = useState(kind === "contact" ? "overview" : "requirement"),
+    [selectedIds, setSelectedIds] = useState<string[]>([]),
+    [batchOwnerUserId, setBatchOwnerUserId] = useState(""),
+    [batchBusy, setBatchBusy] = useState(false),
+    [batchError, setBatchError] = useState("");
   const [form, setForm] = useState<{
       kind: "contact" | "lead";
       record?: EntityRecord;
@@ -121,6 +133,23 @@ export function EntitiesPage({
     detail.reload();
     journey.reload();
     window.dispatchEvent(new Event("crm:data-changed"));
+  };
+  const batchAssign = async () => {
+    if (!batchOwnerUserId || !selectedIds.length) return;
+    setBatchBusy(true);
+    setBatchError("");
+    try {
+      await crmApi(`${endpoint}/batch-assign`, {
+        method: "POST",
+        body: JSON.stringify({ ids: selectedIds, ownerUserId: batchOwnerUserId }),
+      });
+      setSelectedIds([]);
+      refresh();
+    } catch (error) {
+      setBatchError(friendlyError(error));
+    } finally {
+      setBatchBusy(false);
+    }
   };
   const follow = (r: RecordRow) =>
     setFollowup({ kind, id: r.id, label: nameOf(r) });
@@ -214,6 +243,19 @@ export function EntitiesPage({
     ...(kind === "contact"
       ? [
           {
+            id: "contactType",
+            header: "联系人类型",
+            cell: ({
+              row: { original: r },
+            }: {
+              row: { original: RecordRow };
+            }) => (
+              <StatusBadge>
+                {r.contactType === "INDIVIDUAL" ? "个人联系人" : "企业联系人"}
+              </StatusBadge>
+            ),
+          },
+          {
             accessorKey: "title",
             header: "职位",
             cell: ({
@@ -228,7 +270,7 @@ export function EntitiesPage({
       : [
           {
             id: "priority",
-            header: "优先级",
+            header: "商机优先级",
             cell: ({
               row: { original: r },
             }: {
@@ -238,17 +280,21 @@ export function EntitiesPage({
             ),
           },
         ]),
-    {
-      id: "stage",
-      header: kind === "contact" ? "触达阶段" : "商机阶段",
-      cell: ({ row: { original: r } }) => (
-        <StatusBadge>
-          {(kind === "contact"
-            ? contactStages[r.stage || ""]
-            : leadStatuses[r.status || ""]) || "—"}
-        </StatusBadge>
-      ),
-    },
+    ...(kind === "lead"
+      ? [
+          {
+            id: "stage",
+            header: "商机阶段",
+            cell: ({
+              row: { original: r },
+            }: {
+              row: { original: RecordRow };
+            }) => (
+              <StatusBadge>{leadStatuses[r.status || ""] || "—"}</StatusBadge>
+            ),
+          },
+        ]
+      : []),
     {
       id: "owner",
       header: "负责人",
@@ -293,19 +339,8 @@ export function EntitiesPage({
       {!id ? (
         <>
           <PageHeader
-            title={kind === "contact" ? "客户联系人" : "商机"}
+            title={kind === "contact" ? "联系人" : "商机"}
             description={`管理${label}信息与下一步行动`}
-            actions={
-              <>
-                <ImportExport kind={family} me={me} onChanged={refresh} />
-                {canCreate && (
-                  <Button onClick={() => setForm({ kind })}>
-                    <Plus />
-                    新增{label}
-                  </Button>
-                )}
-              </>
-            }
           />
           {list.error ? (
             <ErrorState error={list.error} retry={list.reload} />
@@ -318,6 +353,52 @@ export function EntitiesPage({
               total={list.data?.meta.total}
               onPage={setPage}
               loading={list.loading}
+              selectable={can(me, `crm.${kind}.edit`)}
+              selectedIds={selectedIds}
+              onSelectedIdsChange={setSelectedIds}
+              selectionActions={
+                <>
+                  <FilterControl
+                    label="批量分配负责人"
+                    value={batchOwnerUserId || "unassigned"}
+                    all={false}
+                    options={{
+                      unassigned: "选择负责人",
+                      ...Object.fromEntries(users.map((u) => [u.id, u.name])),
+                    }}
+                    onChange={(value) =>
+                      setBatchOwnerUserId(
+                        value === "unassigned" ? "" : value,
+                      )
+                    }
+                  />
+                  <Button
+                    size="sm"
+                    disabled={!batchOwnerUserId || batchBusy}
+                    onClick={() => void batchAssign()}
+                  >
+                    {batchBusy ? "分配中…" : "批量分配"}
+                  </Button>
+                  <ImportExport kind={family} me={me} onChanged={refresh} selectedIds={selectedIds} filters={filters} exportOnly />
+                </>
+              }
+              tableActions={
+                <ImportExport
+                  kind={family}
+                  me={me}
+                  onChanged={refresh}
+                  selectedIds={selectedIds}
+                  filters={filters}
+                />
+              }
+              primaryAction={
+                canCreate ? (
+                  <Button onClick={() => setForm({ kind })}>
+                    <Plus />
+                    新增{label}
+                  </Button>
+                ) : undefined
+              }
               toolbar={
                 <>
                   <form
@@ -335,16 +416,21 @@ export function EntitiesPage({
                       搜索
                     </button>
                   </form>
-                  <FilterControl
-                    label={kind === "contact" ? "触达阶段" : "商机阶段"}
-                    value={
-                      filters[kind === "contact" ? "stage" : "status"] || "all"
-                    }
-                    options={kind === "contact" ? contactStages : leadStatuses}
-                    onChange={(v) =>
-                      change(kind === "contact" ? "stage" : "status", v)
-                    }
-                  />
+                  {kind === "contact" ? (
+                    <FilterControl
+                      label="联系人类型"
+                      value={filters.contactType || "all"}
+                      options={{ BUSINESS: "企业联系人", INDIVIDUAL: "个人联系人" }}
+                      onChange={(v) => change("contactType", v)}
+                    />
+                  ) : (
+                    <FilterControl
+                      label="商机阶段"
+                      value={filters.status || "all"}
+                      options={leadStatuses}
+                      onChange={(v) => change("status", v)}
+                    />
+                  )}
                   <FilterControl
                     label="负责人"
                     value={
@@ -364,7 +450,7 @@ export function EntitiesPage({
                   />
                   {kind === "lead" && (
                     <FilterControl
-                      label="优先级"
+                      label="商机优先级"
                       value={filters.priority || "all"}
                       options={priorities}
                       onChange={(v) => change("priority", v)}
@@ -475,6 +561,11 @@ export function EntitiesPage({
               }
             />
           )}
+          {batchError && (
+            <p role="alert" className="text-sm text-destructive">
+              {batchError}
+            </p>
+          )}
         </>
       ) : detail.error ? (
         <ErrorState error={detail.error} retry={detail.reload} />
@@ -504,9 +595,12 @@ export function EntitiesPage({
               <>
                 <StatusBadge>
                   {kind === "contact"
-                    ? contactStages[row.stage || ""]
+                    ? row.contactType === "INDIVIDUAL"
+                      ? "个人联系人"
+                      : "企业联系人"
                     : leadStatuses[row.status || ""]}
                 </StatusBadge>
+                <SystemIdField value={row.id} />
                 {kind === "contact" ? (
                   <>
                     <span>{row.title || "未填写职位"}</span>
@@ -620,6 +714,21 @@ export function EntitiesPage({
                   ]
             }
           />
+          {kind === "lead" && (
+            <StagePath
+              current={String(row.status || "NEW")}
+              stages={[
+                { key: "NEW", label: "新建" },
+                { key: "QUALIFIED", label: "已确认" },
+                { key: "SOLUTION", label: "方案" },
+                { key: "QUOTATION", label: "报价" },
+                { key: "WON", label: "成交" },
+                ...(row.status === "LOST"
+                  ? [{ key: "LOST", label: "丢失" }]
+                  : []),
+              ]}
+            />
+          )}
           {kind === "lead" && row.sourceMarketingLead && (
             <Section
               title="来源线索"
@@ -638,8 +747,8 @@ export function EntitiesPage({
                   {
                     label: "获客来源",
                     value: [
-                      row.sourceMarketingLead.source,
-                      row.sourceMarketingLead.sourceChannel,
+                      marketingSourceLabel(row.sourceMarketingLead.source),
+                      marketingSourceChannelLabel(row.sourceMarketingLead.sourceChannel),
                       row.sourceMarketingLead.sourceDetail,
                     ]
                       .filter(Boolean)
@@ -659,18 +768,34 @@ export function EntitiesPage({
               />
             </Section>
           )}
-          <div
-            className={
-              kind === "contact"
-                ? "grid min-w-0 items-start gap-5 lg:grid-cols-[280px_minmax(0,1fr)]"
-                : "min-w-0"
-            }
-          >
-            {kind === "contact" && (
-              <div className="space-y-5">
+          <div className="min-w-0">
+            <DetailTabs
+              value={tab}
+              onChange={setTab}
+              items={
+                (kind === "contact"
+                  ? [
+                      ["overview", "概览"],
+                      ["leads", "关联商机"],
+                      ["journey", "客户旅程"],
+                      ["notes", "备注与附件"],
+                      ...(can(me, "audit.view")
+                        ? [["audit", "操作记录"]]
+                        : []),
+                    ]
+                  : [
+                      ["requirement", "需求与方案"],
+                      ["followups", "跟进记录"],
+                      ...(can(me, "audit.view")
+                        ? [["audit", "操作记录"]]
+                        : []),
+                    ]) as [string, string][]
+              }
+            >
+              {tab === "overview" && kind === "contact" && (
+                <div className="grid items-start gap-5 lg:grid-cols-2">
                 <Section title="联系人资料">
                   <EntityMeta
-                    columns={1}
                     items={[
                       { label: "Phone", value: row.phone },
                       { label: "Email", value: row.email },
@@ -690,7 +815,6 @@ export function EntitiesPage({
                 </Section>
                 <Section title="公司资料">
                   <EntityMeta
-                    columns={1}
                     items={[
                       {
                         label: "公司",
@@ -717,27 +841,8 @@ export function EntitiesPage({
                     ]}
                   />
                 </Section>
-              </div>
-            )}
-            <DetailTabs
-              value={tab}
-              onChange={setTab}
-              items={
-                [
-                  ...(kind === "contact"
-                    ? [
-                        ["leads", "关联商机"],
-                        ["journey", "客户旅程"],
-                      ]
-                    : [
-                        ["requirement", "需求与方案"],
-                        ["followups", "跟进记录"],
-                      ]),
-                  ["notes", "备注"],
-                  ...(can(me, "audit.view") ? [["audit", "操作记录"]] : []),
-                ] as [string, string][]
-              }
-            >
+                </div>
+              )}
               {tab === "leads" &&
                 kind === "contact" &&
                 (can(me, "crm.lead.view") ? (
@@ -777,21 +882,19 @@ export function EntitiesPage({
                   key={`${row.id}-${row.updatedAt}`}
                 />
               )}
-              {tab === "notes" && (
+              {tab === "notes" && kind === "contact" && (
                 <Section title="备注与资料">
                   <p className="mb-5 whitespace-pre-wrap break-words text-sm leading-6">
                     {String(row.remark || "暂无备注")}
                   </p>
-                  {kind === "contact" && (
-                    <AttachmentList
-                      files={row.attachments || []}
-                      endpoint={`${endpoint}/${row.id}`}
-                      fieldKey="meetingMinutesFiles"
-                      title="历史会议资料"
-                      editable={can(me, "crm.contact.edit")}
-                      onChanged={detail.reload}
-                    />
-                  )}
+                  <AttachmentList
+                    files={row.attachments || []}
+                    endpoint={`${endpoint}/${row.id}`}
+                    fieldKey="meetingMinutesFiles"
+                    title="历史会议资料"
+                    editable={can(me, "crm.contact.edit")}
+                    onChanged={detail.reload}
+                  />
                 </Section>
               )}
               {tab === "audit" && can(me, "audit.view") && (
@@ -1088,18 +1191,23 @@ function LeadContent({
         {[
           ["basic", "基本信息"],
           ["team", "团队协作"],
-          ["milestones", "里程碑"],
         ].map(([tab, title]) => (
           <Section title={title} key={tab}>
             <EntityMeta
               items={LEAD_FIELDS.filter(
                 (d) =>
                   d.tab === tab &&
+                  !postSalesOpportunityFields.has(d.key) &&
                   !["remark", "requirementSummary"].includes(d.key),
               ).map((d) => ({ label: d.label, value: renderValue(d) }))}
             />
           </Section>
         ))}
+        <Section title="内部备注">
+          <p className="whitespace-pre-wrap break-words text-sm leading-6">
+            {String(row.remark || "暂无备注")}
+          </p>
+        </Section>
       </div>
     </div>
   );

@@ -47,7 +47,7 @@ export const FOLLOW_MODE_OPTIONS = [];
 const field = (key, label, section, type = "text", options = {}) => ({ key, label, section, type, tab: options.tab || section, ...options });
 
 export const CONTACT_FIELDS = [
-  field("contactName", "客户联系人", "person", "text", { tab: "basic", required: true, maxLength: 160 }),
+  field("contactName", "联系人姓名", "person", "text", { tab: "basic", required: true, maxLength: 160 }),
   field("title", "职位", "person", "text", { tab: "basic", maxLength: 160 }),
   field("department", "部门", "person", "text", { tab: "basic", maxLength: 160 }),
   field("email", "Email", "person", "email", { tab: "basic", maxLength: 191 }),
@@ -71,10 +71,10 @@ export const CONTACT_FIELDS = [
 
 export const LEAD_FIELDS = [
   field("requirementSummary", "项目需求简述", "basic", "text", { required: true, maxLength: 200, wide: true }),
-  field("status", "线索阶段", "basic", "select", { required: true, options: LEAD_STATUSES }),
-  field("priority", "优先级", "basic", "select", { required: true, options: LEAD_PRIORITIES }),
+  field("status", "商机阶段", "basic", "select", { required: true, options: LEAD_STATUSES }),
+  field("priority", "商机优先级", "basic", "select", { required: true, options: LEAD_PRIORITIES }),
   field("leadSource", "客户来源", "basic", "custom-select", { maxLength: 160, options: LEAD_SOURCE_OPTIONS }),
-  field("salesOwnerUserId", "销售对接人", "basic", "user", { required: true }),
+  field("salesOwnerUserId", "商机负责人", "basic", "user", { required: true }),
   field("requirementDetail", "需求整理 / 详细需求", "requirement", "textarea", { maxLength: 16_000, wide: true }),
   field("imageRequirementNote", "图片需求说明", "requirement", "textarea", { maxLength: 16_000, wide: true }),
   field("projectDomain", "项目领域", "requirement", "custom-select", { maxLength: 160, options: PROJECT_DOMAIN_OPTIONS }),
@@ -87,8 +87,8 @@ export const LEAD_FIELDS = [
   field("quotationNote", "报价说明", "commercial", "textarea", { maxLength: 16_000, wide: true }),
   field("estimatedQuote", "预计报价", "commercial", "number", { min: 0, step: "0.01" }),
   field("currency", "币种", "commercial", "select", { options: ["CNY", "USD", "EUR", "JPY"].map((value) => ({ value, label: value })) }),
-  field("followupOwnerUserId", "跟进对接人", "team", "user"),
-  field("participantUserIds", "Leads 参与人员", "team", "multi-user"),
+  field("followupOwnerUserId", "商机跟进负责人", "team", "user"),
+  field("participantUserIds", "商机协作成员", "team", "multi-user"),
   field("followMode", "跟单模式", "team", "custom-select", { maxLength: 160, options: FOLLOW_MODE_OPTIONS }),
   field("collaborationGroups", "对接群", "team", "multi-text", { maxLength: 8_000, wide: true }),
   field("remark", "内部备注", "team", "textarea", { maxLength: 16_000, wide: true }),

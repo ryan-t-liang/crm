@@ -29,6 +29,7 @@ import {
   Section,
 } from "@/components/crm/primitives";
 import type { AuditRow } from "@/components/crm/entity-audit";
+import { auditActionLabel, auditModuleLabel, auditTargetLabel } from "@/lib/product-language";
 
 type Permission = { key: string; name: string; module: string };
 type Role = {
@@ -554,7 +555,7 @@ function RoleForm({
               <h3 className="mb-3 border-b pb-2 text-sm font-medium">
                 {(
                   {
-                    contact: "客户联系人",
+                    contact: "联系人",
                     lead: "商机",
                     organization: "公司",
                     task: "任务",
@@ -734,14 +735,18 @@ export function AuditPage() {
               ),
             },
             { accessorKey: "actorName", header: "操作者" },
-            { accessorKey: "action", header: "操作" },
-            { accessorKey: "module", header: "模块" },
+            {
+              id: "action",
+              header: "操作",
+              cell: ({ row }) => auditActionLabel(row.original.action),
+            },
+            { id: "module", header: "模块", cell: ({ row }) => auditModuleLabel(row.original.module) },
             {
               id: "entity",
               header: "对象",
               cell: ({ row }) => (
                 <div className="text-xs">
-                  <p>{row.original.targetType || "—"}</p>
+                  <p>{auditTargetLabel(row.original.targetType)}</p>
                   <p className="max-w-44 truncate text-muted-foreground">
                     {row.original.targetId}
                   </p>
@@ -767,7 +772,7 @@ export function AuditPage() {
       {selected && (
         <FormDialog
           title="操作记录详情"
-          description={`${selected.action} · ${dateTime(selected.createdAt)}`}
+          description={`${auditActionLabel(selected.action)} · ${dateTime(selected.createdAt)}`}
           onClose={() => setSelected(null)}
           footer={
             <Button variant="outline" onClick={() => setSelected(null)}>
@@ -776,6 +781,11 @@ export function AuditPage() {
           }
         >
           <Section title="操作详情">
+            <details className="mb-4 text-xs text-muted-foreground">
+              <summary className="cursor-pointer">技术信息</summary>
+              <p className="mt-2 font-mono">{selected.action}</p>
+              <p className="mt-1 font-mono">{selected.module} · {selected.targetType || "—"}</p>
+            </details>
             <pre className="whitespace-pre-wrap break-all text-xs leading-6">
               {JSON.stringify(selected.details || {}, null, 2)}
             </pre>

@@ -1,4 +1,4 @@
-# Kivisense CRM Design System v1.0
+# Kivisense CRM Design System v1.3
 
 Status: FROZEN UI FOUNDATION
 
@@ -1762,3 +1762,75 @@ B2B CRM information density
 =
 
 Kivisense CRM Design Language
+
+---
+
+# 53. v1.3 Product-model and dense-enterprise addendum
+
+This addendum supersedes earlier examples wherever product-model language or information architecture conflicts. The visual foundation remains Salesforce-style CRM information organization, shadcn/ui primitives, Attio/Linear restraint, and sparing Kivisense Emerald accents.
+
+## 53.1 Canonical information architecture
+
+- 概览: 数据看板, 我的工作台
+- 客户管理: 公司, 联系人, 线索, 商机
+- 资源: 供应商
+- 系统: 账户管理, 角色与权限, 评分规则, 审计日志
+
+客户运营 is not a top-level destination. Company Smart Views, Company 360 and 我的工作台 absorb its current capabilities. The compatibility route may remain, but new navigation and new product copy must not recreate the removed module.
+
+## 53.2 Canonical object language
+
+- `MarketingLead` is 线索. Fit and Engagement are 线索匹配度 and 互动活跃度.
+- `CrmLead` is persistence compatibility for Opportunity and is always 商机 in ordinary UI.
+- `Organization` is 公司; Supplier is a Company with the 供应商 business relationship.
+- Company lifecycle is 客户阶段. Company roles are 业务关系 and may be multi-valued.
+- Contact is 联系人 and must state 企业联系人 or 个人联系人. The legacy Contact stage must not appear as a generic “CRM 状态”.
+
+Do not expose internal compatibility names such as CrmLead, Lead Owner, Lead Stage, `START_NURTURING`, enum keys, or route keys to ordinary users.
+
+## 53.3 Lifecycle interaction
+
+New Marketing Leads enter NEW and participate in nurturing through ordinary scoring activity; nurturing is not a button or a required explicit state transition. Scoring may promote NEW, NURTURING and RECYCLED records to MQL. A salesperson accepts MQL to SQL, then converts SQL directly to an Opportunity. Any QUALIFIED compatibility transition is internal. WON is the current CRM sales-chain terminal and does not create Order, Contract, ERP, Finance or Procurement UI.
+
+## 53.4 Dense list standard
+
+Every core list uses one `PageToolbar` composition:
+
+1. Optional low-weight Smart Views.
+2. Search on the left, followed by compact primary filters and a “更多筛选” disclosure.
+3. Import, export, column visibility and the single primary create action on the right, permission permitting.
+4. A leading checkbox column, select-page behavior and a contextual batch bar.
+5. Batch owner assignment and “导出所选”; no batch delete.
+6. Explicit empty state for the active scope, including “暂无供应商” for Supplier.
+
+Export must make scope visible: 所选记录, 当前筛选结果, or 当前权限内全部记录. Export is job-based and exposes estimate, status, row count, download, history and regeneration. Import and export errors stay inside the task dialog rather than becoming a global page failure.
+
+## 53.5 Dense record standard
+
+Record pages compose `RecordHeader`, `RecordHighlights`, `StagePath` where applicable, compact `DetailTabs`, `DetailSection`/`FieldGrid`, `ActivityTimeline`, `AttachmentList`, and `SystemIdField`/`CopyValue`. The first viewport must answer identity, state, owner, recent activity, next action and relationships without a decorative card wall.
+
+System IDs are secondary but visible and copyable on Company, Contact, Marketing Lead and Opportunity records. Company logos use an image-only upload contract and `object-fit: contain`; never crop or stretch a business mark.
+
+## 53.6 Forms and selectors
+
+- Industry uses a centrally maintained category and sub-industry taxonomy, with an explicit custom escape hatch.
+- Country/region/city use dependent searchable selectors backed by centralized reference data; preserve legacy text values for compatibility.
+- Entity relationships use fuzzy-search comboboxes with visible identity context, while backend exact-match rules remain authoritative.
+- Required errors attach to fields. If an invalid field is on another tab, focus that tab and field.
+- Attachment areas accept the field-specific image, video and document types and keep explanatory text adjacent to the relevant business field.
+
+## 53.7 Dashboard and workbench
+
+The Dashboard has exactly four business views: 管理概览, 营销与转化, 商机推进, 团队表现. Financial amounts are prohibited. Owner attribution uses Marketing Lead owner and Opportunity sales owner independently of Company owner. Website visitor tracking remains explicitly unavailable until a real source exists.
+
+我的工作台 is a personal action center, not an analytics dashboard. It aggregates new MQL acceptance, today/overdue/next-seven-day tasks, stale Opportunities, active Opportunities without a next action, and only rule-backed Company reconnect candidates.
+
+## 53.8 Assignment feedback
+
+Owner changes save the business record first and enqueue one transactional outbox notification only when the assignee actually changes. UI feedback confirms assignment; it must not falsely claim that email delivery already succeeded. Delivery failures are retried and never roll back the assignment.
+
+## 53.9 Verification standard
+
+Do not merge “tests passed” into a single claim. Report unit, API/database integration, local real-UI write E2E, responsive visual review, RBAC, UAT read-only, UAT controlled write, deployment provenance and notification-transport evidence separately.
+
+Every critical UI write requires: visible browser result, successful HTTP response, persisted database state and a reload check. Browser gates require 1440, 1280 and 1024 widths, no document-level horizontal overflow, and zero unexpected console errors or HTTP 4xx/5xx. The pre-refactor `artifacts/ui-audit/` archive is immutable; new evidence belongs in a separate AFTER directory.

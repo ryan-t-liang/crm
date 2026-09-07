@@ -7,6 +7,7 @@ import { crmAttachmentSelect } from "./attachments.js";
 import type { TimelineListInput } from "../contacts/service.js";
 import type { CrmLeadCreateInput, CrmLeadImportInput, CrmLeadPatchInput, LeadFollowupCreateInput } from "./schemas.js";
 import { transitionOrganizationLifecycle } from "../organizations/service.js";
+import { enqueueAssignmentNotification } from "../common/assignment-notifications.js";
 
 export type CrmLeadListInput = {
   keyword?: string;
@@ -177,6 +178,8 @@ export class CrmLeadService {
         },
         include: crmLeadDetailInclude,
       });
+      await enqueueAssignmentNotification(tx, { entityType: "OPPORTUNITY", entityId: row.id, entityLabel: `商机：${row.requirementSummary}`, fieldKey: "salesOwnerUserId", fromUserId: null, toUserId: row.salesOwnerUserId, assignedByUserId: createdByUserId, path: `/crm_kivisense/#leads/${row.id}` });
+      await enqueueAssignmentNotification(tx, { entityType: "OPPORTUNITY", entityId: row.id, entityLabel: `商机：${row.requirementSummary}`, fieldKey: "followupOwnerUserId", fromUserId: null, toUserId: row.followupOwnerUserId, assignedByUserId: createdByUserId, path: `/crm_kivisense/#leads/${row.id}` });
       await tx.leadStageHistory.create({ data: { leadId: row.id, fromStatus: null, toStatus: row.status, changedByUserId: createdByUserId, changedAt: row.createdAt } });
       if (contact.organizationId) {
         await transitionOrganizationLifecycle(tx, contact.organizationId, row.status === "WON" ? "CUSTOMER" : "OPPORTUNITY", createdByUserId, row.status === "WON" ? "First won lead" : "Active lead created", { automatic: true });
@@ -199,6 +202,19 @@ export class CrmLeadService {
     ]);
     if (!row) throw new ApiError(404, "RESOURCE_NOT_FOUND", "商机不存在");
     return { ...row, attachments };
+  }
+
+  async batchAssign(ids: string[], salesOwnerUserId: string, audit: AuditActorContext) {
+    await assertAssignableCrmUser(this.prisma, salesOwnerUserId, "salesOwnerUserId");
+    return this.prisma.$transaction(async (tx) => {
+      const rows = await tx.crmLead.findMany({ where: { id: { in: ids }, deletedAt: null }, select: { id: true, requirementSummary: true, salesOwnerUserId: true } });
+      for (const row of rows.filter((item) => item.salesOwnerUserId !== salesOwnerUserId)) {
+        await tx.crmLead.update({ where: { id: row.id }, data: { salesOwnerUserId } });
+        await enqueueAssignmentNotification(tx, { entityType: "OPPORTUNITY", entityId: row.id, entityLabel: `商机：${row.requirementSummary}`, fieldKey: "salesOwnerUserId", fromUserId: row.salesOwnerUserId, toUserId: salesOwnerUserId, assignedByUserId: audit.actorUserId!, path: `/crm_kivisense/#leads/${row.id}` });
+      }
+      await appendAuditRecord(tx, audit, { action: "BATCH_ASSIGN_OPPORTUNITIES", module: "crm", targetType: "crm_lead", details: { requestedIds: ids.length, changedIds: rows.filter((item) => item.salesOwnerUserId !== salesOwnerUserId).map((item) => item.id), salesOwnerUserId } });
+      return { requested: ids.length, matched: rows.length, changed: rows.filter((item) => item.salesOwnerUserId !== salesOwnerUserId).length };
+    });
   }
 
   async update(id: string, input: CrmLeadPatchInput, audit: AuditActorContext) {
@@ -241,6 +257,8 @@ export class CrmLeadService {
         },
         include: crmLeadDetailInclude,
       });
+      if (input.salesOwnerUserId !== undefined) await enqueueAssignmentNotification(tx, { entityType: "OPPORTUNITY", entityId: id, entityLabel: `商机：${row.requirementSummary}`, fieldKey: "salesOwnerUserId", fromUserId: existing.salesOwnerUserId, toUserId: row.salesOwnerUserId, assignedByUserId: audit.actorUserId!, path: `/crm_kivisense/#leads/${id}` });
+      if (input.followupOwnerUserId !== undefined) await enqueueAssignmentNotification(tx, { entityType: "OPPORTUNITY", entityId: id, entityLabel: `商机：${row.requirementSummary}`, fieldKey: "followupOwnerUserId", fromUserId: existing.followupOwnerUserId, toUserId: row.followupOwnerUserId, assignedByUserId: audit.actorUserId!, path: `/crm_kivisense/#leads/${id}` });
       if (input.status !== undefined && input.status !== existing.status) {
         await tx.leadStageHistory.create({ data: { leadId: id, fromStatus: existing.status, toStatus: row.status, changedByUserId: audit.actorUserId! } });
         const contact = await tx.contact.findUnique({ where: { id: row.contactId }, select: { organizationId: true } });

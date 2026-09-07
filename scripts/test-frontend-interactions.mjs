@@ -28,9 +28,11 @@ assert.match(rootMarkup, /react-build\/assets\/app\.css/, "主入口必须加载
 assert.match(reactAppSource, /SidebarProvider/, "React App Shell 必须使用 shadcn SidebarProvider");
 assert.match(reactAppSource, /SidebarInset/, "React App Shell 必须使用 shadcn SidebarInset");
 assert.match(reactSidebarSource, /from "@\/components\/ui\/sidebar"/, "导航必须使用实际 shadcn Sidebar 组件");
-assert.match(reactDashboardSource, /SectionCards/, "React Dashboard 必须包含 KPI Section Cards");
+assert.match(reactDashboardSource, /function MetricCards/, "React Dashboard 必须包含紧凑指标组件");
 assert.match(reactDashboardSource, /PipelineChart/, "React Dashboard 必须包含主图表");
 assert.match(reactDashboardSource, /TeamExecutionTable/, "React Dashboard 必须包含 TanStack 运营数据表");
+for (const view of ["管理概览", "营销与转化", "商机推进", "团队表现"]) assert.match(reactDashboardSource, new RegExp(view), `React Dashboard 缺少业务视图：${view}`);
+assert.doesNotMatch(reactSidebarSource, /客户运营/, "React 一级导航不得继续暴露客户运营");
 assert.match(reactPackage, /"@tanstack\/react-table"/, "React Foundation 必须安装 TanStack Table");
 assert.match(reactPackage, /"lucide-react"/, "React Foundation 必须安装 Lucide");
 assert.match(styles, /\.app-brand-logo-shell[^{]*\{[^}]*overflow:\s*visible/s, "Logo 容器不得裁剪");

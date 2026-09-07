@@ -36,6 +36,7 @@ const duplicateQuery = z.object({
   countryCode: z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/).optional(),
   excludeId: z.string().trim().max(32).optional(),
 });
+const batchAssignSchema = z.object({ ids: z.array(z.string().trim().min(1).max(32)).min(1).max(500), ownerUserId: z.string().trim().min(1).max(32) }).strict();
 
 const scoreRuleQuery = z.object({
   includeDisabled: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
@@ -84,6 +85,11 @@ export async function marketingLeadRoutes(app: FastifyInstance): Promise<void> {
     return reply.status(201).send({ data: row });
   });
 
+  app.post("/api/v1/crm/marketing-leads/batch-assign", { preHandler: guard("crm.marketing_lead.assign") }, async (request) => {
+    const body = batchAssignSchema.parse(request.body);
+    return { data: await leads.batchAssign([...new Set(body.ids)], body.ownerUserId, request.auth!.userId, auditActorContext(request), salesScope(request)) };
+  });
+
   app.get<{ Params: { id: string } }>("/api/v1/crm/marketing-leads/:id", { preHandler: guard("crm.marketing_lead.view") }, async (request) => ({
     data: await leads.detail(request.params.id, salesScope(request)),
   }));
@@ -91,6 +97,7 @@ export async function marketingLeadRoutes(app: FastifyInstance): Promise<void> {
   app.patch<{ Params: { id: string } }>("/api/v1/crm/marketing-leads/:id", { preHandler: guard("crm.marketing_lead.edit") }, async (request) => {
     const body = marketingLeadPatchSchema.parse(request.body);
     if (body.ownerUserId !== undefined) requirePermission(request, "crm.marketing_lead.assign");
+    if (body.fitScore !== undefined || body.fitReason !== undefined) requirePermission(request, "crm.marketing.score_rule.manage");
     return { data: await leads.update(request.params.id, body, request.auth!.userId, auditActorContext(request), { scopeUserId: salesScope(request), superAdmin: request.auth!.roleKey === "SUPER_ADMIN" }) };
   });
 

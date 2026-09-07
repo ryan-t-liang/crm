@@ -2,7 +2,7 @@ export const DASHBOARD_KPIS = [
   { key: "activeOrganizations", label: "活跃公司", description: "当前处于活跃状态" },
   { key: "activeLeads", label: "活跃商机", description: "正在推进的机会" },
   { key: "newLeads", label: "新增商机", description: "所选期间内创建" },
-  { key: "reactivationCandidates", label: "待唤醒客户", description: "高 Fit 且已沉睡" },
+  { key: "reactivationCandidates", label: "待唤醒客户", description: "高匹配且已沉睡" },
   { key: "overdueTasks", label: "逾期任务", description: "已超过到期时间" },
   { key: "staleLeads", label: "停滞商机", description: "长期没有新进展" },
 ] as const
@@ -46,14 +46,17 @@ export type MatrixData = {
 
 export type TeamRow = {
   user: { id: string; name: string; loginAccount?: string }
-  openTasks: number
-  doneTasks: number
+  newMarketingLeads: number
+  mql: number
+  sql: number
+  newOpportunities: number
+  wonOpportunities: number
   overdueTasks: number
-  onTimeCompletionPercent: number
   interactions: number
-  activeLeads: number
   staleLeads: number
   leadsWithNextActionPercent: number
+  mqlToSqlPercent: number
+  sqlToOpportunityPercent: number
 }
 
 export type TeamData = {

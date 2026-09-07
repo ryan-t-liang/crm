@@ -18,14 +18,17 @@ const columns: ColumnDef<TeamRow>[] = [
       </div>
     ),
   },
-  { accessorKey: "openTasks", header: "Open" },
-  { accessorKey: "doneTasks", header: "Done" },
-  { accessorKey: "overdueTasks", header: "Overdue" },
-  { accessorKey: "onTimeCompletionPercent", header: "On-time", cell: ({ getValue }) => `${getValue<number>()}%` },
+  { accessorKey: "newMarketingLeads", header: "新增线索" },
+  { accessorKey: "mql", header: "MQL" },
+  { accessorKey: "sql", header: "SQL" },
+  { accessorKey: "newOpportunities", header: "新增商机" },
+  { accessorKey: "wonOpportunities", header: "成交商机" },
   { accessorKey: "interactions", header: "互动" },
-  { accessorKey: "activeLeads", header: "Active Leads" },
-  { accessorKey: "staleLeads", header: "Stale" },
-  { accessorKey: "leadsWithNextActionPercent", header: "有下一动作", cell: ({ getValue }) => `${getValue<number>()}%` },
+  { accessorKey: "overdueTasks", header: "逾期任务" },
+  { accessorKey: "staleLeads", header: "停滞商机" },
+  { accessorKey: "leadsWithNextActionPercent", header: "有下一步行动", cell: ({ getValue }) => `${getValue<number>()}%` },
+  { accessorKey: "mqlToSqlPercent", header: "MQL → SQL", cell: ({ getValue }) => `${getValue<number>()}%` },
+  { accessorKey: "sqlToOpportunityPercent", header: "SQL → 商机", cell: ({ getValue }) => `${getValue<number>()}%` },
 ]
 
 export function TeamExecutionTable({ rows }: { rows: TeamRow[] }) {
@@ -36,11 +39,11 @@ export function TeamExecutionTable({ rows }: { rows: TeamRow[] }) {
   return (
     <Card className="gap-0 overflow-hidden border-border/90 py-0 shadow-none">
       <CardHeader className="border-b px-5 py-4">
-        <CardTitle className="text-base">团队执行</CardTitle>
-        <CardDescription>按人员查看任务、互动、活跃与停滞，不含金额排名</CardDescription>
+        <CardTitle className="text-base">团队表现</CardTitle>
+        <CardDescription>按负责人归属统计线索、商机、互动与执行质量，不含金额排名</CardDescription>
       </CardHeader>
       <div className="max-w-full overflow-x-auto">
-        <Table className="min-w-[860px]">
+        <Table className="min-w-[1180px]">
           <TableHeader className="bg-muted/35">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="h-10 hover:bg-transparent">

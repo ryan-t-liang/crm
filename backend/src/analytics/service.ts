@@ -49,18 +49,29 @@ export class CrmAnalyticsService {
   async management(filter: AnalyticsFilter) {
     const organizations = await this.organizations(filter);
     const organizationIds = organizations.map((row) => row.id);
-    const contacts = await this.prisma.contact.findMany({ where: { organizationId: { in: organizationIds }, deletedAt: null }, select: { id: true, organizationId: true } });
+    // Company ownership scopes company-health metrics. Opportunity metrics are
+    // independently owned by salesOwnerUserId and must never require the
+    // Opportunity owner to also own its Company.
+    const opportunityOrganizations = filter.ownerUserId
+      ? await this.prisma.organization.findMany({
+          where: this.organizationWhere({ ...filter, ownerUserId: undefined }),
+          select: { id: true },
+          take: 1000,
+        })
+      : organizations;
+    const opportunityOrganizationIds = opportunityOrganizations.map((row) => row.id);
+    const contacts = await this.prisma.contact.findMany({ where: { organizationId: { in: opportunityOrganizationIds }, deletedAt: null }, select: { id: true, organizationId: true } });
     const contactIds = contacts.map((row) => row.id);
     const now = new Date();
     const staleBoundary = new Date(now.getTime() - this.config.crmStaleLeadDays * DAY);
     const untouchedBoundary = new Date(now.getTime() - this.config.crmHighFitUntouchedDays * DAY);
     const [leads, tasks, nurtures, interactions] = await Promise.all([
       this.prisma.crmLead.findMany({
-        where: { contactId: { in: contactIds }, deletedAt: null },
+        where: { contactId: { in: contactIds }, salesOwnerUserId: filter.ownerUserId, deletedAt: null },
         select: { id: true, contactId: true, status: true, priority: true, createdAt: true, closedAt: true, lastFollowupAt: true, nextAction: true, salesOwnerUserId: true },
       }),
       this.prisma.crmTask.findMany({
-        where: { OR: [{ organizationId: { in: organizationIds } }, { contactId: { in: contactIds } }, { lead: { contactId: { in: contactIds } } }] },
+        where: { ownerUserId: filter.ownerUserId, OR: [{ organizationId: { in: opportunityOrganizationIds } }, { contactId: { in: contactIds } }, { lead: { contactId: { in: contactIds } } }] },
         select: { id: true, organizationId: true, contactId: true, leadId: true, ownerUserId: true, status: true, dueAt: true, completedAt: true },
       }),
       this.prisma.organizationNurture.findMany({ where: { organizationId: { in: organizationIds } }, select: { id: true, organizationId: true, status: true, createdAt: true, startedAt: true } }),
@@ -136,21 +147,31 @@ export class CrmAnalyticsService {
     const userIds = users.map((user) => user.id);
     const now = new Date();
     const staleBoundary = new Date(now.getTime() - this.config.crmStaleLeadDays * DAY);
-    const organizations = await this.organizations({ ...filter, ownerUserId: undefined });
-    const organizationIds = organizations.map((row) => row.id);
-    const contacts = await this.prisma.contact.findMany({
-      where: { organizationId: { in: organizationIds }, deletedAt: null },
-      select: { id: true, organizationId: true },
-    });
-    const contactIds = contacts.map((row) => row.id);
-    const [tasks, leads, contactInteractionGroups, leadInteractionGroups] = await Promise.all([
+    const [tasks, leads, marketingLeads, contactInteractionGroups, leadInteractionGroups] = await Promise.all([
       this.prisma.crmTask.findMany({
         where: { ownerUserId: { in: userIds } },
         select: { ownerUserId: true, leadId: true, status: true, dueAt: true, completedAt: true },
       }),
       this.prisma.crmLead.findMany({
-        where: { contactId: { in: contactIds }, deletedAt: null, salesOwnerUserId: { in: userIds } },
-        select: { id: true, contactId: true, salesOwnerUserId: true, status: true, lastFollowupAt: true, createdAt: true, nextAction: true },
+        where: {
+          deletedAt: null,
+          salesOwnerUserId: { in: userIds },
+          contact: filter.organizationRole
+            ? { organization: { roles: { some: { role: filter.organizationRole } } } }
+            : undefined,
+        },
+        select: { id: true, salesOwnerUserId: true, status: true, lastFollowupAt: true, createdAt: true, closedAt: true, nextAction: true },
+      }),
+      this.prisma.marketingLead.findMany({
+        where: { deletedAt: null, ownerUserId: { in: userIds } },
+        select: {
+          id: true,
+          ownerUserId: true,
+          status: true,
+          createdAt: true,
+          convertedOpportunityId: true,
+          statusHistory: { select: { toStatus: true, changedAt: true } },
+        },
       }),
       this.prisma.contactFollowup.groupBy({
         by: ["ownerUserId"],
@@ -163,30 +184,32 @@ export class CrmAnalyticsService {
         _count: { _all: true },
       }),
     ]);
-    const organizationOwner = new Map(organizations.map((organization) => [organization.id, organization.ownerUserId]));
-    const contactOrganization = new Map(contacts.map((contact) => [contact.id, contact.organizationId]));
     const contactInteractionsByOwner = new Map(contactInteractionGroups.map((group) => [group.ownerUserId, group._count._all]));
     const leadInteractionsByOwner = new Map(leadInteractionGroups.map((group) => [group.ownerUserId, group._count._all]));
     const rows = users.map((user) => {
-      const ownedContactIds = new Set(contacts
-        .filter((contact) => contact.organizationId && organizationOwner.get(contact.organizationId) === user.id)
-        .map((contact) => contact.id));
       const userTasks = tasks.filter((task) => task.ownerUserId === user.id);
-      const userLeads = leads.filter((lead) => lead.salesOwnerUserId === user.id && ownedContactIds.has(lead.contactId) && contactOrganization.has(lead.contactId));
+      const userLeads = leads.filter((lead) => lead.salesOwnerUserId === user.id);
+      const userMarketingLeads = marketingLeads.filter((lead) => lead.ownerUserId === user.id);
       const activeLeads = userLeads.filter((lead) => ACTIVE_LEAD_STATUSES.includes(lead.status as typeof ACTIVE_LEAD_STATUSES[number]));
       const openTasks = userTasks.filter((task) => task.status === "OPEN");
-      const due = userTasks.filter((task) => task.status !== "CANCELED" && task.dueAt >= filter.from && task.dueAt <= filter.to);
-      const done = due.filter((task) => task.status === "DONE");
+      const reached = (lead: typeof userMarketingLeads[number], status: "MQL" | "SQL") =>
+        lead.statusHistory.some((history) => history.toStatus === status && history.changedAt >= filter.from && history.changedAt <= filter.to);
+      const mql = userMarketingLeads.filter((lead) => reached(lead, "MQL"));
+      const sql = userMarketingLeads.filter((lead) => reached(lead, "SQL"));
+      const convertedSql = sql.filter((lead) => lead.convertedOpportunityId);
       return {
         user,
-        openTasks: openTasks.length,
-        doneTasks: done.length,
+        newMarketingLeads: userMarketingLeads.filter((lead) => lead.createdAt >= filter.from && lead.createdAt <= filter.to).length,
+        mql: mql.length,
+        sql: sql.length,
+        newOpportunities: userLeads.filter((lead) => lead.createdAt >= filter.from && lead.createdAt <= filter.to).length,
+        wonOpportunities: userLeads.filter((lead) => lead.status === "WON" && lead.closedAt && lead.closedAt >= filter.from && lead.closedAt <= filter.to).length,
         overdueTasks: openTasks.filter((task) => task.dueAt < now).length,
-        onTimeCompletionPercent: percentage(done.filter((task) => task.completedAt && task.completedAt <= task.dueAt).length, done.length),
         interactions: (contactInteractionsByOwner.get(user.id) ?? 0) + (leadInteractionsByOwner.get(user.id) ?? 0),
-        activeLeads: activeLeads.length,
         staleLeads: activeLeads.filter((lead) => (lead.lastFollowupAt ?? lead.createdAt) < staleBoundary).length,
         leadsWithNextActionPercent: percentage(activeLeads.filter((lead) => lead.nextAction?.trim() && tasks.some((task) => task.leadId === lead.id && task.status === "OPEN")).length, activeLeads.length),
+        mqlToSqlPercent: percentage(sql.length, mql.length),
+        sqlToOpportunityPercent: percentage(convertedSql.length, sql.length),
       };
     });
     return { period: { from: filter.from, to: filter.to }, rows };

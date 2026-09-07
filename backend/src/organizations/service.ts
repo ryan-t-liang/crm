@@ -7,10 +7,13 @@ import { ApiError } from "../common/errors.js";
 import { crmAttachmentSelect } from "../crm-leads/attachments.js";
 import { calculateEngagement, scoreBand } from "./scoring.js";
 import type { NurtureCreateInput, NurturePatchInput, OrganizationCreateInput, OrganizationPatchInput } from "./schemas.js";
+import { enqueueAssignmentNotification } from "../common/assignment-notifications.js";
 
 const ACTIVE_LEAD_STATUSES = ["NEW", "QUALIFIED", "SOLUTION", "QUOTATION"] as const;
 
 export type OrganizationListInput = {
+  view?: "all" | "mine" | "priority" | "opportunity" | "customer" | "reactivation" | "dormant";
+  currentUserId?: string;
   keyword?: string;
   role?: OrganizationRoleType;
   lifecycleStage?: OrganizationLifecycle;
@@ -30,6 +33,11 @@ export function normalizeOrganizationName(value: string): string {
 export function websiteDomain(value: string | null | undefined): string | null {
   if (!value) return null;
   try { return new URL(value).hostname.toLocaleLowerCase("en-US").replace(/^www\./, ""); } catch { return null; }
+}
+
+function consistentRoles(roles: OrganizationRoleType[], lifecycle: OrganizationLifecycle | undefined): OrganizationRoleType[] {
+  if (lifecycle !== "CUSTOMER") return [...new Set(roles)];
+  return [...new Set([...roles.filter((role) => role !== "PROSPECT"), "CUSTOMER" as const])];
 }
 
 async function requireOrganization(db: CrmDbClient, id: string) {
@@ -207,6 +215,12 @@ export class OrganizationService {
       take: 1000,
     });
     let enriched = await this.metrics.hydrate(rows);
+    if (input.view === "mine") enriched = enriched.filter((row) => row.ownerUserId === input.currentUserId);
+    if (input.view === "priority") enriched = enriched.filter((row) => row.fitScore >= 70);
+    if (input.view === "opportunity") enriched = enriched.filter((row) => row.activeLeadCount > 0 || row.lifecycleStage === "OPPORTUNITY");
+    if (input.view === "customer") enriched = enriched.filter((row) => row.lifecycleStage === "CUSTOMER" || row.roleKeys.includes("CUSTOMER"));
+    if (input.view === "reactivation") enriched = enriched.filter((row) => row.fitScore >= 70 && row.engagementState === "DORMANT");
+    if (input.view === "dormant") enriched = enriched.filter((row) => row.engagementState === "DORMANT");
     if (input.fitLevel) enriched = enriched.filter((row) => row.fitLevel === input.fitLevel);
     if (input.engagementLevel) enriched = enriched.filter((row) => row.engagementLevel === input.engagementLevel);
     if (input.engagementState) enriched = enriched.filter((row) => row.engagementState === input.engagementState);
@@ -214,7 +228,8 @@ export class OrganizationService {
   }
 
   async create(input: OrganizationCreateInput, createdByUserId: string, audit: AuditActorContext) {
-    const { roles, confirmDuplicate, ...fields } = input;
+    const { roles: requestedRoles, confirmDuplicate, ...fields } = input;
+    const roles = consistentRoles(requestedRoles, input.lifecycleStage);
     await assertAssignableCrmUser(this.prisma, input.ownerUserId, "ownerUserId");
     const duplicates = await this.duplicateCandidates(input.name, input.website);
     if (duplicates.length && !confirmDuplicate) {
@@ -232,18 +247,21 @@ export class OrganizationService {
         },
         include: { owner: { select: crmUserSummarySelect }, roles: true },
       });
+      await enqueueAssignmentNotification(tx, { entityType: "ORGANIZATION", entityId: row.id, entityLabel: `公司：${row.shortName || row.name}`, fieldKey: "ownerUserId", fromUserId: null, toUserId: row.ownerUserId, assignedByUserId: createdByUserId, path: `/crm_kivisense/#organizations/${row.id}` });
       await appendAuditRecord(tx, audit, { action: "CREATE_ORGANIZATION", module: "crm", targetType: "organization", targetId: row.id, details: { roles, fields: Object.keys(fields), duplicateOverride: confirmDuplicate } });
       return (await new OrganizationMetricsService(tx as unknown as PrismaClient, this.config).hydrate([row]))[0];
     });
   }
 
   async update(id: string, input: OrganizationPatchInput, audit: AuditActorContext) {
-    const { roles, ...fields } = input;
+    const { roles: requestedRoles, ...fields } = input;
     return this.prisma.$transaction(async (tx) => {
       const existing = await requireOrganization(tx, id);
       if (input.ownerUserId !== undefined) await assertAssignableCrmUser(tx, input.ownerUserId, "ownerUserId");
       const nextName = input.name ?? existing.name;
       const nextWebsite = input.website === undefined ? existing.website : input.website;
+      const currentRoles = (await tx.organizationRole.findMany({ where: { organizationId: id }, select: { role: true } })).map((item) => item.role);
+      const roles = requestedRoles === undefined && input.lifecycleStage !== "CUSTOMER" ? undefined : consistentRoles(requestedRoles ?? currentRoles, input.lifecycleStage ?? existing.lifecycleStage);
       const row = await tx.organization.update({
         where: { id },
         data: {
@@ -254,6 +272,7 @@ export class OrganizationService {
         },
         include: { owner: { select: crmUserSummarySelect }, roles: true },
       });
+      if (input.ownerUserId !== undefined) await enqueueAssignmentNotification(tx, { entityType: "ORGANIZATION", entityId: id, entityLabel: `公司：${row.shortName || row.name}`, fieldKey: "ownerUserId", fromUserId: existing.ownerUserId, toUserId: row.ownerUserId, assignedByUserId: audit.actorUserId!, path: `/crm_kivisense/#organizations/${id}` });
       if (input.lifecycleStage && input.lifecycleStage !== existing.lifecycleStage) {
         await tx.organizationLifecycleHistory.create({ data: { organizationId: id, fromStage: existing.lifecycleStage, toStage: input.lifecycleStage, reason: "Manual lifecycle update", changedByUserId: audit.actorUserId! } });
       }
@@ -262,6 +281,19 @@ export class OrganizationService {
         details: { changedFields: Object.keys(input), fitScoreChange: input.fitScore === undefined ? undefined : { from: existing.fitScore, to: input.fitScore }, lifecycleChange: input.lifecycleStage === undefined ? undefined : { from: existing.lifecycleStage, to: input.lifecycleStage } },
       });
       return (await new OrganizationMetricsService(tx as unknown as PrismaClient, this.config).hydrate([row]))[0];
+    });
+  }
+
+  async batchAssign(ids: string[], ownerUserId: string, audit: AuditActorContext) {
+    await assertAssignableCrmUser(this.prisma, ownerUserId, "ownerUserId");
+    return this.prisma.$transaction(async (tx) => {
+      const rows = await tx.organization.findMany({ where: { id: { in: ids }, deletedAt: null }, select: { id: true, name: true, shortName: true, ownerUserId: true } });
+      for (const row of rows.filter((item) => item.ownerUserId !== ownerUserId)) {
+        await tx.organization.update({ where: { id: row.id }, data: { ownerUserId } });
+        await enqueueAssignmentNotification(tx, { entityType: "ORGANIZATION", entityId: row.id, entityLabel: `公司：${row.shortName || row.name}`, fieldKey: "ownerUserId", fromUserId: row.ownerUserId, toUserId: ownerUserId, assignedByUserId: audit.actorUserId!, path: `/crm_kivisense/#organizations/${row.id}` });
+      }
+      await appendAuditRecord(tx, audit, { action: "BATCH_ASSIGN_ORGANIZATIONS", module: "crm", targetType: "organization", details: { requestedIds: ids.length, changedIds: rows.filter((item) => item.ownerUserId !== ownerUserId).map((item) => item.id), ownerUserId } });
+      return { requested: ids.length, matched: rows.length, changed: rows.filter((item) => item.ownerUserId !== ownerUserId).length };
     });
   }
 
@@ -329,7 +361,7 @@ export class OrganizationService {
     lifecycle.forEach((item) => events.push({ id: `lifecycle-${item.id}`, occurredAt: item.changedAt, type: "LIFECYCLE_CHANGED", title: "公司生命周期变更", summary: `${item.fromStage || "-"} → ${item.toStage}`, actor: item.changedBy }));
     convertedMarketingLeads.forEach((marketingLead) => {
       marketingLead.statusHistory.filter((item) => ["MQL", "SQL"].includes(item.toStatus)).forEach((history) => events.push({ id: `marketing-${history.id}`, occurredAt: history.changedAt, type: `MARKETING_LEAD_${history.toStatus}`, title: `Marketing Lead → ${history.toStatus}`, summary: `${marketingLead.fullName} · ${marketingLead.source}`, actor: history.changedBy, relatedContactId: marketingLead.convertedContactId ?? undefined }));
-      if (marketingLead.convertedAt) events.push({ id: `marketing-converted-${marketingLead.id}`, occurredAt: marketingLead.convertedAt, type: "MARKETING_LEAD_CONVERTED", title: "Marketing Lead Converted", summary: marketingLead.convertedOpportunity?.requirementSummary || marketingLead.fullName, actor: marketingLead.convertedBy, relatedContactId: marketingLead.convertedContact?.id, relatedLeadId: marketingLead.convertedOpportunity?.id });
+      if (marketingLead.convertedAt) events.push({ id: `marketing-converted-${marketingLead.id}`, occurredAt: marketingLead.convertedAt, type: "MARKETING_LEAD_CONVERTED", title: "线索已转为商机", summary: marketingLead.convertedOpportunity?.requirementSummary || marketingLead.fullName, actor: marketingLead.convertedBy, relatedContactId: marketingLead.convertedContact?.id, relatedLeadId: marketingLead.convertedOpportunity?.id });
     });
     events.sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime() || b.id.localeCompare(a.id));
     return { organizationId: id, contactCount: contacts.filter((item) => !item.deletedAt).length, leadCount: leads.filter((item) => !item.deletedAt).length, events, contactNames: Object.fromEntries(contactById) };

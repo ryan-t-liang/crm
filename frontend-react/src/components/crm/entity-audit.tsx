@@ -2,6 +2,7 @@ import { useState } from "react";
 import { dateTime, queryString, useResource, type PageResult } from "@/lib/crm";
 import { DataTable } from "./data-table";
 import { ErrorState } from "./primitives";
+import { auditActionLabel } from "@/lib/product-language";
 
 export type AuditRow = {
   id: string;
@@ -30,7 +31,11 @@ export function EntityAudit({ id }: { id: string }) {
       total={result.data?.meta.total}
       onPage={setPage}
       columns={[
-        { accessorKey: "action", header: "操作" },
+        {
+          id: "action",
+          header: "操作",
+          cell: ({ row }) => auditActionLabel(row.original.action),
+        },
         {
           id: "actor",
           header: "操作者",

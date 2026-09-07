@@ -4,8 +4,10 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { crmApi, type SessionUser, type CrmUser } from "@/lib/api";
 import {
   can,
+  businessRelationText,
   dateTime,
   engagementLabels,
+  friendlyError,
   lifecycleLabels,
   queryString,
   relativeDate,
@@ -40,6 +42,7 @@ import {
   DetailTabs,
   Section,
   ConfirmDeleteDialog,
+  SystemIdField,
   type ActionItem,
 } from "@/components/crm/primitives";
 import { DataTable } from "@/components/crm/data-table";
@@ -58,6 +61,7 @@ import {
 } from "@/components/crm/followup-form";
 import { ImportExport } from "@/components/crm/import-export";
 import { EntityForm } from "@/components/crm/entity-form";
+import { auditActionLabel } from "@/lib/product-language";
 
 type Props = {
   me: SessionUser;
@@ -76,7 +80,11 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
   });
   const [keyword, setKeyword] = useState(""),
     [page, setPage] = useState(1),
-    [tab, setTab] = useState("overview");
+    [tab, setTab] = useState("overview"),
+    [selectedIds, setSelectedIds] = useState<string[]>([]),
+    [batchOwnerUserId, setBatchOwnerUserId] = useState(""),
+    [batchBusy, setBatchBusy] = useState(false),
+    [batchError, setBatchError] = useState("");
   const [edit, setEdit] = useState<Organization | "new" | null>(null),
     [deleting, setDeleting] = useState<Organization | null>(null),
     [taskTarget, setTaskTarget] = useState<TaskTarget | null>(null),
@@ -116,11 +124,29 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
     id ? `/api/v1/crm/organizations/${id}/journey` : null,
   );
   const organization = detail.data?.data;
+  const targetFamily = supplier ? "suppliers" : "organizations";
   function refresh() {
     list.reload();
     detail.reload();
     journey.reload();
     window.dispatchEvent(new Event("crm:data-changed"));
+  }
+  async function batchAssign() {
+    if (!selectedIds.length || !batchOwnerUserId) return;
+    setBatchBusy(true);
+    setBatchError("");
+    try {
+      await crmApi("/api/v1/crm/organizations/batch-assign", {
+        method: "POST",
+        body: JSON.stringify({ ids: selectedIds, ownerUserId: batchOwnerUserId }),
+      });
+      setSelectedIds([]);
+      refresh();
+    } catch (error) {
+      setBatchError(friendlyError(error));
+    } finally {
+      setBatchBusy(false);
+    }
   }
   function actions(row: Organization): ActionItem[] {
     return [
@@ -129,7 +155,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
             {
               label: "查看公司",
               onClick: () => {
-                location.hash = `organizations/${row.id}`;
+                location.hash = `${targetFamily}/${row.id}`;
               },
             },
           ]
@@ -166,7 +192,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                 )
                   .then((r) => setNurtureTarget(r.data))
                   .catch(() => {
-                    window.location.hash = `organizations/${row.id}`;
+                    window.location.hash = `${targetFamily}/${row.id}`;
                   });
               },
             },
@@ -193,7 +219,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
       enableHiding: false,
       cell: ({ row }) => (
         <a
-          href={`#organizations/${row.original.id}`}
+          href={`#${targetFamily}/${row.original.id}`}
           className="flex min-w-48 items-center gap-3"
         >
           <CompanyLogo organization={row.original} />
@@ -210,10 +236,10 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
     },
     {
       id: "roles",
-      header: "角色",
+      header: "业务关系",
       cell: ({ row }) => (
         <span className="whitespace-nowrap text-xs text-muted-foreground">
-          {row.original.roleKeys.map((r) => roleLabels[r]).join(" · ")}
+          {businessRelationText(row.original.roleKeys)}
         </span>
       ),
     },
@@ -221,7 +247,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
       ? ([
           {
             accessorKey: "lifecycleStage",
-            header: "Lifecycle",
+            header: "客户阶段",
             cell: ({ row }) => (
               <StatusBadge>
                 {lifecycleLabels[row.original.lifecycleStage]}
@@ -230,7 +256,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
           },
           {
             accessorKey: "fitScore",
-            header: "Fit",
+            header: "匹配度",
             cell: ({ row }) => (
               <Score
                 value={row.original.fitScore}
@@ -240,7 +266,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
           },
           {
             accessorKey: "engagementScore",
-            header: "Engagement",
+            header: "互动活跃度",
             cell: ({ row }) => (
               <Score
                 value={row.original.engagementScore}
@@ -330,10 +356,12 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
       { accessorKey: "email", header: "Email" },
       { accessorKey: "phone", header: "Phone" },
       {
-        id: "stage",
-        header: "Stage",
+        id: "contactType",
+        header: "类型",
         cell: ({ row }) => (
-          <StatusBadge>{stageLabels[row.original.stage]}</StatusBadge>
+          <StatusBadge>
+            {row.original.contactType === "INDIVIDUAL" ? "个人" : "商务"}
+          </StatusBadge>
         ),
       },
     ],
@@ -384,15 +412,33 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                 ? "管理供应商与交付合作关系。"
                 : "管理潜在客户、客户、供应商与合作伙伴。"
             }
-            actions={
-              can(me, "crm.organization.create") && (
-                <Button onClick={() => setEdit("new")}>
-                  <Plus />
-                  新建公司
-                </Button>
-              )
-            }
           />
+          {!supplier && (
+            <div className="flex max-w-full gap-1 overflow-x-auto border-b" aria-label="公司智能视图">
+              {[
+                ["all", "全部公司"],
+                ["mine", "我的公司"],
+                ["priority", "重点跟进"],
+                ["opportunity", "机会中"],
+                ["customer", "客户"],
+                ["reactivation", "待唤醒"],
+                ["dormant", "沉睡"],
+              ].map(([value, label]) => (
+                <Button
+                  key={value}
+                  variant="ghost"
+                  className={`shrink-0 rounded-none border-b-2 ${
+                    (filters.view || "all") === value
+                      ? "border-foreground"
+                      : "border-transparent text-muted-foreground"
+                  }`}
+                  onClick={() => setFilter("view", value)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+          )}
           {list.error ? (
             <ErrorState error={list.error} retry={list.reload} />
           ) : (
@@ -404,7 +450,47 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
               page={page}
               onPage={setPage}
               loading={list.loading}
-              emptyTitle="暂无公司"
+              emptyTitle={supplier ? "暂无供应商" : "暂无公司"}
+              selectable={can(me, "crm.organization.edit")}
+              selectedIds={selectedIds}
+              onSelectedIdsChange={setSelectedIds}
+              selectionActions={
+                <>
+                  <FilterControl
+                    label="批量分配负责人"
+                    value={batchOwnerUserId || "unassigned"}
+                    all={false}
+                    options={{
+                      unassigned: "选择负责人",
+                      ...Object.fromEntries(users.map((u) => [u.id, u.name])),
+                    }}
+                    onChange={(value) =>
+                      setBatchOwnerUserId(value === "unassigned" ? "" : value)
+                    }
+                  />
+                  <Button size="sm" disabled={!batchOwnerUserId || batchBusy} onClick={() => void batchAssign()}>
+                    {batchBusy ? "分配中…" : "批量分配"}
+                  </Button>
+                  <ImportExport kind="organizations" me={me} onChanged={refresh} selectedIds={selectedIds} filters={{ ...filters, role: supplier ? "VENDOR" : filters.role || "" }} exportOnly />
+                </>
+              }
+              tableActions={
+                <ImportExport
+                  kind="organizations"
+                  me={me}
+                  onChanged={refresh}
+                  selectedIds={selectedIds}
+                  filters={{ ...filters, role: supplier ? "VENDOR" : filters.role || "" }}
+                />
+              }
+              primaryAction={
+                can(me, "crm.organization.create") ? (
+                  <Button onClick={() => setEdit("new")}>
+                    <Plus />
+                    {supplier ? "新增供应商" : "新增公司"}
+                  </Button>
+                ) : undefined
+              }
               toolbar={
                 <>
                   <SearchInput
@@ -414,14 +500,14 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                   />
                   {!supplier && (
                     <FilterControl
-                      label="角色"
+                      label="业务关系"
                       value={filters.role || ""}
                       onChange={(v) => setFilter("role", v)}
                       options={roleLabels}
                     />
                   )}
                   <FilterControl
-                    label="生命周期"
+                    label="客户阶段"
                     value={filters.lifecycleStage || ""}
                     onChange={(v) => setFilter("lifecycleStage", v)}
                     options={lifecycleLabels}
@@ -444,24 +530,24 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                       )
                     }
                   >
-                    <Field label="Fit">
+                    <Field label="匹配度">
                       {() => (
                         <FilterControl
-                          label="Fit"
+                          label="匹配度"
                           value={filters.fitLevel || ""}
                           onChange={(v) => setFilter("fitLevel", v)}
                           options={{
-                            HIGH: "高 Fit",
-                            MEDIUM: "中 Fit",
-                            LOW: "低 Fit",
+                            HIGH: "高匹配",
+                            MEDIUM: "中匹配",
+                            LOW: "低匹配",
                           }}
                         />
                       )}
                     </Field>
-                    <Field label="Engagement">
+                    <Field label="互动活跃度">
                       {() => (
                         <FilterControl
-                          label="Engagement"
+                          label="互动活跃度"
                           value={filters.engagementLevel || ""}
                           onChange={(v) => setFilter("engagementLevel", v)}
                           options={{
@@ -506,15 +592,11 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                       清除筛选
                     </Button>
                   )}
-                  <ImportExport
-                    kind="organizations"
-                    me={me}
-                    onChanged={refresh}
-                  />
                 </>
               }
             />
           )}
+          {batchError && <p role="alert" className="text-sm text-destructive">{batchError}</p>}
         </>
       ) : detail.loading ? (
         <LoadingSkeleton detail />
@@ -523,11 +605,11 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
       ) : (
         <>
           <a
-            href="#organizations"
+            href={`#${targetFamily}`}
             className="flex w-fit items-center gap-2 text-xs text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="size-3.5" />
-            返回公司
+            返回{supplier ? "供应商" : "公司"}
           </a>
           <EntityHeader
             icon={<CompanyLogo organization={organization} large />}
@@ -546,12 +628,13 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                   </a>
                 )}
                 <span>
-                  {organization.roleKeys.map((r) => roleLabels[r]).join(" · ")}
+                  {businessRelationText(organization.roleKeys)}
                 </span>
                 <StatusBadge>
                   {lifecycleLabels[organization.lifecycleStage]}
                 </StatusBadge>
                 <UserAvatar name={organization.owner?.name} />
+                <SystemIdField value={organization.id} />
               </>
             }
             actions={
@@ -637,7 +720,11 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                     <EntityMeta
                       items={[
                         { label: "公司全称", value: organization.name },
-                        { label: "行业", value: organization.industry },
+                        {
+                          label: "行业",
+                          value:
+                            organization.industryCustom || organization.industry,
+                        },
                         { label: "网站", value: organization.website },
                         {
                           label: "地区",
@@ -673,11 +760,11 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                   </Section>
                 </div>
                 <div className="space-y-5">
-                  <Section title="Fit & Engagement">
+                  <Section title="客户匹配与互动活跃度">
                     <div className="grid grid-cols-2 gap-6">
                       <div>
                         <span className="text-xs text-muted-foreground">
-                          Fit
+                          匹配度
                         </span>
                         <div className="mt-1 flex items-baseline gap-2">
                           <strong className="text-2xl font-semibold">
@@ -688,12 +775,12 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                           </span>
                         </div>
                         <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
-                          {organization.fitReason || "尚未填写 Fit 理由"}
+                          {organization.fitReason || "尚未填写匹配度理由"}
                         </p>
                       </div>
                       <div>
                         <span className="text-xs text-muted-foreground">
-                          Engagement
+                          互动活跃度
                         </span>
                         <div className="mt-1 flex items-baseline gap-2">
                           <strong className="text-2xl font-semibold">
@@ -904,7 +991,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
           onSaved={(row) => {
             setEdit(null);
             refresh();
-            location.hash = `organizations/${row.id}`;
+            location.hash = `${targetFamily}/${row.id}`;
           }}
         />
       )}
@@ -918,7 +1005,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
               method: "DELETE",
             });
             refresh();
-            if (id) location.hash = "organizations";
+            if (id) location.hash = targetFamily;
           }}
         />
       )}
@@ -1008,7 +1095,7 @@ function OrganizationAudit({ id }: { id: string }) {
                 className="flex flex-wrap justify-between gap-3 border-b py-3 text-sm"
                 key={row.id}
               >
-                <span>{row.action}</span>
+                <span>{auditActionLabel(row.action)}</span>
                 <span className="text-muted-foreground">
                   {row.actorName} · {dateTime(row.createdAt)}
                 </span>

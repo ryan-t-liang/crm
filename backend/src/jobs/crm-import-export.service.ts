@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { ImportJobRow } from "@prisma/client";
+import type { ImportJobRow, Prisma } from "@prisma/client";
 import ExcelJS from "exceljs";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import { appendAuditRecord, type AuditActorContext } from "../common/audit.js";
@@ -20,6 +20,16 @@ import { crmImportFields, contactExportFields, crmLeadExportFields, marketingLea
 import type { CrmJobObjectType } from "./job-types.js";
 import { fileSha256, parseWorkbook, writeFailureCsv } from "./workbook.js";
 
+export type CrmExportRequestInput = {
+  scope: "SELECTED" | "FILTERED" | "ALL_CURRENT_PERMISSION";
+  format: "XLSX";
+  selectedIds: string[];
+  filters: Record<string, string>;
+  requestedFields?: string[];
+};
+
+type ExportActor = { userId: string; roleKey: string };
+
 type ValidationMessage = { code: string; field?: string; message: string };
 export type CrmPreflightRow = {
   rowNumber: number;
@@ -34,6 +44,10 @@ export type CrmPreflightRow = {
 const stageAliases = new Map([
   ["INITIAL", "INITIAL"], ["初筛", "INITIAL"], ["ONE_TO_ONE", "ONE_TO_ONE"], ["1V1", "ONE_TO_ONE"],
   ["SOLUTION", "SOLUTION"], ["CONVENTION", "CONVENTION"],
+]);
+const contactTypeAliases = new Map([
+  ["BUSINESS", "BUSINESS"], ["企业联系人", "BUSINESS"],
+  ["INDIVIDUAL", "INDIVIDUAL"], ["个人联系人", "INDIVIDUAL"],
 ]);
 const statusAliases = new Map([
   ["NEW", "NEW"], ["新建", "NEW"], ["QUALIFIED", "QUALIFIED"], ["已确认", "QUALIFIED"],
@@ -192,6 +206,7 @@ async function preflightContacts(app: FastifyInstance, rows: Array<{ rowNumber: 
     const phone = trimOrNull(raw.phone);
     const phoneKey = normalizedPhone(phone);
     const stage = enumValue(raw.stage, stageAliases, "stage", "INITIAL", errors);
+    const contactType = enumValue(raw.contactType, contactTypeAliases, "contactType", "BUSINESS", errors);
     const ownerUserId = resolveUser(raw.owner, "owner", errors);
     let organizationId = trimOrNull(raw.organizationId);
     const organizationName = trimOrNull(raw.organizationName);
@@ -209,7 +224,7 @@ async function preflightContacts(app: FastifyInstance, rows: Array<{ rowNumber: 
       } else errors.push({ code: "ORGANIZATION_NOT_FOUND", field: "organizationName", message: `未找到公司：${organizationName}；如需创建，请开启 Create Missing Organization` });
     }
     const candidate = {
-      contactName: String(raw.contactName ?? "").trim(),
+      contactName: String(raw.contactName ?? "").trim(), contactType,
       organizationId, companyShortName: trimOrNull(raw.companyShortName), companyName: trimOrNull(raw.companyName) ?? organizationName,
       department: trimOrNull(raw.department), title: trimOrNull(raw.title), email, phone,
       wechat: trimOrNull(raw.wechat), linkedin: trimOrNull(raw.linkedin), website: trimOrNull(raw.website),
@@ -224,13 +239,13 @@ async function preflightContacts(app: FastifyInstance, rows: Array<{ rowNumber: 
       if (!warnings.some((warning) => warning.field === field && warning.message === message)) warnings.push({ code: "POTENTIAL_DUPLICATE", field, message });
     };
     if (email) {
-      for (const contact of emailMatches.get(email) ?? []) addDuplicate("email", `电子邮箱可能重复：${email}；现有客户联系人：${contact.contactName} / ${contact.companyShortName || contact.companyName || "-"}`);
+      for (const contact of emailMatches.get(email) ?? []) addDuplicate("email", `电子邮箱可能重复：${email}；现有联系人：${contact.contactName} / ${contact.companyShortName || contact.companyName || "-"}`);
       const previous = workbookEmails.get(email);
       if (previous) addDuplicate("email", `电子邮箱可能重复：${email}；同时出现在工作簿第 ${previous} 行`);
       else workbookEmails.set(email, row.rowNumber);
     }
     if (phoneKey) {
-      for (const contact of phoneMatches.get(phoneKey) ?? []) addDuplicate("phone", `电话可能重复：${phone}；现有客户联系人：${contact.contactName} / ${contact.companyShortName || contact.companyName || "-"}`);
+      for (const contact of phoneMatches.get(phoneKey) ?? []) addDuplicate("phone", `电话可能重复：${phone}；现有联系人：${contact.contactName} / ${contact.companyShortName || contact.companyName || "-"}`);
       const previous = workbookPhones.get(phoneKey);
       if (previous) addDuplicate("phone", `电话可能重复：${phone}；同时出现在工作簿第 ${previous} 行`);
       else workbookPhones.set(phoneKey, row.rowNumber);
@@ -285,7 +300,7 @@ async function preflightLeads(app: FastifyInstance, rows: Array<{ rowNumber: num
     const errors: ValidationMessage[] = [];
     const warnings: ValidationMessage[] = [];
     const contactId = String(raw.contactId ?? "").trim();
-    if (contactId && !existingContacts.has(contactId)) errors.push({ code: "CONTACT_NOT_FOUND", field: "contactId", message: `未找到客户联系人编号：${contactId}` });
+    if (contactId && !existingContacts.has(contactId)) errors.push({ code: "CONTACT_NOT_FOUND", field: "contactId", message: `未找到联系人编号：${contactId}` });
     const priority = enumValue(raw.priority, priorityAliases, "priority", "MEDIUM", errors);
     const status = enumValue(raw.status, statusAliases, "status", "NEW", errors);
     const salesOwnerUserId = resolveUser(raw.salesOwner, "salesOwner", errors);
@@ -517,14 +532,65 @@ function styleExportSheet(sheet: ExcelJS.Worksheet, textColumns: string[]) {
   }
 }
 
-export async function buildCrmExportWorkbook(app: FastifyInstance, objectType: CrmJobObjectType) {
+function contains(value?: string) {
+  return value ? { contains: value } : undefined;
+}
+
+function exportWhere(objectType: CrmJobObjectType, input: CrmExportRequestInput, actor: ExportActor) {
+  const selected = input.scope === "SELECTED" ? { id: { in: input.selectedIds } } : {};
+  const filtered = input.scope === "FILTERED" ? input.filters : {};
+  if (objectType === "ORGANIZATION") return {
+    deletedAt: null,
+    ...selected,
+    lifecycleStage: filtered.lifecycleStage || undefined,
+    ownerUserId: filtered.ownerUserId || (filtered.view === "mine" ? actor.userId : undefined),
+    roles: filtered.role ? { some: { role: filtered.role } } : undefined,
+    OR: filtered.keyword ? [{ name: contains(filtered.keyword) }, { shortName: contains(filtered.keyword) }, { website: contains(filtered.keyword) }] : undefined,
+  };
+  if (objectType === "CONTACT") return {
+    deletedAt: null,
+    ...selected,
+    organizationId: filtered.organizationId || undefined,
+    ownerUserId: filtered.ownerUserId || undefined,
+    contactType: filtered.contactType || undefined,
+    OR: filtered.keyword ? [{ contactName: contains(filtered.keyword) }, { companyName: contains(filtered.keyword) }, { email: contains(filtered.keyword) }, { phone: contains(filtered.keyword) }] : undefined,
+  };
+  if (objectType === "MARKETING_LEAD") return {
+    deletedAt: null,
+    ...selected,
+    status: filtered.status || undefined,
+    source: filtered.source || undefined,
+    ownerUserId: filtered.ownerUserId || undefined,
+    AND: actor.roleKey === "SALES" ? { OR: [{ ownerUserId: actor.userId }, { createdByUserId: actor.userId }] } : undefined,
+    OR: filtered.keyword ? [{ fullName: contains(filtered.keyword) }, { companyName: contains(filtered.keyword) }, { email: contains(filtered.keyword) }, { phone: contains(filtered.keyword) }, { inquiryContent: contains(filtered.keyword) }] : undefined,
+  };
+  return {
+    deletedAt: null,
+    ...selected,
+    status: filtered.status || undefined,
+    priority: filtered.priority || undefined,
+    salesOwnerUserId: filtered.salesOwnerUserId || undefined,
+    contact: { deletedAt: null, organizationId: filtered.organizationId || undefined },
+    OR: filtered.keyword ? [{ requirementSummary: contains(filtered.keyword) }, { contact: { contactName: contains(filtered.keyword) } }, { contact: { companyName: contains(filtered.keyword) } }] : undefined,
+  };
+}
+
+export async function estimateCrmExportCount(app: FastifyInstance, objectType: CrmJobObjectType, input: CrmExportRequestInput, actor: ExportActor) {
+  const where = exportWhere(objectType, input, actor);
+  if (objectType === "ORGANIZATION") return app.prisma.organization.count({ where: where as Prisma.OrganizationWhereInput });
+  if (objectType === "CONTACT") return app.prisma.contact.count({ where: where as Prisma.ContactWhereInput });
+  if (objectType === "MARKETING_LEAD") return app.prisma.marketingLead.count({ where: where as Prisma.MarketingLeadWhereInput });
+  return app.prisma.crmLead.count({ where: where as Prisma.CrmLeadWhereInput });
+}
+
+export async function buildCrmExportWorkbook(app: FastifyInstance, objectType: CrmJobObjectType, input: CrmExportRequestInput = { scope: "ALL_CURRENT_PERMISSION", format: "XLSX", selectedIds: [], filters: {} }, actor: ExportActor = { userId: "", roleKey: "SUPER_ADMIN" }) {
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Kivisense CRM";
   if (objectType === "ORGANIZATION") {
     const sheet = workbook.addWorksheet("Organizations", { views: [{ state: "frozen", ySplit: 1 }] });
     sheet.columns = organizationExportFields.map(([key, header]) => ({ key, header, width: Math.max(14, Math.min(32, header.length + 6)) }));
     const [rows, attachmentRows] = await Promise.all([
-      app.prisma.organization.findMany({ where: { deletedAt: null }, include: { roles: true, owner: { select: { loginAccount: true } } }, orderBy: [{ updatedAt: "desc" }, { id: "desc" }] }),
+      app.prisma.organization.findMany({ where: exportWhere(objectType, input, actor) as Prisma.OrganizationWhereInput, include: { roles: true, owner: { select: { loginAccount: true } } }, orderBy: [{ updatedAt: "desc" }, { id: "desc" }] }),
       app.prisma.crmAttachment.findMany({ where: { entityType: "ORGANIZATION" }, select: { id: true, entityId: true, fieldKey: true, storageType: true, originalName: true, externalUrl: true } }),
     ]);
     for (const organization of rows) sheet.addRow({
@@ -539,7 +605,7 @@ export async function buildCrmExportWorkbook(app: FastifyInstance, objectType: C
     const sheet = workbook.addWorksheet("Contacts", { views: [{ state: "frozen", ySplit: 1 }] });
     sheet.columns = contactExportFields.map(([key, header]) => ({ key, header, width: Math.max(14, Math.min(32, header.length + 6)) }));
     const [rows, attachmentRows] = await Promise.all([
-      app.prisma.contact.findMany({ where: { deletedAt: null }, include: { organization: { select: { id: true, name: true } }, owner: { select: { loginAccount: true } }, createdBy: { select: { loginAccount: true } }, _count: { select: { leads: { where: { deletedAt: null } } } } }, orderBy: [{ updatedAt: "desc" }, { id: "desc" }] }),
+      app.prisma.contact.findMany({ where: exportWhere(objectType, input, actor) as Prisma.ContactWhereInput, include: { organization: { select: { id: true, name: true } }, owner: { select: { loginAccount: true } }, createdBy: { select: { loginAccount: true } }, _count: { select: { leads: { where: { deletedAt: null } } } } }, orderBy: [{ updatedAt: "desc" }, { id: "desc" }] }),
       app.prisma.crmAttachment.findMany({ where: { entityType: "CONTACT" }, select: { id: true, entityId: true, fieldKey: true, storageType: true, originalName: true, externalUrl: true } }),
     ]);
     for (const contact of rows) sheet.addRow({
@@ -560,7 +626,7 @@ export async function buildCrmExportWorkbook(app: FastifyInstance, objectType: C
     const sheet = workbook.addWorksheet("Marketing Leads", { views: [{ state: "frozen", ySplit: 1 }] });
     sheet.columns = marketingLeadExportFields.map(([key, header]) => ({ key, header, width: Math.max(14, Math.min(32, header.length + 6)) }));
     const rows = await app.prisma.marketingLead.findMany({
-      where: { deletedAt: null },
+      where: exportWhere(objectType, input, actor) as Prisma.MarketingLeadWhereInput,
       include: { owner: { select: { loginAccount: true } }, createdBy: { select: { loginAccount: true } } },
       orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
     });
@@ -579,7 +645,7 @@ export async function buildCrmExportWorkbook(app: FastifyInstance, objectType: C
   const sheet = workbook.addWorksheet("CRM Leads", { views: [{ state: "frozen", ySplit: 1 }] });
   sheet.columns = crmLeadExportFields.map(([key, header]) => ({ key, header, width: Math.max(14, Math.min(32, header.length + 6)) }));
   const [rows, attachmentRows] = await Promise.all([app.prisma.crmLead.findMany({
-    where: { deletedAt: null, contact: { deletedAt: null } },
+    where: exportWhere(objectType, input, actor) as Prisma.CrmLeadWhereInput,
     include: {
       contact: { select: { contactName: true, companyShortName: true, companyName: true, email: true, phone: true, wechat: true, organization: { select: { name: true, shortName: true } } } },
       salesOwner: { select: { loginAccount: true } }, followupOwner: { select: { loginAccount: true } },
@@ -608,23 +674,30 @@ export async function buildCrmExportWorkbook(app: FastifyInstance, objectType: C
   return { buffer: Buffer.from(await workbook.xlsx.writeBuffer()), rowCount: rows.length, fields: crmLeadExportFields.map(([key]) => key) };
 }
 
-export async function persistCrmExport(app: FastifyInstance, request: FastifyRequest, objectType: CrmJobObjectType) {
+export async function createCrmExportJob(app: FastifyInstance, request: FastifyRequest, objectType: CrmJobObjectType, input: CrmExportRequestInput) {
   const jobNo = jobNumber("EXP");
-  const job = await app.prisma.$transaction(async (tx) => {
+  return app.prisma.$transaction(async (tx) => {
     const created = await tx.exportJob.create({
-      data: { jobNo, objectType, status: "PROCESSING", requestJson: { scope: "ALL" }, scope: "ALL", selectedCount: 0, createdBy: request.auth!.userId },
+      data: { jobNo, objectType, status: "PENDING", requestJson: input, scope: input.scope, filterJson: input.filters, selectedCount: input.selectedIds.length, requestedFields: input.requestedFields, createdBy: request.auth!.userId },
     });
     await appendAuditRecord(tx, auditContext(request), {
       action: "EXPORT_CREATE", module: "crm_export", targetType: "export_job", targetId: created.id,
-      details: { objectType, scope: "ALL" },
+      details: { objectType, scope: input.scope, selectedCount: input.selectedIds.length, filters: input.filters },
     });
     return created;
   });
+}
+
+export async function processCrmExportJob(app: FastifyInstance, jobId: string, actor: ExportActor) {
+  const claim = await app.prisma.exportJob.updateMany({ where: { id: jobId, status: "PENDING" }, data: { status: "PROCESSING" } });
+  if (claim.count !== 1) return app.prisma.exportJob.findUnique({ where: { id: jobId } });
+  const job = await app.prisma.exportJob.findUniqueOrThrow({ where: { id: jobId } });
+  const input = job.requestJson as unknown as CrmExportRequestInput;
   try {
-    const result = await buildCrmExportWorkbook(app, objectType);
+    const result = await buildCrmExportWorkbook(app, job.objectType as CrmJobObjectType, input, actor);
     const directory = join(app.config.storageDir, "exports");
     await mkdir(directory, { recursive: true });
-    const fileName = `${objectType === "CONTACT" ? "kivisense-contacts" : objectType === "CRM_LEAD" ? "kivisense-opportunities" : objectType === "MARKETING_LEAD" ? "kivisense-marketing-leads" : "kivisense-organizations"}-${jobNo}.xlsx`;
+    const fileName = `${job.objectType === "CONTACT" ? "kivisense-contacts" : job.objectType === "CRM_LEAD" ? "kivisense-opportunities" : job.objectType === "MARKETING_LEAD" ? "kivisense-marketing-leads" : "kivisense-organizations"}-${job.jobNo}.xlsx`;
     const storagePath = join(directory, `${job.id}.xlsx`);
     await writeFile(storagePath, result.buffer);
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -636,4 +709,9 @@ export async function persistCrmExport(app: FastifyInstance, request: FastifyReq
     await app.prisma.exportJob.update({ where: { id: job.id }, data: { status: "FAILED", error: error instanceof Error ? error.message.slice(0, 1000) : "Export failed", completedAt: new Date() } });
     throw error;
   }
+}
+
+export async function persistCrmExport(app: FastifyInstance, request: FastifyRequest, objectType: CrmJobObjectType, input: CrmExportRequestInput = { scope: "ALL_CURRENT_PERMISSION", format: "XLSX", selectedIds: [], filters: {} }) {
+  const job = await createCrmExportJob(app, request, objectType, input);
+  return processCrmExportJob(app, job.id, { userId: request.auth!.userId, roleKey: request.auth!.roleKey });
 }

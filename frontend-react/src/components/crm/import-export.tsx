@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { Download, Upload } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Download, RotateCw, Upload } from "lucide-react";
 import { appUrl, crmApi, type SessionUser } from "@/lib/api";
 import { can, dateTime, friendlyError } from "@/lib/crm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Table,
   TableHeader,
@@ -37,15 +38,29 @@ type ImportJob = {
     errorRows: number;
   };
   rows?: ImportRow[];
+  rowCount?: number;
+  downloadUrl?: string | null;
+  statusUrl?: string;
+  scope?: string;
+  jobNo?: string;
+  objectType?: string;
+  operatorName?: string;
+  format?: string;
 };
 export function ImportExport({
   kind,
   me,
   onChanged,
+  selectedIds = [],
+  filters = {},
+  exportOnly = false,
 }: {
   kind: "organizations" | "contacts" | "leads" | "marketing-leads";
   me: SessionUser;
   onChanged: () => void;
+  selectedIds?: string[];
+  filters?: Record<string, string>;
+  exportOnly?: boolean;
 }) {
   const key =
     kind === "organizations"
@@ -58,17 +73,7 @@ export function ImportExport({
   const [mode, setMode] = useState<"import" | "export" | null>(null);
   return (
     <>
-      {can(me, `crm.${key}.export`) && (
-        <Button
-          variant="outline"
-          className="shadow-none"
-          onClick={() => setMode("export")}
-        >
-          <Download />
-          导出
-        </Button>
-      )}
-      {can(me, `crm.${key}.import`) && (
+      {!exportOnly && can(me, `crm.${key}.import`) && (
         <Button
           variant="outline"
           className="shadow-none"
@@ -78,12 +83,24 @@ export function ImportExport({
           导入
         </Button>
       )}
+      {can(me, `crm.${key}.export`) && (
+        <Button
+          variant="outline"
+          className="shadow-none"
+          onClick={() => setMode("export")}
+        >
+          <Download />
+          {exportOnly ? "导出所选" : "导出"}
+        </Button>
+      )}
       {mode && (
         <JobDialog
           kind={kind}
           mode={mode}
           onClose={() => setMode(null)}
           onChanged={onChanged}
+          selectedIds={selectedIds}
+          filters={filters}
         />
       )}
     </>
@@ -94,19 +111,25 @@ function JobDialog({
   mode,
   onClose,
   onChanged,
+  selectedIds,
+  filters,
 }: {
   kind: string;
   mode: "import" | "export";
   onClose: () => void;
   onChanged: () => void;
+  selectedIds: string[];
+  filters: Record<string, string>;
 }) {
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [file, setFile] = useState<File | null>(null),
     [createMissing, setCreateMissing] = useState(false),
     [allowDuplicate, setAllowDuplicate] = useState(false),
+    [exportScope, setExportScope] = useState<"SELECTED" | "FILTERED" | "ALL_CURRENT_PERMISSION">(selectedIds.length ? "SELECTED" : "FILTERED"),
     [job, setJob] = useState<ImportJob | null>(null),
     [history, setHistory] = useState<ImportJob[] | null>(null),
+    [estimatedCount, setEstimatedCount] = useState<number | null>(null),
     [result, setResult] = useState<{
       imported?: number;
       failed?: number;
@@ -114,6 +137,23 @@ function JobDialog({
       rowCount?: number;
       downloadUrl?: string;
     } | null>(null);
+  const exportRequest = useMemo(() => ({
+    scope: exportScope,
+    format: "XLSX" as const,
+    selectedIds: exportScope === "SELECTED" ? selectedIds : [],
+    filters: exportScope === "FILTERED" ? filters : {},
+  }), [exportScope, filters, selectedIds]);
+  useEffect(() => {
+    if (mode !== "export" || history || result) return;
+    const controller = new AbortController();
+    setEstimatedCount(null);
+    void crmApi<{ data: { count: number } }>(`/api/v1/crm/exports/${kind}/estimate`, {
+      method: "POST",
+      body: JSON.stringify(exportRequest),
+      signal: controller.signal,
+    }).then((response) => setEstimatedCount(response.data.count)).catch(() => {});
+    return () => controller.abort();
+  }, [exportRequest, history, kind, mode, result]);
   async function run(action: "upload" | "execute" | "export" | "history") {
     setBusy(true);
     setError("");
@@ -148,9 +188,15 @@ function JobDialog({
       }
       if (action === "export") {
         const response = await crmApi<{
-          data: { rowCount: number; downloadUrl: string };
-        }>(`/api/v1/crm/exports/${kind}`, { method: "POST", body: "{}" });
-        setResult(response.data);
+          data: ImportJob;
+        }>(`/api/v1/crm/exports/${kind}`, { method: "POST", body: JSON.stringify(exportRequest) });
+        let current = response.data;
+        for (let attempt = 0; attempt < 80 && !["COMPLETED", "FAILED"].includes(current.status || ""); attempt += 1) {
+          await new Promise((resolve) => setTimeout(resolve, 250));
+          current = (await crmApi<{ data: ImportJob }>(`/api/v1/crm/exports/${current.id}`)).data;
+        }
+        if (current.status !== "COMPLETED") throw new Error(current.status === "FAILED" ? "导出任务失败，请在导出记录中重试。" : "导出任务仍在处理中，请稍后在导出记录中下载。");
+        setResult({ rowCount: current.rowCount, downloadUrl: current.downloadUrl || undefined });
       }
       if (action === "history") {
         const objectType =
@@ -162,7 +208,7 @@ function JobDialog({
                 ? "MARKETING_LEAD"
               : "ORGANIZATION";
         const response = await crmApi<{ data: ImportJob[] }>(
-          `/api/v1/crm/imports?objectType=${objectType}&pageSize=50`,
+          `/api/v1/crm/${mode === "export" ? "exports" : "imports"}?objectType=${objectType}&pageSize=50`,
         );
         setHistory(response.data);
       }
@@ -181,7 +227,7 @@ function JobDialog({
       title={mode === "import" ? "批量导入" : "导出数据"}
       description={
         mode === "export"
-          ? "将导出当前权限范围内的全部记录，不局限于列表筛选结果。"
+          ? "选择导出范围。所有范围都会再次应用当前账号的数据权限。"
           : "上传 XLSX，先预检，确认后写入。"
       }
       onClose={onClose}
@@ -260,6 +306,23 @@ function JobDialog({
             </Button>
           </>
         )}
+        {!busy && mode === "export" && !result && !history && (
+          <>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">导出范围</label>
+              <Select value={exportScope} onValueChange={(value) => setExportScope(value as typeof exportScope)}>
+                <SelectTrigger aria-label="导出范围"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="SELECTED" disabled={!selectedIds.length}>选中的 {selectedIds.length} 条</SelectItem>
+                  <SelectItem value="FILTERED">当前筛选结果</SelectItem>
+                  <SelectItem value="ALL_CURRENT_PERMISSION">当前权限内全部</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">预计记录数：{estimatedCount == null ? "计算中…" : `${estimatedCount} 条`}；文件格式：XLSX；生成后 24 小时内可下载。</p>
+            </div>
+            <Button variant="ghost" onClick={() => { void run("history"); }}>导出记录</Button>
+          </>
+        )}
         {job?.preflight && !result && (
           <>
             <SummaryStrip
@@ -283,7 +346,7 @@ function JobDialog({
                   <TableRow key={row.rowNumber}>
                     <TableCell>{row.rowNumber}</TableCell>
                     <TableCell>{row.identity}</TableCell>
-                    <TableCell>{row.status}</TableCell>
+                    <TableCell>{({ VALID: "可导入", WARNING: "需注意", ERROR: "有错误" } as Record<string, string>)[row.status] || "未知状态"}</TableCell>
                     <TableCell>
                       {[...(row.errors || []), ...(row.warnings || [])]
                         .map((x) => x.message)
@@ -323,20 +386,19 @@ function JobDialog({
         {history && (
           <>
             <Button variant="ghost" onClick={() => setHistory(null)}>
-              返回上传
+              返回
             </Button>
             {history.map((item) => (
               <div key={item.id} className="border-b py-2 text-sm">
-                <p>
-                  {item.fileName} · {item.status}
-                </p>
+                <p>{item.fileName || item.jobNo || item.id} · {({ CONTACT: "联系人", CRM_LEAD: "商机", MARKETING_LEAD: "线索", ORGANIZATION: "公司" } as Record<string, string>)[item.objectType || ""] || "其他对象"} · {({ PENDING: "生成中", PROCESSING: "生成中", COMPLETED: "已完成", FAILED: "失败", EXPIRED: "已过期" } as Record<string, string>)[item.status || ""] || "未知状态"}</p>
                 <p className="text-xs text-muted-foreground">
-                  {dateTime(item.createdAt)} · 成功 {item.successCount} · 失败{" "}
-                  {item.failedCount}
+                  {dateTime(item.createdAt)} · {item.operatorName || "—"} · {mode === "export" ? `${({ SELECTED: "所选记录", FILTERED: "筛选结果", ALL_CURRENT_PERMISSION: "当前权限范围全部" } as Record<string, string>)[item.scope || ""] || "未知范围"} · ${item.rowCount || 0} 条 · ${item.format || "XLSX"}` : `成功 ${item.successCount} · 失败 ${item.failedCount}`}
                 </p>
+                {mode === "export" && item.status === "COMPLETED" && <a className="mr-3 text-xs underline" href={appUrl(`/api/v1/crm/exports/${item.id}/download`)} download>下载</a>}
+                {mode === "export" && <Button variant="ghost" size="sm" onClick={async () => { setBusy(true); try { await crmApi(`/api/v1/crm/exports/${item.id}/regenerate`, { method: "POST", body: "{}" }); setHistory(null); await run("history"); } finally { setBusy(false); } }}><RotateCw />重新生成</Button>}
               </div>
             ))}
-            {!history.length && <p>暂无导入记录</p>}
+            {!history.length && <p>{mode === "export" ? "暂无导出记录" : "暂无导入记录"}</p>}
           </>
         )}
         {error && (

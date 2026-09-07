@@ -7,8 +7,10 @@ import { paginationMeta, paginationSchema } from "../common/pagination.js";
 import { contentDispositionFilename, CrmAttachmentService } from "../crm-leads/attachments.js";
 import { nurtureCreateSchema, nurturePatchSchema, organizationCreateSchema, organizationLifecycleSchema, organizationPatchSchema, organizationRoleSchema } from "./schemas.js";
 import { OrganizationNurtureService, OrganizationService } from "./service.js";
+import { CITIES, COUNTRIES, INDUSTRY_TAXONOMY, REGIONS } from "./reference-data.js";
 
 const listQuerySchema = paginationSchema.extend({
+  view: z.enum(["all", "mine", "priority", "opportunity", "customer", "reactivation", "dormant"]).default("all"),
   keyword: z.string().trim().max(200).optional(),
   role: organizationRoleSchema.optional(),
   lifecycleStage: organizationLifecycleSchema.optional(),
@@ -23,6 +25,7 @@ const duplicateQuerySchema = z.object({
   name: z.string().trim().min(1).max(240),
   website: z.string().trim().max(500).optional(),
 }).strict();
+const batchAssignSchema = z.object({ ids: z.array(z.string().trim().min(1).max(32)).min(1).max(500), ownerUserId: z.string().trim().min(1).max(32) }).strict();
 
 function requireAdditionalPermission(appPermission: string, permissions: Set<string>): void {
   if (!permissions.has(appPermission)) throw new ApiError(403, "PERMISSION_DENIED", "当前账户没有此操作权限");
@@ -33,9 +36,13 @@ export async function organizationRoutes(app: FastifyInstance): Promise<void> {
   const nurtures = new OrganizationNurtureService(app.prisma);
   const attachments = new CrmAttachmentService(app.prisma, app.config.storageDir, app.config.maxAttachmentBytes);
 
+  app.get("/api/v1/crm/reference-data/company", { preHandler: guard() }, async () => ({
+    data: { industries: INDUSTRY_TAXONOMY, countries: COUNTRIES, regions: REGIONS, cities: CITIES },
+  }));
+
   app.get("/api/v1/crm/organizations", { preHandler: guard("crm.organization.view") }, async (request) => {
     const query = listQuerySchema.parse(request.query);
-    const result = await organizations.list(query);
+    const result = await organizations.list({ ...query, currentUserId: request.auth!.userId });
     return { data: result.rows, meta: paginationMeta(query.page, query.pageSize, result.total) };
   });
 
@@ -48,6 +55,11 @@ export async function organizationRoutes(app: FastifyInstance): Promise<void> {
     const body = organizationCreateSchema.parse(request.body);
     const row = await organizations.create(body, request.auth!.userId, auditActorContext(request));
     return reply.status(201).send({ data: row });
+  });
+
+  app.post("/api/v1/crm/organizations/batch-assign", { preHandler: guard("crm.organization.edit") }, async (request) => {
+    const body = batchAssignSchema.parse(request.body);
+    return { data: await organizations.batchAssign([...new Set(body.ids)], body.ownerUserId, auditActorContext(request)) };
   });
 
   app.get<{ Params: { id: string } }>("/api/v1/crm/organizations/:id", { preHandler: guard("crm.organization.view") }, async (request) => ({

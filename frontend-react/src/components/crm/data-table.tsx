@@ -16,6 +16,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -36,6 +37,12 @@ export function DataTable<T extends { id: string }>({
   emptyTitle,
   emptyAction,
   label = "数据目录",
+  selectable = false,
+  selectedIds = [],
+  onSelectedIdsChange,
+  selectionActions,
+  tableActions,
+  primaryAction,
 }: {
   columns: ColumnDef<T>[];
   rows: T[];
@@ -48,6 +55,12 @@ export function DataTable<T extends { id: string }>({
   emptyTitle?: string;
   emptyAction?: ReactNode;
   label?: string;
+  selectable?: boolean;
+  selectedIds?: string[];
+  onSelectedIdsChange?: (ids: string[]) => void;
+  selectionActions?: ReactNode;
+  tableActions?: ReactNode;
+  primaryAction?: ReactNode;
 }) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const table = useReactTable({
@@ -59,6 +72,11 @@ export function DataTable<T extends { id: string }>({
     onColumnVisibilityChange: setColumnVisibility,
   });
   const pages = Math.max(1, Math.ceil((total ?? rows.length) / pageSize));
+  const selected = new Set(selectedIds);
+  const pageIds = rows.map((row) => row.id);
+  const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.has(id));
+  const somePageSelected = pageIds.some((id) => selected.has(id));
+  const setSelected = (ids: string[]) => onSelectedIdsChange?.([...new Set(ids)]);
   return (
     <div className="min-w-0 space-y-3">
       <div
@@ -67,7 +85,8 @@ export function DataTable<T extends { id: string }>({
         className="flex flex-wrap items-center gap-2"
       >
         {toolbar}
-        <div className="ml-auto">
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          {tableActions}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="shadow-none">
@@ -92,8 +111,16 @@ export function DataTable<T extends { id: string }>({
                 ))}
             </DropdownMenuContent>
           </DropdownMenu>
+          {primaryAction}
         </div>
       </div>
+      {selectable && selectedIds.length > 0 && (
+        <div role="toolbar" aria-label="批量操作" className="flex flex-wrap items-center gap-3 border-y bg-muted/30 px-3 py-2">
+          <span className="text-sm font-medium">已选择 {selectedIds.length} 条</span>
+          {selectionActions}
+          <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setSelected([])}>取消选择</Button>
+        </div>
+      )}
       <div className="min-w-0 overflow-hidden rounded-xl border">
         {loading ? (
           <div className="p-4">
@@ -103,6 +130,15 @@ export function DataTable<T extends { id: string }>({
           <Table aria-label={label}>
             <TableHeader className="bg-muted/30">
               <TableRow>
+                {selectable && (
+                  <TableHead className="w-10 px-3">
+                    <Checkbox
+                      aria-label="选择本页"
+                      checked={allPageSelected ? true : somePageSelected ? "indeterminate" : false}
+                      onCheckedChange={(checked) => setSelected(checked === true ? [...selectedIds, ...pageIds] : selectedIds.filter((id) => !pageIds.includes(id)))}
+                    />
+                  </TableHead>
+                )}
                 {table.getHeaderGroups()[0].headers.map((header) => (
                   <TableHead
                     key={header.id}
@@ -119,6 +155,15 @@ export function DataTable<T extends { id: string }>({
             <TableBody>
               {table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id} className="h-11 hover:bg-muted/30">
+                  {selectable && (
+                    <TableCell className="w-10 px-3">
+                      <Checkbox
+                        aria-label={`选择 ${row.id}`}
+                        checked={selected.has(row.id)}
+                        onCheckedChange={(checked) => setSelected(checked === true ? [...selectedIds, row.id] : selectedIds.filter((id) => id !== row.id))}
+                      />
+                    </TableCell>
+                  )}
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}

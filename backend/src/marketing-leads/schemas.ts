@@ -59,17 +59,16 @@ const editableFields = {
   sourceDetail: optionalText(240),
   firstTouchAt: optionalDateTime,
   ownerUserId: optionalId,
-  fitScore: fitScore.default(0),
-  fitReason: optionalText(16_000),
 } as const;
 
 export const marketingLeadCreateSchema = z.object({
   ...editableFields,
-  status: z.enum(["NEW", "NURTURING"]).default("NEW"),
 }).strict();
 
 export const marketingLeadImportSchema = z.object({
   ...editableFields,
+  fitScore: fitScore.default(0),
+  fitReason: optionalText(16_000),
   status: z.enum(["NEW", "NURTURING"]).default("NEW"),
 }).strict();
 
@@ -101,7 +100,7 @@ export const marketingLeadPatchSchema = z.object({
   firstTouchAt: editableFields.firstTouchAt,
   ownerUserId: editableFields.ownerUserId,
   fitScore: fitScore.optional(),
-  fitReason: editableFields.fitReason,
+  fitReason: optionalText(16_000),
 }).strict().refine((value) => Object.keys(value).length > 0, { message: "至少提供一个需要修改的字段" });
 
 export const marketingLeadOrderBySchema = z.enum([
@@ -124,7 +123,7 @@ export const marketingLeadActivityCreateSchema = z.object({
 }).strict();
 
 export const marketingLeadTransitionSchema = z.object({
-  action: z.enum(["START_NURTURING", "ACCEPT_SQL", "RECYCLE", "QUALIFY", "DISQUALIFY"]),
+  action: z.enum(["ACCEPT_SQL", "RECYCLE", "DISQUALIFY"]),
   reason: optionalText(500),
 }).strict().superRefine((value, context) => {
   if (["RECYCLE", "DISQUALIFY"].includes(value.action) && !value.reason) {

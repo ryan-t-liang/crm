@@ -67,7 +67,7 @@ export async function crmApi<T>(path: string, options: RequestInit = {}): Promis
       response.status,
       payload?.error?.code,
       payload?.traceId || response.headers.get("x-trace-id") || undefined,
-      payload?.error?.details,
+      payload?.error?.fieldErrors ?? payload?.error?.details,
     )
   }
   return payload as T

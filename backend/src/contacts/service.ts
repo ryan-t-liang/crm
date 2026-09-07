@@ -6,12 +6,14 @@ import { ApiError } from "../common/errors.js";
 import { crmAttachmentSelect } from "../crm-leads/attachments.js";
 import type { ContactCreateInput, ContactFollowupCreateInput, ContactImportInput, ContactPatchInput } from "./schemas.js";
 import { normalizeInternationalPhone } from "../marketing-leads/phone.js";
+import { enqueueAssignmentNotification } from "../common/assignment-notifications.js";
 
 export type ContactListInput = {
   keyword?: string;
   organizationId?: string;
   source?: string;
   stage?: "INITIAL" | "ONE_TO_ONE" | "SOLUTION" | "CONVENTION";
+  contactType?: "BUSINESS" | "INDIVIDUAL";
   ownerUserId?: string;
   nextFollowupFrom?: Date;
   nextFollowupTo?: Date;
@@ -67,6 +69,7 @@ export class ContactService {
     const where: Prisma.ContactWhereInput = {
       deletedAt: null,
       stage: input.stage,
+      contactType: input.contactType,
       organizationId: input.organizationId,
       source: input.source,
       ownerUserId: input.ownerUserId,
@@ -100,20 +103,44 @@ export class ContactService {
 
   async create(input: ContactCreateInput | ContactImportInput, createdByUserId: string, audit: AuditActorContext) {
     return this.prisma.$transaction(async (tx) => {
-      await assertAssignableCrmUser(tx, input.ownerUserId, "ownerUserId");
-      const organizationFields = await organizationSnapshot(tx, input.organizationId);
-      const phoneNormalized = normalizeInternationalPhone(input.phone);
-      const whatsappNormalized = normalizeInternationalPhone(input.whatsapp);
+      const { newOrganization, ...contactInput } = input;
+      await assertAssignableCrmUser(tx, contactInput.ownerUserId, "ownerUserId");
+      let organizationId = contactInput.organizationId;
+      if (newOrganization) {
+        const normalizedName = newOrganization.name.trim().replace(/\s+/g, " ").toLocaleLowerCase("en-US");
+        const duplicate = await tx.organization.findFirst({ where: { normalizedName, deletedAt: null }, select: { id: true, name: true } });
+        if (duplicate) throw new ApiError(409, "ORGANIZATION_DUPLICATE_WARNING", "发现同名公司，请选择已有公司或修改名称", { candidate: duplicate });
+        const websiteDomain = newOrganization.website ? (() => { try { return new URL(newOrganization.website).hostname.toLocaleLowerCase("en-US").replace(/^www\./, ""); } catch { return null; } })() : null;
+        const createdOrganization = await tx.organization.create({
+          data: {
+            ...newOrganization,
+            normalizedName,
+            websiteDomain,
+            lifecycleStage: "TARGET",
+            ownerUserId: contactInput.ownerUserId,
+            createdByUserId,
+            roles: { create: { role: "PROSPECT" } },
+            lifecycleHistory: { create: { fromStage: null, toStage: "TARGET", reason: "Created with business contact", changedByUserId: createdByUserId } },
+          },
+          select: { id: true },
+        });
+        organizationId = createdOrganization.id;
+        await appendAuditRecord(tx, audit, { action: "CREATE_ORGANIZATION", module: "crm_organization", targetType: "organization", targetId: organizationId, details: { source: "CONTACT_QUICK_CREATE" } });
+      }
+      const organizationFields = await organizationSnapshot(tx, organizationId);
+      const phoneNormalized = normalizeInternationalPhone(contactInput.phone);
+      const whatsappNormalized = normalizeInternationalPhone(contactInput.whatsapp);
       const row = await tx.contact.create({
-        data: { ...input, phoneNormalized, whatsappNormalized, ...(organizationFields || {}), createdByUserId },
+        data: { ...contactInput, organizationId, phoneNormalized, whatsappNormalized, ...(organizationFields || {}), createdByUserId },
         include: contactDetailInclude,
       });
+      await enqueueAssignmentNotification(tx, { entityType: "CONTACT", entityId: row.id, entityLabel: `联系人：${row.contactName}`, fieldKey: "ownerUserId", fromUserId: null, toUserId: row.ownerUserId, assignedByUserId: createdByUserId, path: `/crm_kivisense/#contacts/${row.id}` });
       await appendAuditRecord(tx, audit, {
         action: "CREATE_CONTACT",
         module: "crm",
         targetType: "contact",
         targetId: row.id,
-        details: { fields: Object.keys(input) },
+        details: { fields: Object.keys(contactInput), organizationQuickCreated: Boolean(newOrganization) },
       });
       return { ...row, attachments: [] };
     });
@@ -128,11 +155,26 @@ export class ContactService {
     return { ...row, attachments };
   }
 
+  async batchAssign(ids: string[], ownerUserId: string, audit: AuditActorContext) {
+    await assertAssignableCrmUser(this.prisma, ownerUserId, "ownerUserId");
+    return this.prisma.$transaction(async (tx) => {
+      const rows = await tx.contact.findMany({ where: { id: { in: ids }, deletedAt: null }, select: { id: true, contactName: true, ownerUserId: true } });
+      for (const row of rows.filter((item) => item.ownerUserId !== ownerUserId)) {
+        await tx.contact.update({ where: { id: row.id }, data: { ownerUserId } });
+        await enqueueAssignmentNotification(tx, { entityType: "CONTACT", entityId: row.id, entityLabel: `联系人：${row.contactName}`, fieldKey: "ownerUserId", fromUserId: row.ownerUserId, toUserId: ownerUserId, assignedByUserId: audit.actorUserId!, path: `/crm_kivisense/#contacts/${row.id}` });
+      }
+      await appendAuditRecord(tx, audit, { action: "BATCH_ASSIGN_CONTACTS", module: "crm", targetType: "contact", details: { requestedIds: ids.length, changedIds: rows.filter((item) => item.ownerUserId !== ownerUserId).map((item) => item.id), ownerUserId } });
+      return { requested: ids.length, matched: rows.length, changed: rows.filter((item) => item.ownerUserId !== ownerUserId).length };
+    });
+  }
+
   async update(id: string, input: ContactPatchInput, audit: AuditActorContext) {
     return this.prisma.$transaction(async (tx) => {
       const existing = await requireContact(tx, id);
       if (input.ownerUserId !== undefined) await assertAssignableCrmUser(tx, input.ownerUserId, "ownerUserId");
       const linkedOrganizationId = input.organizationId === undefined ? existing.organizationId : input.organizationId;
+      const finalContactType = input.contactType ?? existing.contactType;
+      if (finalContactType === "INDIVIDUAL" && linkedOrganizationId) throw new ApiError(422, "INDIVIDUAL_CONTACT_COMPANY_FORBIDDEN", "个人联系人不能关联公司");
       if (linkedOrganizationId && ["companyName", "companyShortName", "website", "industry", "country", "region", "city"].some((field) => field in input)) {
         throw new ApiError(422, "ORGANIZATION_SOURCE_OF_TRUTH", "联系人已关联公司，公司资料请在公司档案中维护");
       }
@@ -140,6 +182,7 @@ export class ContactService {
       const phoneNormalized = input.phone === undefined ? undefined : normalizeInternationalPhone(input.phone);
       const whatsappNormalized = input.whatsapp === undefined ? undefined : normalizeInternationalPhone(input.whatsapp);
       const row = await tx.contact.update({ where: { id }, data: { ...input, phoneNormalized, whatsappNormalized, ...(organizationFields || {}) }, include: contactDetailInclude });
+      if (input.ownerUserId !== undefined) await enqueueAssignmentNotification(tx, { entityType: "CONTACT", entityId: id, entityLabel: `联系人：${row.contactName}`, fieldKey: "ownerUserId", fromUserId: existing.ownerUserId, toUserId: row.ownerUserId, assignedByUserId: audit.actorUserId!, path: `/crm_kivisense/#contacts/${id}` });
       await appendAuditRecord(tx, audit, {
         action: "UPDATE_CONTACT",
         module: "crm",
@@ -252,7 +295,7 @@ export class ContactService {
       for (const history of marketingLead.statusHistory.filter((item) => ["MQL", "SQL"].includes(item.toStatus))) {
         events.push({ id: `marketing-${history.id}`, occurredAt: history.changedAt, category: "MILESTONE", type: `MARKETING_LEAD_${history.toStatus}`, title: `Marketing Lead → ${history.toStatus}`, summary: `${marketingLead.fullName}${marketingLead.companyName ? ` · ${marketingLead.companyName}` : ""}`, actor: history.changedBy, relatedLead: null, attachments: [] });
       }
-      if (marketingLead.convertedAt) events.push({ id: `marketing-converted-${marketingLead.id}`, occurredAt: marketingLead.convertedAt, category: "MILESTONE", type: "MARKETING_LEAD_CONVERTED", title: "Marketing Lead Converted", summary: marketingLead.convertedOpportunity?.requirementSummary || marketingLead.fullName, actor: marketingLead.convertedBy, relatedLead: marketingLead.convertedOpportunity ? { id: marketingLead.convertedOpportunity.id, requirementSummary: marketingLead.convertedOpportunity.requirementSummary, deleted: Boolean(marketingLead.convertedOpportunity.deletedAt) } : null, attachments: [] });
+      if (marketingLead.convertedAt) events.push({ id: `marketing-converted-${marketingLead.id}`, occurredAt: marketingLead.convertedAt, category: "MILESTONE", type: "MARKETING_LEAD_CONVERTED", title: "线索已转为商机", summary: marketingLead.convertedOpportunity?.requirementSummary || marketingLead.fullName, actor: marketingLead.convertedBy, relatedLead: marketingLead.convertedOpportunity ? { id: marketingLead.convertedOpportunity.id, requirementSummary: marketingLead.convertedOpportunity.requirementSummary, deleted: Boolean(marketingLead.convertedOpportunity.deletedAt) } : null, attachments: [] });
     }
     const legacyFiles = filesFor("CONTACT", id).filter((item) => item.fieldKey === "meetingMinutesFiles");
     const firstLegacyFile = legacyFiles[0];

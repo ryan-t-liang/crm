@@ -18,6 +18,7 @@ import type {
 } from "./schemas.js";
 import { normalizeInternationalPhone, validatedPhone } from "./phone.js";
 import { clampLeadScore, leadScoreLevel, leadTemperature } from "./scoring.js";
+import { enqueueAssignmentNotification } from "../common/assignment-notifications.js";
 
 export type MarketingLeadListInput = {
   keyword?: string;
@@ -106,7 +107,7 @@ async function maybePromoteToMql(
   audit: AuditActorContext,
 ) {
   const lead = await db.marketingLead.findUniqueOrThrow({ where: { id } });
-  if (lead.status !== "NURTURING" || lead.fitScore < config.crmMqlMinFitScore || lead.engagementScoreCached < config.crmMqlMinEngagementScore) return lead;
+  if (!["NEW", "NURTURING", "RECYCLED"].includes(lead.status) || lead.fitScore < config.crmMqlMinFitScore || lead.engagementScoreCached < config.crmMqlMinEngagementScore) return lead;
   const now = new Date();
   const updated = await db.marketingLead.update({ where: { id }, data: { status: "MQL", mqlAt: lead.mqlAt ?? now } });
   await db.leadStatusHistory.create({ data: { marketingLeadId: id, fromStatus: lead.status, toStatus: "MQL", reason: `Automatic MQL: Fit >= ${config.crmMqlMinFitScore}, Engagement >= ${config.crmMqlMinEngagementScore}`, changedByUserId: actorUserId, changedAt: now } });
@@ -188,8 +189,10 @@ export class MarketingLeadService {
       });
       await tx.leadStatusHistory.create({ data: { marketingLeadId: row.id, fromStatus: null, toStatus: row.status, reason: "Marketing lead created", changedByUserId: createdByUserId, changedAt: row.createdAt } });
       if (row.fitScore !== 0) await tx.leadScoreHistory.create({ data: { marketingLeadId: row.id, dimension: "FIT", previousScore: 0, scoreDelta: row.fitScore, newScore: row.fitScore, reason: "Initial Fit score", changedByUserId: createdByUserId, createdAt: row.createdAt } });
+      await enqueueAssignmentNotification(tx, { entityType: "MARKETING_LEAD", entityId: row.id, entityLabel: `线索：${row.fullName}`, fieldKey: "ownerUserId", fromUserId: null, toUserId: row.ownerUserId, assignedByUserId: createdByUserId, path: `/crm_kivisense/#marketing-leads/${row.id}` });
       await appendAuditRecord(tx, audit, { action: "CREATE_MARKETING_LEAD", module: "crm_marketing", targetType: "marketing_lead", targetId: row.id, details: { source: row.source, status: row.status, ownerUserId: row.ownerUserId, fields: Object.keys(input) } });
-      return response(row);
+      await maybePromoteToMql(tx, this.config, row.id, createdByUserId, audit);
+      return response(await tx.marketingLead.findUniqueOrThrow({ where: { id: row.id }, include: marketingLeadSummaryInclude }));
     });
   }
 
@@ -197,6 +200,19 @@ export class MarketingLeadService {
     const row = await this.prisma.marketingLead.findFirst({ where: { id, deletedAt: null, AND: scopeWhere(scopeUserId) }, include: marketingLeadDetailInclude });
     if (!row) throw new ApiError(404, "RESOURCE_NOT_FOUND", "线索不存在或不在当前数据范围内");
     return response(row);
+  }
+
+  async batchAssign(ids: string[], ownerUserId: string, actorUserId: string, audit: AuditActorContext, scopeUserId?: string) {
+    await assertAssignableCrmUser(this.prisma, ownerUserId, "ownerUserId");
+    return this.prisma.$transaction(async (tx) => {
+      const rows = await tx.marketingLead.findMany({ where: { id: { in: ids }, deletedAt: null, status: { not: "CONVERTED" }, AND: scopeWhere(scopeUserId) }, select: { id: true, fullName: true, ownerUserId: true } });
+      for (const row of rows.filter((item) => item.ownerUserId !== ownerUserId)) {
+        await tx.marketingLead.update({ where: { id: row.id }, data: { ownerUserId, assignedAt: new Date() } });
+        await enqueueAssignmentNotification(tx, { entityType: "MARKETING_LEAD", entityId: row.id, entityLabel: `线索：${row.fullName}`, fieldKey: "ownerUserId", fromUserId: row.ownerUserId, toUserId: ownerUserId, assignedByUserId: actorUserId, path: `/crm_kivisense/#marketing-leads/${row.id}` });
+      }
+      await appendAuditRecord(tx, audit, { action: "BATCH_ASSIGN_MARKETING_LEADS", module: "crm_marketing", targetType: "marketing_lead", details: { requestedIds: ids.length, changedIds: rows.filter((item) => item.ownerUserId !== ownerUserId).map((item) => item.id), ownerUserId } });
+      return { requested: ids.length, matched: rows.length, changed: rows.filter((item) => item.ownerUserId !== ownerUserId).length };
+    });
   }
 
   async update(id: string, input: MarketingLeadPatchInput, actorUserId: string, audit: AuditActorContext, options: { scopeUserId?: string; superAdmin?: boolean } = {}) {
@@ -227,6 +243,7 @@ export class MarketingLeadService {
         targetId: id,
         details: { changedFields: Object.keys(input), ownerChange: input.ownerUserId === undefined ? undefined : { from: existing.ownerUserId, to: input.ownerUserId }, fitChange: input.fitScore === undefined ? undefined : { from: existing.fitScore, to: input.fitScore } },
       });
+      if (input.ownerUserId !== undefined) await enqueueAssignmentNotification(tx, { entityType: "MARKETING_LEAD", entityId: id, entityLabel: `线索：${row.fullName}`, fieldKey: "ownerUserId", fromUserId: existing.ownerUserId, toUserId: row.ownerUserId, assignedByUserId: actorUserId, path: `/crm_kivisense/#marketing-leads/${id}` });
       await maybePromoteToMql(tx, this.config, id, actorUserId, audit);
       const refreshed = await tx.marketingLead.findUniqueOrThrow({ where: { id }, include: marketingLeadDetailInclude });
       return response(refreshed);
@@ -282,12 +299,10 @@ export class MarketingLeadService {
     return this.prisma.$transaction(async (tx) => {
       const lead = await requireMarketingLead(tx, id, scopeUserId);
       if (lead.status === "CONVERTED") throw new ApiError(409, "CONVERTED_LEAD_READ_ONLY", "已转商机的线索不能再修改状态");
-      const target: Record<MarketingLeadTransitionInput["action"], MarketingLeadStatus> = { START_NURTURING: "NURTURING", ACCEPT_SQL: "SQL", RECYCLE: "RECYCLED", QUALIFY: "QUALIFIED", DISQUALIFY: "DISQUALIFIED" };
+      const target: Record<MarketingLeadTransitionInput["action"], MarketingLeadStatus> = { ACCEPT_SQL: "SQL", RECYCLE: "RECYCLED", DISQUALIFY: "DISQUALIFIED" };
       const allowed: Record<MarketingLeadTransitionInput["action"], MarketingLeadStatus[]> = {
-        START_NURTURING: ["NEW", "RECYCLED"],
         ACCEPT_SQL: ["MQL"],
-        RECYCLE: ["MQL", "SQL", "QUALIFIED"],
-        QUALIFY: ["SQL"],
+        RECYCLE: ["MQL", "SQL"],
         DISQUALIFY: ["NEW", "NURTURING", "MQL", "SQL", "QUALIFIED", "RECYCLED"],
       };
       if (!allowed[input.action].includes(lead.status)) throw new ApiError(409, "INVALID_MARKETING_LEAD_TRANSITION", `当前状态 ${lead.status} 不能执行 ${input.action}`);
@@ -307,7 +322,6 @@ export class MarketingLeadService {
       });
       await tx.leadStatusHistory.create({ data: { marketingLeadId: id, fromStatus: lead.status, toStatus: next, reason: input.reason ?? input.action, changedByUserId: actorUserId, changedAt: now } });
       await appendAuditRecord(tx, audit, { action: `MARKETING_LEAD_${input.action}`, module: "crm_marketing", targetType: "marketing_lead", targetId: id, details: { fromStatus: lead.status, toStatus: next, changedAt: now.toISOString(), hasReason: Boolean(input.reason) } });
-      if (next === "NURTURING") await maybePromoteToMql(tx, this.config, id, actorUserId, audit);
       const refreshed = await tx.marketingLead.findUniqueOrThrow({ where: { id }, include: marketingLeadDetailInclude });
       return response(refreshed);
     });
@@ -373,8 +387,8 @@ export class MarketingLeadService {
         if (lead.status === "CONVERTED" && lead.convertedOpportunityId) {
           return { idempotent: true, marketingLeadId: id, organizationId: lead.convertedOrganizationId, contactId: lead.convertedContactId, opportunityId: lead.convertedOpportunityId };
         }
-        if (lead.status !== "QUALIFIED" && !(options.superAdmin && input.overrideQualification)) {
-          throw new ApiError(409, "MARKETING_LEAD_NOT_QUALIFIED", "只有已确认机会的线索可以转为商机");
+        if (!["SQL", "QUALIFIED"].includes(lead.status) && !(options.superAdmin && input.overrideQualification)) {
+          throw new ApiError(409, "MARKETING_LEAD_NOT_SQL", "只有已由销售接受的 SQL 线索可以转为商机");
         }
         await Promise.all([
           assertAssignableCrmUser(tx, input.opportunity.salesOwnerUserId, "opportunity.salesOwnerUserId"),
@@ -411,6 +425,7 @@ export class MarketingLeadService {
           const whatsapp = data.whatsapp ?? lead.whatsapp;
           contact = await tx.contact.create({
             data: {
+              contactType: "BUSINESS",
               contactName: data.contactName,
               email: data.email ?? lead.email,
               phone,
@@ -457,10 +472,16 @@ export class MarketingLeadService {
           include: crmLeadDetailInclude,
         });
         await tx.leadStageHistory.create({ data: { leadId: opportunity.id, fromStatus: null, toStatus: opportunity.status, changedByUserId: actorUserId, changedAt: opportunity.createdAt } });
+        await enqueueAssignmentNotification(tx, { entityType: "OPPORTUNITY", entityId: opportunity.id, entityLabel: `商机：${opportunity.requirementSummary}`, fieldKey: "salesOwnerUserId", fromUserId: null, toUserId: opportunity.salesOwnerUserId, assignedByUserId: actorUserId, path: `/crm_kivisense/#leads/${opportunity.id}` });
+        await enqueueAssignmentNotification(tx, { entityType: "OPPORTUNITY", entityId: opportunity.id, entityLabel: `商机：${opportunity.requirementSummary}`, fieldKey: "followupOwnerUserId", fromUserId: null, toUserId: opportunity.followupOwnerUserId, assignedByUserId: actorUserId, path: `/crm_kivisense/#leads/${opportunity.id}` });
         if (organization) await transitionOrganizationLifecycle(tx, organization.id, "OPPORTUNITY", actorUserId, "Marketing Lead converted to Opportunity", { automatic: true });
         const convertedAt = new Date();
+        if (lead.status === "SQL") {
+          await tx.marketingLead.update({ where: { id }, data: { status: "QUALIFIED", qualifiedAt: lead.qualifiedAt ?? convertedAt } });
+          await tx.leadStatusHistory.create({ data: { marketingLeadId: id, fromStatus: "SQL", toStatus: "QUALIFIED", reason: "Internal compatibility transition during Opportunity conversion", changedByUserId: actorUserId, changedAt: convertedAt } });
+        }
         await tx.marketingLead.update({ where: { id }, data: { status: "CONVERTED", convertedOrganizationId: organization?.id ?? null, convertedContactId: contact.id, convertedOpportunityId: opportunity.id, convertedByUserId: actorUserId, convertedAt } });
-        await tx.leadStatusHistory.create({ data: { marketingLeadId: id, fromStatus: lead.status, toStatus: "CONVERTED", reason: options.superAdmin && input.overrideQualification ? "Super Admin conversion override" : "Converted to Opportunity", changedByUserId: actorUserId, changedAt: convertedAt } });
+        await tx.leadStatusHistory.create({ data: { marketingLeadId: id, fromStatus: lead.status === "SQL" ? "QUALIFIED" : lead.status, toStatus: "CONVERTED", reason: options.superAdmin && input.overrideQualification ? "Super Admin conversion override" : "Converted to Opportunity", changedByUserId: actorUserId, changedAt: convertedAt } });
         await appendAuditRecord(tx, audit, {
           action: "CONVERT_MARKETING_LEAD",
           module: "crm_marketing",

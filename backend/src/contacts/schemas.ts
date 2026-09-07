@@ -21,6 +21,7 @@ const contactStageSchema = z.enum(["INITIAL", "ONE_TO_ONE", "SOLUTION", "CONVENT
 const followupTypeSchema = z.enum(["GENERAL", "MEETING", "CALL", "EMAIL", "WECHAT", "OTHER"]);
 
 const contactFields = {
+  contactType: z.enum(["BUSINESS", "INDIVIDUAL"]).optional(),
   organizationId: optionalId,
   companyShortName: optionalText(120),
   companyName: optionalText(240),
@@ -43,11 +44,26 @@ const contactFields = {
   remark: optionalText(16_000),
 } as const;
 
+const contactOrganizationCreateSchema = z.object({
+  name: z.string().trim().min(1).max(240),
+  shortName: optionalText(120),
+  website: optionalUrl,
+  industry: optionalText(160),
+  country: optionalText(120),
+  region: optionalText(120),
+  city: optionalText(120),
+}).strict();
+
 export const contactCreateSchema = z.object({
   contactName: z.string().trim().min(1).max(160),
   ...contactFields,
+  newOrganization: contactOrganizationCreateSchema.optional(),
   stage: contactStageSchema.default("INITIAL"),
-}).strict();
+}).strict().superRefine((value, context) => {
+  if (value.contactType === "INDIVIDUAL" && value.organizationId) context.addIssue({ code: "custom", path: ["organizationId"], message: "个人联系人不能关联公司" });
+  if (value.contactType === "INDIVIDUAL" && value.newOrganization) context.addIssue({ code: "custom", path: ["newOrganization"], message: "个人联系人不能创建关联公司" });
+  if (value.organizationId && value.newOrganization) context.addIssue({ code: "custom", path: ["newOrganization"], message: "请选择已有公司或创建新公司，不能同时提交" });
+});
 
 // Import-only compatibility for the historical Contact snapshot column. The
 // interactive create/edit API intentionally cannot mutate this value.
@@ -59,7 +75,9 @@ export const contactPatchSchema = z.object({
   contactName: z.string().trim().min(1).max(160).optional(),
   ...contactFields,
   stage: contactStageSchema.optional(),
-}).strict().refine((value) => Object.keys(value).length > 0, {
+}).strict().superRefine((value, context) => {
+  if (value.contactType === "INDIVIDUAL" && value.organizationId) context.addIssue({ code: "custom", path: ["organizationId"], message: "个人联系人不能关联公司" });
+}).refine((value) => Object.keys(value).length > 0, {
   message: "至少提供一个需要修改的字段",
 });
 

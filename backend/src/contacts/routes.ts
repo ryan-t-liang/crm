@@ -22,6 +22,7 @@ const contactListQuery = paginationSchema.extend({
   organizationId: z.string().trim().min(1).max(32).optional(),
   source: z.string().trim().max(200).optional(),
   stage: z.enum(["INITIAL", "ONE_TO_ONE", "SOLUTION", "CONVENTION"]).optional(),
+  contactType: z.enum(["BUSINESS", "INDIVIDUAL"]).optional(),
   ownerUserId: z.string().trim().min(1).max(32).optional(),
   nextFollowupFrom: timezoneAwareDateTimeSchema.optional(),
   nextFollowupTo: timezoneAwareDateTimeSchema.optional(),
@@ -30,6 +31,7 @@ const contactListQuery = paginationSchema.extend({
   path: ["nextFollowupTo"],
   message: "结束时间不能早于开始时间",
 });
+const batchAssignSchema = z.object({ ids: z.array(z.string().trim().min(1).max(32)).min(1).max(500), ownerUserId: z.string().trim().min(1).max(32) }).strict();
 
 function contactResponse<T extends { _count: { leads: number } }>(row: T) {
   const { _count, ...contact } = row;
@@ -60,6 +62,11 @@ export async function contactRoutes(app: FastifyInstance): Promise<void> {
     const body = contactCreateSchema.parse(request.body);
     const row = await contacts.create(body, request.auth!.userId, auditActorContext(request));
     return reply.status(201).send({ data: contactResponse(row) });
+  });
+
+  app.post("/api/v1/crm/contacts/batch-assign", { preHandler: guard("crm.contact.edit") }, async (request) => {
+    const body = batchAssignSchema.parse(request.body);
+    return { data: await contacts.batchAssign([...new Set(body.ids)], body.ownerUserId, auditActorContext(request)) };
   });
 
   app.get<{ Params: { id: string } }>("/api/v1/crm/contacts/:id", { preHandler: guard("crm.contact.view") }, async (request) => ({
