@@ -1,0 +1,128 @@
+{
+  "verdict": "PASS",
+  "completedAt": "2026-09-07T17:54:10.842Z",
+  "target": "https://www.gridworks.cn/crm_kivisense/",
+  "expectedCommit": "82173ba7a39433cf8284ce4d8ca8eae9eb77b14d",
+  "remoteCommit": "82173ba7a39433cf8284ce4d8ca8eae9eb77b14d",
+  "package": {
+    "path": "/srv/kivisense-crm-uat-releases/82173ba7a394.tar.gz",
+    "sha256": "8f4de66a968cbaddd6e1147343e93ca34f47a5385754791c871f919c5d86eab2"
+  },
+  "backup": {
+    "path": "/srv/kivisense-crm-backups/20260907T173853Z-pre-marketing-82173ba7a394",
+    "hashCheck": [
+      "application.tgz: OK",
+      "attachments.tgz: OK",
+      "nginx.tgz: OK",
+      "database.sql.gz: OK"
+    ],
+    "hashes": [
+      "7a888c979934d58f14e8e5462b0d1dde30588b641fb6afd50cc63eb4ac5625a4  application.tgz",
+      "9d83d9cd81a5aa272b236b89830e7f70683f69f8daed71ce65f103f545e039ea  attachments.tgz",
+      "0bbff0350c9722806532f1076b5544ebbe3fa7af26ac8c6b9261e5f1593e0eb0  nginx.tgz",
+      "7bc79c605dc03a910bd147d97b44f3c5f12ec096d5a69dc472df7c953ae107f9  database.sql.gz"
+    ]
+  },
+  "database": {
+    "migrationCount": 9,
+    "businessCountsUnchanged": true,
+    "counts": [
+      "organizations\t6",
+      "contacts\t5",
+      "opportunities\t5",
+      "contact_followups\t1",
+      "opportunity_followups\t2",
+      "tasks\t0",
+      "attachments\t1",
+      "customer_plans\t0"
+    ]
+  },
+  "protectedEnvironments": {
+    "unchanged": true,
+    "snapshot": [
+      "/sowind-crm-backend-1 sha256:1cc85c6c38b06ece8e628223bad0468283235f5906e6f80591dc8737f6e9b33a 2026-09-02T08:15:46.538216634Z",
+      "/sowind-crm-test-backend-1 sha256:7fb83cf6122661aa41c03a23aea3d4d123d47c757e45247d7a31d594b854659e 2026-09-02T10:22:12.534616787Z"
+    ]
+  },
+  "runtime": {
+    "container": "kivisense-crm-uat:82173ba7a394|sha256:f8a3625d686ab9d469cb095c51dda93ffae0ea1af15f5d41ea33d0b9b6f00a56|running|2026-09-07T17:41:07.987474601Z",
+    "health": {
+      "status": "ok",
+      "database": "ok",
+      "release": "Kivisense CRM 2.0",
+      "version": "2.0.0-uat"
+    },
+    "ready": {
+      "status": "ready",
+      "database": "ok",
+      "release": "Kivisense CRM 2.0",
+      "version": "2.0.0-uat"
+    },
+    "filesystem": "/dev/vda3        40G   36G  1.3G  97% /"
+  },
+  "files": [
+    {
+      "path": "index.html",
+      "local": "29f2689839b24d25d87d1ad272ddeabdd29c3698870b983d9a41fcfc143bef6a",
+      "https": "29f2689839b24d25d87d1ad272ddeabdd29c3698870b983d9a41fcfc143bef6a",
+      "runtime": "29f2689839b24d25d87d1ad272ddeabdd29c3698870b983d9a41fcfc143bef6a",
+      "status": "PASS"
+    },
+    {
+      "path": "react-build/index.html",
+      "local": "50f80ef21cce6212ee73b2067b0a05c699cd476811cdbcf09f33dca847beec04",
+      "https": "50f80ef21cce6212ee73b2067b0a05c699cd476811cdbcf09f33dca847beec04",
+      "runtime": "50f80ef21cce6212ee73b2067b0a05c699cd476811cdbcf09f33dca847beec04",
+      "status": "PASS"
+    },
+    {
+      "path": "react-build/assets/app.css",
+      "local": "7c446462b733279f14239bbb817751d947eef9b91fe7353cfacdf5f582c7a762",
+      "https": "7c446462b733279f14239bbb817751d947eef9b91fe7353cfacdf5f582c7a762",
+      "runtime": "7c446462b733279f14239bbb817751d947eef9b91fe7353cfacdf5f582c7a762",
+      "status": "PASS"
+    },
+    {
+      "path": "react-build/assets/app.js",
+      "local": "ba1203e632e0c550566546d9744cb5ac02c4432d2264fb9722e7cc8fd5b6c6b4",
+      "https": "ba1203e632e0c550566546d9744cb5ac02c4432d2264fb9722e7cc8fd5b6c6b4",
+      "runtime": "ba1203e632e0c550566546d9744cb5ac02c4432d2264fb9722e7cc8fd5b6c6b4",
+      "status": "PASS"
+    },
+    {
+      "path": "react-build/assets/chunks/charts-C5FrrCPd.js",
+      "local": "ca6ee538da8c84afd7422597177bb87204b68303bba8ef39c52fb303d22d2a8a",
+      "https": "ca6ee538da8c84afd7422597177bb87204b68303bba8ef39c52fb303d22d2a8a",
+      "runtime": "ca6ee538da8c84afd7422597177bb87204b68303bba8ef39c52fb303d22d2a8a",
+      "status": "PASS"
+    },
+    {
+      "path": "react-build/assets/chunks/react-BTYd1ELI.js",
+      "local": "d1c340b22ae0ff65852bc75b5ddc51b860f6fe87ade993726c667e68e41d6e6d",
+      "https": "d1c340b22ae0ff65852bc75b5ddc51b860f6fe87ade993726c667e68e41d6e6d",
+      "runtime": "d1c340b22ae0ff65852bc75b5ddc51b860f6fe87ade993726c667e68e41d6e6d",
+      "status": "PASS"
+    },
+    {
+      "path": "react-build/assets/chunks/rolldown-runtime-hePW80VL.js",
+      "local": "580ad8c58061a4dde99bde0a56905e382f0568516ee2f5b84dbfb52085709021",
+      "https": "580ad8c58061a4dde99bde0a56905e382f0568516ee2f5b84dbfb52085709021",
+      "runtime": "580ad8c58061a4dde99bde0a56905e382f0568516ee2f5b84dbfb52085709021",
+      "status": "PASS"
+    },
+    {
+      "path": "react-build/assets/chunks/shadcn-COvKZYgR.js",
+      "local": "88192a12922a786efaa7955bc76569e7becab49fa229705c6594e27a7e87b40e",
+      "https": "88192a12922a786efaa7955bc76569e7becab49fa229705c6594e27a7e87b40e",
+      "runtime": "88192a12922a786efaa7955bc76569e7becab49fa229705c6594e27a7e87b40e",
+      "status": "PASS"
+    },
+    {
+      "path": "react-build/assets/chunks/table-Bx98S6y-.js",
+      "local": "d956cc8c88c72f12c25df3b4f0795847a085718c5eccde1433667d932fa09654",
+      "https": "d956cc8c88c72f12c25df3b4f0795847a085718c5eccde1433667d932fa09654",
+      "runtime": "d956cc8c88c72f12c25df3b4f0795847a085718c5eccde1433667d932fa09654",
+      "status": "PASS"
+    }
+  ]
+}

@@ -1,0 +1,2339 @@
+{
+  "verdict": "PASS",
+  "runId": 1788802892886,
+  "completedAt": "2026-09-07T17:42:09.788Z",
+  "target": "https://www.gridworks.cn/crm_kivisense",
+  "deployedCommit": "82173ba7a39433cf8284ce4d8ca8eae9eb77b14d",
+  "checks": [
+    {
+      "name": "UAT SUPER_ADMIN Login",
+      "status": "PASS"
+    },
+    {
+      "name": "UAT stale QA record cleanup",
+      "status": "PASS",
+      "deletedRecords": 1
+    },
+    {
+      "name": "UAT MarketingLead Create/Edit/Assign",
+      "status": "PASS",
+      "marketingId": "cmtrj28yy0005rv01qez59shh",
+      "assignedTo": "uat.sales@kivisense.test"
+    },
+    {
+      "name": "UAT MarketingLead → MQL",
+      "status": "PASS"
+    },
+    {
+      "name": "UAT MQL → SQL",
+      "status": "PASS"
+    },
+    {
+      "name": "UAT SQL → Opportunity",
+      "status": "PASS",
+      "opportunityId": "cmtrj2k4f001jrv014ja9rvsz",
+      "contactId": "cmtrj2k4a001hrv01p5myjvqj",
+      "organizationId": "cmtrj2k41001drv011sr6a8tr"
+    },
+    {
+      "name": "UAT Export Selected + Download + XLSX",
+      "status": "PASS",
+      "exportJobId": "cmtrj2lkv001xrv01j6hj4cau",
+      "rowCount": 1,
+      "file": "artifacts/uat-v4/run-1788802892886/marketing-leads-selected-1788802892886.xlsx"
+    },
+    {
+      "name": "UAT Export History",
+      "status": "PASS"
+    },
+    {
+      "name": "UAT HTTP + DB + Reload verification",
+      "status": "PASS"
+    },
+    {
+      "name": "UAT Cleanup via UI soft delete",
+      "status": "PASS"
+    },
+    {
+      "name": "UAT unexpected console/network errors = 0",
+      "status": "PASS"
+    }
+  ],
+  "writes": [
+    {
+      "name": "Cleanup 线索",
+      "method": "DELETE",
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/crm/marketing-leads/cmtritamp004omy01mkmdat7d",
+      "status": 200,
+      "response": {
+        "data": {
+          "id": "cmtritamp004omy01mkmdat7d"
+        }
+      }
+    },
+    {
+      "name": "UAT MarketingLead Create",
+      "method": "POST",
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/crm/marketing-leads",
+      "status": 201,
+      "response": {
+        "data": {
+          "id": "cmtrj28yy0005rv01qez59shh",
+          "fullName": "UAT-V4-线索-1788802892886",
+          "email": "uat-v4-1788802892886@example.test",
+          "phone": null,
+          "phoneNormalized": null,
+          "whatsapp": null,
+          "whatsappNormalized": null,
+          "wechat": null,
+          "linkedinUrl": null,
+          "title": null,
+          "department": null,
+          "companyName": "UAT-V4-公司-1788802892886",
+          "companyWebsite": "https://uat-v4-1788802892886.example.test",
+          "companyDomain": "uat-v4-1788802892886.example.test",
+          "companySize": null,
+          "industry": null,
+          "countryCode": "CN",
+          "region": null,
+          "city": null,
+          "inquiryType": null,
+          "inquiryContent": "UAT Phase 3 controlled write: enterprise 3D product experience requirement.",
+          "productInterest": null,
+          "requirementTags": [],
+          "budgetRange": null,
+          "note": null,
+          "source": "FORM",
+          "sourceChannel": "ORGANIC_SEARCH",
+          "sourceDetail": null,
+          "firstTouchAt": "2026-09-07T17:41:42.226Z",
+          "status": "NEW",
+          "ownerUserId": "cmtltl86u000qlq0ti7pj3wl0",
+          "assignedAt": "2026-09-07T17:41:42.226Z",
+          "mqlAt": null,
+          "sqlAt": null,
+          "qualifiedAt": null,
+          "recycledAt": null,
+          "convertedAt": null,
+          "disqualifiedAt": null,
+          "disqualifiedReason": null,
+          "fitScore": 0,
+          "fitReason": null,
+          "engagementScoreCached": 0,
+          "engagementScoreCalculatedAt": null,
+          "lastActivityAt": null,
+          "firstSalesResponseAt": null,
+          "convertedOrganizationId": null,
+          "convertedContactId": null,
+          "convertedOpportunityId": null,
+          "convertedByUserId": null,
+          "createdByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+          "createdAt": "2026-09-07T17:41:42.245Z",
+          "updatedAt": "2026-09-07T17:41:42.245Z",
+          "deletedAt": null,
+          "deletedByUserId": null,
+          "owner": {
+            "id": "cmtltl86u000qlq0ti7pj3wl0",
+            "name": "UAT 超级管理员",
+            "loginAccount": "uat.superadmin@kivisense.test",
+            "status": "ACTIVE"
+          },
+          "convertedBy": null,
+          "convertedOrganization": null,
+          "convertedContact": null,
+          "convertedOpportunity": null,
+          "fitLevel": "LOW",
+          "engagementLevel": "LOW",
+          "leadLevel": "COLD"
+        }
+      }
+    },
+    {
+      "name": "UAT MarketingLead Edit + Assign",
+      "method": "PATCH",
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/crm/marketing-leads/cmtrj28yy0005rv01qez59shh",
+      "status": 200,
+      "response": {
+        "data": {
+          "id": "cmtrj28yy0005rv01qez59shh",
+          "fullName": "UAT-V4-线索-1788802892886",
+          "email": "uat-v4-1788802892886@example.test",
+          "phone": null,
+          "phoneNormalized": null,
+          "whatsapp": null,
+          "whatsappNormalized": null,
+          "wechat": null,
+          "linkedinUrl": null,
+          "title": null,
+          "department": null,
+          "companyName": "UAT-V4-公司-1788802892886",
+          "companyWebsite": "https://uat-v4-1788802892886.example.test",
+          "companyDomain": "uat-v4-1788802892886.example.test",
+          "companySize": null,
+          "industry": null,
+          "countryCode": "CN",
+          "region": null,
+          "city": null,
+          "inquiryType": null,
+          "inquiryContent": "UAT Phase 3 controlled write: enterprise 3D product experience requirement.",
+          "productInterest": null,
+          "requirementTags": [],
+          "budgetRange": null,
+          "note": "UAT Phase 3 edit verified",
+          "source": "FORM",
+          "sourceChannel": "ORGANIC_SEARCH",
+          "sourceDetail": null,
+          "firstTouchAt": "2026-09-07T17:41:42.226Z",
+          "status": "NEW",
+          "ownerUserId": "cmtltl9tu0003qh01h15pu6sc",
+          "assignedAt": "2026-09-07T17:41:44.303Z",
+          "mqlAt": null,
+          "sqlAt": null,
+          "qualifiedAt": null,
+          "recycledAt": null,
+          "convertedAt": null,
+          "disqualifiedAt": null,
+          "disqualifiedReason": null,
+          "fitScore": 0,
+          "fitReason": null,
+          "engagementScoreCached": 0,
+          "engagementScoreCalculatedAt": null,
+          "lastActivityAt": null,
+          "firstSalesResponseAt": null,
+          "convertedOrganizationId": null,
+          "convertedContactId": null,
+          "convertedOpportunityId": null,
+          "convertedByUserId": null,
+          "createdByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+          "createdAt": "2026-09-07T17:41:42.245Z",
+          "updatedAt": "2026-09-07T17:41:44.305Z",
+          "deletedAt": null,
+          "deletedByUserId": null,
+          "owner": {
+            "id": "cmtltl9tu0003qh01h15pu6sc",
+            "name": "UAT 销售人员",
+            "loginAccount": "uat.sales@kivisense.test",
+            "status": "ACTIVE"
+          },
+          "convertedBy": null,
+          "convertedOrganization": null,
+          "convertedContact": null,
+          "convertedOpportunity": null,
+          "createdBy": {
+            "id": "cmtltl86u000qlq0ti7pj3wl0",
+            "name": "UAT 超级管理员",
+            "loginAccount": "uat.superadmin@kivisense.test",
+            "status": "ACTIVE"
+          },
+          "activities": [],
+          "scoreHistory": [],
+          "statusHistory": [
+            {
+              "id": "cmtrj28zi0007rv01v8oamnwv",
+              "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+              "fromStatus": null,
+              "toStatus": "NEW",
+              "reason": "Marketing lead created",
+              "changedAt": "2026-09-07T17:41:42.245Z",
+              "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+              "changedBy": {
+                "id": "cmtltl86u000qlq0ti7pj3wl0",
+                "name": "UAT 超级管理员",
+                "loginAccount": "uat.superadmin@kivisense.test",
+                "status": "ACTIVE"
+              }
+            }
+          ],
+          "fitLevel": "LOW",
+          "engagementLevel": "LOW",
+          "leadLevel": "COLD"
+        }
+      }
+    },
+    {
+      "name": "UAT Score 符合目标客户画像",
+      "method": "POST",
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/crm/marketing-leads/cmtrj28yy0005rv01qez59shh/activities",
+      "status": 201,
+      "response": {
+        "data": {
+          "activity": {
+            "id": "cmtrj2bnq000frv01hi5hlmcu",
+            "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+            "scoringRuleId": "3a9ce396aadc11f186fdee0ce19beaf6",
+            "eventType": "ICP_PROFILE_MATCH",
+            "source": "CRM",
+            "occurredAt": "2026-09-07T17:41:45.733Z",
+            "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+            "note": null,
+            "engagementDeltaSnapshot": 0,
+            "fitDeltaSnapshot": 40,
+            "createdAt": "2026-09-07T17:41:45.734Z",
+            "scoringRule": {
+              "id": "3a9ce396aadc11f186fdee0ce19beaf6",
+              "code": "ICP_PROFILE_MATCH",
+              "name": "符合目标客户画像",
+              "category": "QUALIFICATION",
+              "scoreDimension": "FIT",
+              "scoreDelta": 40,
+              "repeatable": false,
+              "maxOccurrences": 1,
+              "cooldownHours": null,
+              "enabled": true,
+              "sortOrder": 45,
+              "description": "已确认客户画像与目标市场、行业或应用场景匹配",
+              "createdAt": "2026-09-07T16:50:27.807Z",
+              "updatedAt": "2026-09-07T16:50:27.807Z"
+            },
+            "actor": {
+              "id": "cmtltl86u000qlq0ti7pj3wl0",
+              "name": "UAT 超级管理员",
+              "loginAccount": "uat.superadmin@kivisense.test",
+              "status": "ACTIVE"
+            }
+          },
+          "lead": {
+            "id": "cmtrj28yy0005rv01qez59shh",
+            "fullName": "UAT-V4-线索-1788802892886",
+            "email": "uat-v4-1788802892886@example.test",
+            "phone": null,
+            "phoneNormalized": null,
+            "whatsapp": null,
+            "whatsappNormalized": null,
+            "wechat": null,
+            "linkedinUrl": null,
+            "title": null,
+            "department": null,
+            "companyName": "UAT-V4-公司-1788802892886",
+            "companyWebsite": "https://uat-v4-1788802892886.example.test",
+            "companyDomain": "uat-v4-1788802892886.example.test",
+            "companySize": null,
+            "industry": null,
+            "countryCode": "CN",
+            "region": null,
+            "city": null,
+            "inquiryType": null,
+            "inquiryContent": "UAT Phase 3 controlled write: enterprise 3D product experience requirement.",
+            "productInterest": null,
+            "requirementTags": [],
+            "budgetRange": null,
+            "note": "UAT Phase 3 edit verified",
+            "source": "FORM",
+            "sourceChannel": "ORGANIC_SEARCH",
+            "sourceDetail": null,
+            "firstTouchAt": "2026-09-07T17:41:42.226Z",
+            "status": "NEW",
+            "ownerUserId": "cmtltl9tu0003qh01h15pu6sc",
+            "assignedAt": "2026-09-07T17:41:44.303Z",
+            "mqlAt": null,
+            "sqlAt": null,
+            "qualifiedAt": null,
+            "recycledAt": null,
+            "convertedAt": null,
+            "disqualifiedAt": null,
+            "disqualifiedReason": null,
+            "fitScore": 40,
+            "fitReason": null,
+            "engagementScoreCached": 0,
+            "engagementScoreCalculatedAt": "2026-09-07T17:41:45.744Z",
+            "lastActivityAt": "2026-09-07T17:41:45.733Z",
+            "firstSalesResponseAt": null,
+            "convertedOrganizationId": null,
+            "convertedContactId": null,
+            "convertedOpportunityId": null,
+            "convertedByUserId": null,
+            "createdByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+            "createdAt": "2026-09-07T17:41:42.245Z",
+            "updatedAt": "2026-09-07T17:41:45.745Z",
+            "deletedAt": null,
+            "deletedByUserId": null,
+            "owner": {
+              "id": "cmtltl9tu0003qh01h15pu6sc",
+              "name": "UAT 销售人员",
+              "loginAccount": "uat.sales@kivisense.test",
+              "status": "ACTIVE"
+            },
+            "convertedBy": null,
+            "convertedOrganization": null,
+            "convertedContact": null,
+            "convertedOpportunity": null,
+            "createdBy": {
+              "id": "cmtltl86u000qlq0ti7pj3wl0",
+              "name": "UAT 超级管理员",
+              "loginAccount": "uat.superadmin@kivisense.test",
+              "status": "ACTIVE"
+            },
+            "activities": [
+              {
+                "id": "cmtrj2bnq000frv01hi5hlmcu",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "scoringRuleId": "3a9ce396aadc11f186fdee0ce19beaf6",
+                "eventType": "ICP_PROFILE_MATCH",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T17:41:45.733Z",
+                "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "note": null,
+                "engagementDeltaSnapshot": 0,
+                "fitDeltaSnapshot": 40,
+                "createdAt": "2026-09-07T17:41:45.734Z",
+                "scoringRule": {
+                  "id": "3a9ce396aadc11f186fdee0ce19beaf6",
+                  "code": "ICP_PROFILE_MATCH",
+                  "name": "符合目标客户画像",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "FIT",
+                  "scoreDelta": 40,
+                  "repeatable": false,
+                  "maxOccurrences": 1,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 45,
+                  "description": "已确认客户画像与目标市场、行业或应用场景匹配",
+                  "createdAt": "2026-09-07T16:50:27.807Z",
+                  "updatedAt": "2026-09-07T16:50:27.807Z"
+                },
+                "actor": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "scoreHistory": [
+              {
+                "id": "cmtrj2bnw000hrv01r7nln5bq",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "activityEventId": "cmtrj2bnq000frv01hi5hlmcu",
+                "dimension": "FIT",
+                "previousScore": 0,
+                "scoreDelta": 40,
+                "newScore": 40,
+                "reason": "ICP_PROFILE_MATCH",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "createdAt": "2026-09-07T17:41:45.740Z",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "statusHistory": [
+              {
+                "id": "cmtrj28zi0007rv01v8oamnwv",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "fromStatus": null,
+                "toStatus": "NEW",
+                "reason": "Marketing lead created",
+                "changedAt": "2026-09-07T17:41:42.245Z",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "fitLevel": "MEDIUM",
+            "engagementLevel": "LOW",
+            "leadLevel": "COLD"
+          }
+        }
+      }
+    },
+    {
+      "name": "UAT Score 完成会议",
+      "method": "POST",
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/crm/marketing-leads/cmtrj28yy0005rv01qez59shh/activities",
+      "status": 201,
+      "response": {
+        "data": {
+          "activity": {
+            "id": "cmtrj2ck1000krv012c6wscru",
+            "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+            "scoringRuleId": "7c6ebcf5aa9211f186fdee0ce19beaf6",
+            "eventType": "MEETING_COMPLETED",
+            "source": "CRM",
+            "occurredAt": "2026-09-07T17:41:46.895Z",
+            "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+            "note": null,
+            "engagementDeltaSnapshot": 15,
+            "fitDeltaSnapshot": 0,
+            "createdAt": "2026-09-07T17:41:46.897Z",
+            "scoringRule": {
+              "id": "7c6ebcf5aa9211f186fdee0ce19beaf6",
+              "code": "MEETING_COMPLETED",
+              "name": "完成会议",
+              "category": "SALES",
+              "scoreDimension": "ENGAGEMENT",
+              "scoreDelta": 15,
+              "repeatable": true,
+              "maxOccurrences": null,
+              "cooldownHours": null,
+              "enabled": true,
+              "sortOrder": 90,
+              "description": "会议已实际完成",
+              "createdAt": "2026-09-07T08:02:35.474Z",
+              "updatedAt": "2026-09-07T08:02:35.474Z"
+            },
+            "actor": {
+              "id": "cmtltl86u000qlq0ti7pj3wl0",
+              "name": "UAT 超级管理员",
+              "loginAccount": "uat.superadmin@kivisense.test",
+              "status": "ACTIVE"
+            }
+          },
+          "lead": {
+            "id": "cmtrj28yy0005rv01qez59shh",
+            "fullName": "UAT-V4-线索-1788802892886",
+            "email": "uat-v4-1788802892886@example.test",
+            "phone": null,
+            "phoneNormalized": null,
+            "whatsapp": null,
+            "whatsappNormalized": null,
+            "wechat": null,
+            "linkedinUrl": null,
+            "title": null,
+            "department": null,
+            "companyName": "UAT-V4-公司-1788802892886",
+            "companyWebsite": "https://uat-v4-1788802892886.example.test",
+            "companyDomain": "uat-v4-1788802892886.example.test",
+            "companySize": null,
+            "industry": null,
+            "countryCode": "CN",
+            "region": null,
+            "city": null,
+            "inquiryType": null,
+            "inquiryContent": "UAT Phase 3 controlled write: enterprise 3D product experience requirement.",
+            "productInterest": null,
+            "requirementTags": [],
+            "budgetRange": null,
+            "note": "UAT Phase 3 edit verified",
+            "source": "FORM",
+            "sourceChannel": "ORGANIC_SEARCH",
+            "sourceDetail": null,
+            "firstTouchAt": "2026-09-07T17:41:42.226Z",
+            "status": "NEW",
+            "ownerUserId": "cmtltl9tu0003qh01h15pu6sc",
+            "assignedAt": "2026-09-07T17:41:44.303Z",
+            "mqlAt": null,
+            "sqlAt": null,
+            "qualifiedAt": null,
+            "recycledAt": null,
+            "convertedAt": null,
+            "disqualifiedAt": null,
+            "disqualifiedReason": null,
+            "fitScore": 40,
+            "fitReason": null,
+            "engagementScoreCached": 15,
+            "engagementScoreCalculatedAt": "2026-09-07T17:41:46.907Z",
+            "lastActivityAt": "2026-09-07T17:41:46.895Z",
+            "firstSalesResponseAt": null,
+            "convertedOrganizationId": null,
+            "convertedContactId": null,
+            "convertedOpportunityId": null,
+            "convertedByUserId": null,
+            "createdByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+            "createdAt": "2026-09-07T17:41:42.245Z",
+            "updatedAt": "2026-09-07T17:41:46.909Z",
+            "deletedAt": null,
+            "deletedByUserId": null,
+            "owner": {
+              "id": "cmtltl9tu0003qh01h15pu6sc",
+              "name": "UAT 销售人员",
+              "loginAccount": "uat.sales@kivisense.test",
+              "status": "ACTIVE"
+            },
+            "convertedBy": null,
+            "convertedOrganization": null,
+            "convertedContact": null,
+            "convertedOpportunity": null,
+            "createdBy": {
+              "id": "cmtltl86u000qlq0ti7pj3wl0",
+              "name": "UAT 超级管理员",
+              "loginAccount": "uat.superadmin@kivisense.test",
+              "status": "ACTIVE"
+            },
+            "activities": [
+              {
+                "id": "cmtrj2ck1000krv012c6wscru",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "scoringRuleId": "7c6ebcf5aa9211f186fdee0ce19beaf6",
+                "eventType": "MEETING_COMPLETED",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T17:41:46.895Z",
+                "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "note": null,
+                "engagementDeltaSnapshot": 15,
+                "fitDeltaSnapshot": 0,
+                "createdAt": "2026-09-07T17:41:46.897Z",
+                "scoringRule": {
+                  "id": "7c6ebcf5aa9211f186fdee0ce19beaf6",
+                  "code": "MEETING_COMPLETED",
+                  "name": "完成会议",
+                  "category": "SALES",
+                  "scoreDimension": "ENGAGEMENT",
+                  "scoreDelta": 15,
+                  "repeatable": true,
+                  "maxOccurrences": null,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 90,
+                  "description": "会议已实际完成",
+                  "createdAt": "2026-09-07T08:02:35.474Z",
+                  "updatedAt": "2026-09-07T08:02:35.474Z"
+                },
+                "actor": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj2bnq000frv01hi5hlmcu",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "scoringRuleId": "3a9ce396aadc11f186fdee0ce19beaf6",
+                "eventType": "ICP_PROFILE_MATCH",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T17:41:45.733Z",
+                "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "note": null,
+                "engagementDeltaSnapshot": 0,
+                "fitDeltaSnapshot": 40,
+                "createdAt": "2026-09-07T17:41:45.734Z",
+                "scoringRule": {
+                  "id": "3a9ce396aadc11f186fdee0ce19beaf6",
+                  "code": "ICP_PROFILE_MATCH",
+                  "name": "符合目标客户画像",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "FIT",
+                  "scoreDelta": 40,
+                  "repeatable": false,
+                  "maxOccurrences": 1,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 45,
+                  "description": "已确认客户画像与目标市场、行业或应用场景匹配",
+                  "createdAt": "2026-09-07T16:50:27.807Z",
+                  "updatedAt": "2026-09-07T16:50:27.807Z"
+                },
+                "actor": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "scoreHistory": [
+              {
+                "id": "cmtrj2ck8000mrv01d08r86ss",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "activityEventId": "cmtrj2ck1000krv012c6wscru",
+                "dimension": "ENGAGEMENT",
+                "previousScore": 0,
+                "scoreDelta": 15,
+                "newScore": 15,
+                "reason": "MEETING_COMPLETED",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "createdAt": "2026-09-07T17:41:46.904Z",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj2bnw000hrv01r7nln5bq",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "activityEventId": "cmtrj2bnq000frv01hi5hlmcu",
+                "dimension": "FIT",
+                "previousScore": 0,
+                "scoreDelta": 40,
+                "newScore": 40,
+                "reason": "ICP_PROFILE_MATCH",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "createdAt": "2026-09-07T17:41:45.740Z",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "statusHistory": [
+              {
+                "id": "cmtrj28zi0007rv01v8oamnwv",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "fromStatus": null,
+                "toStatus": "NEW",
+                "reason": "Marketing lead created",
+                "changedAt": "2026-09-07T17:41:42.245Z",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "fitLevel": "MEDIUM",
+            "engagementLevel": "LOW",
+            "leadLevel": "COLD"
+          }
+        }
+      }
+    },
+    {
+      "name": "UAT Score 明确兴趣",
+      "method": "POST",
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/crm/marketing-leads/cmtrj28yy0005rv01qez59shh/activities",
+      "status": 201,
+      "response": {
+        "data": {
+          "activity": {
+            "id": "cmtrj2dgf000prv01w8o78w15",
+            "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+            "scoringRuleId": "7c6ebdb1aa9211f186fdee0ce19beaf6",
+            "eventType": "EXPLICIT_INTEREST",
+            "source": "CRM",
+            "occurredAt": "2026-09-07T17:41:48.062Z",
+            "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+            "note": null,
+            "engagementDeltaSnapshot": 15,
+            "fitDeltaSnapshot": 0,
+            "createdAt": "2026-09-07T17:41:48.063Z",
+            "scoringRule": {
+              "id": "7c6ebdb1aa9211f186fdee0ce19beaf6",
+              "code": "EXPLICIT_INTEREST",
+              "name": "明确兴趣",
+              "category": "QUALIFICATION",
+              "scoreDimension": "ENGAGEMENT",
+              "scoreDelta": 15,
+              "repeatable": true,
+              "maxOccurrences": 3,
+              "cooldownHours": null,
+              "enabled": true,
+              "sortOrder": 100,
+              "description": "客户明确表达兴趣",
+              "createdAt": "2026-09-07T08:02:35.474Z",
+              "updatedAt": "2026-09-07T08:02:35.474Z"
+            },
+            "actor": {
+              "id": "cmtltl86u000qlq0ti7pj3wl0",
+              "name": "UAT 超级管理员",
+              "loginAccount": "uat.superadmin@kivisense.test",
+              "status": "ACTIVE"
+            }
+          },
+          "lead": {
+            "id": "cmtrj28yy0005rv01qez59shh",
+            "fullName": "UAT-V4-线索-1788802892886",
+            "email": "uat-v4-1788802892886@example.test",
+            "phone": null,
+            "phoneNormalized": null,
+            "whatsapp": null,
+            "whatsappNormalized": null,
+            "wechat": null,
+            "linkedinUrl": null,
+            "title": null,
+            "department": null,
+            "companyName": "UAT-V4-公司-1788802892886",
+            "companyWebsite": "https://uat-v4-1788802892886.example.test",
+            "companyDomain": "uat-v4-1788802892886.example.test",
+            "companySize": null,
+            "industry": null,
+            "countryCode": "CN",
+            "region": null,
+            "city": null,
+            "inquiryType": null,
+            "inquiryContent": "UAT Phase 3 controlled write: enterprise 3D product experience requirement.",
+            "productInterest": null,
+            "requirementTags": [],
+            "budgetRange": null,
+            "note": "UAT Phase 3 edit verified",
+            "source": "FORM",
+            "sourceChannel": "ORGANIC_SEARCH",
+            "sourceDetail": null,
+            "firstTouchAt": "2026-09-07T17:41:42.226Z",
+            "status": "NEW",
+            "ownerUserId": "cmtltl9tu0003qh01h15pu6sc",
+            "assignedAt": "2026-09-07T17:41:44.303Z",
+            "mqlAt": null,
+            "sqlAt": null,
+            "qualifiedAt": null,
+            "recycledAt": null,
+            "convertedAt": null,
+            "disqualifiedAt": null,
+            "disqualifiedReason": null,
+            "fitScore": 40,
+            "fitReason": null,
+            "engagementScoreCached": 30,
+            "engagementScoreCalculatedAt": "2026-09-07T17:41:48.072Z",
+            "lastActivityAt": "2026-09-07T17:41:48.062Z",
+            "firstSalesResponseAt": null,
+            "convertedOrganizationId": null,
+            "convertedContactId": null,
+            "convertedOpportunityId": null,
+            "convertedByUserId": null,
+            "createdByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+            "createdAt": "2026-09-07T17:41:42.245Z",
+            "updatedAt": "2026-09-07T17:41:48.073Z",
+            "deletedAt": null,
+            "deletedByUserId": null,
+            "owner": {
+              "id": "cmtltl9tu0003qh01h15pu6sc",
+              "name": "UAT 销售人员",
+              "loginAccount": "uat.sales@kivisense.test",
+              "status": "ACTIVE"
+            },
+            "convertedBy": null,
+            "convertedOrganization": null,
+            "convertedContact": null,
+            "convertedOpportunity": null,
+            "createdBy": {
+              "id": "cmtltl86u000qlq0ti7pj3wl0",
+              "name": "UAT 超级管理员",
+              "loginAccount": "uat.superadmin@kivisense.test",
+              "status": "ACTIVE"
+            },
+            "activities": [
+              {
+                "id": "cmtrj2dgf000prv01w8o78w15",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "scoringRuleId": "7c6ebdb1aa9211f186fdee0ce19beaf6",
+                "eventType": "EXPLICIT_INTEREST",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T17:41:48.062Z",
+                "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "note": null,
+                "engagementDeltaSnapshot": 15,
+                "fitDeltaSnapshot": 0,
+                "createdAt": "2026-09-07T17:41:48.063Z",
+                "scoringRule": {
+                  "id": "7c6ebdb1aa9211f186fdee0ce19beaf6",
+                  "code": "EXPLICIT_INTEREST",
+                  "name": "明确兴趣",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "ENGAGEMENT",
+                  "scoreDelta": 15,
+                  "repeatable": true,
+                  "maxOccurrences": 3,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 100,
+                  "description": "客户明确表达兴趣",
+                  "createdAt": "2026-09-07T08:02:35.474Z",
+                  "updatedAt": "2026-09-07T08:02:35.474Z"
+                },
+                "actor": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj2ck1000krv012c6wscru",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "scoringRuleId": "7c6ebcf5aa9211f186fdee0ce19beaf6",
+                "eventType": "MEETING_COMPLETED",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T17:41:46.895Z",
+                "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "note": null,
+                "engagementDeltaSnapshot": 15,
+                "fitDeltaSnapshot": 0,
+                "createdAt": "2026-09-07T17:41:46.897Z",
+                "scoringRule": {
+                  "id": "7c6ebcf5aa9211f186fdee0ce19beaf6",
+                  "code": "MEETING_COMPLETED",
+                  "name": "完成会议",
+                  "category": "SALES",
+                  "scoreDimension": "ENGAGEMENT",
+                  "scoreDelta": 15,
+                  "repeatable": true,
+                  "maxOccurrences": null,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 90,
+                  "description": "会议已实际完成",
+                  "createdAt": "2026-09-07T08:02:35.474Z",
+                  "updatedAt": "2026-09-07T08:02:35.474Z"
+                },
+                "actor": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj2bnq000frv01hi5hlmcu",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "scoringRuleId": "3a9ce396aadc11f186fdee0ce19beaf6",
+                "eventType": "ICP_PROFILE_MATCH",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T17:41:45.733Z",
+                "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "note": null,
+                "engagementDeltaSnapshot": 0,
+                "fitDeltaSnapshot": 40,
+                "createdAt": "2026-09-07T17:41:45.734Z",
+                "scoringRule": {
+                  "id": "3a9ce396aadc11f186fdee0ce19beaf6",
+                  "code": "ICP_PROFILE_MATCH",
+                  "name": "符合目标客户画像",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "FIT",
+                  "scoreDelta": 40,
+                  "repeatable": false,
+                  "maxOccurrences": 1,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 45,
+                  "description": "已确认客户画像与目标市场、行业或应用场景匹配",
+                  "createdAt": "2026-09-07T16:50:27.807Z",
+                  "updatedAt": "2026-09-07T16:50:27.807Z"
+                },
+                "actor": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "scoreHistory": [
+              {
+                "id": "cmtrj2dgl000rrv01s7ugwqug",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "activityEventId": "cmtrj2dgf000prv01w8o78w15",
+                "dimension": "ENGAGEMENT",
+                "previousScore": 15,
+                "scoreDelta": 15,
+                "newScore": 30,
+                "reason": "EXPLICIT_INTEREST",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "createdAt": "2026-09-07T17:41:48.070Z",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj2ck8000mrv01d08r86ss",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "activityEventId": "cmtrj2ck1000krv012c6wscru",
+                "dimension": "ENGAGEMENT",
+                "previousScore": 0,
+                "scoreDelta": 15,
+                "newScore": 15,
+                "reason": "MEETING_COMPLETED",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "createdAt": "2026-09-07T17:41:46.904Z",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj2bnw000hrv01r7nln5bq",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "activityEventId": "cmtrj2bnq000frv01hi5hlmcu",
+                "dimension": "FIT",
+                "previousScore": 0,
+                "scoreDelta": 40,
+                "newScore": 40,
+                "reason": "ICP_PROFILE_MATCH",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "createdAt": "2026-09-07T17:41:45.740Z",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "statusHistory": [
+              {
+                "id": "cmtrj28zi0007rv01v8oamnwv",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "fromStatus": null,
+                "toStatus": "NEW",
+                "reason": "Marketing lead created",
+                "changedAt": "2026-09-07T17:41:42.245Z",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "fitLevel": "MEDIUM",
+            "engagementLevel": "LOW",
+            "leadLevel": "COLD"
+          }
+        }
+      }
+    },
+    {
+      "name": "UAT Score 明确需求",
+      "method": "POST",
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/crm/marketing-leads/cmtrj28yy0005rv01qez59shh/activities",
+      "status": 201,
+      "response": {
+        "data": {
+          "activity": {
+            "id": "cmtrj2eda000urv01jd4nc94o",
+            "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+            "scoringRuleId": "7c6ebe75aa9211f186fdee0ce19beaf6",
+            "eventType": "EXPLICIT_REQUIREMENT",
+            "source": "CRM",
+            "occurredAt": "2026-09-07T17:41:49.245Z",
+            "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+            "note": null,
+            "engagementDeltaSnapshot": 20,
+            "fitDeltaSnapshot": 0,
+            "createdAt": "2026-09-07T17:41:49.247Z",
+            "scoringRule": {
+              "id": "7c6ebe75aa9211f186fdee0ce19beaf6",
+              "code": "EXPLICIT_REQUIREMENT",
+              "name": "明确需求",
+              "category": "QUALIFICATION",
+              "scoreDimension": "ENGAGEMENT",
+              "scoreDelta": 20,
+              "repeatable": true,
+              "maxOccurrences": 3,
+              "cooldownHours": null,
+              "enabled": true,
+              "sortOrder": 110,
+              "description": "客户明确说明业务需求",
+              "createdAt": "2026-09-07T08:02:35.474Z",
+              "updatedAt": "2026-09-07T08:02:35.474Z"
+            },
+            "actor": {
+              "id": "cmtltl86u000qlq0ti7pj3wl0",
+              "name": "UAT 超级管理员",
+              "loginAccount": "uat.superadmin@kivisense.test",
+              "status": "ACTIVE"
+            }
+          },
+          "lead": {
+            "id": "cmtrj28yy0005rv01qez59shh",
+            "fullName": "UAT-V4-线索-1788802892886",
+            "email": "uat-v4-1788802892886@example.test",
+            "phone": null,
+            "phoneNormalized": null,
+            "whatsapp": null,
+            "whatsappNormalized": null,
+            "wechat": null,
+            "linkedinUrl": null,
+            "title": null,
+            "department": null,
+            "companyName": "UAT-V4-公司-1788802892886",
+            "companyWebsite": "https://uat-v4-1788802892886.example.test",
+            "companyDomain": "uat-v4-1788802892886.example.test",
+            "companySize": null,
+            "industry": null,
+            "countryCode": "CN",
+            "region": null,
+            "city": null,
+            "inquiryType": null,
+            "inquiryContent": "UAT Phase 3 controlled write: enterprise 3D product experience requirement.",
+            "productInterest": null,
+            "requirementTags": [],
+            "budgetRange": null,
+            "note": "UAT Phase 3 edit verified",
+            "source": "FORM",
+            "sourceChannel": "ORGANIC_SEARCH",
+            "sourceDetail": null,
+            "firstTouchAt": "2026-09-07T17:41:42.226Z",
+            "status": "NEW",
+            "ownerUserId": "cmtltl9tu0003qh01h15pu6sc",
+            "assignedAt": "2026-09-07T17:41:44.303Z",
+            "mqlAt": null,
+            "sqlAt": null,
+            "qualifiedAt": null,
+            "recycledAt": null,
+            "convertedAt": null,
+            "disqualifiedAt": null,
+            "disqualifiedReason": null,
+            "fitScore": 40,
+            "fitReason": null,
+            "engagementScoreCached": 50,
+            "engagementScoreCalculatedAt": "2026-09-07T17:41:49.270Z",
+            "lastActivityAt": "2026-09-07T17:41:49.245Z",
+            "firstSalesResponseAt": null,
+            "convertedOrganizationId": null,
+            "convertedContactId": null,
+            "convertedOpportunityId": null,
+            "convertedByUserId": null,
+            "createdByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+            "createdAt": "2026-09-07T17:41:42.245Z",
+            "updatedAt": "2026-09-07T17:41:49.272Z",
+            "deletedAt": null,
+            "deletedByUserId": null,
+            "owner": {
+              "id": "cmtltl9tu0003qh01h15pu6sc",
+              "name": "UAT 销售人员",
+              "loginAccount": "uat.sales@kivisense.test",
+              "status": "ACTIVE"
+            },
+            "convertedBy": null,
+            "convertedOrganization": null,
+            "convertedContact": null,
+            "convertedOpportunity": null,
+            "createdBy": {
+              "id": "cmtltl86u000qlq0ti7pj3wl0",
+              "name": "UAT 超级管理员",
+              "loginAccount": "uat.superadmin@kivisense.test",
+              "status": "ACTIVE"
+            },
+            "activities": [
+              {
+                "id": "cmtrj2eda000urv01jd4nc94o",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "scoringRuleId": "7c6ebe75aa9211f186fdee0ce19beaf6",
+                "eventType": "EXPLICIT_REQUIREMENT",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T17:41:49.245Z",
+                "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "note": null,
+                "engagementDeltaSnapshot": 20,
+                "fitDeltaSnapshot": 0,
+                "createdAt": "2026-09-07T17:41:49.247Z",
+                "scoringRule": {
+                  "id": "7c6ebe75aa9211f186fdee0ce19beaf6",
+                  "code": "EXPLICIT_REQUIREMENT",
+                  "name": "明确需求",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "ENGAGEMENT",
+                  "scoreDelta": 20,
+                  "repeatable": true,
+                  "maxOccurrences": 3,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 110,
+                  "description": "客户明确说明业务需求",
+                  "createdAt": "2026-09-07T08:02:35.474Z",
+                  "updatedAt": "2026-09-07T08:02:35.474Z"
+                },
+                "actor": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj2dgf000prv01w8o78w15",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "scoringRuleId": "7c6ebdb1aa9211f186fdee0ce19beaf6",
+                "eventType": "EXPLICIT_INTEREST",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T17:41:48.062Z",
+                "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "note": null,
+                "engagementDeltaSnapshot": 15,
+                "fitDeltaSnapshot": 0,
+                "createdAt": "2026-09-07T17:41:48.063Z",
+                "scoringRule": {
+                  "id": "7c6ebdb1aa9211f186fdee0ce19beaf6",
+                  "code": "EXPLICIT_INTEREST",
+                  "name": "明确兴趣",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "ENGAGEMENT",
+                  "scoreDelta": 15,
+                  "repeatable": true,
+                  "maxOccurrences": 3,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 100,
+                  "description": "客户明确表达兴趣",
+                  "createdAt": "2026-09-07T08:02:35.474Z",
+                  "updatedAt": "2026-09-07T08:02:35.474Z"
+                },
+                "actor": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj2ck1000krv012c6wscru",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "scoringRuleId": "7c6ebcf5aa9211f186fdee0ce19beaf6",
+                "eventType": "MEETING_COMPLETED",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T17:41:46.895Z",
+                "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "note": null,
+                "engagementDeltaSnapshot": 15,
+                "fitDeltaSnapshot": 0,
+                "createdAt": "2026-09-07T17:41:46.897Z",
+                "scoringRule": {
+                  "id": "7c6ebcf5aa9211f186fdee0ce19beaf6",
+                  "code": "MEETING_COMPLETED",
+                  "name": "完成会议",
+                  "category": "SALES",
+                  "scoreDimension": "ENGAGEMENT",
+                  "scoreDelta": 15,
+                  "repeatable": true,
+                  "maxOccurrences": null,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 90,
+                  "description": "会议已实际完成",
+                  "createdAt": "2026-09-07T08:02:35.474Z",
+                  "updatedAt": "2026-09-07T08:02:35.474Z"
+                },
+                "actor": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj2bnq000frv01hi5hlmcu",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "scoringRuleId": "3a9ce396aadc11f186fdee0ce19beaf6",
+                "eventType": "ICP_PROFILE_MATCH",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T17:41:45.733Z",
+                "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "note": null,
+                "engagementDeltaSnapshot": 0,
+                "fitDeltaSnapshot": 40,
+                "createdAt": "2026-09-07T17:41:45.734Z",
+                "scoringRule": {
+                  "id": "3a9ce396aadc11f186fdee0ce19beaf6",
+                  "code": "ICP_PROFILE_MATCH",
+                  "name": "符合目标客户画像",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "FIT",
+                  "scoreDelta": 40,
+                  "repeatable": false,
+                  "maxOccurrences": 1,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 45,
+                  "description": "已确认客户画像与目标市场、行业或应用场景匹配",
+                  "createdAt": "2026-09-07T16:50:27.807Z",
+                  "updatedAt": "2026-09-07T16:50:27.807Z"
+                },
+                "actor": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "scoreHistory": [
+              {
+                "id": "cmtrj2edi000wrv0134cg1zi7",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "activityEventId": "cmtrj2eda000urv01jd4nc94o",
+                "dimension": "ENGAGEMENT",
+                "previousScore": 30,
+                "scoreDelta": 20,
+                "newScore": 50,
+                "reason": "EXPLICIT_REQUIREMENT",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "createdAt": "2026-09-07T17:41:49.255Z",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj2dgl000rrv01s7ugwqug",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "activityEventId": "cmtrj2dgf000prv01w8o78w15",
+                "dimension": "ENGAGEMENT",
+                "previousScore": 15,
+                "scoreDelta": 15,
+                "newScore": 30,
+                "reason": "EXPLICIT_INTEREST",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "createdAt": "2026-09-07T17:41:48.070Z",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj2ck8000mrv01d08r86ss",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "activityEventId": "cmtrj2ck1000krv012c6wscru",
+                "dimension": "ENGAGEMENT",
+                "previousScore": 0,
+                "scoreDelta": 15,
+                "newScore": 15,
+                "reason": "MEETING_COMPLETED",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "createdAt": "2026-09-07T17:41:46.904Z",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj2bnw000hrv01r7nln5bq",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "activityEventId": "cmtrj2bnq000frv01hi5hlmcu",
+                "dimension": "FIT",
+                "previousScore": 0,
+                "scoreDelta": 40,
+                "newScore": 40,
+                "reason": "ICP_PROFILE_MATCH",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "createdAt": "2026-09-07T17:41:45.740Z",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "statusHistory": [
+              {
+                "id": "cmtrj28zi0007rv01v8oamnwv",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "fromStatus": null,
+                "toStatus": "NEW",
+                "reason": "Marketing lead created",
+                "changedAt": "2026-09-07T17:41:42.245Z",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "fitLevel": "MEDIUM",
+            "engagementLevel": "MEDIUM",
+            "leadLevel": "WARM"
+          }
+        }
+      }
+    },
+    {
+      "name": "UAT Score 要求方案",
+      "method": "POST",
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/crm/marketing-leads/cmtrj28yy0005rv01qez59shh/activities",
+      "status": 201,
+      "response": {
+        "data": {
+          "activity": {
+            "id": "cmtrj2fb9000zrv01gqzuga7t",
+            "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+            "scoringRuleId": "7c6ebf7caa9211f186fdee0ce19beaf6",
+            "eventType": "REQUEST_SOLUTION",
+            "source": "CRM",
+            "occurredAt": "2026-09-07T17:41:50.467Z",
+            "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+            "note": null,
+            "engagementDeltaSnapshot": 20,
+            "fitDeltaSnapshot": 0,
+            "createdAt": "2026-09-07T17:41:50.469Z",
+            "scoringRule": {
+              "id": "7c6ebf7caa9211f186fdee0ce19beaf6",
+              "code": "REQUEST_SOLUTION",
+              "name": "要求方案",
+              "category": "QUALIFICATION",
+              "scoreDimension": "ENGAGEMENT",
+              "scoreDelta": 20,
+              "repeatable": true,
+              "maxOccurrences": 3,
+              "cooldownHours": null,
+              "enabled": true,
+              "sortOrder": 120,
+              "description": "客户要求正式方案",
+              "createdAt": "2026-09-07T08:02:35.474Z",
+              "updatedAt": "2026-09-07T08:02:35.474Z"
+            },
+            "actor": {
+              "id": "cmtltl86u000qlq0ti7pj3wl0",
+              "name": "UAT 超级管理员",
+              "loginAccount": "uat.superadmin@kivisense.test",
+              "status": "ACTIVE"
+            }
+          },
+          "lead": {
+            "id": "cmtrj28yy0005rv01qez59shh",
+            "fullName": "UAT-V4-线索-1788802892886",
+            "email": "uat-v4-1788802892886@example.test",
+            "phone": null,
+            "phoneNormalized": null,
+            "whatsapp": null,
+            "whatsappNormalized": null,
+            "wechat": null,
+            "linkedinUrl": null,
+            "title": null,
+            "department": null,
+            "companyName": "UAT-V4-公司-1788802892886",
+            "companyWebsite": "https://uat-v4-1788802892886.example.test",
+            "companyDomain": "uat-v4-1788802892886.example.test",
+            "companySize": null,
+            "industry": null,
+            "countryCode": "CN",
+            "region": null,
+            "city": null,
+            "inquiryType": null,
+            "inquiryContent": "UAT Phase 3 controlled write: enterprise 3D product experience requirement.",
+            "productInterest": null,
+            "requirementTags": [],
+            "budgetRange": null,
+            "note": "UAT Phase 3 edit verified",
+            "source": "FORM",
+            "sourceChannel": "ORGANIC_SEARCH",
+            "sourceDetail": null,
+            "firstTouchAt": "2026-09-07T17:41:42.226Z",
+            "status": "MQL",
+            "ownerUserId": "cmtltl9tu0003qh01h15pu6sc",
+            "assignedAt": "2026-09-07T17:41:44.303Z",
+            "mqlAt": "2026-09-07T17:41:50.494Z",
+            "sqlAt": null,
+            "qualifiedAt": null,
+            "recycledAt": null,
+            "convertedAt": null,
+            "disqualifiedAt": null,
+            "disqualifiedReason": null,
+            "fitScore": 40,
+            "fitReason": null,
+            "engagementScoreCached": 70,
+            "engagementScoreCalculatedAt": "2026-09-07T17:41:50.478Z",
+            "lastActivityAt": "2026-09-07T17:41:50.467Z",
+            "firstSalesResponseAt": null,
+            "convertedOrganizationId": null,
+            "convertedContactId": null,
+            "convertedOpportunityId": null,
+            "convertedByUserId": null,
+            "createdByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+            "createdAt": "2026-09-07T17:41:42.245Z",
+            "updatedAt": "2026-09-07T17:41:50.496Z",
+            "deletedAt": null,
+            "deletedByUserId": null,
+            "owner": {
+              "id": "cmtltl9tu0003qh01h15pu6sc",
+              "name": "UAT 销售人员",
+              "loginAccount": "uat.sales@kivisense.test",
+              "status": "ACTIVE"
+            },
+            "convertedBy": null,
+            "convertedOrganization": null,
+            "convertedContact": null,
+            "convertedOpportunity": null,
+            "createdBy": {
+              "id": "cmtltl86u000qlq0ti7pj3wl0",
+              "name": "UAT 超级管理员",
+              "loginAccount": "uat.superadmin@kivisense.test",
+              "status": "ACTIVE"
+            },
+            "activities": [
+              {
+                "id": "cmtrj2fb9000zrv01gqzuga7t",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "scoringRuleId": "7c6ebf7caa9211f186fdee0ce19beaf6",
+                "eventType": "REQUEST_SOLUTION",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T17:41:50.467Z",
+                "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "note": null,
+                "engagementDeltaSnapshot": 20,
+                "fitDeltaSnapshot": 0,
+                "createdAt": "2026-09-07T17:41:50.469Z",
+                "scoringRule": {
+                  "id": "7c6ebf7caa9211f186fdee0ce19beaf6",
+                  "code": "REQUEST_SOLUTION",
+                  "name": "要求方案",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "ENGAGEMENT",
+                  "scoreDelta": 20,
+                  "repeatable": true,
+                  "maxOccurrences": 3,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 120,
+                  "description": "客户要求正式方案",
+                  "createdAt": "2026-09-07T08:02:35.474Z",
+                  "updatedAt": "2026-09-07T08:02:35.474Z"
+                },
+                "actor": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj2eda000urv01jd4nc94o",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "scoringRuleId": "7c6ebe75aa9211f186fdee0ce19beaf6",
+                "eventType": "EXPLICIT_REQUIREMENT",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T17:41:49.245Z",
+                "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "note": null,
+                "engagementDeltaSnapshot": 20,
+                "fitDeltaSnapshot": 0,
+                "createdAt": "2026-09-07T17:41:49.247Z",
+                "scoringRule": {
+                  "id": "7c6ebe75aa9211f186fdee0ce19beaf6",
+                  "code": "EXPLICIT_REQUIREMENT",
+                  "name": "明确需求",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "ENGAGEMENT",
+                  "scoreDelta": 20,
+                  "repeatable": true,
+                  "maxOccurrences": 3,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 110,
+                  "description": "客户明确说明业务需求",
+                  "createdAt": "2026-09-07T08:02:35.474Z",
+                  "updatedAt": "2026-09-07T08:02:35.474Z"
+                },
+                "actor": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj2dgf000prv01w8o78w15",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "scoringRuleId": "7c6ebdb1aa9211f186fdee0ce19beaf6",
+                "eventType": "EXPLICIT_INTEREST",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T17:41:48.062Z",
+                "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "note": null,
+                "engagementDeltaSnapshot": 15,
+                "fitDeltaSnapshot": 0,
+                "createdAt": "2026-09-07T17:41:48.063Z",
+                "scoringRule": {
+                  "id": "7c6ebdb1aa9211f186fdee0ce19beaf6",
+                  "code": "EXPLICIT_INTEREST",
+                  "name": "明确兴趣",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "ENGAGEMENT",
+                  "scoreDelta": 15,
+                  "repeatable": true,
+                  "maxOccurrences": 3,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 100,
+                  "description": "客户明确表达兴趣",
+                  "createdAt": "2026-09-07T08:02:35.474Z",
+                  "updatedAt": "2026-09-07T08:02:35.474Z"
+                },
+                "actor": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj2ck1000krv012c6wscru",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "scoringRuleId": "7c6ebcf5aa9211f186fdee0ce19beaf6",
+                "eventType": "MEETING_COMPLETED",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T17:41:46.895Z",
+                "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "note": null,
+                "engagementDeltaSnapshot": 15,
+                "fitDeltaSnapshot": 0,
+                "createdAt": "2026-09-07T17:41:46.897Z",
+                "scoringRule": {
+                  "id": "7c6ebcf5aa9211f186fdee0ce19beaf6",
+                  "code": "MEETING_COMPLETED",
+                  "name": "完成会议",
+                  "category": "SALES",
+                  "scoreDimension": "ENGAGEMENT",
+                  "scoreDelta": 15,
+                  "repeatable": true,
+                  "maxOccurrences": null,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 90,
+                  "description": "会议已实际完成",
+                  "createdAt": "2026-09-07T08:02:35.474Z",
+                  "updatedAt": "2026-09-07T08:02:35.474Z"
+                },
+                "actor": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj2bnq000frv01hi5hlmcu",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "scoringRuleId": "3a9ce396aadc11f186fdee0ce19beaf6",
+                "eventType": "ICP_PROFILE_MATCH",
+                "source": "CRM",
+                "occurredAt": "2026-09-07T17:41:45.733Z",
+                "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "note": null,
+                "engagementDeltaSnapshot": 0,
+                "fitDeltaSnapshot": 40,
+                "createdAt": "2026-09-07T17:41:45.734Z",
+                "scoringRule": {
+                  "id": "3a9ce396aadc11f186fdee0ce19beaf6",
+                  "code": "ICP_PROFILE_MATCH",
+                  "name": "符合目标客户画像",
+                  "category": "QUALIFICATION",
+                  "scoreDimension": "FIT",
+                  "scoreDelta": 40,
+                  "repeatable": false,
+                  "maxOccurrences": 1,
+                  "cooldownHours": null,
+                  "enabled": true,
+                  "sortOrder": 45,
+                  "description": "已确认客户画像与目标市场、行业或应用场景匹配",
+                  "createdAt": "2026-09-07T16:50:27.807Z",
+                  "updatedAt": "2026-09-07T16:50:27.807Z"
+                },
+                "actor": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "scoreHistory": [
+              {
+                "id": "cmtrj2fbf0011rv011fvirzvp",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "activityEventId": "cmtrj2fb9000zrv01gqzuga7t",
+                "dimension": "ENGAGEMENT",
+                "previousScore": 50,
+                "scoreDelta": 20,
+                "newScore": 70,
+                "reason": "REQUEST_SOLUTION",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "createdAt": "2026-09-07T17:41:50.475Z",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj2edi000wrv0134cg1zi7",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "activityEventId": "cmtrj2eda000urv01jd4nc94o",
+                "dimension": "ENGAGEMENT",
+                "previousScore": 30,
+                "scoreDelta": 20,
+                "newScore": 50,
+                "reason": "EXPLICIT_REQUIREMENT",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "createdAt": "2026-09-07T17:41:49.255Z",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj2dgl000rrv01s7ugwqug",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "activityEventId": "cmtrj2dgf000prv01w8o78w15",
+                "dimension": "ENGAGEMENT",
+                "previousScore": 15,
+                "scoreDelta": 15,
+                "newScore": 30,
+                "reason": "EXPLICIT_INTEREST",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "createdAt": "2026-09-07T17:41:48.070Z",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj2ck8000mrv01d08r86ss",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "activityEventId": "cmtrj2ck1000krv012c6wscru",
+                "dimension": "ENGAGEMENT",
+                "previousScore": 0,
+                "scoreDelta": 15,
+                "newScore": 15,
+                "reason": "MEETING_COMPLETED",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "createdAt": "2026-09-07T17:41:46.904Z",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj2bnw000hrv01r7nln5bq",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "activityEventId": "cmtrj2bnq000frv01hi5hlmcu",
+                "dimension": "FIT",
+                "previousScore": 0,
+                "scoreDelta": 40,
+                "newScore": 40,
+                "reason": "ICP_PROFILE_MATCH",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "createdAt": "2026-09-07T17:41:45.740Z",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "statusHistory": [
+              {
+                "id": "cmtrj2fc60014rv014ssumg2i",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "fromStatus": "NEW",
+                "toStatus": "MQL",
+                "reason": "Automatic MQL: Fit >= 40, Engagement >= 70",
+                "changedAt": "2026-09-07T17:41:50.494Z",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              },
+              {
+                "id": "cmtrj28zi0007rv01v8oamnwv",
+                "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+                "fromStatus": null,
+                "toStatus": "NEW",
+                "reason": "Marketing lead created",
+                "changedAt": "2026-09-07T17:41:42.245Z",
+                "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+                "changedBy": {
+                  "id": "cmtltl86u000qlq0ti7pj3wl0",
+                  "name": "UAT 超级管理员",
+                  "loginAccount": "uat.superadmin@kivisense.test",
+                  "status": "ACTIVE"
+                }
+              }
+            ],
+            "fitLevel": "MEDIUM",
+            "engagementLevel": "HIGH",
+            "leadLevel": "WARM"
+          }
+        }
+      }
+    },
+    {
+      "name": "UAT MQL → SQL",
+      "method": "POST",
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/crm/marketing-leads/cmtrj28yy0005rv01qez59shh/transition",
+      "status": 200,
+      "response": {
+        "data": {
+          "id": "cmtrj28yy0005rv01qez59shh",
+          "fullName": "UAT-V4-线索-1788802892886",
+          "email": "uat-v4-1788802892886@example.test",
+          "phone": null,
+          "phoneNormalized": null,
+          "whatsapp": null,
+          "whatsappNormalized": null,
+          "wechat": null,
+          "linkedinUrl": null,
+          "title": null,
+          "department": null,
+          "companyName": "UAT-V4-公司-1788802892886",
+          "companyWebsite": "https://uat-v4-1788802892886.example.test",
+          "companyDomain": "uat-v4-1788802892886.example.test",
+          "companySize": null,
+          "industry": null,
+          "countryCode": "CN",
+          "region": null,
+          "city": null,
+          "inquiryType": null,
+          "inquiryContent": "UAT Phase 3 controlled write: enterprise 3D product experience requirement.",
+          "productInterest": null,
+          "requirementTags": [],
+          "budgetRange": null,
+          "note": "UAT Phase 3 edit verified",
+          "source": "FORM",
+          "sourceChannel": "ORGANIC_SEARCH",
+          "sourceDetail": null,
+          "firstTouchAt": "2026-09-07T17:41:42.226Z",
+          "status": "SQL",
+          "ownerUserId": "cmtltl9tu0003qh01h15pu6sc",
+          "assignedAt": "2026-09-07T17:41:44.303Z",
+          "mqlAt": "2026-09-07T17:41:50.494Z",
+          "sqlAt": "2026-09-07T17:41:55.640Z",
+          "qualifiedAt": null,
+          "recycledAt": null,
+          "convertedAt": null,
+          "disqualifiedAt": null,
+          "disqualifiedReason": null,
+          "fitScore": 40,
+          "fitReason": null,
+          "engagementScoreCached": 70,
+          "engagementScoreCalculatedAt": "2026-09-07T17:41:50.478Z",
+          "lastActivityAt": "2026-09-07T17:41:50.467Z",
+          "firstSalesResponseAt": "2026-09-07T17:41:55.640Z",
+          "convertedOrganizationId": null,
+          "convertedContactId": null,
+          "convertedOpportunityId": null,
+          "convertedByUserId": null,
+          "createdByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+          "createdAt": "2026-09-07T17:41:42.245Z",
+          "updatedAt": "2026-09-07T17:41:55.642Z",
+          "deletedAt": null,
+          "deletedByUserId": null,
+          "owner": {
+            "id": "cmtltl9tu0003qh01h15pu6sc",
+            "name": "UAT 销售人员",
+            "loginAccount": "uat.sales@kivisense.test",
+            "status": "ACTIVE"
+          },
+          "convertedBy": null,
+          "convertedOrganization": null,
+          "convertedContact": null,
+          "convertedOpportunity": null,
+          "createdBy": {
+            "id": "cmtltl86u000qlq0ti7pj3wl0",
+            "name": "UAT 超级管理员",
+            "loginAccount": "uat.superadmin@kivisense.test",
+            "status": "ACTIVE"
+          },
+          "activities": [
+            {
+              "id": "cmtrj2fb9000zrv01gqzuga7t",
+              "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+              "scoringRuleId": "7c6ebf7caa9211f186fdee0ce19beaf6",
+              "eventType": "REQUEST_SOLUTION",
+              "source": "CRM",
+              "occurredAt": "2026-09-07T17:41:50.467Z",
+              "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+              "note": null,
+              "engagementDeltaSnapshot": 20,
+              "fitDeltaSnapshot": 0,
+              "createdAt": "2026-09-07T17:41:50.469Z",
+              "scoringRule": {
+                "id": "7c6ebf7caa9211f186fdee0ce19beaf6",
+                "code": "REQUEST_SOLUTION",
+                "name": "要求方案",
+                "category": "QUALIFICATION",
+                "scoreDimension": "ENGAGEMENT",
+                "scoreDelta": 20,
+                "repeatable": true,
+                "maxOccurrences": 3,
+                "cooldownHours": null,
+                "enabled": true,
+                "sortOrder": 120,
+                "description": "客户要求正式方案",
+                "createdAt": "2026-09-07T08:02:35.474Z",
+                "updatedAt": "2026-09-07T08:02:35.474Z"
+              },
+              "actor": {
+                "id": "cmtltl86u000qlq0ti7pj3wl0",
+                "name": "UAT 超级管理员",
+                "loginAccount": "uat.superadmin@kivisense.test",
+                "status": "ACTIVE"
+              }
+            },
+            {
+              "id": "cmtrj2eda000urv01jd4nc94o",
+              "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+              "scoringRuleId": "7c6ebe75aa9211f186fdee0ce19beaf6",
+              "eventType": "EXPLICIT_REQUIREMENT",
+              "source": "CRM",
+              "occurredAt": "2026-09-07T17:41:49.245Z",
+              "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+              "note": null,
+              "engagementDeltaSnapshot": 20,
+              "fitDeltaSnapshot": 0,
+              "createdAt": "2026-09-07T17:41:49.247Z",
+              "scoringRule": {
+                "id": "7c6ebe75aa9211f186fdee0ce19beaf6",
+                "code": "EXPLICIT_REQUIREMENT",
+                "name": "明确需求",
+                "category": "QUALIFICATION",
+                "scoreDimension": "ENGAGEMENT",
+                "scoreDelta": 20,
+                "repeatable": true,
+                "maxOccurrences": 3,
+                "cooldownHours": null,
+                "enabled": true,
+                "sortOrder": 110,
+                "description": "客户明确说明业务需求",
+                "createdAt": "2026-09-07T08:02:35.474Z",
+                "updatedAt": "2026-09-07T08:02:35.474Z"
+              },
+              "actor": {
+                "id": "cmtltl86u000qlq0ti7pj3wl0",
+                "name": "UAT 超级管理员",
+                "loginAccount": "uat.superadmin@kivisense.test",
+                "status": "ACTIVE"
+              }
+            },
+            {
+              "id": "cmtrj2dgf000prv01w8o78w15",
+              "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+              "scoringRuleId": "7c6ebdb1aa9211f186fdee0ce19beaf6",
+              "eventType": "EXPLICIT_INTEREST",
+              "source": "CRM",
+              "occurredAt": "2026-09-07T17:41:48.062Z",
+              "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+              "note": null,
+              "engagementDeltaSnapshot": 15,
+              "fitDeltaSnapshot": 0,
+              "createdAt": "2026-09-07T17:41:48.063Z",
+              "scoringRule": {
+                "id": "7c6ebdb1aa9211f186fdee0ce19beaf6",
+                "code": "EXPLICIT_INTEREST",
+                "name": "明确兴趣",
+                "category": "QUALIFICATION",
+                "scoreDimension": "ENGAGEMENT",
+                "scoreDelta": 15,
+                "repeatable": true,
+                "maxOccurrences": 3,
+                "cooldownHours": null,
+                "enabled": true,
+                "sortOrder": 100,
+                "description": "客户明确表达兴趣",
+                "createdAt": "2026-09-07T08:02:35.474Z",
+                "updatedAt": "2026-09-07T08:02:35.474Z"
+              },
+              "actor": {
+                "id": "cmtltl86u000qlq0ti7pj3wl0",
+                "name": "UAT 超级管理员",
+                "loginAccount": "uat.superadmin@kivisense.test",
+                "status": "ACTIVE"
+              }
+            },
+            {
+              "id": "cmtrj2ck1000krv012c6wscru",
+              "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+              "scoringRuleId": "7c6ebcf5aa9211f186fdee0ce19beaf6",
+              "eventType": "MEETING_COMPLETED",
+              "source": "CRM",
+              "occurredAt": "2026-09-07T17:41:46.895Z",
+              "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+              "note": null,
+              "engagementDeltaSnapshot": 15,
+              "fitDeltaSnapshot": 0,
+              "createdAt": "2026-09-07T17:41:46.897Z",
+              "scoringRule": {
+                "id": "7c6ebcf5aa9211f186fdee0ce19beaf6",
+                "code": "MEETING_COMPLETED",
+                "name": "完成会议",
+                "category": "SALES",
+                "scoreDimension": "ENGAGEMENT",
+                "scoreDelta": 15,
+                "repeatable": true,
+                "maxOccurrences": null,
+                "cooldownHours": null,
+                "enabled": true,
+                "sortOrder": 90,
+                "description": "会议已实际完成",
+                "createdAt": "2026-09-07T08:02:35.474Z",
+                "updatedAt": "2026-09-07T08:02:35.474Z"
+              },
+              "actor": {
+                "id": "cmtltl86u000qlq0ti7pj3wl0",
+                "name": "UAT 超级管理员",
+                "loginAccount": "uat.superadmin@kivisense.test",
+                "status": "ACTIVE"
+              }
+            },
+            {
+              "id": "cmtrj2bnq000frv01hi5hlmcu",
+              "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+              "scoringRuleId": "3a9ce396aadc11f186fdee0ce19beaf6",
+              "eventType": "ICP_PROFILE_MATCH",
+              "source": "CRM",
+              "occurredAt": "2026-09-07T17:41:45.733Z",
+              "actorUserId": "cmtltl86u000qlq0ti7pj3wl0",
+              "note": null,
+              "engagementDeltaSnapshot": 0,
+              "fitDeltaSnapshot": 40,
+              "createdAt": "2026-09-07T17:41:45.734Z",
+              "scoringRule": {
+                "id": "3a9ce396aadc11f186fdee0ce19beaf6",
+                "code": "ICP_PROFILE_MATCH",
+                "name": "符合目标客户画像",
+                "category": "QUALIFICATION",
+                "scoreDimension": "FIT",
+                "scoreDelta": 40,
+                "repeatable": false,
+                "maxOccurrences": 1,
+                "cooldownHours": null,
+                "enabled": true,
+                "sortOrder": 45,
+                "description": "已确认客户画像与目标市场、行业或应用场景匹配",
+                "createdAt": "2026-09-07T16:50:27.807Z",
+                "updatedAt": "2026-09-07T16:50:27.807Z"
+              },
+              "actor": {
+                "id": "cmtltl86u000qlq0ti7pj3wl0",
+                "name": "UAT 超级管理员",
+                "loginAccount": "uat.superadmin@kivisense.test",
+                "status": "ACTIVE"
+              }
+            }
+          ],
+          "scoreHistory": [
+            {
+              "id": "cmtrj2fbf0011rv011fvirzvp",
+              "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+              "activityEventId": "cmtrj2fb9000zrv01gqzuga7t",
+              "dimension": "ENGAGEMENT",
+              "previousScore": 50,
+              "scoreDelta": 20,
+              "newScore": 70,
+              "reason": "REQUEST_SOLUTION",
+              "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+              "createdAt": "2026-09-07T17:41:50.475Z",
+              "changedBy": {
+                "id": "cmtltl86u000qlq0ti7pj3wl0",
+                "name": "UAT 超级管理员",
+                "loginAccount": "uat.superadmin@kivisense.test",
+                "status": "ACTIVE"
+              }
+            },
+            {
+              "id": "cmtrj2edi000wrv0134cg1zi7",
+              "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+              "activityEventId": "cmtrj2eda000urv01jd4nc94o",
+              "dimension": "ENGAGEMENT",
+              "previousScore": 30,
+              "scoreDelta": 20,
+              "newScore": 50,
+              "reason": "EXPLICIT_REQUIREMENT",
+              "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+              "createdAt": "2026-09-07T17:41:49.255Z",
+              "changedBy": {
+                "id": "cmtltl86u000qlq0ti7pj3wl0",
+                "name": "UAT 超级管理员",
+                "loginAccount": "uat.superadmin@kivisense.test",
+                "status": "ACTIVE"
+              }
+            },
+            {
+              "id": "cmtrj2dgl000rrv01s7ugwqug",
+              "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+              "activityEventId": "cmtrj2dgf000prv01w8o78w15",
+              "dimension": "ENGAGEMENT",
+              "previousScore": 15,
+              "scoreDelta": 15,
+              "newScore": 30,
+              "reason": "EXPLICIT_INTEREST",
+              "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+              "createdAt": "2026-09-07T17:41:48.070Z",
+              "changedBy": {
+                "id": "cmtltl86u000qlq0ti7pj3wl0",
+                "name": "UAT 超级管理员",
+                "loginAccount": "uat.superadmin@kivisense.test",
+                "status": "ACTIVE"
+              }
+            },
+            {
+              "id": "cmtrj2ck8000mrv01d08r86ss",
+              "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+              "activityEventId": "cmtrj2ck1000krv012c6wscru",
+              "dimension": "ENGAGEMENT",
+              "previousScore": 0,
+              "scoreDelta": 15,
+              "newScore": 15,
+              "reason": "MEETING_COMPLETED",
+              "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+              "createdAt": "2026-09-07T17:41:46.904Z",
+              "changedBy": {
+                "id": "cmtltl86u000qlq0ti7pj3wl0",
+                "name": "UAT 超级管理员",
+                "loginAccount": "uat.superadmin@kivisense.test",
+                "status": "ACTIVE"
+              }
+            },
+            {
+              "id": "cmtrj2bnw000hrv01r7nln5bq",
+              "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+              "activityEventId": "cmtrj2bnq000frv01hi5hlmcu",
+              "dimension": "FIT",
+              "previousScore": 0,
+              "scoreDelta": 40,
+              "newScore": 40,
+              "reason": "ICP_PROFILE_MATCH",
+              "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+              "createdAt": "2026-09-07T17:41:45.740Z",
+              "changedBy": {
+                "id": "cmtltl86u000qlq0ti7pj3wl0",
+                "name": "UAT 超级管理员",
+                "loginAccount": "uat.superadmin@kivisense.test",
+                "status": "ACTIVE"
+              }
+            }
+          ],
+          "statusHistory": [
+            {
+              "id": "cmtrj2jb4001arv01a2g63g4o",
+              "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+              "fromStatus": "MQL",
+              "toStatus": "SQL",
+              "reason": "ACCEPT_SQL",
+              "changedAt": "2026-09-07T17:41:55.640Z",
+              "changedByUserId": "cmtltl9tu0003qh01h15pu6sc",
+              "changedBy": {
+                "id": "cmtltl9tu0003qh01h15pu6sc",
+                "name": "UAT 销售人员",
+                "loginAccount": "uat.sales@kivisense.test",
+                "status": "ACTIVE"
+              }
+            },
+            {
+              "id": "cmtrj2fc60014rv014ssumg2i",
+              "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+              "fromStatus": "NEW",
+              "toStatus": "MQL",
+              "reason": "Automatic MQL: Fit >= 40, Engagement >= 70",
+              "changedAt": "2026-09-07T17:41:50.494Z",
+              "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+              "changedBy": {
+                "id": "cmtltl86u000qlq0ti7pj3wl0",
+                "name": "UAT 超级管理员",
+                "loginAccount": "uat.superadmin@kivisense.test",
+                "status": "ACTIVE"
+              }
+            },
+            {
+              "id": "cmtrj28zi0007rv01v8oamnwv",
+              "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+              "fromStatus": null,
+              "toStatus": "NEW",
+              "reason": "Marketing lead created",
+              "changedAt": "2026-09-07T17:41:42.245Z",
+              "changedByUserId": "cmtltl86u000qlq0ti7pj3wl0",
+              "changedBy": {
+                "id": "cmtltl86u000qlq0ti7pj3wl0",
+                "name": "UAT 超级管理员",
+                "loginAccount": "uat.superadmin@kivisense.test",
+                "status": "ACTIVE"
+              }
+            }
+          ],
+          "fitLevel": "MEDIUM",
+          "engagementLevel": "HIGH",
+          "leadLevel": "WARM"
+        }
+      }
+    },
+    {
+      "name": "UAT SQL → Opportunity",
+      "method": "POST",
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/crm/marketing-leads/cmtrj28yy0005rv01qez59shh/convert",
+      "status": 200,
+      "response": {
+        "data": {
+          "idempotent": false,
+          "marketingLeadId": "cmtrj28yy0005rv01qez59shh",
+          "organizationId": "cmtrj2k41001drv011sr6a8tr",
+          "contactId": "cmtrj2k4a001hrv01p5myjvqj",
+          "opportunityId": "cmtrj2k4f001jrv014ja9rvsz"
+        }
+      }
+    },
+    {
+      "name": "UAT Export Selected",
+      "method": "POST",
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/crm/exports/marketing-leads",
+      "status": 202,
+      "response": {
+        "data": {
+          "id": "cmtrj2lkv001xrv01j6hj4cau",
+          "jobNo": "EXP-20260907-1A9DCFE9",
+          "objectType": "MARKETING_LEAD",
+          "status": "PENDING",
+          "scope": "SELECTED",
+          "filterJson": {},
+          "selectedCount": 1,
+          "requestedFields": null,
+          "effectiveFields": null,
+          "fileName": null,
+          "rowCount": 0,
+          "error": null,
+          "createdBy": "cmtltl86u000qlq0ti7pj3wl0",
+          "createdAt": "2026-09-07T17:41:58.592Z",
+          "completedAt": null,
+          "expiresAt": null,
+          "format": "XLSX",
+          "operatorName": "UAT 超级管理员",
+          "downloadUrl": null,
+          "statusUrl": "/api/v1/crm/exports/cmtrj2lkv001xrv01j6hj4cau"
+        }
+      }
+    },
+    {
+      "name": "Cleanup 商机",
+      "method": "DELETE",
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/crm/leads/cmtrj2k4f001jrv014ja9rvsz",
+      "status": 200,
+      "response": {
+        "data": {
+          "id": "cmtrj2k4f001jrv014ja9rvsz"
+        }
+      }
+    },
+    {
+      "name": "Cleanup 线索",
+      "method": "DELETE",
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/crm/marketing-leads/cmtrj28yy0005rv01qez59shh",
+      "status": 200,
+      "response": {
+        "data": {
+          "id": "cmtrj28yy0005rv01qez59shh"
+        }
+      }
+    },
+    {
+      "name": "Cleanup 联系人",
+      "method": "DELETE",
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/crm/contacts/cmtrj2k4a001hrv01p5myjvqj",
+      "status": 200,
+      "response": {
+        "data": {
+          "id": "cmtrj2k4a001hrv01p5myjvqj"
+        }
+      }
+    },
+    {
+      "name": "Cleanup 公司",
+      "method": "DELETE",
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/crm/organizations/cmtrj2k41001drv011sr6a8tr",
+      "status": 200,
+      "response": {
+        "data": {
+          "id": "cmtrj2k41001drv011sr6a8tr"
+        }
+      }
+    }
+  ],
+  "databaseEvidence": [
+    {
+      "phase": "before-cleanup",
+      "rows": [
+        "ML\tCONVERTED\tcmtltl9tu0003qh01h15pu6sc\tcmtrj2k41001drv011sr6a8tr\tcmtrj2k4a001hrv01p5myjvqj\tcmtrj2k4f001jrv014ja9rvsz\t0",
+        "OPP\tNEW\tcmtltl9tu0003qh01h15pu6sc\tcmtrj28yy0005rv01qez59shh\t0",
+        "CONTACT\tBUSINESS\tcmtrj2k41001drv011sr6a8tr\t0",
+        "ORG\tOPPORTUNITY\t0",
+        "NOTIFY\t1\tPENDING"
+      ],
+      "notificationTransport": "PENDING"
+    },
+    {
+      "phase": "after-cleanup",
+      "rows": [
+        "ML\t1",
+        "OPP\t1",
+        "CONTACT\t1",
+        "ORG\t1"
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "marketing-lead-mql-1440",
+      "file": "artifacts/uat-v4/run-1788802892886/01-marketing-lead-mql-1440.png",
+      "bytes": 165246,
+      "sha256": "f278fd6aa7b5248f6f1ea56d131b311ecc33cfd4fa98d6d95e2c94d9f22af5a1",
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      }
+    },
+    {
+      "name": "converted-marketing-lead-1440",
+      "file": "artifacts/uat-v4/run-1788802892886/02-converted-marketing-lead-1440.png",
+      "bytes": 167608,
+      "sha256": "040727c3b6e223dee556a766339167a1c427fe004bf7a79cb49191f2e61055e4",
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      }
+    },
+    {
+      "name": "export-history-1440",
+      "file": "artifacts/uat-v4/run-1788802892886/03-export-history-1440.png",
+      "bytes": 130573,
+      "sha256": "3e8226668594c78aa181122c79a540754c2bdc92776a52140f9d562b7d80a635",
+      "dimensions": {
+        "viewport": 1440,
+        "document": 1440
+      }
+    }
+  ],
+  "exportFile": {
+    "file": "artifacts/uat-v4/run-1788802892886/marketing-leads-selected-1788802892886.xlsx",
+    "bytes": 7558,
+    "sha256": "d8209de816280ec84846b8a65fbb66b1afc5ba41a75f4884a72fd9c89024c16d"
+  },
+  "notificationDelivery": {
+    "mailbox": "NOT_TESTED",
+    "outboxStatuses": "PENDING"
+  },
+  "cleanup": {
+    "policy": "UI soft delete",
+    "objectIds": {
+      "marketingId": "cmtrj28yy0005rv01qez59shh",
+      "opportunityId": "cmtrj2k4f001jrv014ja9rvsz",
+      "contactId": "cmtrj2k4a001hrv01p5myjvqj",
+      "organizationId": "cmtrj2k41001drv011sr6a8tr"
+    }
+  },
+  "health": {
+    "status": "ready",
+    "database": "ok",
+    "release": "Kivisense CRM 2.0",
+    "version": "2.0.0-uat"
+  },
+  "consoleEvents": [],
+  "networkEvents": [],
+  "expectedNetwork": [],
+  "evidenceId": "92219d8c-d305-455b-8456-f116925b4f39"
+}

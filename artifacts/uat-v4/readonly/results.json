@@ -1,0 +1,244 @@
+{
+  "verdict": "PASS",
+  "completedAt": "2026-09-07T17:45:49.904Z",
+  "target": "https://www.gridworks.cn/crm_kivisense",
+  "deployedCommit": "82173ba7a39433cf8284ce4d8ca8eae9eb77b14d",
+  "results": [
+    {
+      "role": "SUPER_ADMIN",
+      "status": "PASS",
+      "dashboardTabs": [
+        "管理概览",
+        "营销与转化",
+        "商机推进",
+        "团队表现"
+      ],
+      "listControls": [
+        {
+          "object": "公司",
+          "canCreate": true,
+          "canImport": true,
+          "canExport": true
+        },
+        {
+          "object": "联系人",
+          "canCreate": true,
+          "canImport": true,
+          "canExport": true
+        },
+        {
+          "object": "线索",
+          "canCreate": true,
+          "canImport": true,
+          "canExport": true
+        },
+        {
+          "object": "商机",
+          "canCreate": true,
+          "canImport": true,
+          "canExport": true
+        },
+        {
+          "object": "供应商",
+          "canCreate": true,
+          "canImport": true,
+          "canExport": true
+        }
+      ]
+    },
+    {
+      "role": "SALES",
+      "status": "PASS",
+      "dashboardTabs": [
+        "管理概览",
+        "营销与转化",
+        "商机推进"
+      ],
+      "listControls": [
+        {
+          "object": "公司",
+          "canCreate": true,
+          "canImport": false,
+          "canExport": false
+        },
+        {
+          "object": "联系人",
+          "canCreate": true,
+          "canImport": false,
+          "canExport": false
+        },
+        {
+          "object": "线索",
+          "canCreate": true,
+          "canImport": true,
+          "canExport": true
+        },
+        {
+          "object": "商机",
+          "canCreate": true,
+          "canImport": false,
+          "canExport": false
+        },
+        {
+          "object": "供应商",
+          "canCreate": true,
+          "canImport": false,
+          "canExport": false
+        }
+      ]
+    },
+    {
+      "role": "VIEWER",
+      "status": "PASS",
+      "dashboardTabs": [
+        "管理概览",
+        "商机推进"
+      ],
+      "listControls": [
+        {
+          "object": "公司",
+          "canCreate": false,
+          "canImport": false,
+          "canExport": false
+        },
+        {
+          "object": "联系人",
+          "canCreate": false,
+          "canImport": false,
+          "canExport": false
+        },
+        {
+          "object": "线索",
+          "canCreate": false,
+          "canImport": false,
+          "canExport": false
+        },
+        {
+          "object": "商机",
+          "canCreate": false,
+          "canImport": false,
+          "canExport": false
+        },
+        {
+          "object": "供应商",
+          "canCreate": false,
+          "canImport": false,
+          "canExport": false
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "role": "SUPER_ADMIN",
+      "name": "dashboard",
+      "file": "artifacts/uat-v4/readonly/super_admin-dashboard.png",
+      "bytes": 174290,
+      "sha256": "cff747619b3485d73be22d99d330e9e17ab0021271eba887689f646a531c78bf",
+      "dimensions": {
+        "viewport": 1440,
+        "body": 1440,
+        "document": 1440
+      }
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "name": "marketing-leads",
+      "file": "artifacts/uat-v4/readonly/super_admin-marketing-leads.png",
+      "bytes": 73424,
+      "sha256": "f32400fb339b0c296e16eeb78aa5ba59adec85a04c5ddb96a9886d3f83acad60",
+      "dimensions": {
+        "viewport": 1440,
+        "body": 1440,
+        "document": 1440
+      }
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "name": "leads",
+      "file": "artifacts/uat-v4/readonly/super_admin-leads.png",
+      "bytes": 91727,
+      "sha256": "93ab684058243eb0032cb6c6999640162ab673ad8ce95f37f3c22ff7810320f7",
+      "dimensions": {
+        "viewport": 1440,
+        "body": 1440,
+        "document": 1440
+      }
+    },
+    {
+      "role": "SALES",
+      "name": "dashboard",
+      "file": "artifacts/uat-v4/readonly/sales-dashboard.png",
+      "bytes": 152543,
+      "sha256": "2d1a8852e26c6761b1086930d1705421133ef42a2ef1cd4a3b90d01086b356f7",
+      "dimensions": {
+        "viewport": 1440,
+        "body": 1440,
+        "document": 1440
+      }
+    },
+    {
+      "role": "SALES",
+      "name": "marketing-leads",
+      "file": "artifacts/uat-v4/readonly/sales-marketing-leads.png",
+      "bytes": 66435,
+      "sha256": "214438669f3290e07c5e00f0e22d8d200cf5cc48eb3a3a6695a3af65db506651",
+      "dimensions": {
+        "viewport": 1440,
+        "body": 1440,
+        "document": 1440
+      }
+    },
+    {
+      "role": "SALES",
+      "name": "leads",
+      "file": "artifacts/uat-v4/readonly/sales-leads.png",
+      "bytes": 83493,
+      "sha256": "6e7c9705edf296cb46b69530c2b451fbd69d65d2f09a7159207181a3963a0f10",
+      "dimensions": {
+        "viewport": 1440,
+        "body": 1440,
+        "document": 1440
+      }
+    },
+    {
+      "role": "VIEWER",
+      "name": "dashboard",
+      "file": "artifacts/uat-v4/readonly/viewer-dashboard.png",
+      "bytes": 125346,
+      "sha256": "8e6a85e5b9eb8998c4f305413f388b33db4af590a95dedadde36bddbc1e4cd07",
+      "dimensions": {
+        "viewport": 1440,
+        "body": 1440,
+        "document": 1440
+      }
+    },
+    {
+      "role": "VIEWER",
+      "name": "marketing-leads",
+      "file": "artifacts/uat-v4/readonly/viewer-marketing-leads.png",
+      "bytes": 63647,
+      "sha256": "11fbb31f02e6a77ed206a03160a59190ff3aa4ecc28b114b6f49b2ee6a66a508",
+      "dimensions": {
+        "viewport": 1440,
+        "body": 1440,
+        "document": 1440
+      }
+    },
+    {
+      "role": "VIEWER",
+      "name": "leads",
+      "file": "artifacts/uat-v4/readonly/viewer-leads.png",
+      "bytes": 80267,
+      "sha256": "528b44d1e7410ca4f03cb74397156d18cfb0f65d975ecffb8dcb6504fc0ac4fd",
+      "dimensions": {
+        "viewport": 1440,
+        "body": 1440,
+        "document": 1440
+      }
+    }
+  ],
+  "consoleErrors": [],
+  "networkErrors": [],
+  "deniedWrites": []
+}
