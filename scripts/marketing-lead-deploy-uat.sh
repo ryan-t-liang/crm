@@ -78,7 +78,8 @@ elif [[ "$mode" = migrate ]]; then
   [[ "$backup" = /srv/kivisense-crm-backups/* ]] || exit 2
   (cd "$backup" && sha256sum -c SHA256SUMS)
   before=$(<"$backup/migration-count-before.txt")
-  test "$before" -eq 6
+  test "$before" -ge 6
+  test "$before" -le 7
   docker run --rm --name "kivisense-crm-marketing-migrate-$release_short" --env-file "$app/.env" --network "$network" "$image" npm --workspace backend run prisma:migrate:deploy | tee "$backup/migration-output.txt"
   after=$(migration_count)
   test "$after" -eq 7

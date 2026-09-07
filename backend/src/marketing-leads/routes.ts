@@ -37,7 +37,9 @@ const duplicateQuery = z.object({
   excludeId: z.string().trim().max(32).optional(),
 });
 
-const scoreRuleQuery = z.object({ includeDisabled: z.coerce.boolean().default(false) });
+const scoreRuleQuery = z.object({
+  includeDisabled: z.enum(["true", "false"]).default("false").transform((value) => value === "true"),
+});
 const analyticsQuery = z.object({
   from: z.string().datetime({ offset: true }).optional(),
   to: z.string().datetime({ offset: true }).optional(),

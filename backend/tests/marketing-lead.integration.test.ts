@@ -109,6 +109,8 @@ describe.skipIf(!enabled).sequential("Marketing Lead to Opportunity", () => {
     const adminOwned = await inject({ method: "POST", url: "/api/v1/crm/marketing-leads", payload: { fullName: `Admin Owned ${runKey}`, source: "MANUAL", ownerUserId: adminId } }, adminCookie);
     expect(adminOwned.statusCode).toBe(201);
     expect((await inject({ method: "GET", url: `/api/v1/crm/marketing-leads/${adminOwned.json().data.id}` })).statusCode).toBe(404);
+    expect((await inject({ method: "GET", url: "/api/v1/crm/marketing/scoring-rules?includeDisabled=false" })).statusCode).toBe(200);
+    expect((await inject({ method: "GET", url: "/api/v1/crm/marketing/scoring-rules?includeDisabled=true" })).statusCode).toBe(403);
   });
 
   it("creates the Naderi overseas lead, detects duplicates and records immutable score history", async () => {
