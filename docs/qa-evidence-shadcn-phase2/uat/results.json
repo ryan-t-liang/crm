@@ -1,0 +1,279 @@
+{
+  "checks": [
+    {
+      "role": "SUPER_ADMIN",
+      "route": "dashboard",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "route": "organizations",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "route": "contacts",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "route": "leads",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "route": "operations",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "route": "workbench",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "route": "suppliers",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "route": "accounts",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "route": "roles",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "route": "audit",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "route": "organizations/detail-and-refresh",
+      "status": "PASS"
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "route": "contacts/detail-and-refresh",
+      "status": "PASS"
+    },
+    {
+      "role": "SUPER_ADMIN",
+      "route": "leads/detail-and-refresh",
+      "status": "PASS"
+    },
+    {
+      "role": "SALES",
+      "route": "dashboard",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "SALES",
+      "route": "organizations",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "SALES",
+      "route": "contacts",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "SALES",
+      "route": "leads",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "SALES",
+      "route": "operations",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "SALES",
+      "route": "workbench",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "SALES",
+      "route": "suppliers",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "VIEWER",
+      "route": "dashboard",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "VIEWER",
+      "route": "organizations",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "VIEWER",
+      "route": "contacts",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "VIEWER",
+      "route": "leads",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "VIEWER",
+      "route": "operations",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "VIEWER",
+      "route": "workbench",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "VIEWER",
+      "route": "suppliers",
+      "status": "PASS",
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    }
+  ],
+  "errors": [],
+  "network": [],
+  "expectedUnauthenticated": [
+    {
+      "role": "SUPER_ADMIN",
+      "status": 401,
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/auth/me"
+    },
+    {
+      "role": "SALES",
+      "status": 401,
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/auth/me"
+    },
+    {
+      "role": "VIEWER",
+      "status": 401,
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/auth/me"
+    }
+  ],
+  "deniedWrites": []
+}

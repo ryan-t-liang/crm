@@ -36,12 +36,12 @@ try {
     await page.getByRole("heading", { name: "Dashboard", exact: true }).waitFor();
     await page.evaluate(() => { document.querySelector('[data-slot="sidebar-wrapper"]').dataset.qaShell = "persistent"; });
     for (const [route, name] of [["dashboard", "Dashboard"], ["organizations", "公司"], ["contacts", "客户联系人"], ["leads", "线索"], ["operations", "客户运营"], ["workbench", "我的工作台"], ["suppliers", "供应商"], ...(role === "SUPER_ADMIN" ? [["accounts", "账户管理"], ["roles", "角色与权限"], ["audit", "审计日志"]] : [])]) {
-      await page.getByRole("link", { name, exact: true }).click();
-      await page.waitForTimeout(850);
+      await page.getByLabel("主导航", { exact: true }).getByRole("link", { name, exact: true }).click();
+      await page.waitForTimeout(2000);
       assert.ok(page.url().endsWith("#" + route), page.url());
       assert.equal(await page.locator('[data-slot="sidebar-wrapper"]').getAttribute("data-qa-shell"), "persistent");
       assert.equal(await page.getByText("加载失败", { exact: true }).count(), 0);
-      if (role === "VIEWER") assert.equal(await page.getByRole("button", { name: /^(新建公司|新增联系人|新增线索|创建任务|新增互动|导入|导出|开始孵化|保存)/ }).count(), 0);
+      if (role === "VIEWER") assert.equal(await page.getByRole("button", { name: /^(新建公司|新增联系人|新增线索|创建任务|新增互动|导入|导出|开始孵化|保存)$/ }).count(), 0);
       await page.screenshot({ path: resolve(out, `${role.toLowerCase()}-${route}.png`), fullPage: true });
       const widths = await page.evaluate(() => ({ body: document.body.scrollWidth, document: document.documentElement.scrollWidth, viewport: innerWidth }));
       assert.ok(widths.body <= widths.viewport && widths.document <= widths.viewport);

@@ -1,0 +1,82 @@
+{
+  "codeCommit": "cd95decd6e69a2d2a79dbf69e8db8ca40cfb88df",
+  "deployedCommit": "cd95decd6e69a2d2a79dbf69e8db8ca40cfb88df",
+  "ready": {
+    "status": "ready",
+    "database": "ok",
+    "release": "Kivisense CRM 2.0",
+    "version": "2.0.0-uat"
+  },
+  "checks": [
+    {
+      "path": "index.html",
+      "sha256": "29f2689839b24d25d87d1ad272ddeabdd29c3698870b983d9a41fcfc143bef6a",
+      "runtime": "29f2689839b24d25d87d1ad272ddeabdd29c3698870b983d9a41fcfc143bef6a",
+      "https": "29f2689839b24d25d87d1ad272ddeabdd29c3698870b983d9a41fcfc143bef6a",
+      "status": "PASS"
+    },
+    {
+      "path": "legacy/index.html",
+      "sha256": "e51ba022b96b9096243d41d8d279e3401529564afc2285373c44802c7dc92512",
+      "runtime": "e51ba022b96b9096243d41d8d279e3401529564afc2285373c44802c7dc92512",
+      "https": "e51ba022b96b9096243d41d8d279e3401529564afc2285373c44802c7dc92512",
+      "status": "PASS"
+    },
+    {
+      "path": "react-build/index.html",
+      "sha256": "50f80ef21cce6212ee73b2067b0a05c699cd476811cdbcf09f33dca847beec04",
+      "runtime": "50f80ef21cce6212ee73b2067b0a05c699cd476811cdbcf09f33dca847beec04",
+      "https": "50f80ef21cce6212ee73b2067b0a05c699cd476811cdbcf09f33dca847beec04",
+      "status": "PASS"
+    },
+    {
+      "path": "react-build/assets/app.css",
+      "sha256": "8a68fd781cf9a7417afab14ea11d24e12f15f8d0634c548a2c38651a23404a2b",
+      "runtime": "8a68fd781cf9a7417afab14ea11d24e12f15f8d0634c548a2c38651a23404a2b",
+      "https": "8a68fd781cf9a7417afab14ea11d24e12f15f8d0634c548a2c38651a23404a2b",
+      "status": "PASS"
+    },
+    {
+      "path": "react-build/assets/app.js",
+      "sha256": "e0e200b66980307f01d51417daee95c3eec9173462cc837027ff2f66439d6894",
+      "runtime": "e0e200b66980307f01d51417daee95c3eec9173462cc837027ff2f66439d6894",
+      "https": "e0e200b66980307f01d51417daee95c3eec9173462cc837027ff2f66439d6894",
+      "status": "PASS"
+    },
+    {
+      "path": "react-build/assets/chunks/charts-C5FrrCPd.js",
+      "sha256": "ca6ee538da8c84afd7422597177bb87204b68303bba8ef39c52fb303d22d2a8a",
+      "runtime": "ca6ee538da8c84afd7422597177bb87204b68303bba8ef39c52fb303d22d2a8a",
+      "https": "ca6ee538da8c84afd7422597177bb87204b68303bba8ef39c52fb303d22d2a8a",
+      "status": "PASS"
+    },
+    {
+      "path": "react-build/assets/chunks/react-BTYd1ELI.js",
+      "sha256": "d1c340b22ae0ff65852bc75b5ddc51b860f6fe87ade993726c667e68e41d6e6d",
+      "runtime": "d1c340b22ae0ff65852bc75b5ddc51b860f6fe87ade993726c667e68e41d6e6d",
+      "https": "d1c340b22ae0ff65852bc75b5ddc51b860f6fe87ade993726c667e68e41d6e6d",
+      "status": "PASS"
+    },
+    {
+      "path": "react-build/assets/chunks/rolldown-runtime-hePW80VL.js",
+      "sha256": "580ad8c58061a4dde99bde0a56905e382f0568516ee2f5b84dbfb52085709021",
+      "runtime": "580ad8c58061a4dde99bde0a56905e382f0568516ee2f5b84dbfb52085709021",
+      "https": "580ad8c58061a4dde99bde0a56905e382f0568516ee2f5b84dbfb52085709021",
+      "status": "PASS"
+    },
+    {
+      "path": "react-build/assets/chunks/shadcn-COvKZYgR.js",
+      "sha256": "88192a12922a786efaa7955bc76569e7becab49fa229705c6594e27a7e87b40e",
+      "runtime": "88192a12922a786efaa7955bc76569e7becab49fa229705c6594e27a7e87b40e",
+      "https": "88192a12922a786efaa7955bc76569e7becab49fa229705c6594e27a7e87b40e",
+      "status": "PASS"
+    },
+    {
+      "path": "react-build/assets/chunks/table-Bx98S6y-.js",
+      "sha256": "d956cc8c88c72f12c25df3b4f0795847a085718c5eccde1433667d932fa09654",
+      "runtime": "d956cc8c88c72f12c25df3b4f0795847a085718c5eccde1433667d932fa09654",
+      "https": "d956cc8c88c72f12c25df3b4f0795847a085718c5eccde1433667d932fa09654",
+      "status": "PASS"
+    }
+  ]
+}

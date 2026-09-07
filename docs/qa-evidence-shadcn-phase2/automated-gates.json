@@ -1,0 +1,21 @@
+{
+  "date": "2026-09-07",
+  "codeCommit": "cd95decd6e69a2d2a79dbf69e8db8ca40cfb88df",
+  "sourceUnchangedAfterCommit": true,
+  "environment": "macOS Node 24.18.0, local MySQL 8 isolated regression database; remote Node 22 image build recorded separately",
+  "checks": [
+    { "command": "npm run build", "status": "PASS" },
+    { "command": "npm run lint", "status": "PASS", "scope": "frontend and backend TypeScript" },
+    { "command": "npm run test:frontend", "status": "PASS", "scope": "legacy syntax/interaction contracts plus React tests", "reactTests": 14 },
+    { "command": "npm --workspace backend run test -- --no-file-parallelism --maxWorkers=1", "status": "PASS", "databaseIntegrationEnabled": true, "unitTests": 15, "crmIntegrationTests": 15, "importExportIntegrationTests": 8 },
+    { "command": "npm run test:field-dictionary", "status": "PASS", "contactSourceHeaders": 31, "leadSourceHeaders": 44 },
+    { "command": "npm run prisma:generate", "status": "PASS" },
+    { "command": "npm run prisma:validate", "status": "PASS" },
+    { "command": "git diff --check", "status": "PASS" },
+    { "command": "bash -n scripts/phase2-deploy-uat.sh", "status": "PASS" },
+    { "command": "node --check scripts/phase2-uat-readonly-qa.mjs", "status": "PASS" }
+  ],
+  "browserResults": "suite-summary.json",
+  "productionDatabaseMutation": false,
+  "uatMigrationSeedReset": false
+}

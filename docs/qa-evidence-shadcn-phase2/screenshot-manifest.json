@@ -685,9 +685,9 @@
   },
   {
     "file": "30-contacts-import-preview.png",
-    "sha256": "3e301fbacc91680343599c4b82483d64bdec4ce0be00e85ca2c86ff11aa69b67",
+    "sha256": "da91079b1c862b74edf723f59339655136bfd34cfc1e82d36099d362b3d923b4",
     "width": 1440,
-    "height": 1189,
+    "height": 1242,
     "checks": [
       {
         "name": "30-contacts-import-preview",
@@ -698,7 +698,7 @@
   },
   {
     "file": "30-leads-import-preview.png",
-    "sha256": "bf1d80502cd2d2586afd9ce85c2ac4e8b7dda84aa79e8c137de98eefc4e45784",
+    "sha256": "3d9a840b0d60dba1337672f88161441849860198257b8702bf9fad8eff3b222c",
     "width": 1440,
     "height": 1000,
     "checks": [
@@ -711,7 +711,7 @@
   },
   {
     "file": "30-organizations-import-preview.png",
-    "sha256": "1e53d033dca988679240590023a2bff1c73cd1bdcea1a2a70e523a848db09bf2",
+    "sha256": "29fa8078a14ab1077c3201b3331621fabc5703ff761b6a1e319d5a92763f403a",
     "width": 1440,
     "height": 1150,
     "checks": [
@@ -724,9 +724,9 @@
   },
   {
     "file": "31-contacts-import-result.png",
-    "sha256": "05de9d34a9e4e69cab7c4b8f7883bcae303ad162fcc4792db8d252dd8d62b440",
+    "sha256": "a153f0267f5a9adb469bf18fb768c3eaefb40cdb8f21dc4ffa4d3c00c3cd01d8",
     "width": 1440,
-    "height": 1242,
+    "height": 1295,
     "checks": [
       {
         "name": "31-contacts-import-result",
@@ -737,7 +737,7 @@
   },
   {
     "file": "31-leads-import-result.png",
-    "sha256": "ba1e45162bb5867c252b8fd9ec817d327ce597d2230c1e999a99e84198c50cc0",
+    "sha256": "71fa23e2ceac2ac871b397eb5a6a15a96e3db729c0fc3313621791507b1a177f",
     "width": 1440,
     "height": 1000,
     "checks": [
@@ -750,7 +750,7 @@
   },
   {
     "file": "31-organizations-import-result.png",
-    "sha256": "8bbb25474a4758455ee91a95f69fa890b1144bce64c5e3989026598d6d5a9785",
+    "sha256": "13eff006e6f54944cafd72ca87772f6f55874fc8c30abee49ed389b0fd462324",
     "width": 1440,
     "height": 1203,
     "checks": [
@@ -763,22 +763,22 @@
   },
   {
     "file": "32-contextual-attachments.png",
-    "sha256": "7dc748b9716d1f7c48a1481c25693539ae8c359fbfd71d86921d9780b4299e04",
+    "sha256": "f964d3511c0be7937f012f21f494906a6b8a295273433409cf456f90359a16d6",
     "width": 1440,
     "height": 1651,
     "checks": [
       {
         "name": "32-contextual-attachments",
         "status": "PASS",
-        "url": "http://127.0.0.1:3310/#leads/cmtqqqd0300e1qpo6ja2f61q4"
+        "url": "http://127.0.0.1:3310/#leads/cmtqqwjln00gaqpo61i302azn"
       }
     ]
   },
   {
     "file": "34-contacts-delete-confirm.png",
-    "sha256": "f4f2ed8c6ff7706c6441a99eb0e09dbf215b80d5f17e2d95d2987cd3ebff80b4",
+    "sha256": "5cb25df9f119c1f60bab58039b748a006ddc226cf1f0ce496857307ad41a1fbf",
     "width": 1440,
-    "height": 1242,
+    "height": 1295,
     "checks": [
       {
         "name": "34-contacts-delete-confirm",
@@ -789,7 +789,7 @@
   },
   {
     "file": "34-leads-delete-confirm.png",
-    "sha256": "e8de02ac49a029215285e54d7a5be577747e573557b4d27f97adad24ac39f1aa",
+    "sha256": "77bc7ffca3df5dce48f1a8f9849d701dcfc807e8494e15c40501d3d39700bf04",
     "width": 1440,
     "height": 1000,
     "checks": [
@@ -802,7 +802,7 @@
   },
   {
     "file": "34-organizations-delete-confirm.png",
-    "sha256": "d80e7327adb49764e1593bfbd99809a944ce60cb55efbce4f928f655bdcdfe39",
+    "sha256": "c3db35a85b562e830cc02bea86a703de039dab8bd41b22c8b1435fc82e1d2a96",
     "width": 1440,
     "height": 1203,
     "checks": [

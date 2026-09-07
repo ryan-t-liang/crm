@@ -1,4 +1,4 @@
-# Kivisense CRM 2.0 — Full Migration Report
+# Kivisense CRM 2.0 shadcn UI Rebuild — Full Migration Report
 
 Date: 2026-09-07. Phase 2: Full CRM Migration.
 
@@ -7,6 +7,8 @@ Date: 2026-09-07. Phase 2: Full CRM Migration.
 Core CRM screens now share the approved Phase 1 React app shell. Company, Contact, Lead, Operations, Workbench, Suppliers, Accounts, Roles, Audit and authentication no longer send ordinary navigation to `/legacy/`. Domain models, write APIs, scoring, lifecycle automation, KPI and RBAC contracts remain unchanged. Additive server-side list filters support correct company-scoped selection and entity audit views.
 
 Baseline: `e832b98c7f9ea684ff485bed1b6e8f0dfa4b6ac0`; working branch: `codex/kivisense-crm-v2-v1-ui-rebuild`. The clean baseline was fetched and protected by the pushed branch `backup/kivisense-crm-v2-before-full-shadcn-migration`. Neither `main` nor `Kivisense_CRM_v1` was changed.
+
+Implementation commit: `cd95decd6e69a2d2a79dbf69e8db8ca40cfb88df`, pushed to GitHub and deployed as the immutable UAT image. Subsequent changes in this branch are QA evidence/report/test-harness updates only; deployed frontend and backend source remain identical to this commit.
 
 ## 2. UI Source of Truth
 
@@ -115,13 +117,15 @@ SUPER_ADMIN, SALES and VIEWER were exercised in separate local sessions. VIEWER 
 
 ## 25. Automated Tests
 
-Latest local gates: production build PASS; TypeScript lint PASS; frontend 14/14 PASS; backend 38/38 PASS (15 CRM integration, 8 import/export integration, 15 unit); field dictionary PASS (31 Contact + 44 Lead source headers); Prisma generate and validate PASS. The databases `kivisense_phase2_qa` and `kivisense_phase2_regression` are disposable local databases. Existing schema migrations and seed were applied **only there**, never during UAT release.
+Latest local gates: production build PASS; TypeScript lint PASS; frontend 14/14 PASS plus legacy syntax/interaction contracts PASS; backend 38/38 PASS (15 CRM integration, 8 import/export integration, 15 unit); field dictionary PASS (31 Contact + 44 Lead source headers); Prisma generate and validate PASS. The databases `kivisense_phase2_qa` and `kivisense_phase2_regression` are disposable local databases. Existing schema migrations and seed were applied **only there**, never during UAT release. Command results are recorded in `qa-evidence-shadcn-phase2/automated-gates.json`.
 
 New regression coverage checks all React route families, query sentinel omission, task ownership/permissions, error redaction, JSON POST headers, empty-body DELETE behavior, company-scoped Contact/Lead lookup and entity audit filters.
 
 ## 26. Browser Tests
 
 Real installed Chrome, Playwright, actual built React assets and local Fastify/MySQL were used, not mocked screenshots. Suites and per-check outputs are under `scripts/phase2-*.mjs` and `docs/qa-evidence-shadcn-phase2/`. Create/edit/tab-state/association/next-action persistence, imports/exports, file bytes, deletion and account changes are checked against real API/UI state. Session tests distinguish expected unauthenticated `/auth/me` 401 from unexpected errors.
+
+Six local browser suites pass **103 checks**, with zero unexpected console/network failures. These counts include screenshot/layout assertions and should not be confused with the separate 52 frontend/backend unit/integration tests. [Step-by-step browser evidence](qa-evidence-shadcn-phase2/evidence.md), [suite summary](qa-evidence-shadcn-phase2/suite-summary.json), [issue log](qa-evidence-shadcn-phase2/issues.md).
 
 The original fast back-to-back runs hit the unchanged 180-request/minute server limit. Those were not counted as PASS; suites were spaced and rerun. Historical failed captures are retained under `resolved/` with the issue log. This is functional/visual UAT coverage, not a load test or exhaustive security assessment.
 
@@ -133,14 +137,28 @@ The original fast back-to-back runs hit the unchanged 180-request/minute server 
 
 Ordered actual screenshots, result JSON, a manifest and step-by-step evidence document are kept in `docs/qa-evidence-shadcn-phase2/`. Key groups: 01 Dashboard; 02–08 Company; 09–10 Contact; 11–16 Lead/Journey; 17–22 Operations/Tasks/Suppliers; 23–29 authentication/admin/RBAC; 30–34 imports/attachments/deletion; 35–36 Company form/files; 37 responsive matrix. Screenshots were taken after transitions settled, then representative pages and dialogs were visually inspected.
 
+There are **77 current local screenshots**, excluding archived failures; the separate `uat/` directory contains real HTTPS post-deployment screenshots. [Screenshot manifest](qa-evidence-shadcn-phase2/screenshot-manifest.json) includes dimensions, hashes and source-case URLs.
+
 ## 29. UAT Deployment
 
-Pending final gate and release verification. Target remains [Kivisense CRM UAT](https://www.gridworks.cn/crm_kivisense/#dashboard), `/srv/kivisense-crm-uat`, Docker service `kivisense-crm-uat-backend-1`, loopback port 3202. Production on 3200 and test on 3201 are out of scope. The release will retain the previous image and create verified app/DB/storage/Nginx backups before replacement. No migration/seed/reset or Nginx reconfiguration is permitted in this release.
+Deployed [Kivisense CRM UAT](https://www.gridworks.cn/crm_kivisense/#dashboard) on 2026-09-07 at 12:38 Asia/Shanghai. Code: `cd95decd6e69a2d2a79dbf69e8db8ca40cfb88df`; image `kivisense-crm-uat:cd95decd6e69`; container image digest `sha256:3224852b6beb4237e45c5ca05d17100960d304504605057b2bd56db8bcf46c3f`. Runtime `/srv/kivisense-crm-uat`, Docker service `kivisense-crm-uat-backend-1`, loopback port 3202. Git archive SHA-256: `acafbf0dc5b9b87c62715cd0ab1807e9b15e11f0bffc12deea31faadc3906458`.
+
+Backup: `/srv/kivisense-crm-backups/20260907T043400Z-pre-cd95decd6e69`. Application, database dump, attachment tree and Nginx archives all passed compression and SHA-256 checks. Node 22 Docker build and port 3203 preflight passed before UAT was recreated. Temporary preflight container was stopped automatically; the previous image `kivisense-crm-uat:e832b98c7f9e` remains available for rollback.
+
+Health is `ready/database=ok`. Ten entry/legacy/build files have matching local, container and HTTPS SHA-256 values: [artifact parity](qa-evidence-shadcn-phase2/uat/artifact-parity.json). Business counts before/after are identical: 2 Companies, 2 Contacts, 2 Leads, 1 Contact Followup, 1 Lead Followup, 0 Tasks, 0 Attachments, 0 Nurture plans, 6 migration rows. **No migration, seed or reset was run on UAT.**
+
+Nginx archive comparison passed; existing duplicate `gridworks.cn` server-name warning remains unchanged. Attachment tree contents match the backup byte-for-byte; only tracked `.gitkeep` mtimes changed during archive extraction. Production on 3200 and test on 3201 retain their exact image IDs and start times; neither was deployed or restarted. The host has about 3 GB free after building; no unrelated images/caches were pruned.
+
+Post-deployment real Chrome verification: **27/27 PASS** across SUPER_ADMIN, SALES and VIEWER, including all permitted navigation, persistent shell, Company/Contact/Lead detail refresh and hidden VIEWER mutation controls. Zero unexpected console/network errors and zero attempted business writes. Only login/session/audit metadata changed as a normal consequence of authentication; no business fixtures were created online. [UAT browser results](qa-evidence-shadcn-phase2/uat/results.json).
+
+For rollback, restore the backed-up UAT app/config and recreate only its backend using the retained previous image. Do not roll back the database for this UI-only release.
 
 ## 30. Known Issues
 
-No unresolved P0/P1 product defect in completed local suites. Final browser reruns and UAT proof are still being collected; this interim document does not claim a deployed release. Non-blocking constraints: legacy compatibility code remains; no advanced saved-view engine; exhaustive file-extension permutations, load testing and new human Phase 2 visual acceptance are outside this automated pass. See the issue/evidence documents for resolved defects and exact tested cases.
+No unresolved P0/P1 product defect in completed local suites. Non-blocking constraints: legacy compatibility code remains; no advanced saved-view engine; exhaustive file-extension permutations, load testing and new human Phase 2 visual acceptance are outside this automated pass. The existing server has limited free disk space; future image retention should be managed separately, without deleting unrelated workloads. See the issue/evidence documents for resolved defects and exact tested cases.
 
 ## 31. Final Verdict
 
-BLOCKED — interim release gate: finish final reruns and record UAT deployment verification before changing this verdict. This is a temporary verification status, not a missing business capability.
+READY FOR FULL UI UAT
+
+All requested core modules are migrated, local regression and live deployment checks pass, and recoverable UAT backups are retained. This means ready for the user's full Phase 2 acceptance review; it does not claim that the user has already visually approved Phase 2.

@@ -24,9 +24,10 @@ Scope: local real Chrome, built React frontend, Fastify and isolated MySQL; comp
 ## Test harness corrections and coverage limits
 
 - Exact names were corrected for Company row menu, Followup dialog and repeated local fixtures. Those selector timeouts do not prove a product defect; each affected scenario was rerun.
+- The UAT harness initially matched the Dashboard breadcrumb as a second navigation link; it now scopes clicks to the actual main navigation. Its broad `导入` prefix also matched a contact named `导入联系人…` in a read-only row action label; exact action-name matching corrected this false positive. No role permission or product code was changed; the complete three-role rerun passed 27/27.
 - Rapid consecutive browser suites hit the existing 180-request/minute limit (including static assets). Historical 429 outputs were not waived: suites were spaced and rerun without unexpected network failures. No rate-limit configuration was changed. This pass does not claim load/performance capacity.
 - Expected unauthenticated `/api/v1/auth/me` 401 responses are separately listed in the authentication suite; any other unexpected HTTP failure fails the suite.
 - Passed screenshots/checks are in current result JSON and `screenshot-manifest.json`; earlier failed attempts are not current status.
 - Exhaustive file type/size permutations, keyboard-only coverage of every control, cross-browser testing and human Phase 2 visual acceptance remain outside this representative pass. Backend validation/security contracts and existing integration tests remain in force.
 
-No unresolved P0/P1 product issue after the successful local reruns. UAT verification is separately recorded and must not be inferred from local PASS.
+No unresolved P0/P1 product issue after the successful local reruns. UAT verification separately passed 27/27; see `uat/results.json` and `uat/artifact-parity.json`. This is not inferred from local PASS.
