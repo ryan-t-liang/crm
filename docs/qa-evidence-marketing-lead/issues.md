@@ -24,4 +24,5 @@ The first evidence run completed conversion but stopped because “来源线索�
 - Root cause: `z.coerce.boolean()` treated the non-empty string `"false"` as `true`, invoking the management-only guard.
 - Fix: parse only the literal query strings `true` and `false`, then transform them to a boolean.
 - Regression: integration coverage asserts SALES receives 200 for `includeDisabled=false` and 403 for `includeDisabled=true`.
-- UAT retest: pending the hotfix release; only the post-hotfix run may close this issue.
+- UAT retest: PASS on deployed commit `7f203799d9526b0ba50486db39913f4a10786f7d`. SALES received 14 enabled scoring rules, had no rule-management control, and completed the Marketing Lead, Opportunity, scoring-label, and dashboard review with zero unexpected network or page errors.
+- Evidence: `uat/results.json`, `uat/sales-scoring-rules.png`, `uat/artifact-parity.json`.

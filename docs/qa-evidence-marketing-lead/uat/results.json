@@ -1,0 +1,58 @@
+{
+  "verdict": "PASS",
+  "checks": [
+    {
+      "role": "SUPER_ADMIN",
+      "status": "PASS",
+      "marketingAnalytics": true,
+      "scoringRuleCount": 14,
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "SALES",
+      "status": "PASS",
+      "marketingAnalytics": true,
+      "scoringRuleCount": 14,
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    },
+    {
+      "role": "VIEWER",
+      "status": "PASS",
+      "marketingAnalytics": false,
+      "scoringRuleCount": 14,
+      "widths": {
+        "body": 1440,
+        "document": 1440,
+        "viewport": 1440
+      }
+    }
+  ],
+  "errors": [],
+  "network": [],
+  "expectedNetwork": [
+    {
+      "role": "SUPER_ADMIN",
+      "status": 401,
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/auth/me"
+    },
+    {
+      "role": "SALES",
+      "status": 401,
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/auth/me"
+    },
+    {
+      "role": "VIEWER",
+      "status": 401,
+      "url": "https://www.gridworks.cn/crm_kivisense/api/v1/auth/me"
+    }
+  ],
+  "deniedWrites": []
+}

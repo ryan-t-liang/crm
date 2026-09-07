@@ -1,0 +1,11 @@
+
+> @kivisense/crm-backend@2.0.0 prisma:migrate:deploy
+> prisma migrate deploy
+
+Prisma schema loaded from prisma/schema.prisma
+Datasource "db": MySQL database "kivisense_crm_uat" at "sowind-crm-test-mysql-1:3306"
+
+7 migrations found in prisma/migrations
+
+
+No pending migrations to apply.

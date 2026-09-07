@@ -31,3 +31,24 @@ QA_BASE_URL=http://127.0.0.1:3300 QA_PASSWORD='<local-admin-password>' node scri
 ```
 
 The script is intentionally restricted to localhost and creates QA-only Marketing Lead fixtures in the selected local database.
+
+## Deployed UAT evidence
+
+`uat/artifact-parity.json` proves that the local build, HTTPS response, and running UAT container have matching SHA-256 hashes for all nine release files. Its expected and remote commit are both `7f203799d9526b0ba50486db39913f4a10786f7d`.
+
+`uat/results.json` is the read-only browser review for SUPER_ADMIN, SALES, and VIEWER at 1440 px. All three roles passed their permitted screens with no page overflow, no unexpected network failures, no console failures, and no business writes. The expected unauthenticated `/auth/me` probes are recorded separately from failures.
+
+The remaining UAT files preserve the deployment controls:
+
+- `SHA256SUMS` covers the application, database, attachments, and Nginx backups in `/srv/kivisense-crm-backups/20260907T080926Z-pre-marketing-7f203799d952`;
+- `business-counts-*.tsv` proves eight existing business-table counts were unchanged before preflight, after migration, and after activation;
+- `production-test-*.txt` proves the protected Production and Test backend container image IDs and start times were unchanged;
+- `migration-output.txt` records the second deployment's safe no-op migration result, while `marketing-schema-after.tsv` confirms the Marketing migration and new tables;
+- `deployed-health.json` records UAT readiness after activation.
+
+Run the read-only deployed checks with:
+
+```bash
+EXPECTED_COMMIT=7f203799d9526b0ba50486db39913f4a10786f7d node scripts/marketing-lead-uat-artifact-check.mjs
+node scripts/marketing-lead-uat-readonly-qa.mjs
+```
