@@ -1,6 +1,6 @@
 # Product Language Audit Report
 
-- Generated: 2026-09-08T02:42:03.205Z
+- Generated: 2026-09-08T03:00:04.594Z
 - Scope: `frontend-react/src/**/*.{ts,tsx}`（排除测试与集中字典本身）
 - Dictionary: `frontend-react/src/lib/product-language.ts`
 - Verdict: **PASS**

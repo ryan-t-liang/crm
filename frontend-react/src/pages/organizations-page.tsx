@@ -61,7 +61,7 @@ import {
 } from "@/components/crm/followup-form";
 import { ImportExport } from "@/components/crm/import-export";
 import { EntityForm } from "@/components/crm/entity-form";
-import { auditActionLabel } from "@/lib/product-language";
+import { auditActionLabel, scoreLevelLabels } from "@/lib/product-language";
 
 type Props = {
   me: SessionUser;
@@ -771,7 +771,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                             {organization.fitScore}
                           </strong>
                           <span className="text-xs text-muted-foreground">
-                            {organization.fitLevel}
+                            {scoreLevelLabels[organization.fitLevel] || "未知"}
                           </span>
                         </div>
                         <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
@@ -787,7 +787,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                             {organization.engagementScore}
                           </strong>
                           <span className="text-xs text-muted-foreground">
-                            {organization.engagementLevel}
+                            {scoreLevelLabels[organization.engagementLevel] || "未知"}
                           </span>
                         </div>
                         <dl className="mt-3 space-y-2">
@@ -1057,7 +1057,9 @@ function Score({ value, level }: { value: number; level: string }) {
   return (
     <span className="inline-flex items-center gap-2">
       <span className="font-medium tabular-nums">{value}</span>
-      <span className="text-[10px] text-muted-foreground">{level}</span>
+      <span className="text-[10px] text-muted-foreground">
+        {scoreLevelLabels[level] || "未知"}
+      </span>
     </span>
   );
 }

@@ -70,7 +70,7 @@ async function shot(name) {
   screenshots.push({ name, file: file.slice(resolve(".").length + 1), bytes: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex"), dimensions });
 }
 
-const forbiddenProductCopy = /Contact 360|\bPhone\b|Fit Score|Fit Reason|\bManual\b|ORGANIC_SEARCH|CREATE_ORGANIZATION|销售机会 Pipeline|Win Rate/;
+const forbiddenProductCopy = /Contact 360|\bPhone\b|Fit Score|Fit Reason|\bManual\b|ORGANIC_SEARCH|CREATE_ORGANIZATION|销售机会 Pipeline|Win Rate|\b(?:LOW|MEDIUM|HIGH|TARGET|NURTURING|QUALIFIED)\b/;
 async function openRoute(route, heading, tableName, screenshotName) {
   await page.evaluate((hash) => { window.location.hash = hash; }, route);
   await page.getByRole("heading", { name: heading, exact: true }).first().waitFor({ state: "visible" });

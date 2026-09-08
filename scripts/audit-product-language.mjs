@@ -27,6 +27,7 @@ const checks = [
   { id: "PL-005", severity: "error", pattern: /孵化中|无效 \/ 不跟进/g, message: "线索状态未使用统一产品语言" },
   { id: "PL-006", severity: "error", pattern: /销售机会 Pipeline/g, message: "商机看板仍显示中英混合技术标题" },
   { id: "PL-007", severity: "error", pattern: /\|\|\s*(?:item|row\.original)\.(?:status|stage)/g, message: "枚举缺失时可能直接回显原始代码" },
+  { id: "PL-008", severity: "error", pattern: />\s*\{organization\.(?:fitLevel|engagementLevel)\}\s*</g, message: "公司评分等级仍可能直接回显原始枚举" },
 ];
 
 const requiredDictionaryExports = [
@@ -59,7 +60,7 @@ for (const file of await filesUnder(sourceRoot)) {
 const dictionary = await readFile(dictionaryPath, "utf8");
 for (const name of requiredDictionaryExports) {
   if (!dictionary.includes(`export const ${name}`) && !dictionary.includes(`export function ${name}`)) {
-    findings.push({ id: "PL-008", severity: "error", file: relative(root, dictionaryPath), line: 1, excerpt: name, message: "统一产品语言字典缺少必需导出" });
+    findings.push({ id: "PL-009", severity: "error", file: relative(root, dictionaryPath), line: 1, excerpt: name, message: "统一产品语言字典缺少必需导出" });
   }
 }
 
