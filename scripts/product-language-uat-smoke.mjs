@@ -30,6 +30,7 @@ const consoleErrors = [];
 const networkErrors = [];
 const deniedWrites = [];
 const pages = [];
+const detailChecks = [];
 const screenshots = [];
 let authenticated = false;
 
@@ -84,6 +85,20 @@ async function openRoute(route, heading, tableName, screenshotName) {
   await shot(screenshotName);
 }
 
+async function openFirstDetail(tableName, hrefPrefix, marker, screenshotName) {
+  const table = page.getByRole("table", { name: tableName, exact: true });
+  const href = await table.locator(`a[href^="#${hrefPrefix}/"]`).first().getAttribute("href");
+  assert.ok(href, `${tableName} has no record available for the detail presentation check`);
+  await page.evaluate((hash) => { window.location.hash = hash; }, href.slice(1));
+  await page.getByText(marker, { exact: true }).first().waitFor({ state: "visible" });
+  await settle();
+  const body = await page.locator("body").innerText();
+  const forbidden = body.match(forbiddenProductCopy)?.[0];
+  assert.equal(forbidden, undefined, `${hrefPrefix} detail exposes forbidden product copy: ${forbidden}`);
+  detailChecks.push({ route: href.slice(1), marker, status: "OPEN" });
+  await shot(screenshotName);
+}
+
 try {
   await page.goto(`${base}/#dashboard`, { waitUntil: "domcontentloaded" });
   await page.getByLabel("登录账号", { exact: true }).fill(secrets.UAT_SUPER_ADMIN_USERNAME);
@@ -95,9 +110,13 @@ try {
 
   await openRoute("dashboard", "数据看板", null, "dashboard-1440");
   await openRoute("organizations", "公司", "公司目录", "company-list-1440");
+  await openFirstDetail("公司目录", "organizations", "公司 ID", "company-detail-1440");
   await openRoute("contacts", "联系人", "联系人目录", "contact-list-1440");
+  await openFirstDetail("联系人目录", "contacts", "联系人 ID", "contact-detail-1440");
   await openRoute("marketing-leads", "线索", "线索目录", "marketing-lead-list-1440");
+  await openFirstDetail("线索目录", "marketing-leads", "线索 ID", "marketing-lead-detail-1440");
   await openRoute("leads", "商机", "商机目录", "opportunity-list-1440");
+  await openFirstDetail("商机目录", "leads", "商机 ID", "opportunity-detail-1440");
   await openRoute("workbench", "我的工作台", null, "workbench-1440");
   await openRoute("suppliers", "供应商", "供应商目录", "supplier-list-1440");
 
@@ -125,7 +144,8 @@ try {
     deployedCommit,
     viewport: "1440x900",
     pages,
-    changedInteraction: "Marketing Lead create presentation only; no business write was submitted",
+    detailChecks,
+    changedInteraction: "Core detail presentation and Marketing Lead create source-channel presentation only; no business write was submitted",
     screenshots,
     consoleErrors,
     networkErrors,

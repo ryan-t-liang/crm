@@ -1,0 +1,240 @@
+{
+  "verdict": "PASS",
+  "completedAt": "2026-09-08T03:14:46.130Z",
+  "target": "https://www.gridworks.cn/crm_kivisense",
+  "deployedCommit": "a0c8cd0fdf0f61a2720de0ad4dc841fa80529b80",
+  "viewport": "1440x900",
+  "pages": [
+    {
+      "route": "dashboard",
+      "heading": "数据看板",
+      "status": "OPEN"
+    },
+    {
+      "route": "organizations",
+      "heading": "公司",
+      "status": "OPEN"
+    },
+    {
+      "route": "contacts",
+      "heading": "联系人",
+      "status": "OPEN"
+    },
+    {
+      "route": "marketing-leads",
+      "heading": "线索",
+      "status": "OPEN"
+    },
+    {
+      "route": "leads",
+      "heading": "商机",
+      "status": "OPEN"
+    },
+    {
+      "route": "workbench",
+      "heading": "我的工作台",
+      "status": "OPEN"
+    },
+    {
+      "route": "suppliers",
+      "heading": "供应商",
+      "status": "OPEN"
+    }
+  ],
+  "detailChecks": [
+    {
+      "route": "organizations/ad111866a94311f186fdee0ce19beaf6",
+      "marker": "公司 ID",
+      "status": "OPEN"
+    },
+    {
+      "route": "contacts/cmtltr0wd000qo2017ccroe9m",
+      "marker": "联系人 ID",
+      "status": "OPEN"
+    },
+    {
+      "route": "marketing-leads/cmtr02c3e000rmn013a3ogqe2",
+      "marker": "线索 ID",
+      "status": "OPEN"
+    },
+    {
+      "route": "leads/cmtltqzmn000go201i4nwffan",
+      "marker": "商机 ID",
+      "status": "OPEN"
+    }
+  ],
+  "changedInteraction": "Core detail presentation and Marketing Lead create source-channel presentation only; no business write was submitted",
+  "screenshots": [
+    {
+      "name": "dashboard-1440",
+      "file": "artifacts/product-language-audit/screenshots/01-dashboard-1440.png",
+      "bytes": 151224,
+      "sha256": "9634c088143014e0c7a142986ad50b55a17516beaa9b519e9353d640b33d47b8",
+      "dimensions": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "bodyWidth": 1440,
+        "documentWidth": 1440
+      }
+    },
+    {
+      "name": "company-list-1440",
+      "file": "artifacts/product-language-audit/screenshots/02-company-list-1440.png",
+      "bytes": 145810,
+      "sha256": "f3d3c90899930847860f564c5a4ed6f19370882ccf113184e6ae6596bab49cba",
+      "dimensions": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "bodyWidth": 1440,
+        "documentWidth": 1440
+      }
+    },
+    {
+      "name": "company-detail-1440",
+      "file": "artifacts/product-language-audit/screenshots/03-company-detail-1440.png",
+      "bytes": 181852,
+      "sha256": "9f517f817fb2be25e4eaa694044b4707d3a6909514887bea8c44e33f16d56621",
+      "dimensions": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "bodyWidth": 1440,
+        "documentWidth": 1440
+      }
+    },
+    {
+      "name": "contact-list-1440",
+      "file": "artifacts/product-language-audit/screenshots/04-contact-list-1440.png",
+      "bytes": 135212,
+      "sha256": "c6701a7ae46631be382a9ff89b29f4cc4f554ccd0afa12863f056ca177ec44a3",
+      "dimensions": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "bodyWidth": 1440,
+        "documentWidth": 1440
+      }
+    },
+    {
+      "name": "contact-detail-1440",
+      "file": "artifacts/product-language-audit/screenshots/05-contact-detail-1440.png",
+      "bytes": 139671,
+      "sha256": "87292e354874821165b0f2255719e1bd25d78bb5ac0e32c18293d4e370dea99b",
+      "dimensions": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "bodyWidth": 1440,
+        "documentWidth": 1440
+      }
+    },
+    {
+      "name": "marketing-lead-list-1440",
+      "file": "artifacts/product-language-audit/screenshots/06-marketing-lead-list-1440.png",
+      "bytes": 109804,
+      "sha256": "94b9b98043294e5cbc40cecb0e8ce0b009af985940f6982b2e9c1b3a450c1e02",
+      "dimensions": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "bodyWidth": 1440,
+        "documentWidth": 1440
+      }
+    },
+    {
+      "name": "marketing-lead-detail-1440",
+      "file": "artifacts/product-language-audit/screenshots/07-marketing-lead-detail-1440.png",
+      "bytes": 144081,
+      "sha256": "eaadfc709732c44bb64615f5307edb75fa8b4cce976883e491a54d7ff3f493c6",
+      "dimensions": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "bodyWidth": 1440,
+        "documentWidth": 1440
+      }
+    },
+    {
+      "name": "opportunity-list-1440",
+      "file": "artifacts/product-language-audit/screenshots/08-opportunity-list-1440.png",
+      "bytes": 130396,
+      "sha256": "9c3fcedcc80f37c8cf1c892384d0ead6e8a9438ac0da0cfc7c139eb31701f47b",
+      "dimensions": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "bodyWidth": 1440,
+        "documentWidth": 1440
+      }
+    },
+    {
+      "name": "opportunity-detail-1440",
+      "file": "artifacts/product-language-audit/screenshots/09-opportunity-detail-1440.png",
+      "bytes": 176566,
+      "sha256": "2f6939ed01c1103122a625d69ac4d8e3289951b140824b372a9e9332582825aa",
+      "dimensions": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "bodyWidth": 1440,
+        "documentWidth": 1440
+      }
+    },
+    {
+      "name": "workbench-1440",
+      "file": "artifacts/product-language-audit/screenshots/10-workbench-1440.png",
+      "bytes": 117310,
+      "sha256": "36b08b78447c4aa0046d4e8ea9ba2d785e0e17b0890288c259761d553255f5b6",
+      "dimensions": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "bodyWidth": 1440,
+        "documentWidth": 1440
+      }
+    },
+    {
+      "name": "supplier-list-1440",
+      "file": "artifacts/product-language-audit/screenshots/11-supplier-list-1440.png",
+      "bytes": 108442,
+      "sha256": "296922cd0f805147076619606842540424b0c0375501fd4d092ec64645986c5c",
+      "dimensions": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "bodyWidth": 1440,
+        "documentWidth": 1440
+      }
+    },
+    {
+      "name": "marketing-lead-create-channels-1440",
+      "file": "artifacts/product-language-audit/screenshots/12-marketing-lead-create-channels-1440.png",
+      "bytes": 152744,
+      "sha256": "0470ed0959bff4ac842f3ab7e244a1521b7b738be183b5e8cc925983e5ebb848",
+      "dimensions": {
+        "viewport": [
+          1440,
+          900
+        ],
+        "bodyWidth": 1440,
+        "documentWidth": 1440
+      }
+    }
+  ],
+  "consoleErrors": [],
+  "networkErrors": [],
+  "deniedWrites": []
+}
