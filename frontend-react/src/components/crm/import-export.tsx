@@ -15,6 +15,7 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { FormDialog, SummaryStrip, LoadingSkeleton } from "./primitives";
+import { dataJobStatusLabels, dataObjectLabels, exportScopeLabels } from "@/lib/product-language";
 
 type ImportRow = {
   rowNumber: number;
@@ -390,9 +391,9 @@ function JobDialog({
             </Button>
             {history.map((item) => (
               <div key={item.id} className="border-b py-2 text-sm">
-                <p>{item.fileName || item.jobNo || item.id} · {({ CONTACT: "联系人", CRM_LEAD: "商机", MARKETING_LEAD: "线索", ORGANIZATION: "公司" } as Record<string, string>)[item.objectType || ""] || "其他对象"} · {({ PENDING: "生成中", PROCESSING: "生成中", COMPLETED: "已完成", FAILED: "失败", EXPIRED: "已过期" } as Record<string, string>)[item.status || ""] || "未知状态"}</p>
+                <p>{item.fileName || item.jobNo || item.id} · {dataObjectLabels[item.objectType || ""] || "其他对象"} · {dataJobStatusLabels[item.status || ""] || "未知状态"}</p>
                 <p className="text-xs text-muted-foreground">
-                  {dateTime(item.createdAt)} · {item.operatorName || "—"} · {mode === "export" ? `${({ SELECTED: "所选记录", FILTERED: "筛选结果", ALL_CURRENT_PERMISSION: "当前权限范围全部" } as Record<string, string>)[item.scope || ""] || "未知范围"} · ${item.rowCount || 0} 条 · ${item.format || "XLSX"}` : `成功 ${item.successCount} · 失败 ${item.failedCount}`}
+                  {dateTime(item.createdAt)} · {item.operatorName || "—"} · {mode === "export" ? `${exportScopeLabels[item.scope || ""] || "未知范围"} · ${item.rowCount || 0} 条 · ${item.format || "XLSX"}` : `成功 ${item.successCount} · 失败 ${item.failedCount}`}
                 </p>
                 {mode === "export" && item.status === "COMPLETED" && <a className="mr-3 text-xs underline" href={appUrl(`/api/v1/crm/exports/${item.id}/download`)} download>下载</a>}
                 {mode === "export" && <Button variant="ghost" size="sm" onClick={async () => { setBusy(true); try { await crmApi(`/api/v1/crm/exports/${item.id}/regenerate`, { method: "POST", body: "{}" }); setHistory(null); await run("history"); } finally { setBusy(false); } }}><RotateCw />重新生成</Button>}

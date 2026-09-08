@@ -285,7 +285,7 @@ export function App() {
                           : "公司"
                         : family === "contacts"
                           ? entityId
-                            ? "联系人 / Contact 360"
+                            ? "联系人详情"
                             : "联系人"
                           : family === "marketing-leads"
                             ? entityId

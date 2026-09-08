@@ -530,7 +530,7 @@ export function EntityForm({
                       label={
                         kind === "contact"
                           ? "公司"
-                          : "联系人、公司、Email 或 Phone"
+                          : "联系人、公司、Email 或电话"
                       }
                       value={relationId}
                       selectedLabel={relationLabel}

@@ -178,7 +178,7 @@ export function OperationsPage({
                     onChange={setKeyword}
                   />
                   <FilterControl
-                    label="负责人"
+                    label="计划负责人"
                     value={owner}
                     options={Object.fromEntries(
                       users.map((u) => [u.id, u.name]),
@@ -209,7 +209,7 @@ export function OperationsPage({
                 { accessorKey: "touchTopic", header: "下次主题" },
                 {
                   id: "owner",
-                  header: "负责人",
+                  header: "计划负责人",
                   cell: ({ row }) => row.original.owner?.name,
                 },
                 {
@@ -301,7 +301,7 @@ export function OperationsPage({
                     placeholder="搜索公司或联系人"
                   />
                   <FilterControl
-                    label="负责人"
+                    label="公司负责人"
                     value={owner}
                     onChange={(v) => {
                       setOwner(v);
@@ -359,7 +359,7 @@ export function OperationsPage({
                 },
                 {
                   id: "owner",
-                  header: "负责人",
+                  header: "公司负责人",
                   cell: ({ row }) => row.original.owner?.name || "待分配",
                 },
                 {
@@ -636,7 +636,7 @@ export function WorkbenchPage({
         {(me.role.key === "SUPER_ADMIN" ||
           can(me, "crm.dashboard.management.view")) && (
           <FilterControl
-            label="负责人"
+            label="任务负责人"
             value={scope}
             options={Object.fromEntries(users.map((u) => [u.id, u.name]))}
             all={false}

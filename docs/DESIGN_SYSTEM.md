@@ -1834,3 +1834,40 @@ Owner changes save the business record first and enqueue one transactional outbo
 Do not merge “tests passed” into a single claim. Report unit, API/database integration, local real-UI write E2E, responsive visual review, RBAC, UAT read-only, UAT controlled write, deployment provenance and notification-transport evidence separately.
 
 Every critical UI write requires: visible browser result, successful HTTP response, persisted database state and a reload check. Browser gates require 1440, 1280 and 1024 widths, no document-level horizontal overflow, and zero unexpected console errors or HTTP 4xx/5xx. The pre-refactor `artifacts/ui-audit/` archive is immutable; new evidence belongs in a separate AFTER directory.
+
+---
+
+# 54. v1.4 V1 visual-language and review-policy override
+
+This section supersedes earlier visual guidance that treats shadcn defaults, Attio/Linear restraint, all-white surfaces, weak borders or card scarcity as the target. It also supersedes the multi-phase and 90-screenshot browser gate for this product-language/visual-restyle round. It does not change the v1.3 product model, information architecture, routes, Dashboard four-view structure, Workbench, import/export, assignment notification or RBAC contracts.
+
+## 54.1 Visual source of truth
+
+The supported composition is:
+
+`Current React architecture + current product structure + current domain model + V1 visual language`.
+
+`frontend/styles/production.css` is the historical V1 visual reference. Reuse its warm neutral canvas, white business surfaces, stronger neutral borders, restrained surface shadows, mature dark sidebar, serif display headings, warm table headers, grouped forms and visible business sections. Do not restore the legacy DOM, legacy IA, legacy routes or its Lead/Opportunity ambiguity.
+
+shadcn/ui remains the component implementation library, not the design language. Kivisense Emerald is reserved for primary actions, active navigation, success and current stage. Low-saturation blue, amber, red and gray establish information, pending/risk, error/lost and disabled/history states.
+
+## 54.2 Shared surface rules
+
+- Page canvas is warm neutral; business modules sit on white panels.
+- A complete business module may use one card/panel; individual fields do not become cards.
+- Page and record titles use the V1 serif display treatment; tables/forms/body copy remain sans-serif.
+- Section headers use a warm tint, clear divider and restrained Emerald anchor.
+- Tables keep the current checkbox, toolbar, filter, import, export, columns and pagination structure, with stronger headers, hover and selected states.
+- Forms keep the current fields and tabs, with grouped section surfaces and a stable tinted footer.
+- Sidebar keeps the current IA and uses a dark neutral rail with an Emerald active indicator.
+- Lucide is the only icon family.
+
+## 54.3 Minimum validation for this round
+
+1. Frontend production build.
+2. Backend build/typecheck only when backend code changed.
+3. One 1440px browser smoke of Dashboard, Company, Contact, Marketing Lead, Opportunity, Workbench and Supplier, checking open state, no white screen and no obvious console crash.
+4. One real UI write only if this round changes business behavior. A language/visual-only round reports existing writes as not retested.
+5. No more than 8–12 key screenshots. Human UI review is the release gate.
+
+Reports must distinguish build, page-open smoke, language/visual review and functional regression. Never infer business-flow PASS from a page opening successfully.

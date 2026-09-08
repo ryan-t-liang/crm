@@ -96,13 +96,13 @@ export function AppSidebar({ me, counts, onLogout, route = "dashboard" }: { me: 
   const initials = me.name.trim().slice(0, 1).toUpperCase() || "K"
 
   return (
-    <Sidebar collapsible="icon" variant="sidebar" aria-label="主导航">
+    <Sidebar collapsible="icon" variant="sidebar" aria-label="主导航" className="crm-sidebar">
       <SidebarHeader className="border-b border-sidebar-border px-2 py-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild className="h-11 data-[slot=sidebar-menu-button]:hover:bg-transparent">
               <a href="#dashboard" aria-label="返回数据看板">
-                <span className="flex size-8 items-center justify-center rounded-[8px] border border-sidebar-border bg-white">
+                <span className="crm-logo-tile flex size-8 items-center justify-center rounded-[8px] border border-sidebar-border bg-white">
                   <img src={assetUrl("/assets/kivisense-logo.svg")} alt="Kivisense 标志" className="size-5" />
                 </span>
                 <span className="grid flex-1 text-left leading-tight">

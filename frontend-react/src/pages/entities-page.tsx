@@ -297,7 +297,7 @@ export function EntitiesPage({
       : []),
     {
       id: "owner",
-      header: "负责人",
+      header: kind === "contact" ? "联系人负责人" : "商机负责人",
       cell: ({ row: { original: r } }) => (
         <span className="whitespace-nowrap">
           {(kind === "contact" ? r.owner : r.salesOwner)?.name || "待分配"}
@@ -410,7 +410,7 @@ export function EntitiesPage({
                     <SearchInput
                       value={search}
                       onChange={setSearch}
-                      placeholder={`搜索${label}、公司${kind === "contact" ? "、Email 或 Phone" : ""}`}
+                      placeholder={`搜索${label}、公司${kind === "contact" ? "、Email 或电话" : ""}`}
                     />
                     <button type="submit" className="sr-only">
                       搜索
@@ -432,7 +432,7 @@ export function EntitiesPage({
                     />
                   )}
                   <FilterControl
-                    label="负责人"
+                    label={kind === "contact" ? "联系人负责人" : "商机负责人"}
                     value={
                       filters[
                         kind === "contact" ? "ownerUserId" : "salesOwnerUserId"
@@ -600,7 +600,7 @@ export function EntitiesPage({
                       : "企业联系人"
                     : leadStatuses[row.status || ""]}
                 </StatusBadge>
-                <SystemIdField value={row.id} />
+                <SystemIdField value={row.id} label={kind === "contact" ? "联系人 ID" : "商机 ID"} />
                 {kind === "contact" ? (
                   <>
                     <span>{row.title || "未填写职位"}</span>
@@ -688,7 +688,7 @@ export function EntitiesPage({
             items={
               kind === "contact"
                 ? [
-                    { label: "负责人", value: row.owner?.name || "待分配" },
+                    { label: "联系人负责人", value: row.owner?.name || "待分配" },
                     { label: "关联商机", value: row.relatedLeadCount ?? 0 },
                     {
                       label: "最近互动",
@@ -719,7 +719,7 @@ export function EntitiesPage({
               current={String(row.status || "NEW")}
               stages={[
                 { key: "NEW", label: "新建" },
-                { key: "QUALIFIED", label: "已确认" },
+                { key: "QUALIFIED", label: "已验证" },
                 { key: "SOLUTION", label: "方案" },
                 { key: "QUOTATION", label: "报价" },
                 { key: "WON", label: "成交" },
@@ -797,7 +797,7 @@ export function EntitiesPage({
                 <Section title="联系人资料">
                   <EntityMeta
                     items={[
-                      { label: "Phone", value: row.phone },
+                      { label: "电话", value: row.phone },
                       { label: "Email", value: row.email },
                       { label: "微信", value: String(row.wechat || "") },
                       { label: "部门", value: String(row.department || "") },

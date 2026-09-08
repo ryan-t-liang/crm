@@ -1,4 +1,11 @@
-const auditActionLabels: Record<string, string> = {
+/**
+ * Kivisense CRM product-language dictionary.
+ *
+ * Persistence codes stay stable in APIs and storage. Ordinary business screens
+ * must resolve those codes through this module instead of presenting them to
+ * users or inventing page-local translations.
+ */
+export const auditActionLabels: Record<string, string> = {
   CREATE_ORGANIZATION: "创建公司",
   UPDATE_ORGANIZATION: "更新公司",
   DELETE_ORGANIZATION: "删除公司",
@@ -8,11 +15,13 @@ const auditActionLabels: Record<string, string> = {
   DELETE_CONTACT: "删除联系人",
   BATCH_ASSIGN_CONTACTS: "批量分配联系人负责人",
   CREATE_CONTACT_FOLLOWUP: "新增联系人跟进记录",
+  CREATE_FOLLOWUP: "记录跟进",
   CREATE_MARKETING_LEAD: "创建线索",
   UPDATE_MARKETING_LEAD: "更新线索",
   CORRECT_CONVERTED_MARKETING_LEAD: "更正已转换线索",
   DELETE_MARKETING_LEAD: "删除线索",
   BATCH_ASSIGN_MARKETING_LEADS: "批量分配线索负责人",
+  ASSIGN_MARKETING_LEAD: "分配线索负责人",
   CREATE_MARKETING_LEAD_ACTIVITY: "记录线索行为",
   MARKETING_LEAD_AUTO_MQL: "线索自动转为营销合格",
   MARKETING_LEAD_ACCEPT_SQL: "接受线索跟进",
@@ -20,13 +29,18 @@ const auditActionLabels: Record<string, string> = {
   MARKETING_LEAD_DISQUALIFY: "判定线索无效",
   CONVERT_MARKETING_LEAD: "线索转为商机",
   CREATE_CRM_LEAD: "创建商机",
+  CREATE_OPPORTUNITY: "创建商机",
   UPDATE_CRM_LEAD: "更新商机",
+  UPDATE_OPPORTUNITY: "更新商机",
+  CHANGE_OPPORTUNITY_STAGE: "更新商机阶段",
   DELETE_LEAD: "删除商机",
   BATCH_ASSIGN_OPPORTUNITIES: "批量分配商机负责人",
   CREATE_LEAD_FOLLOWUP: "新增商机跟进记录",
   CREATE_CRM_TASK: "创建任务",
+  CREATE_TASK: "创建任务",
   UPDATE_CRM_TASK: "更新任务",
   COMPLETE_CRM_TASK: "完成任务",
+  COMPLETE_TASK: "完成任务",
   CANCEL_CRM_TASK: "取消任务",
   START_NURTURE: "开始客户经营计划",
   UPDATE_NURTURE: "更新客户经营计划",
@@ -53,11 +67,13 @@ const auditActionLabels: Record<string, string> = {
   LOGOUT: "退出登录",
 };
 
+export const auditActionOptions = auditActionLabels;
+
 export function auditActionLabel(action: string): string {
   return auditActionLabels[action] || "未知操作";
 }
 
-const auditModuleLabels: Record<string, string> = {
+export const auditModuleLabels: Record<string, string> = {
   crm: "CRM",
   crm_organization: "公司",
   crm_marketing: "线索",
@@ -68,7 +84,7 @@ const auditModuleLabels: Record<string, string> = {
   auth: "登录与会话",
 };
 
-const auditTargetLabels: Record<string, string> = {
+export const auditTargetLabels: Record<string, string> = {
   organization: "公司",
   contact: "联系人",
   contact_followup: "联系人跟进记录",
@@ -93,15 +109,15 @@ export function auditTargetLabel(targetType?: string | null): string {
 }
 
 export const marketingSourceLabels: Record<string, string> = {
-  WEBSITE: "官网访问",
-  FORM: "表单提交",
+  WEBSITE: "官网",
+  FORM: "表单",
   CAMPAIGN: "营销活动",
   EVENT: "市场活动",
   EXHIBITION: "展会",
-  REFERRAL: "客户转介绍",
+  REFERRAL: "推荐",
   LINKEDIN: "LinkedIn",
   WECHAT: "微信",
-  OUTBOUND: "主动开发",
+  OUTBOUND: "主动拓客",
   PARTNER: "合作伙伴",
   IMPORT: "批量导入",
   MANUAL: "手工录入",
@@ -110,25 +126,141 @@ export const marketingSourceLabels: Record<string, string> = {
 
 export const marketingSourceChannelLabels: Record<string, string> = {
   ORGANIC_SEARCH: "自然搜索",
+  PAID_SEARCH: "付费搜索",
   PAID_AD: "付费广告",
+  PAID_MEDIA: "广告投放",
   DIRECT: "直接访问",
-  REFERRAL: "推荐",
+  REFERRAL: "转介绍",
   EXHIBITION: "展会",
   LINKEDIN: "LinkedIn",
   WECHAT: "微信",
-  OUTBOUND: "主动开发",
+  WECHAT_OFFICIAL: "微信公众号",
+  SOCIAL: "社交媒体",
+  EMAIL: "邮件",
+  OFFLINE_EVENT: "线下活动",
+  OUTBOUND: "销售主动拓客",
   PARTNER: "合作伙伴",
   OTHER: "其他",
 };
 
+export const marketingLeadStatusLabels: Record<string, string> = {
+  NEW: "新线索",
+  NURTURING: "培育中",
+  MQL: "营销合格（MQL）",
+  SQL: "销售合格（SQL）",
+  QUALIFIED: "已确认机会",
+  CONVERTED: "已转商机",
+  RECYCLED: "重新培育",
+  DISQUALIFIED: "无效线索",
+};
+
+export const opportunityStageLabels: Record<string, string> = {
+  NEW: "新建",
+  QUALIFIED: "已验证",
+  SOLUTION: "方案",
+  QUOTATION: "报价",
+  WON: "成交",
+  LOST: "丢失",
+};
+
+export const priorityLabels: Record<string, string> = {
+  URGENT: "紧急",
+  HIGH: "高",
+  MEDIUM: "中",
+  LOW: "低",
+};
+
+export const organizationLifecycleLabels: Record<string, string> = {
+  TARGET: "目标客户",
+  CONTACTED: "已触达",
+  NURTURING: "持续经营",
+  OPPORTUNITY: "机会中",
+  CUSTOMER: "客户",
+  DISQUALIFIED: "不适合",
+};
+
+export const organizationRoleLabels: Record<string, string> = {
+  PROSPECT: "客户（未成交）",
+  CUSTOMER: "客户（已成交）",
+  VENDOR: "供应商",
+  PARTNER: "合作伙伴",
+};
+
+export const contactTypeLabels: Record<string, string> = {
+  INITIAL: "初步联系人",
+  ONE_TO_ONE: "一对一联系人",
+  CONVENTION: "活动联系人",
+};
+
+export const scoreLevelLabels: Record<string, string> = {
+  LOW: "低",
+  MEDIUM: "中",
+  HIGH: "高",
+  COLD: "低",
+  WARM: "中",
+  HOT: "高",
+};
+
+export const engagementStateLabels: Record<string, string> = {
+  ACTIVE: "活跃",
+  COOLING: "降温",
+  DORMANT: "沉睡",
+};
+
+export const accountStatusLabels: Record<string, string> = {
+  ACTIVE: "启用",
+  DISABLED: "停用",
+};
+
+export const taskStatusLabels: Record<string, string> = {
+  TODO: "待处理",
+  IN_PROGRESS: "进行中",
+  COMPLETED: "已完成",
+  CANCELLED: "已取消",
+};
+
+export const dataJobStatusLabels: Record<string, string> = {
+  PENDING: "等待处理",
+  PROCESSING: "处理中",
+  UPLOADED: "已上传",
+  PREFLIGHTED: "预检完成",
+  RUNNING: "处理中",
+  COMPLETED: "已完成",
+  FAILED: "失败",
+  CANCELLED: "已取消",
+  READY: "可下载",
+  EXPIRED: "已过期",
+};
+
+export const dataObjectLabels: Record<string, string> = {
+  organizations: "公司",
+  ORGANIZATION: "公司",
+  contacts: "联系人",
+  CONTACT: "联系人",
+  "marketing-leads": "线索",
+  MARKETING_LEAD: "线索",
+  leads: "商机",
+  CRM_LEAD: "商机",
+};
+
+export const exportScopeLabels: Record<string, string> = {
+  CURRENT_FILTER: "当前筛选结果",
+  FILTERED: "当前筛选结果",
+  SELECTED: "已选记录",
+  ALL: "全部记录",
+  ALL_CURRENT_PERMISSION: "当前权限内全部记录",
+};
+
 const marketingActivityLabels: Record<string, string> = {
   EMAIL_REPLY: "客户回复",
-  KEY_CONTENT_VIEW: "浏览关键内容",
-  MEETING_BOOKED: "预约会议",
-  MEETING_COMPLETED: "完成会议",
+  KEY_CONTENT_VIEW: "查看关键内容",
+  MEETING_BOOKED: "已预约会议",
+  MEETING_COMPLETED: "已完成会议",
   INTEREST_CONFIRMED: "明确表达兴趣",
+  EXPLICIT_INTEREST: "明确表达兴趣",
   REQUIREMENT_CONFIRMED: "明确需求",
   PROPOSAL_REQUESTED: "要求方案",
+  REQUEST_SOLUTION: "要求方案",
   NOT_READY: "暂无时机",
   NOT_INTERESTED: "无兴趣",
   MANUAL_NOTE: "补充行为记录",
@@ -148,7 +280,9 @@ export function marketingSourceLabel(source: string): string {
 }
 
 export function marketingSourceChannelLabel(channel?: string | null): string {
-  return channel ? marketingSourceChannelLabels[channel] || "其他" : "—";
+  if (!channel) return "—";
+  if (marketingSourceChannelLabels[channel]) return marketingSourceChannelLabels[channel];
+  return /^[A-Z][A-Z0-9_]+$/.test(channel) ? "其他" : channel;
 }
 
 export function marketingActivityLabel(eventType: string): string {
@@ -157,4 +291,23 @@ export function marketingActivityLabel(eventType: string): string {
 
 export function marketingActivitySourceLabel(source: string): string {
   return marketingActivitySourceLabels[source] || "其他来源";
+}
+
+const embeddedCodeLabels: Record<string, string> = {
+  ...marketingLeadStatusLabels,
+  ...opportunityStageLabels,
+  ...organizationLifecycleLabels,
+  ...priorityLabels,
+  ...engagementStateLabels,
+  FIT: "匹配度",
+  ENGAGEMENT: "互动活跃度",
+};
+
+/** Resolve machine codes inside system-generated event copy. */
+export function productEventText(value?: string | null): string {
+  if (!value) return "—";
+  return value.replace(
+    /\b(MQL|SQL|DISQUALIFIED|NURTURING|QUALIFIED|CONVERTED|RECYCLED|TARGET|CONTACTED|OPPORTUNITY|CUSTOMER|NEW|SOLUTION|QUOTATION|WON|LOST|URGENT|HIGH|MEDIUM|LOW|ACTIVE|COOLING|DORMANT|FIT|ENGAGEMENT)\b/g,
+    (code) => embeddedCodeLabels[code] || code,
+  );
 }

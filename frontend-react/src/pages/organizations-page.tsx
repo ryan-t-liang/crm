@@ -292,7 +292,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
         ] as ColumnDef<Organization>[])),
     {
       id: "owner",
-      header: "负责人",
+      header: supplier ? "供应商负责人" : "公司负责人",
       cell: ({ row }) => <UserAvatar name={row.original.owner?.name} />,
     },
     { accessorKey: "contactCount", header: "联系人" },
@@ -354,7 +354,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
       },
       { accessorKey: "title", header: "职位" },
       { accessorKey: "email", header: "Email" },
-      { accessorKey: "phone", header: "Phone" },
+      { accessorKey: "phone", header: "电话" },
       {
         id: "contactType",
         header: "类型",
@@ -395,7 +395,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
       },
       {
         id: "owner",
-        header: "负责人",
+        header: "商机负责人",
         cell: ({ row }) => <UserAvatar name={row.original.salesOwner?.name} />,
       },
     ],
@@ -513,7 +513,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                     options={lifecycleLabels}
                   />
                   <FilterControl
-                    label="负责人"
+                    label={supplier ? "供应商负责人" : "公司负责人"}
                     value={filters.ownerUserId || ""}
                     onChange={(v) => setFilter("ownerUserId", v)}
                     options={Object.fromEntries(
@@ -634,7 +634,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                   {lifecycleLabels[organization.lifecycleStage]}
                 </StatusBadge>
                 <UserAvatar name={organization.owner?.name} />
-                <SystemIdField value={organization.id} />
+                <SystemIdField value={organization.id} label="公司 ID" />
               </>
             }
             actions={
@@ -736,7 +736,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                             .filter(Boolean)
                             .join(" · "),
                         },
-                        { label: "负责人", value: organization.owner?.name },
+                        { label: "公司负责人", value: organization.owner?.name },
                         {
                           label: "生命周期",
                           value: lifecycleLabels[organization.lifecycleStage],

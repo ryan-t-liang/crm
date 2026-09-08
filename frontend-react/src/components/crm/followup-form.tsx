@@ -178,10 +178,10 @@ export function FollowupForm({
             />
           )}
         </Field>
-        <Field label="负责人">
+        <Field label="跟进负责人">
           {() => (
             <FilterControl
-              label="负责人"
+              label="跟进负责人"
               value={owner}
               onChange={setOwner}
               all={false}

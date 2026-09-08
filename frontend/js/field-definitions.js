@@ -11,7 +11,7 @@ export const CONTACT_STAGES = [
 
 export const LEAD_STATUSES = [
   { value: "NEW", label: "新建" },
-  { value: "QUALIFIED", label: "已确认" },
+  { value: "QUALIFIED", label: "已验证" },
   { value: "SOLUTION", label: "方案" },
   { value: "QUOTATION", label: "报价" },
   { value: "WON", label: "成交" },
@@ -51,7 +51,7 @@ export const CONTACT_FIELDS = [
   field("title", "职位", "person", "text", { tab: "basic", maxLength: 160 }),
   field("department", "部门", "person", "text", { tab: "basic", maxLength: 160 }),
   field("email", "Email", "person", "email", { tab: "basic", maxLength: 191 }),
-  field("phone", "Phone", "person", "tel", { tab: "basic", maxLength: 64 }),
+  field("phone", "电话", "person", "tel", { tab: "basic", maxLength: 64 }),
   field("wechat", "微信", "person", "text", { tab: "basic", maxLength: 191 }),
   field("linkedin", "LinkedIn", "person", "url", { tab: "basic", maxLength: 500 }),
   field("companyShortName", "公司简称", "company", "text", { tab: "basic", maxLength: 120 }),
@@ -98,10 +98,10 @@ export const LEAD_FIELDS = [
   field("paymentReceivedAt", "收款日期", "milestones", "datetime-local"),
 ];
 
-export const stageLabel = (value) => CONTACT_STAGES.find((item) => item.value === value)?.label || value || "-";
-export const leadStatusLabel = (value) => LEAD_STATUSES.find((item) => item.value === value)?.label || value || "-";
-export const leadPriorityLabel = (value) => LEAD_PRIORITIES.find((item) => item.value === value)?.label || value || "-";
-export const followupTypeLabel = (value) => FOLLOWUP_TYPES.find((item) => item.value === value)?.label || value || "-";
+export const stageLabel = (value) => CONTACT_STAGES.find((item) => item.value === value)?.label || (value ? "其他阶段" : "-");
+export const leadStatusLabel = (value) => LEAD_STATUSES.find((item) => item.value === value)?.label || (value ? "其他阶段" : "-");
+export const leadPriorityLabel = (value) => LEAD_PRIORITIES.find((item) => item.value === value)?.label || (value ? "其他优先级" : "-");
+export const followupTypeLabel = (value) => FOLLOWUP_TYPES.find((item) => item.value === value)?.label || (value ? "其他方式" : "-");
 
 function optionsMarkup(options, value) {
   return options.map((item) => `<option value="${esc(item.value)}"${String(value ?? "") === item.value ? " selected" : ""}>${esc(item.label)}</option>`).join("");

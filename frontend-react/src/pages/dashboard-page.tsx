@@ -14,7 +14,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { getData, type CrmUser, type SessionUser } from "@/lib/api"
-import { marketingActivityLabel, marketingSourceLabel, marketingSourceLabels } from "@/lib/product-language"
+import { marketingActivityLabel, marketingSourceLabel, marketingSourceLabels, scoreLevelLabels } from "@/lib/product-language"
 import {
   containsFinancialKey,
   customDateRange,
@@ -125,13 +125,13 @@ export function DashboardPage({ me, users }: { me: SessionUser; users: CrmUser[]
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="@container/main flex flex-1 flex-col gap-4 p-4 md:p-5 lg:p-6">
-        <header className="flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
+      <div className="crm-page @container/main flex flex-1 flex-col gap-4 p-4 md:p-5 lg:p-6">
+        <header className="crm-page-header flex flex-col justify-between gap-4 xl:flex-row xl:items-end">
           <div>
             <p className="mb-1 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
               {management ? "管理视图" : "个人视图"}
             </p>
-            <h1 className="text-2xl font-semibold tracking-tight">数据看板</h1>
+            <h1 className="crm-display-title text-2xl font-semibold tracking-tight">数据看板</h1>
             <p className="mt-1 text-sm text-muted-foreground">用非金额指标判断客户资产、机会推进与团队执行是否健康。</p>
           </div>
           <div className="flex flex-wrap items-end gap-2" aria-label="数据看板筛选">
@@ -227,17 +227,15 @@ export function DashboardPage({ me, users }: { me: SessionUser; users: CrmUser[]
 }
 
 function MetricCards({ items }: { items: Array<{ label: string; value: string | number; detail?: string }> }) {
-  return <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{items.map((item) => <Card key={item.label} className="gap-2 py-5 shadow-none"><CardHeader className="px-5"><CardTitle className="text-xs font-medium text-muted-foreground">{item.label}</CardTitle></CardHeader><CardContent className="px-5"><p className="text-2xl font-semibold tabular-nums">{item.value}</p>{item.detail ? <p className="mt-1 text-xs text-muted-foreground">{item.detail}</p> : null}</CardContent></Card>)}</div>
+  return <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{items.map((item) => <Card key={item.label} className="crm-metric-card gap-2 overflow-hidden py-5 shadow-none"><CardHeader className="px-5"><CardTitle className="text-xs font-medium text-muted-foreground">{item.label}</CardTitle></CardHeader><CardContent className="px-5"><p className="text-2xl font-semibold tabular-nums">{item.value}</p>{item.detail ? <p className="mt-1 text-xs text-muted-foreground">{item.detail}</p> : null}</CardContent></Card>)}</div>
 }
 
 function hours(value: number | null) { return value == null ? "—" : `${value} 小时` }
-const scoreLevelLabels: Record<string, string> = { HIGH: "高", MEDIUM: "中", LOW: "低" }
-
 function MarketingFunnelView({ funnel, sources }: { funnel: MarketingFunnel; sources: MarketingSources | null }) {
   const kpi = funnel.kpis
   const labels: Record<string, string> = { LEAD: "线索", MQL: "营销合格", SQL: "销售合格", OPPORTUNITY: "商机" }
   const conversions = [null, kpi.mqlRate.percent, kpi.mqlToSqlRate.percent, kpi.sqlToOpportunityRate.percent]
-  return <div className="space-y-4"><Alert className="py-2"><AlertTitle className="text-sm">网站访客追踪尚未接入</AlertTitle><AlertDescription className="text-xs">{funnel.tracking.message}</AlertDescription></Alert><section className="grid gap-3 md:grid-cols-4">{funnel.stages.map((stage, index) => <Card key={stage.key} className="relative gap-2 py-5 shadow-none"><CardHeader className="px-5"><CardTitle className="text-sm text-muted-foreground">{labels[stage.key] || stage.label}</CardTitle></CardHeader><CardContent className="px-5"><p className="text-3xl font-semibold tabular-nums">{stage.count}</p>{conversions[index] != null ? <p className="mt-1 text-xs text-muted-foreground">上一步转化 {conversions[index]}%</p> : null}</CardContent>{index < funnel.stages.length - 1 ? <span className="absolute -right-3 top-1/2 z-10 hidden text-muted-foreground md:block">→</span> : null}</Card>)}</section><MetricCards items={[{ label: "新增线索", value: kpi.newLeads }, { label: "营销合格线索", value: kpi.mqlCount }, { label: "MQL 转化率", value: `${kpi.mqlRate.percent}%`, detail: `${kpi.mqlRate.numerator}/${kpi.mqlRate.denominator}` }, { label: "MQL → SQL", value: `${kpi.mqlToSqlRate.percent}%`, detail: `${kpi.mqlToSqlRate.numerator}/${kpi.mqlToSqlRate.denominator}` }, { label: "SQL → 商机", value: `${kpi.sqlToOpportunityRate.percent}%` }, { label: "线索 → 商机", value: `${kpi.leadToOpportunityRate.percent}%` }, { label: "平均线索 → MQL", value: hours(kpi.avgLeadToMqlHours) }, { label: "平均 MQL → SQL", value: hours(kpi.avgMqlToSqlHours) }, { label: "平均线索 → 商机", value: hours(kpi.avgLeadToOpportunityHours) }, { label: "MQL 响应时间", value: hours(kpi.mqlResponseHours) }]} />{sources ? <SourceQualityTable sources={sources} /> : null}</div>
+  return <div className="space-y-4"><Alert className="py-2"><AlertTitle className="text-sm">网站访客追踪尚未接入</AlertTitle><AlertDescription className="text-xs">{funnel.tracking.message}</AlertDescription></Alert><section className="grid gap-3 md:grid-cols-4">{funnel.stages.map((stage, index) => <Card key={stage.key} className="crm-funnel-card relative gap-2 overflow-hidden py-5 shadow-none"><CardHeader className="px-5"><CardTitle className="text-sm text-muted-foreground">{labels[stage.key] || "其他阶段"}</CardTitle></CardHeader><CardContent className="px-5"><p className="text-3xl font-semibold tabular-nums">{stage.count}</p>{conversions[index] != null ? <p className="mt-1 text-xs text-muted-foreground">上一步转化 {conversions[index]}%</p> : null}</CardContent>{index < funnel.stages.length - 1 ? <span className="absolute -right-3 top-1/2 z-10 hidden text-muted-foreground md:block">→</span> : null}</Card>)}</section><MetricCards items={[{ label: "新增线索", value: kpi.newLeads }, { label: "营销合格（MQL）", value: kpi.mqlCount }, { label: "MQL 转化率", value: `${kpi.mqlRate.percent}%`, detail: `${kpi.mqlRate.numerator}/${kpi.mqlRate.denominator}` }, { label: "MQL → SQL 转化率", value: `${kpi.mqlToSqlRate.percent}%`, detail: `${kpi.mqlToSqlRate.numerator}/${kpi.mqlToSqlRate.denominator}` }, { label: "SQL → 商机转化率", value: `${kpi.sqlToOpportunityRate.percent}%` }, { label: "线索 → 商机转化率", value: `${kpi.leadToOpportunityRate.percent}%` }, { label: "平均线索 → MQL 耗时", value: hours(kpi.avgLeadToMqlHours) }, { label: "平均 MQL → SQL 耗时", value: hours(kpi.avgMqlToSqlHours) }, { label: "平均线索 → 商机耗时", value: hours(kpi.avgLeadToOpportunityHours) }, { label: "MQL 平均响应时间", value: hours(kpi.mqlResponseHours) }]} />{sources ? <SourceQualityTable sources={sources} /> : null}</div>
 }
 
 function MarketingScoringView({ scoring, sources }: { scoring: MarketingScoring; sources: MarketingSources | null }) {

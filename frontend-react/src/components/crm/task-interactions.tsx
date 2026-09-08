@@ -125,10 +125,10 @@ export function TaskForm({
             />
           )}
         </Field>
-        <Field label="负责人" required>
+        <Field label="任务负责人" required>
           {() => (
             <FilterControl
-              label="负责人"
+              label="任务负责人"
               value={owner}
               onChange={setOwner}
               options={Object.fromEntries(
@@ -415,10 +415,10 @@ export function NurtureForm({
       }
     >
       <div className="grid gap-6 sm:grid-cols-2">
-        <Field label="负责人" required>
+        <Field label="计划负责人" required>
           {() => (
             <FilterControl
-              label="负责人"
+              label="计划负责人"
               value={values.ownerUserId}
               onChange={(v) => set("ownerUserId", v)}
               options={Object.fromEntries(users.map((u) => [u.id, u.name]))}

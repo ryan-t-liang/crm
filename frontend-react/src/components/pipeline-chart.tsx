@@ -3,15 +3,7 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import type { DashboardData } from "@/lib/dashboard"
-
-const pipelineLabels: Record<string, string> = {
-  NEW: "新建",
-  QUALIFIED: "已验证",
-  SOLUTION: "方案",
-  QUOTATION: "报价",
-  WON: "成交",
-  LOST: "丢失",
-}
+import { opportunityStageLabels } from "@/lib/product-language"
 
 const chartConfig = {
   count: {
@@ -21,12 +13,12 @@ const chartConfig = {
 } satisfies ChartConfig
 
 export function PipelineChart({ pipeline }: { pipeline: DashboardData["pipeline"] }) {
-  const rows = pipeline.map((item) => ({ ...item, label: pipelineLabels[item.status] || item.status }))
+  const rows = pipeline.map((item) => ({ ...item, label: opportunityStageLabels[item.status] || "其他阶段" }))
 
   return (
     <Card className="gap-4 border-border/90 py-0 shadow-none">
       <CardHeader className="border-b px-5 py-4">
-        <CardTitle className="text-base">销售机会 Pipeline</CardTitle>
+        <CardTitle className="text-base">商机阶段分布</CardTitle>
         <CardDescription>活跃阶段为当前数量，成交与丢失为所选期间关闭数量</CardDescription>
       </CardHeader>
       <CardContent className="px-3 pb-4 pt-2 sm:px-5">

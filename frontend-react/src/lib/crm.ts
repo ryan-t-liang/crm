@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, crmApi, type CrmUser, type SessionUser } from "./api";
+import {
+  contactTypeLabels,
+  engagementStateLabels,
+  opportunityStageLabels,
+  organizationLifecycleLabels,
+  organizationRoleLabels,
+  priorityLabels,
+} from "./product-language";
 
 export type PageResult<T> = {
   data: T[];
@@ -266,12 +274,7 @@ export type JourneyEvent = {
   nextFollowupAt?: string;
   attachments?: Attachment[];
 };
-export const roleLabels: Record<string, string> = {
-  PROSPECT: "客户（未成交）",
-  CUSTOMER: "客户（已成交）",
-  VENDOR: "供应商",
-  PARTNER: "合作伙伴",
-};
+export const roleLabels = organizationRoleLabels;
 export function businessRelationText(roleKeys: string[]): string {
   const labels = [
     ...(roleKeys.some((role) => role === "PROSPECT" || role === "CUSTOMER") ? ["客户"] : []),
@@ -280,36 +283,13 @@ export function businessRelationText(roleKeys: string[]): string {
   ];
   return labels.join(" · ") || "—";
 }
-export const lifecycleLabels: Record<string, string> = {
-  TARGET: "目标",
-  CONTACTED: "已触达",
-  NURTURING: "客户经营中",
-  OPPORTUNITY: "机会中",
-  CUSTOMER: "客户",
-  DISQUALIFIED: "不合格",
-};
+export const lifecycleLabels = organizationLifecycleLabels;
 export const stageLabels: Record<string, string> = {
-  NEW: "新建",
-  QUALIFIED: "已确认",
-  SOLUTION: "方案",
-  QUOTATION: "报价",
-  WON: "成交",
-  LOST: "丢失",
-  INITIAL: "初筛",
-  ONE_TO_ONE: "1v1",
-  CONVENTION: "Convention",
+  ...opportunityStageLabels,
+  ...contactTypeLabels,
 };
-export const levelLabels: Record<string, string> = {
-  URGENT: "紧急",
-  HIGH: "高",
-  MEDIUM: "中",
-  LOW: "低",
-};
-export const engagementLabels: Record<string, string> = {
-  ACTIVE: "活跃",
-  COOLING: "降温",
-  DORMANT: "沉睡",
-};
+export const levelLabels = priorityLabels;
+export const engagementLabels = engagementStateLabels;
 export function can(me: SessionUser, permission: string) {
   return me.permissions.includes(permission);
 }
@@ -360,16 +340,21 @@ export function localInput(value: string | Date = new Date()) {
     .slice(0, 16);
 }
 export function friendlyError(error: unknown) {
-  if (
-    error instanceof ApiError &&
-    error.status < 500 &&
-    ![401, 403].includes(error.status)
-  )
-    return error.message;
   if (error instanceof ApiError && error.status === 403)
     return "当前账号没有此操作权限。";
   if (error instanceof ApiError && error.status === 401)
     return "登录已过期，请重新登录。";
+  if (error instanceof ApiError && error.status < 500) {
+    const detail = Array.isArray(error.details)
+      ? error.details.find((item) => item && typeof item === "object" && "message" in item)
+      : null;
+    const message = detail && typeof detail === "object" && "message" in detail
+      ? String(detail.message)
+      : error.message;
+    if (/Validation failed|Invalid enum|ZodError|Bad Request|Request data validation failed|Prisma|SQL|Stack Trace|Internal Server Error/i.test(message))
+      return "提交内容有误，请检查标记字段后重试。";
+    return message || "提交内容有误，请检查后重试。";
+  }
   return "暂时无法完成请求，请稍后重试。";
 }
 export function useResource<T>(path: string | null) {

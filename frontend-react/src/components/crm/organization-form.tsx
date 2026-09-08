@@ -407,10 +407,10 @@ export function OrganizationForm({
           )}
           {tab === "crm" && (
             <>
-              <Field label="负责人" error={fieldErrors.ownerUserId}>
+              <Field label="公司负责人" error={fieldErrors.ownerUserId}>
                 {() => (
                   <FilterControl
-                    label="负责人"
+                    label="公司负责人"
                     value={values.ownerUserId || "unassigned"}
                     onChange={(v) =>
                       set("ownerUserId", v === "unassigned" ? "" : v)

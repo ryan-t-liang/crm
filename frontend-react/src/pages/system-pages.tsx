@@ -29,7 +29,13 @@ import {
   Section,
 } from "@/components/crm/primitives";
 import type { AuditRow } from "@/components/crm/entity-audit";
-import { auditActionLabel, auditModuleLabel, auditTargetLabel } from "@/lib/product-language";
+import {
+  auditActionLabel,
+  auditActionOptions,
+  auditModuleLabel,
+  auditModuleLabels,
+  auditTargetLabel,
+} from "@/lib/product-language";
 
 type Permission = { key: string; name: string; module: string };
 type Role = {
@@ -642,22 +648,17 @@ export function AuditPage() {
               <FilterControl
                 label="模块"
                 value={filters.module || "all"}
-                options={{
-                  crm: "CRM",
-                  auth: "登录与安全",
-                  account: "账户",
-                  role: "角色",
-                }}
+                options={auditModuleLabels}
                 onChange={(v) => change("module", v)}
               />
-              <SearchInput
-                label="操作代码"
-                placeholder="操作代码，例如 CREATE_CONTACT"
+              <FilterControl
+                label="操作类型"
                 value={filters.action || ""}
+                options={auditActionOptions}
                 onChange={(v) => change("action", v)}
               />
               <FilterPopover>
-                <Field label="对象 ID">
+                <Field label="业务记录编号">
                   {(id) => (
                     <Input
                       id={id}
@@ -666,7 +667,7 @@ export function AuditPage() {
                     />
                   )}
                 </Field>
-                <Field label="操作者 ID">
+                <Field label="操作人编号">
                   {(id) => (
                     <Input
                       id={id}

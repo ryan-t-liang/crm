@@ -62,7 +62,7 @@ import { cn } from "@/lib/utils";
 
 export function PageContent({ children }: { children: ReactNode }) {
   return (
-    <main className="flex min-w-0 flex-1 flex-col gap-5 p-4 md:p-6">
+    <main className="crm-page flex min-w-0 flex-1 flex-col gap-5 p-4 md:p-6">
       {children}
     </main>
   );
@@ -77,9 +77,9 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="crm-page-header flex flex-wrap items-start justify-between gap-4">
       <div className="min-w-0">
-        <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+        <h1 className="crm-display-title text-2xl font-semibold tracking-tight">{title}</h1>
         {description && (
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         )}
@@ -92,7 +92,7 @@ export function PageHeader({
 }
 export function PageToolbar({ left, right }: { left?: ReactNode; right?: ReactNode }) {
   return (
-    <div role="toolbar" className="flex flex-wrap items-center gap-2 border-y bg-background py-3">
+    <div role="toolbar" className="crm-toolbar flex flex-wrap items-center gap-2 rounded-xl border bg-card px-3 py-3">
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">{left}</div>
       <div className="flex flex-wrap items-center gap-2">{right}</div>
     </div>
@@ -111,7 +111,7 @@ export function focusFirstInvalidField() {
   }, 0);
 }
 export function SystemIdField({ value, label = "系统编号" }: { value: string; label?: string }) {
-  return <span className="inline-flex items-center gap-2"><span>{label}</span><CopyValue value={value} /></span>;
+  return <span className="inline-flex items-center gap-2"><span>{label}</span><CopyValue value={value} label="复制 ID" /></span>;
 }
 export const RecordHeader = EntityHeader;
 export const RecordHighlights = SummaryStrip;
@@ -121,7 +121,7 @@ export const SectionHeader = PageHeader;
 export const CompactEmptyState = EmptyState;
 export function StagePath({ stages, current }: { stages: Array<{ key: string; label: string }>; current: string }) {
   const currentIndex = stages.findIndex((stage) => stage.key === current);
-  return <ol aria-label="阶段路径" className="flex min-w-0 overflow-x-auto border-y bg-muted/20 px-3 py-2">{stages.map((stage, index) => <li key={stage.key} className={cn("flex min-w-28 items-center gap-2 text-xs", index <= currentIndex ? "font-medium text-foreground" : "text-muted-foreground")}><span className={cn("flex size-5 items-center justify-center rounded-full border", index <= currentIndex && "border-foreground bg-foreground text-background")}>{index + 1}</span><span>{stage.label}</span>{index < stages.length - 1 && <span className="ml-auto text-border">—</span>}</li>)}</ol>;
+  return <ol aria-label="阶段路径" className="crm-stage-path flex min-w-0 overflow-x-auto rounded-xl border bg-card px-4 py-3">{stages.map((stage, index) => <li key={stage.key} className={cn("flex min-w-28 items-center gap-2 text-xs", index <= currentIndex ? "font-medium text-foreground" : "text-muted-foreground")}><span className={cn("flex size-5 items-center justify-center rounded-full border", index < currentIndex && "border-emerald-600 bg-emerald-600 text-white", index === currentIndex && "border-emerald-700 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-100")}>{index < currentIndex ? <Check className="size-3" /> : index + 1}</span><span>{stage.label}</span>{index < stages.length - 1 && <span className={cn("ml-auto h-px w-5", index < currentIndex ? "bg-emerald-300" : "bg-border")} />}</li>)}</ol>;
 }
 export const FieldGrid = ({ children }: { children: ReactNode }) => <div className="grid gap-4 sm:grid-cols-2">{children}</div>;
 export const RecordActions = ({ children }: { children: ReactNode }) => <div className="flex flex-wrap items-center gap-2">{children}</div>;
@@ -184,10 +184,18 @@ export function LoadingSkeleton({ detail = false }: { detail?: boolean }) {
   );
 }
 export function StatusBadge({ children }: { children: ReactNode }) {
+  const text = typeof children === "string" ? children : "";
+  const tone = /成交|完成|启用|活跃|合格|已确认|成功|可导入/.test(text)
+    ? "crm-status-success"
+    : /失败|丢失|无效|停用|错误|逾期|取消/.test(text)
+      ? "crm-status-danger"
+      : /待|培育|处理中|注意|降温|中/.test(text)
+        ? "crm-status-warning"
+        : "crm-status-neutral";
   return (
     <Badge
       variant="secondary"
-      className="border border-border bg-muted/50 font-normal text-foreground"
+      className={cn("crm-status-badge border font-medium", tone)}
     >
       {children}
     </Badge>
@@ -251,11 +259,11 @@ export function EntityHeader({
   actions?: ReactNode;
 }) {
   return (
-    <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="crm-entity-header flex flex-wrap items-start justify-between gap-4">
       <div className="flex min-w-0 flex-1 items-start gap-3">
         {icon}
         <div className="min-w-0">
-          <h1 className="break-words text-2xl font-semibold tracking-tight">
+          <h1 className="crm-display-title break-words text-2xl font-semibold tracking-tight">
             {title}
           </h1>
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
@@ -273,9 +281,9 @@ export function SummaryStrip({
   items: { label: string; value: ReactNode; detail?: ReactNode }[];
 }) {
   return (
-    <div className="grid grid-cols-2 gap-4 rounded-xl border bg-muted/20 px-5 py-4 lg:grid-cols-4">
+    <div className="crm-summary-strip grid grid-cols-2 gap-0 overflow-hidden rounded-xl border bg-card lg:grid-cols-4">
       {items.map((item) => (
-        <div key={item.label} className="min-w-0">
+        <div key={item.label} className="crm-summary-item min-w-0 px-5 py-4">
           <div className="text-xs text-muted-foreground">{item.label}</div>
           <div
             className="mt-1 line-clamp-2 break-words text-sm font-medium"
@@ -306,13 +314,13 @@ export function DetailTabs({
 }) {
   return (
     <Tabs value={value} onValueChange={onChange} className="min-w-0 gap-5">
-      <div className="max-w-full overflow-x-auto border-b">
+      <div className="crm-detail-tabs max-w-full overflow-x-auto rounded-t-xl border border-b-0 bg-card px-2">
         <TabsList className="h-10 rounded-none bg-transparent p-0">
           {items.map(([key, label]) => (
             <TabsTrigger
               key={key}
               value={key}
-              className="h-10 rounded-none border-0 border-b-2 border-transparent px-4 text-sm shadow-none data-[state=active]:border-foreground data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+              className="h-11 rounded-none border-0 border-b-2 border-transparent px-4 text-sm shadow-none data-[state=active]:border-emerald-600 data-[state=active]:bg-emerald-50/50 data-[state=active]:text-emerald-800 data-[state=active]:shadow-none"
             >
               {label}
             </TabsTrigger>
@@ -335,8 +343,8 @@ export function Section({
   action?: ReactNode;
 }) {
   return (
-    <section className="min-w-0 rounded-xl border">
-      <div className="flex items-center justify-between gap-3 border-b px-5 py-4">
+    <section className="crm-section min-w-0 overflow-hidden rounded-xl border bg-card">
+      <div className="crm-section-header flex items-center justify-between gap-3 border-b px-5 py-4">
         <h2 className="text-base font-semibold">{title}</h2>
         {action}
       </div>
@@ -691,8 +699,8 @@ export function FormDialog({
             {description || "填写完成后统一保存。"}
           </DialogDescription>
         </DialogHeader>
-        <div className="min-h-0 overflow-y-auto p-6">{children}</div>
-        <div className="flex shrink-0 items-center justify-end gap-2 border-t bg-background px-6 py-4">
+        <div className="crm-form-body min-h-0 overflow-y-auto p-6">{children}</div>
+        <div className="crm-form-footer flex shrink-0 items-center justify-end gap-2 border-t px-6 py-4">
           {footer}
         </div>
       </DialogContent>

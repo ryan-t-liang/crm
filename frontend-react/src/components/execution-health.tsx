@@ -3,7 +3,7 @@ import { lifecycleLabels, type DashboardData } from "@/lib/dashboard"
 
 export function ExecutionHealth({ data }: { data: DashboardData }) {
   const metrics = [
-    ["Win Rate", `${data.execution.winRate.percent}%`, `${data.execution.winRate.numerator}/${data.execution.winRate.denominator}`],
+    ["成交率", `${data.execution.winRate.percent}%`, `${data.execution.winRate.numerator}/${data.execution.winRate.denominator}`],
     ["平均销售周期", `${data.execution.averageSalesCycleDays} 天`, "已关闭机会"],
     ["下一步行动覆盖率", `${data.execution.nextActionCoverage.percent}%`, `${data.execution.nextActionCoverage.numerator}/${data.execution.nextActionCoverage.denominator}`],
     ["任务完成率", `${data.execution.followupCompletion.percent}%`, `${data.execution.followupCompletion.numerator}/${data.execution.followupCompletion.denominator}`],
@@ -35,7 +35,7 @@ export function ExecutionHealth({ data }: { data: DashboardData }) {
           <div className="space-y-2.5">
             {data.lifecycle.map((item) => (
               <div key={item.stage} className="grid grid-cols-[56px_1fr_30px] items-center gap-3 text-xs">
-                <span className="text-muted-foreground">{lifecycleLabels[item.stage] || item.stage}</span>
+                <span className="text-muted-foreground">{lifecycleLabels[item.stage] || "其他阶段"}</span>
                 <span className="h-1.5 overflow-hidden rounded-full bg-muted">
                   <span className="block h-full rounded-full bg-neutral-700" style={{ width: `${(item.count / maxLifecycle) * 100}%` }} />
                 </span>

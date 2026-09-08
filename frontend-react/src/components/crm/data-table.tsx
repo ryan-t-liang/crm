@@ -78,11 +78,11 @@ export function DataTable<T extends { id: string }>({
   const somePageSelected = pageIds.some((id) => selected.has(id));
   const setSelected = (ids: string[]) => onSelectedIdsChange?.([...new Set(ids)]);
   return (
-    <div className="min-w-0 space-y-3">
+    <div className="crm-data-table min-w-0 space-y-3">
       <div
         role="toolbar"
         aria-label={`${label}工具栏`}
-        className="flex flex-wrap items-center gap-2"
+        className="crm-data-toolbar flex flex-wrap items-center gap-2 rounded-xl border bg-card p-3"
       >
         {toolbar}
         <div className="ml-auto flex flex-wrap items-center gap-2">
@@ -121,14 +121,14 @@ export function DataTable<T extends { id: string }>({
           <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setSelected([])}>取消选择</Button>
         </div>
       )}
-      <div className="min-w-0 overflow-hidden rounded-xl border">
+      <div className="crm-table-shell min-w-0 overflow-hidden rounded-xl border bg-card">
         {loading ? (
           <div className="p-4">
             <LoadingSkeleton />
           </div>
         ) : (
           <Table aria-label={label}>
-            <TableHeader className="bg-muted/30">
+            <TableHeader className="crm-table-header">
               <TableRow>
                 {selectable && (
                   <TableHead className="w-10 px-3">
@@ -154,7 +154,7 @@ export function DataTable<T extends { id: string }>({
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className="h-11 hover:bg-muted/30">
+                <TableRow key={row.id} className="h-11 hover:bg-emerald-50/60 data-[state=selected]:bg-emerald-50">
                   {selectable && (
                     <TableCell className="w-10 px-3">
                       <Checkbox
@@ -167,7 +167,7 @@ export function DataTable<T extends { id: string }>({
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
-                      className={`px-4 py-2 text-sm ${cell.column.id === "actions" ? "sticky right-0 bg-background" : ""}`}
+            className={`px-4 py-2 text-sm ${cell.column.id === "actions" ? "sticky right-0 bg-card" : ""}`}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,

@@ -3,6 +3,7 @@ import { can, dateTime, type JourneyEvent } from "@/lib/crm";
 import type { SessionUser } from "@/lib/api";
 import { AttachmentList } from "./attachment-list";
 import { EmptyState } from "./primitives";
+import { productEventText } from "@/lib/product-language";
 
 export function Timeline({
   events,
@@ -21,13 +22,13 @@ export function Timeline({
           <Activity className="mt-1 size-4 shrink-0 text-muted-foreground" />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-sm font-medium">{event.title}</span>
+              <span className="text-sm font-medium">{productEventText(event.title)}</span>
               <time className="text-xs text-muted-foreground">
                 {dateTime(event.occurredAt)}
               </time>
             </div>
             <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6">
-              {event.summary}
+              {productEventText(event.summary)}
             </p>
             {(event.progress || event.nextAction || event.nextFollowupAt) && (
               <div className="mt-3 space-y-1 text-xs text-muted-foreground">

@@ -93,10 +93,4 @@ export function containsFinancialKey(value: unknown): boolean {
   return Object.entries(value as Record<string, unknown>).some(([key, nested]) => FINANCIAL_KEY.test(key) || containsFinancialKey(nested))
 }
 
-export const lifecycleLabels: Record<string, string> = {
-  TARGET: "目标",
-  CONTACTED: "已触达",
-  NURTURING: "客户经营中",
-  OPPORTUNITY: "机会中",
-  CUSTOMER: "客户",
-}
+export { organizationLifecycleLabels as lifecycleLabels } from "./product-language"
