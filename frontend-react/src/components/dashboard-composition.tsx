@@ -77,30 +77,33 @@ export function DashboardStageFlow({ stages, label, compact = false, footnote }:
   )
 }
 
-export function DashboardFunnel25D({ stages, label, footnote }: { stages: DashboardStage[]; label: string; footnote?: ReactNode }) {
+export function DashboardFunnel25D({ stages, label, summary, footnote }: { stages: DashboardStage[]; label: string; summary: ReactNode; footnote?: ReactNode }) {
   return (
     <div className="dashboard-funnel-25d" aria-label={label}>
-      <ol className="dashboard-funnel-legend">
-        {stages.map((stage) => (
-          <li key={stage.key}>
-            <span>{stage.label}</span>
-            <strong>{stage.count}</strong>
-            {stage.conversionToNext ? <small>{stage.conversionToNext}</small> : null}
-          </li>
-        ))}
+      <div className="dashboard-funnel-summary">{summary}</div>
+      <ol className="dashboard-funnel-steps">
+        {stages.map((stage, index) => {
+          const decrement = stages.length === 5 ? 14 : 17
+          const width = 100 - index * decrement
+          const nextWidth = 100 - (index + 1) * decrement
+          const inset = ((width - nextWidth) / 2 / width) * 100
+          return (
+            <li key={stage.key}>
+              <span className="dashboard-funnel-stage-label">{stage.label}</span>
+              <div className="dashboard-funnel-stage">
+                <div className="dashboard-funnel-bar" style={{ "--funnel-width": `${width}%` } as CSSProperties} aria-label={`${stage.label} ${stage.count}`}>
+                  <strong>{stage.count}</strong>
+                </div>
+                {index < stages.length - 1 ? (
+                  <div className="dashboard-funnel-connector" style={{ "--funnel-width": `${width}%`, "--funnel-inset": `${inset}%` } as CSSProperties}>
+                    <span>{stage.conversionToNext ?? "阶段推进"}</span>
+                  </div>
+                ) : null}
+              </div>
+            </li>
+          )
+        })}
       </ol>
-      <div className="dashboard-funnel-art" aria-hidden="true">
-        {stages.map((stage, index) => (
-          <div
-            key={stage.key}
-            className={`dashboard-funnel-layer is-${stage.tone ?? "neutral"}`}
-            style={{ "--funnel-width": `${100 - index * (stages.length === 5 ? 12 : 15)}%` } as CSSProperties}
-          >
-            <span>{stage.label}</span>
-            <strong>{stage.count}</strong>
-          </div>
-        ))}
-      </div>
       {footnote ? <div className="dashboard-funnel-footnote">{footnote}</div> : null}
     </div>
   )
