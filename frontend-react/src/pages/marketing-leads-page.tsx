@@ -27,11 +27,11 @@ import {
   UserAvatar,
   FilterControl,
 } from "@/components/crm/primitives";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription, AlertTitle } from "@/components/v1/ui";
+import { Button } from "@/components/v1/ui";
+import { Input } from "@/components/v1/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/v1/ui";
+import { Textarea } from "@/components/v1/ui";
 import { ApiError, crmApi, type CrmUser, type SessionUser } from "@/lib/api";
 import {
   marketingActivitySourceLabel,

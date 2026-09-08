@@ -17,7 +17,7 @@ Do not create a second company or supplier master. `OrganizationRole` expresses 
 
 ## Sources of truth
 
-- The existing V1 visual language in `frontend/styles/production.css` is the UI source of truth: quiet, dense, white rounded cards, restrained status color, and native DOM/SVG only.
+- The supplied `crm-Kivisense_CRM_v1.zip` is the UI source of truth. Its inline V1 styles take priority over the supplementary `frontend/styles/production.css`; current React pages must use the repository's V1-native components and native DOM/SVG only.
 - `docs/crm-2.0-field-dictionary.md` is the field source of truth for Contact and Lead compatibility.
 - Organization owns linked company name, website, industry, and location. Contact legacy company strings are compatibility snapshots only and must not remain the relationship key.
 - Opportunity must retain `contactId`; do not replace Contact 1:N Opportunity with a direct Organization-only relationship.

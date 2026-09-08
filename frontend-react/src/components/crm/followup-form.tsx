@@ -7,10 +7,10 @@ import {
   type Contact,
   type PageResult,
 } from "@/lib/crm";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/v1/ui";
+import { Input } from "@/components/v1/ui";
+import { Textarea } from "@/components/v1/ui";
+import { Checkbox } from "@/components/v1/ui";
 import { EntityCombobox, Field, FilterControl, FormDialog } from "./primitives";
 import { attachmentAccept } from "./attachment-list";
 

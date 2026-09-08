@@ -57,9 +57,7 @@ Premium
 
 Primary Reference：
 
-shadcn/ui dashboard-01
-
-https://ui.shadcn.com/blocks#dashboard-01
+用户提供的 `crm-Kivisense_CRM_v1.zip`
 
 参考：
 
@@ -74,16 +72,7 @@ https://ui.shadcn.com/blocks#dashboard-01
 - Border
 - Interaction Density
 
-Secondary Inspiration：
-
-Linear
-Attio
-Notion
-Stripe Dashboard
-
-不要直接复制任何品牌。
-
-Kivisense 必须形成自己的产品识别。
+不再使用任何通用 UI Kit、Dashboard Demo 或其他 SaaS 产品作为视觉参考。
 
 ---
 
@@ -93,15 +82,16 @@ Preferred UI Stack：
 
 React
 Tailwind CSS
-shadcn/ui
 Lucide
 TanStack Table
 
-优先使用 shadcn 官方组件。
+所有基础组件必须来自 `frontend-react/src/components/v1/`。
+
+禁止引入或保留外部 UI 组件体系来决定 DOM、布局或视觉。
 
 禁止：
 
-为了一个普通 Button / Select / Dialog 自行重新实现一套行为。
+绕开 V1 组件体系创建另一套 Button / Select / Dialog。
 
 自定义应主要发生在：
 
@@ -567,9 +557,7 @@ Outline / Ghost。
 
 # 16. KPI Card
 
-视觉基准：
-
-shadcn dashboard-01 Section Cards。
+视觉基准：V1 指标卡和业务面板。
 
 结构：
 
@@ -1630,7 +1618,7 @@ Error association
 
 # 47. Login
 
-参考 shadcn login blocks。
+参考 V1 登录窗口和表单语言。
 
 Kivisense Logo
 
@@ -1727,7 +1715,7 @@ DESIGN_SYSTEM.md
 5. 绿色具有品牌识别，但不喧宾夺主
 6. 不像国产后台模板
 7. 不像低代码平台
-8. 不像 shadcn 默认 Demo 换 Logo
+8. 不像通用 Dashboard Demo 换 Logo
 9. 整套产品有统一 Kivisense identity
 
 ---
@@ -1749,7 +1737,7 @@ Better information architecture
 
 最终公式：
 
-shadcn/ui structural quality
+V1 原生组件结构
 
 +
 
@@ -1767,7 +1755,7 @@ Kivisense CRM Design Language
 
 # 53. v1.3 Product-model and dense-enterprise addendum
 
-This addendum supersedes earlier examples wherever product-model language or information architecture conflicts. The visual foundation remains Salesforce-style CRM information organization, shadcn/ui primitives, Attio/Linear restraint, and sparing Kivisense Emerald accents.
+This addendum supersedes earlier examples wherever product-model language or information architecture conflicts. Its product-model rules remain active; all visual and component-foundation language is superseded by the V1 restoration sections below.
 
 ## 53.1 Canonical information architecture
 
@@ -1839,7 +1827,7 @@ Every critical UI write requires: visible browser result, successful HTTP respon
 
 # 54. v1.4 V1 visual-language and review-policy override
 
-This section supersedes earlier visual guidance that treats shadcn defaults, Attio/Linear restraint, all-white surfaces, weak borders or card scarcity as the target. It also supersedes the multi-phase and 90-screenshot browser gate for this product-language/visual-restyle round. It does not change the v1.3 product model, information architecture, routes, Dashboard four-view structure, Workbench, import/export, assignment notification or RBAC contracts.
+This section supersedes earlier visual guidance that treats generic UI-kit defaults, all-white surfaces, weak borders or card scarcity as the target. It also supersedes the multi-phase and 90-screenshot browser gate for this product-language/visual-restyle round. It does not change the v1.3 product model, information architecture, routes, Dashboard four-view structure, Workbench, import/export, assignment notification or RBAC contracts.
 
 ## 54.1 Visual source of truth
 
@@ -1849,7 +1837,7 @@ The supported composition is:
 
 `frontend/styles/production.css` is the historical V1 visual reference. Reuse its warm neutral canvas, white business surfaces, stronger neutral borders, restrained surface shadows, mature dark sidebar, serif display headings, warm table headers, grouped forms and visible business sections. Do not restore the legacy DOM, legacy IA, legacy routes or its Lead/Opportunity ambiguity.
 
-shadcn/ui remains the component implementation library, not the design language. Kivisense Emerald is reserved for primary actions, active navigation, success and current stage. Low-saturation blue, amber, red and gray establish information, pending/risk, error/lost and disabled/history states.
+The V1-native React component library is the only component implementation layer. Kivisense Emerald is reserved for primary actions, active navigation, success and current stage. Low-saturation blue, amber, red and gray establish information, pending/risk, error/lost and disabled/history states.
 
 ## 54.2 Shared surface rules
 

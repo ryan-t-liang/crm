@@ -7,45 +7,45 @@ import {
   Search,
   SlidersHorizontal,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/v1/ui";
+import { Input } from "@/components/v1/ui";
+import { Label } from "@/components/v1/ui";
+import { Badge } from "@/components/v1/ui";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/v1/ui";
+import { Alert, AlertDescription, AlertTitle } from "@/components/v1/ui";
+import { Skeleton } from "@/components/v1/ui";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from "@/components/ui/select";
+} from "@/components/v1/ui";
 import {
   Popover,
   PopoverTrigger,
   PopoverContent,
-} from "@/components/ui/popover";
+} from "@/components/v1/ui";
 import {
   Command,
   CommandInput,
   CommandList,
   CommandEmpty,
   CommandItem,
-} from "@/components/ui/command";
+} from "@/components/v1/ui";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/v1/ui";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "@/components/ui/dialog";
+} from "@/components/v1/ui";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -54,8 +54,8 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogCancel,
-} from "@/components/ui/alert-dialog";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+} from "@/components/v1/ui";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/v1/ui";
 import { appUrl } from "@/lib/api";
 import { friendlyError, type Organization } from "@/lib/crm";
 import { cn } from "@/lib/utils";

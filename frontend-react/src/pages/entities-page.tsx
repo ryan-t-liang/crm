@@ -27,8 +27,8 @@ import {
   type JourneyEvent,
   type Attachment,
 } from "@/lib/crm";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/v1/ui";
+import { Input } from "@/components/v1/ui";
 import { DataTable } from "@/components/crm/data-table";
 import { EntityForm, type EntityRecord } from "@/components/crm/entity-form";
 import {

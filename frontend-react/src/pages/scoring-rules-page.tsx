@@ -4,11 +4,11 @@ import { Plus } from "lucide-react";
 
 import { DataTable } from "@/components/crm/data-table";
 import { ErrorState, Field, FormDialog, PageContent, PageHeader, RowActions, StatusBadge } from "@/components/crm/primitives";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/v1/ui";
+import { Checkbox } from "@/components/v1/ui";
+import { Input } from "@/components/v1/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/v1/ui";
+import { Textarea } from "@/components/v1/ui";
 import { crmApi, type SessionUser } from "@/lib/api";
 import { can, friendlyError, useResource, type LeadScoringRule } from "@/lib/crm";
 

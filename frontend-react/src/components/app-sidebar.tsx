@@ -14,7 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/v1/ui"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +22,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/v1/ui"
 import {
   Sidebar,
   SidebarContent,
@@ -36,7 +36,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
-} from "@/components/ui/sidebar"
+} from "@/components/v1/ui"
 import { assetUrl, legacyUrl, type SessionUser } from "@/lib/api"
 import { migratedRoutes } from "@/lib/crm"
 

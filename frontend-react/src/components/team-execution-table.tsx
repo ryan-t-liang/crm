@@ -1,8 +1,8 @@
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table"
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Avatar, AvatarFallback } from "@/components/v1/ui"
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/v1/ui"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/v1/ui"
 import type { TeamRow } from "@/lib/dashboard"
 
 const columns: ColumnDef<TeamRow>[] = [

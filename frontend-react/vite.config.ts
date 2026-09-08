@@ -21,7 +21,6 @@ export default defineConfig({
         manualChunks: (id) => {
           if (id.includes("recharts") || id.includes("d3-")) return "charts"
           if (id.includes("@tanstack")) return "table"
-          if (id.includes("radix-ui")) return "shadcn"
           if (id.includes("react-dom") || id.includes("/react/")) return "react"
           return undefined
         },

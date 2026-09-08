@@ -9,9 +9,9 @@ import {
   useResource,
   type PageResult,
 } from "@/lib/crm";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/v1/ui";
+import { Input } from "@/components/v1/ui";
+import { Checkbox } from "@/components/v1/ui";
 import { DataTable } from "@/components/crm/data-table";
 import {
   PageContent,

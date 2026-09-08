@@ -1,418 +1,142 @@
-# Kivisense CRM 2.0 — shadcn UI Rebuild
+# Kivisense CRM 2.0 — V1 Native UI Foundation
 
 基于当前分支最新代码继续开发。
 
-本次只做 UI / Frontend Design System 重构，不重新定义 CRM 业务模型。
+本文件覆盖此前所有外部 UI Kit、Dashboard Demo、Dense Enterprise、Attio、Linear 和 Salesforce 视觉方向。
 
-## 1. UI 技术基线
+## 1. 唯一视觉来源
 
-必须真正使用：
+用户提供的 `crm-Kivisense_CRM_v1.zip` 是唯一视觉 Source of Truth。
+
+视觉参考优先级：
+
+1. `frontend/index.html` 中的 V1 inline style。
+2. `frontend/js/app.js` 的 V1 DOM/class 组合，仅用于理解视觉结构。
+3. `frontend/styles/production.css` 的补充规则。
+
+不允许把其他产品或 UI 组件库作为第二视觉来源。
+
+## 2. 组件技术基线
+
+保留：
 
 - React
 - Tailwind CSS
-- shadcn/ui
 - Lucide Icons
 - TanStack Table
+- Recharts
 
-核心视觉和页面结构参考：
+所有基础 UI 必须由：
 
-https://ui.shadcn.com/blocks#dashboard-01
+`frontend-react/src/components/v1/`
 
-重点：
+直接实现。
 
-不要只是“模仿 shadcn 风格”。
+必须使用 V1 原生组件实现：
 
-如果当前前端不是 React / shadcn 架构，请先审计，并制定前端迁移方案。
+- App Shell
+- Sidebar
+- Header / Breadcrumb
+- Button / Input / Textarea / Checkbox / Select
+- Card / Panel / KPI
+- Table / Pagination / Toolbar
+- Tabs
+- Dropdown / Popover / Combobox
+- Dialog / Delete Confirm
+- Badge / Avatar / Skeleton / Alert
+- Chart Container / Tooltip
 
-允许重构前端壳层和组件体系。
+禁止：
 
-禁止为了 UI 重构修改：
+- `frontend-react/src/components/ui/`
+- 外部 UI 组件体系的生成代码
+- 用外部组件的 DOM 骨架套 V1 CSS
+- `data-slot` 选择器换皮
+- V1 与任何通用 UI Kit 的混合视觉
+- 为未来开发重新引入已删除的 UI 组件依赖
 
-- CRM 核心 Domain
-- Database Schema，除非绝对必要
+依赖图中不得出现：
+
+- `radix-ui`
+- `cmdk`
+- `class-variance-authority`
+- `tailwind-merge`
+- `tw-animate-css`
+
+## 3. 保留当前产品
+
+这是组件层和视觉层替换，不是产品回滚。
+
+必须保留当前：
+
+- React 页面与路由
+- CRM Domain Model
+- Contact 1:N Opportunity
+- MarketingLead → MQL → SQL → Opportunity 生命周期
+- Company / Contact / Marketing Lead / Opportunity / Supplier
+- Dashboard / Workbench / Task / Followup / Journey
+- Attachment / Import / Export
 - API Contract
-- RBAC 业务规则
-- Followup / Task / Journey / Scoring 逻辑
+- RBAC
+- 数据结构与数据库
 
----
+禁止恢复旧版业务文案、旧路由、旧枚举、旧数据库、旧 API 或 legacy 页面入口。
 
-## 2. Frozen Business Domain
+## 4. V1 视觉语言
 
-保持：
+- Canvas：`#f3f1eb`
+- White Surface：`#ffffff`
+- Warm Surface：`#faf9f5`
+- Ink：`#171717`
+- Muted：`#666666`
+- Line：`#e5e5e2` / `#d7d7d3`
+- Dark Rail：`#0b0b0b`
+- Kivisense Green：`#04e06e` / `#03c360`
+- V1 Gold：`#a9854b`
+- V1 Navy：`#30465c`
+- V1 Rose：`#9b5d61`
+- Panel radius：`15px`
+- Card radius：`13px`
+- Control radius：`8–9px`
+- Display heading：Georgia / Songti
+- Body / Form / Table：sans-serif
 
-Organization = Company 360
+页面必须呈现 V1 的暖灰画布、白色业务面板、深色侧栏、清晰边界、克制阴影、成熟业务密度和可识别的标题层级。
 
-Contact = Person 360
+## 5. 组件与页面规则
 
-Lead = Opportunity
+- 页面使用 V1 App Shell，不得出现通用 Dashboard 模板骨架。
+- 一个完整业务模块可以使用一个面板；字段不能各自变成卡片。
+- KPI 使用 V1 独立指标卡，不做默认统计卡墙。
+- 列表必须使用 V1 Toolbar + Table Window + Pagination。
+- 表单保持现有字段与业务分组，但外壳、页签、Footer 和控件全部使用 V1 组件。
+- 搜索联系人等关系字段使用 V1 模糊搜索下拉。
+- 附件字段紧邻相关文字字段，支持图片、视频和文档。
+- Dialog 是 V1 窗口，不得保留外部 UI Kit 的标题、留白或关闭按钮结构。
+- 删除入口保持权限控制和确认窗口，不修改软删除语义。
 
-Followup = Business Interaction
+## 6. 验收条件
 
-Task = Next Action
+代码验收必须同时满足：
 
-Journey = Business History
+1. `frontend-react/src/components/ui` 不存在。
+2. 所有前端业务代码只引用 `@/components/v1/ui` 或业务组件。
+3. 包依赖和 lockfile 中不存在已禁止的 UI 依赖。
+4. 源码和构建产物中不存在 `data-slot` 换皮结构。
+5. Frontend production build 通过。
+6. 当前业务逻辑、API、RBAC 和数据结构没有被改动。
 
-Audit = System Operation History
+本轮按照用户指定的恢复策略，不运行 Playwright、Puppeteer、截图采集、浏览器 smoke 或 E2E。最终视觉由 Human Review 验收。
 
-Nurture = Customer Nurture Plan
+最终判断只有：
 
-Dashboard = Non-financial Customer / Pipeline / Execution Analytics
+- `READY FOR HUMAN V1 UI REVIEW`
+- `BLOCKED`
 
-现有：
+最终效果必须是：
 
-Company
-Contact
-Lead
-Customer Operations
-Workbench
-Supplier
-Task
-Followup
-Scoring
-Lifecycle
-Nurture
-Reactivation
-Attachments
-Import / Export
-RBAC
-Audit
+“Kivisense CRM V1 的原生 UI 体系承载当前 CRM 2.0 产品。”
 
-全部保留。
+不得再出现：
 
----
-
-## 3. Design Direction
-
-最终产品必须呈现：
-
-Modern B2B SaaS CRM
-
-关键词：
-
-- Premium
-- Quiet
-- Dense
-- Structured
-- Fast
-- Professional
-
-必须最大限度复现 shadcn `dashboard-01` 的：
-
-- Sidebar 结构
-- Site Header
-- Content rhythm
-- KPI Card 气质
-- Chart Container
-- Data Table
-- Border
-- Typography
-- Spacing
-- Hover / Active states
-
-但业务内容全部替换成 Kivisense CRM。
-
----
-
-## 4. Brand
-
-Kivisense：
-
-#04E06E
-#03C360
-
-规则：
-
-90% Neutral
-10% Brand Accent
-
-Brand Green 只用于：
-
-- Primary Action
-- Focus
-- Selected
-- Active Indicator
-- 少量 Chart Highlight
-
-禁止：
-
-- 大面积绿色 Sidebar
-- 大量绿色 Badge
-- 彩色 Dashboard
-- Marketing Gradient
-
----
-
-## 5. UI Rules
-
-Radius：
-
-- Button/Input/Select 8px
-- Card 10px
-- Dialog/Drawer 12px
-
-Spacing：
-
-4 / 8 / 12 / 16 / 20 / 24 / 32 / 40 / 48
-
-Typography：
-
-- Page Title 24px
-- Section 16–18px
-- Body/Table 14px
-- Secondary 13px
-- Metadata 12px
-
-原则：
-
-Border First
-Shadow Second
-
-禁止：
-
-- Card 套 Card
-- 巨大圆角
-- 巨大 Shadow
-- 满屏 Badge
-- 低代码式 Form
-- 大块 Filter Panel
-
----
-
-## 6. App Shell
-
-优先完成统一：
-
-- App Sidebar
-- Sidebar Collapse
-- Site Header
-- Breadcrumb
-- Page Header
-- Main Content Shell
-- Toolbar
-- Dialog / Sheet
-- Data Table Shell
-
-导航：
-
-Dashboard
-
-客户管理
-- 公司
-- 客户联系人
-- 线索
-
-客户运营
-- 客户运营
-- 我的工作台
-
-资源
-- 供应商
-
-系统管理
-- 账户管理
-- 角色与权限
-- 审计日志
-
----
-
-## 7. Dashboard
-
-Dashboard 第一优先级。
-
-布局尽量沿用 shadcn `dashboard-01`：
-
-Section Cards
-↓
-Main Chart
-↓
-Business Table / Activity
-
-第一排最多 6 个 KPI：
-
-- 活跃公司
-- 活跃线索
-- 新增线索
-- 待唤醒客户
-- 逾期任务
-- 停滞线索
-
-禁止任何金额 KPI。
-
-图表：
-
-- neutral
-- subtle grid
-- restrained axis
-- Kivisense Green 只作重点系列
-- 禁止彩虹图表
-
----
-
-## 8. CRM Tables
-
-Company / Contact / Lead / Supplier / Tasks：
-
-统一：
-
-Page Header
-Saved View / Tabs
-Toolbar
-Data Table
-Pagination
-
-Toolbar：
-
-Search
-Filter
-Sort
-Columns
-Bulk Actions
-View
-
-高级 Filter 使用：
-
-Popover / Sheet / Drawer
-
-禁止大面积筛选表单。
-
-Table：
-
-- Row 40–44px
-- Header 36–40px
-- subtle divider
-- restrained hover
-- sticky header where useful
-- metadata 用 muted text
-- Badge 只给真正的状态
-
----
-
-## 9. Detail / 360
-
-Company 360：
-
-- Summary Header
-- Overview
-- Contacts
-- Leads
-- Journey
-- Tasks
-- Files
-- Notes
-- Audit
-
-Contact 360：
-
-- Person Summary
-- Company
-- Related Leads
-- Customer Journey
-- Notes
-- Audit
-
-Lead Detail：
-
-- Summary
-- Stage
-- Owner
-- Latest Progress
-- Next Action
-- Related Company / Contact
-- Requirement
-- Attachments
-- Followup Timeline
-
-不要做字段墙。
-
----
-
-## 10. Forms
-
-保留现有业务 IA。
-
-Contact：
-
-3 Tabs
-
-Lead：
-
-5 Tabs
-
-Company：
-
-按业务模块组织。
-
-规则：
-
-- Tab / Section Navigation
-- 同类字段放一起
-- 文件必须紧邻对应文本
-- 不一次铺开几十个字段
-- Footer 统一 Save / Cancel
-- 切 Tab 不丢失未保存状态
-
----
-
-## 11. Implementation Order
-
-1. Frontend architecture audit
-2. shadcn installation / component foundation
-3. Global tokens
-4. App Shell
-5. Dashboard
-6. Table system
-7. Company / Contact / Lead
-8. Operations / Workbench / Supplier
-9. Detail / Form / Attachment / Timeline
-10. Login / System pages
-11. Responsive review
-12. Browser screenshots
-13. Regression tests
-
----
-
-## 12. Quality Gate
-
-必须检查：
-
-1440
-1280
-1024
-
-不得出现：
-
-document-level horizontal overflow。
-
-必须截图：
-
-Dashboard
-Company List
-Company 360
-Contact List
-Contact 360
-Lead List
-Lead Detail
-Customer Operations
-Workbench
-Supplier
-Create/Edit Form
-Attachment
-Login
-
-最终 Verdict：
-
-READY FOR UI REVIEW
-
-或
-
-BLOCKED
-
-不要自动部署 Production。
-
-最终效果必须明确表现为：
-
-“真正使用 shadcn/ui 体系构建的 Kivisense CRM”
-
-而不是：
-
-“旧后台换了一层 CSS。”
+“这是通用 UI Kit，只是换成了 V1 的颜色。”

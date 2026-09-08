@@ -13,7 +13,7 @@ import {
   type Task,
   type PageResult,
 } from "@/lib/crm";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/v1/ui";
 import { DataTable } from "@/components/crm/data-table";
 import {
   PageContent,

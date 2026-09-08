@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/v1/ui"
 import { lifecycleLabels, type DashboardData } from "@/lib/dashboard"
 
 export function ExecutionHealth({ data }: { data: DashboardData }) {

@@ -20,8 +20,8 @@ import {
   type Organization,
   type PageResult,
 } from "@/lib/crm";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/v1/ui";
+import { Input } from "@/components/v1/ui";
 import {
   PageContent,
   PageHeader,

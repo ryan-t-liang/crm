@@ -1,6 +1,6 @@
 import { Building2, CirclePlus, ClockAlert, Goal, PauseCircle, RefreshCcw } from "lucide-react"
 
-import { Card, CardContent, CardHeader } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/v1/ui"
 import { DASHBOARD_KPIS, type DashboardData } from "@/lib/dashboard"
 
 const icons = {

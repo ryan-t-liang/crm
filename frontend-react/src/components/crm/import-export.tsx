@@ -2,10 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Download, RotateCw, Upload } from "lucide-react";
 import { appUrl, crmApi, type SessionUser } from "@/lib/api";
 import { can, dateTime, friendlyError } from "@/lib/crm";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/v1/ui";
+import { Input } from "@/components/v1/ui";
+import { Checkbox } from "@/components/v1/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/v1/ui";
 import {
   Table,
   TableHeader,
@@ -13,7 +13,7 @@ import {
   TableRow,
   TableBody,
   TableCell,
-} from "@/components/ui/table";
+} from "@/components/v1/ui";
 import { FormDialog, SummaryStrip, LoadingSkeleton } from "./primitives";
 import { dataJobStatusLabels, dataObjectLabels, exportScopeLabels } from "@/lib/product-language";
 

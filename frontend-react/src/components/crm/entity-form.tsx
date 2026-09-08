@@ -15,10 +15,10 @@ import {
   type PageResult,
   type Attachment,
 } from "@/lib/crm";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/v1/ui";
+import { Button } from "@/components/v1/ui";
+import { Textarea } from "@/components/v1/ui";
+import { Checkbox } from "@/components/v1/ui";
 import {
   DetailTabs,
   EntityCombobox,

@@ -1,7 +1,7 @@
 import { ArrowUpRight } from "lucide-react"
-import { cn } from "cn"
+import { cn } from "@/lib/utils"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/v1/ui"
 import type { MatrixData } from "@/lib/dashboard"
 
 export function FitEngagementMatrix({ matrix }: { matrix: MatrixData }) {

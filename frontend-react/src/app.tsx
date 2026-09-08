@@ -2,9 +2,9 @@ import { useEffect, useState, type CSSProperties } from "react";
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { Skeleton } from "@/components/ui/skeleton";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { SidebarInset, SidebarProvider } from "@/components/v1/ui";
+import { Skeleton } from "@/components/v1/ui";
+import { TooltipProvider } from "@/components/v1/ui";
 import { DashboardPage } from "@/pages/dashboard-page";
 import { OrganizationsPage } from "@/pages/organizations-page";
 import { EntitiesPage } from "@/pages/entities-page";

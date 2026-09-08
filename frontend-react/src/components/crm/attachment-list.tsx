@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { Download, FileText, Film, Image, Upload, X } from "lucide-react";
 import { appUrl, crmApi } from "@/lib/api";
 import { dateTime, friendlyError, type Attachment } from "@/lib/crm";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/v1/ui";
 import { ConfirmDeleteDialog } from "./primitives";
 
 export const attachmentAccept =

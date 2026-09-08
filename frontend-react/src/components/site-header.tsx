@@ -6,9 +6,9 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
-import { SidebarTrigger } from "@/components/ui/sidebar"
+} from "@/components/v1/ui"
+import { Separator } from "@/components/v1/ui"
+import { SidebarTrigger } from "@/components/v1/ui"
 
 export function SiteHeader({ title = "数据看板", dashboard = true }: { title?: string; dashboard?: boolean }) {
   return (

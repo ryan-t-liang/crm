@@ -14,15 +14,15 @@ import {
   TableRow,
   TableHead,
   TableCell,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+} from "@/components/v1/ui";
+import { Button } from "@/components/v1/ui";
+import { Checkbox } from "@/components/v1/ui";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
-} from "@/components/ui/dropdown-menu";
+} from "@/components/v1/ui";
 import { EmptyState, LoadingSkeleton } from "./primitives";
 
 export function DataTable<T extends { id: string }>({
