@@ -1002,6 +1002,192 @@
   background: var(--v1-canvas);
 }
 
+.crm-detail-page {
+  gap: 0;
+  padding: 0;
+  background: #f5f4ef;
+}
+
+.crm-detail-scaffold {
+  min-width: 0;
+}
+
+.crm-detail-top {
+  min-height: 88px;
+  padding: 18px 27px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid var(--v1-line);
+  background: var(--v1-surface);
+}
+
+.crm-detail-back-button {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  display: grid;
+  flex: 0 0 38px;
+  place-items: center;
+  border: 1px solid var(--v1-line);
+  border-radius: 9px;
+  background: #fff;
+  color: var(--v1-muted);
+}
+
+.crm-detail-back-button:hover {
+  border-color: #c6c6c1;
+  color: var(--v1-ink);
+}
+
+.crm-detail-back-button svg {
+  width: 17px;
+  height: 17px;
+}
+
+.crm-detail-top .crm-entity-header {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  flex: 1;
+  align-items: center;
+}
+
+.crm-detail-top .crm-entity-header > div:first-child {
+  align-items: center;
+}
+
+.crm-detail-top .crm-display-title {
+  font-size: 22px;
+  line-height: 1.16;
+}
+
+.crm-detail-top .crm-entity-header [class*="text-muted-foreground"] {
+  margin-top: 4px;
+  font-size: 10px;
+}
+
+.crm-detail-top .v1-avatar,
+.crm-detail-top .crm-company-logo {
+  width: 47px;
+  height: 47px;
+  flex: 0 0 47px;
+  border-radius: 50%;
+}
+
+.crm-detail-top .crm-company-logo .v1-avatar-fallback,
+.crm-detail-top .crm-company-logo .v1-avatar-image {
+  border-radius: 50%;
+}
+
+.crm-detail-symbol {
+  width: 47px;
+  height: 47px;
+  display: grid;
+  flex: 0 0 47px;
+  place-items: center;
+  border: 1px solid #dededa;
+  border-radius: 50%;
+  background: #eeeeeb;
+  color: var(--v1-ink);
+}
+
+.crm-detail-symbol svg {
+  width: 19px;
+  height: 19px;
+}
+
+.crm-detail-page > .v1-alert,
+.crm-detail-page > [aria-label="正在加载"] {
+  margin: 30px;
+}
+
+.crm-detail-grid {
+  min-height: calc(100vh - 160px);
+  padding: 20px;
+  display: grid;
+  grid-template-columns: minmax(420px, 0.92fr) minmax(520px, 1.08fr);
+  gap: 18px;
+  align-items: start;
+  background: #f5f4ef;
+}
+
+.crm-detail-side,
+.crm-detail-main {
+  min-width: 0;
+}
+
+.crm-detail-side {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+}
+
+.crm-detail-side .crm-summary-strip {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  border-radius: 13px;
+}
+
+.crm-detail-side .crm-summary-item {
+  min-height: 78px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--v1-line);
+}
+
+.crm-detail-side .crm-summary-item:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.crm-detail-side .crm-section {
+  border-radius: 13px;
+  box-shadow: 0 4px 18px rgba(20, 20, 20, 0.025);
+}
+
+.crm-detail-side .crm-section-header {
+  min-height: 53px;
+  padding: 12px 17px;
+  background: #fff;
+}
+
+.crm-detail-side .crm-section-body {
+  padding: 15px 17px 17px;
+}
+
+.crm-detail-side .crm-section-body dl {
+  gap: 11px 18px;
+}
+
+.crm-detail-side .crm-section-body dl > div {
+  padding-bottom: 9px;
+  border-bottom: 1px solid #ecece8;
+}
+
+.crm-detail-main .crm-detail-tabs {
+  position: sticky;
+  top: 73px;
+  z-index: 12;
+  margin-bottom: 14px;
+  padding: 4px;
+  border: 1px solid var(--v1-line);
+  border-radius: 11px;
+  background: rgba(235, 235, 230, 0.95);
+  backdrop-filter: blur(12px);
+}
+
+.crm-detail-main .crm-detail-tabs .v1-tabs-list {
+  width: 100%;
+}
+
+.crm-detail-main .crm-detail-tab {
+  flex: 1 0 104px;
+  min-height: 38px;
+  font-size: 10px;
+}
+
+.crm-detail-main .crm-section {
+  border-radius: 13px;
+}
+
 .crm-page-header,
 .crm-entity-header {
   min-height: 70px;
@@ -1982,6 +2168,16 @@
     padding: 25px;
   }
 
+  .crm-detail-page {
+    padding: 0;
+  }
+
+  .crm-detail-grid {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 16px;
+    gap: 14px;
+  }
+
   .crm-data-filter-fields {
     flex-wrap: wrap;
   }
@@ -2000,6 +2196,20 @@
 
   .crm-page {
     padding: 18px 14px;
+  }
+
+  .crm-detail-page {
+    padding: 0;
+  }
+
+  .crm-detail-top {
+    min-height: 0;
+    padding: 14px;
+    align-items: flex-start;
+  }
+
+  .crm-detail-top .crm-entity-header {
+    align-items: flex-start;
   }
 
   .crm-display-title {

@@ -25,6 +25,7 @@ import { Input } from "@/components/v1/ui";
 import {
   PageContent,
   PageHeader,
+  DetailScaffold,
   CompanyLogo,
   UserAvatar,
   StatusBadge,
@@ -81,7 +82,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
   });
   const [keyword, setKeyword] = useState(""),
     [page, setPage] = useState(1),
-    [tab, setTab] = useState("overview"),
+    [tab, setTab] = useState("contacts"),
     [selectedIds, setSelectedIds] = useState<string[]>([]),
     [batchOwnerUserId, setBatchOwnerUserId] = useState(""),
     [batchBusy, setBatchBusy] = useState(false),
@@ -107,7 +108,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
     return () => clearTimeout(timer);
   }, [keyword]);
   useEffect(() => {
-    setTab("overview");
+    setTab("contacts");
   }, [id]);
   const setFilter = (key: string, value: string) => {
     setFilters((f) => ({ ...f, [key]: value }));
@@ -403,7 +404,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
     [],
   );
   return (
-    <PageContent>
+    <PageContent detail={!!id}>
       {!id ? (
         <>
           <PageHeader
@@ -620,277 +621,91 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
       ) : detail.error || !organization ? (
         <ErrorState error={detail.error} retry={detail.reload} />
       ) : (
-        <>
-          <a
-            href={`#${targetFamily}`}
-            className="flex w-fit items-center gap-2 text-xs text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="size-3.5" />
-            返回{supplier ? "供应商" : "公司"}
-          </a>
-          <EntityHeader
-            icon={<CompanyLogo organization={organization} large />}
-            title={organization.name}
-            meta={
-              <>
-                <span>{organization.shortName || organization.industry}</span>
-                {organization.website && (
-                  <a
-                    href={organization.website}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="hover:underline"
-                  >
-                    {organization.website.replace(/^https?:\/\//, "")}
-                  </a>
-                )}
-                <span>
-                  {businessRelationText(organization.roleKeys)}
-                </span>
-                <StatusBadge>
-                  {lifecycleLabels[organization.lifecycleStage]}
-                </StatusBadge>
-                <UserAvatar name={organization.owner?.name} />
-                <SystemIdField value={organization.id} label="公司 ID" />
-              </>
-            }
-            actions={
-              <>
-                {can(me, "crm.contact.create") && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setEntityCreate("contact")}
-                  >
-                    新增联系人
-                  </Button>
-                )}
-                {can(me, "crm.lead.create") && can(me, "crm.contact.view") && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setEntityCreate("lead")}
-                  >
-                    创建商机
-                  </Button>
-                )}
-                {can(me, "crm.contact_followup.create") &&
-                  can(me, "crm.task.create") && (
-                    <Button
-                      onClick={() =>
-                        setFollowupTarget({
-                          kind: "contact",
-                          organizationId: organization.id,
-                          label: organization.name,
-                        })
-                      }
-                    >
-                      <Plus />
-                      新增互动
-                    </Button>
-                  )}
-                <RowActions
-                  label={organization.name}
-                  items={actions(organization)}
-                />
-              </>
-            }
-          />
-          <SummaryStrip
-            items={[
-              { label: "联系人", value: organization.contactCount },
-              { label: "活跃商机", value: organization.activeLeadCount },
-              {
-                label: "最近互动",
-                value: relativeDate(organization.lastInteractionAt),
-                detail: dateTime(organization.lastInteractionAt),
-              },
-              {
-                label: "下一步行动",
-                value: organization.nextTask?.title || "暂无下一步行动",
-                detail: organization.nextActionAt
-                  ? dateTime(organization.nextActionAt)
-                  : undefined,
-              },
-            ]}
-          />
+        <DetailScaffold
+          top={
+            <>
+              <a className="crm-detail-back-button" href={`#${targetFamily}`} aria-label={`返回${supplier ? "供应商" : "公司"}列表`}><ArrowLeft /></a>
+              <EntityHeader
+                icon={<CompanyLogo organization={organization} large />}
+                title={organization.name}
+                meta={
+                  <>
+                    <span>{organization.shortName || organization.industry}</span>
+                    {organization.website && <a href={organization.website} target="_blank" rel="noreferrer" className="hover:underline">{organization.website.replace(/^https?:\/\//, "")}</a>}
+                    <span>{businessRelationText(organization.roleKeys)}</span>
+                    <StatusBadge>{lifecycleLabels[organization.lifecycleStage]}</StatusBadge>
+                    <UserAvatar name={organization.owner?.name} />
+                    <SystemIdField value={organization.id} label="公司 ID" />
+                  </>
+                }
+                actions={
+                  <>
+                    {can(me, "crm.contact.create") && <Button variant="outline" onClick={() => setEntityCreate("contact")}>新增联系人</Button>}
+                    {can(me, "crm.lead.create") && can(me, "crm.contact.view") && <Button variant="outline" onClick={() => setEntityCreate("lead")}>创建商机</Button>}
+                    {can(me, "crm.contact_followup.create") && can(me, "crm.task.create") && <Button onClick={() => setFollowupTarget({ kind: "contact", organizationId: organization.id, label: organization.name })}><Plus />新增互动</Button>}
+                    <RowActions label={organization.name} items={actions(organization)} />
+                  </>
+                }
+              />
+            </>
+          }
+          sidebar={
+            <>
+              <SummaryStrip items={[
+                { label: "联系人", value: organization.contactCount },
+                { label: "活跃商机", value: organization.activeLeadCount },
+                { label: "最近互动", value: relativeDate(organization.lastInteractionAt), detail: dateTime(organization.lastInteractionAt) },
+                { label: "下一步行动", value: organization.nextTask?.title || "暂无下一步行动", detail: organization.nextActionAt ? dateTime(organization.nextActionAt) : undefined },
+              ]} />
+              <Section title="公司信息">
+                <EntityMeta items={[
+                  { label: "公司全称", value: organization.name },
+                  { label: "行业", value: organization.industryCustom || organization.industry },
+                  { label: "网站", value: organization.website },
+                  { label: "地区", value: [organization.country, organization.region, organization.city].filter(Boolean).join(" · ") },
+                  { label: "公司负责人", value: organization.owner?.name },
+                  { label: "生命周期", value: lifecycleLabels[organization.lifecycleStage] },
+                ]} />
+              </Section>
+              <Section title="客户匹配与互动活跃度">
+                <EntityMeta items={[
+                  { label: "匹配度", value: `${organization.fitScore} · ${scoreLevelLabels[organization.fitLevel] || "未知"}` },
+                  { label: "互动活跃度", value: `${organization.engagementScore} · ${scoreLevelLabels[organization.engagementLevel] || "未知"}` },
+                  { label: "匹配度理由", value: organization.fitReason || "尚未填写" },
+                  { label: "活跃状态", value: engagementLabels[organization.engagementState] },
+                ]} />
+              </Section>
+              <Section title="运营状态" action={can(me, "crm.task.create") ? <Button variant="ghost" size="sm" onClick={() => setTaskTarget({ organizationId: organization.id, label: organization.name })}>创建任务</Button> : undefined}>
+                <EntityMeta items={[
+                  { label: "距离最近互动", value: organization.dormantDays == null ? "尚无互动" : `${organization.dormantDays} 天` },
+                  { label: "下一次触达", value: dateTime(organization.nurtures.find((n) => n.status === "ACTIVE")?.nextTouchAt) },
+                  { label: "经营主题", value: organization.nurtures.find((n) => n.status === "ACTIVE")?.touchTopic },
+                  { label: "下一步行动", value: organization.nextTask?.title || "尚未安排" },
+                ]} />
+              </Section>
+            </>
+          }
+        >
           <DetailTabs
             value={tab}
             onChange={setTab}
             items={[
-              ["overview", "概览"],
               ["contacts", `联系人 ${organization.contacts.length}`],
               ["leads", `商机 ${organization.leads.length}`],
               ["journey", "客户旅程"],
-              ...(can(me, "crm.task.view")
-                ? [["tasks", "任务"] as [string, string]]
-                : []),
+              ...(can(me, "crm.task.view") ? [["tasks", "任务"] as [string, string]] : []),
               ["files", "文件"],
               ["notes", "备注"],
-              ...(can(me, "audit.view")
-                ? [["audit", "操作记录"] as [string, string]]
-                : []),
+              ...(can(me, "audit.view") ? [["audit", "操作记录"] as [string, string]] : []),
             ]}
           >
-            {tab === "overview" && (
-              <div className="grid gap-5 xl:grid-cols-[1.2fr_1fr]">
-                <div className="space-y-5">
-                  <Section title="公司信息">
-                    <EntityMeta
-                      items={[
-                        { label: "公司全称", value: organization.name },
-                        {
-                          label: "行业",
-                          value:
-                            organization.industryCustom || organization.industry,
-                        },
-                        { label: "网站", value: organization.website },
-                        {
-                          label: "地区",
-                          value: [
-                            organization.country,
-                            organization.region,
-                            organization.city,
-                          ]
-                            .filter(Boolean)
-                            .join(" · "),
-                        },
-                        { label: "公司负责人", value: organization.owner?.name },
-                        {
-                          label: "生命周期",
-                          value: lifecycleLabels[organization.lifecycleStage],
-                        },
-                      ]}
-                    />
-                  </Section>
-                  <Section title="最近活动">
-                    {journey.error ? (
-                      <ErrorState
-                        error={journey.error}
-                        retry={journey.reload}
-                      />
-                    ) : journey.loading ? (
-                      <LoadingSkeleton />
-                    ) : (
-                      <Timeline
-                        events={journey.data?.data.events.slice(0, 3) || []}
-                      />
-                    )}
-                  </Section>
-                </div>
-                <div className="space-y-5">
-                  <Section title="客户匹配与互动活跃度">
-                    <div className="grid grid-cols-2 gap-6">
-                      <div>
-                        <span className="text-xs text-muted-foreground">
-                          匹配度
-                        </span>
-                        <div className="mt-1 flex items-baseline gap-2">
-                          <strong className="text-2xl font-semibold">
-                            {organization.fitScore}
-                          </strong>
-                          <span className="text-xs text-muted-foreground">
-                            {scoreLevelLabels[organization.fitLevel] || "未知"}
-                          </span>
-                        </div>
-                        <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">
-                          {organization.fitReason || "尚未填写匹配度理由"}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-xs text-muted-foreground">
-                          互动活跃度
-                        </span>
-                        <div className="mt-1 flex items-baseline gap-2">
-                          <strong className="text-2xl font-semibold">
-                            {organization.engagementScore}
-                          </strong>
-                          <span className="text-xs text-muted-foreground">
-                            {scoreLevelLabels[organization.engagementLevel] || "未知"}
-                          </span>
-                        </div>
-                        <dl className="mt-3 space-y-2">
-                          {organization.engagementBreakdown.map((item) => (
-                            <div
-                              key={item.key}
-                              className="flex justify-between gap-3 text-xs text-muted-foreground"
-                            >
-                              <dt>{item.label}</dt>
-                              <dd className="tabular-nums">
-                                {item.points > 0 ? "+" : ""}
-                                {item.points}
-                              </dd>
-                            </div>
-                          ))}
-                        </dl>
-                      </div>
-                    </div>
-                  </Section>
-                  <Section title="运营状态">
-                    <EntityMeta
-                      items={[
-                        {
-                          label: "活跃状态",
-                          value: engagementLabels[organization.engagementState],
-                        },
-                        {
-                          label: "距离最近互动",
-                          value:
-                            organization.dormantDays == null
-                              ? "尚无互动"
-                              : `${organization.dormantDays} 天`,
-                        },
-                        {
-                          label: "下一次触达",
-                          value: dateTime(
-                            organization.nurtures.find(
-                              (n) => n.status === "ACTIVE",
-                            )?.nextTouchAt,
-                          ),
-                        },
-                        {
-                          label: "经营主题",
-                          value: organization.nurtures.find(
-                            (n) => n.status === "ACTIVE",
-                          )?.touchTopic,
-                        },
-                      ]}
-                    />
-                  </Section>
-                  <Section
-                    title="下一步行动"
-                    action={
-                      can(me, "crm.task.create") && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() =>
-                            setTaskTarget({
-                              organizationId: organization.id,
-                              label: organization.name,
-                            })
-                          }
-                        >
-                          创建任务
-                        </Button>
-                      )
-                    }
-                  >
-                    <p className="text-sm">
-                      {organization.nextTask?.title || "尚未安排下一步行动"}
-                    </p>
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {dateTime(organization.nextActionAt)}
-                    </p>
-                  </Section>
-                </div>
-              </div>
-            )}
             {tab === "contacts" && (
               <DataTable
                 label="公司联系人"
                 columns={contactColumns}
                 rows={organization.contacts}
                 emptyTitle="暂无联系人"
-                toolbar={
+                primaryAction={
                   can(me, "crm.contact.create") && (
                     <Button onClick={() => setEntityCreate("contact")}>
                       <Plus />
@@ -906,7 +721,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                 columns={leadColumns}
                 rows={organization.leads}
                 emptyTitle="暂无商机"
-                toolbar={
+                primaryAction={
                   can(me, "crm.lead.create") &&
                   can(me, "crm.contact.view") && (
                     <Button onClick={() => setEntityCreate("lead")}>
@@ -996,7 +811,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
             )}
             {tab === "audit" && <OrganizationAudit id={organization.id} />}
           </DetailTabs>
-        </>
+        </DetailScaffold>
       )}
       {edit && (
         <OrganizationForm

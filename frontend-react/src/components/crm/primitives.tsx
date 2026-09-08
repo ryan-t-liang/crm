@@ -60,11 +60,36 @@ import { appUrl } from "@/lib/api";
 import { friendlyError, type Organization } from "@/lib/crm";
 import { cn } from "@/lib/utils";
 
-export function PageContent({ children }: { children: ReactNode }) {
+export function PageContent({
+  children,
+  detail = false,
+}: {
+  children: ReactNode;
+  detail?: boolean;
+}) {
   return (
-    <main className="crm-page flex min-w-0 flex-1 flex-col gap-5 p-4 md:p-6">
+    <main className={cn("crm-page flex min-w-0 flex-1 flex-col gap-5 p-4 md:p-6", detail && "crm-detail-page")}>
       {children}
     </main>
+  );
+}
+export function DetailScaffold({
+  top,
+  sidebar,
+  children,
+}: {
+  top: ReactNode;
+  sidebar: ReactNode;
+  children: ReactNode;
+}) {
+  return (
+    <div className="crm-detail-scaffold">
+      <header className="crm-detail-top">{top}</header>
+      <div className="crm-detail-grid">
+        <aside className="crm-detail-side">{sidebar}</aside>
+        <section className="crm-detail-main">{children}</section>
+      </div>
+    </div>
   );
 }
 export function PageHeader({

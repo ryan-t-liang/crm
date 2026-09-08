@@ -9,6 +9,7 @@ import {
   ConfirmDeleteDialog,
   CopyValue,
   DetailTabs,
+  DetailScaffold,
   EntityHeader,
   EntityMeta,
   ErrorState,
@@ -383,22 +384,73 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
       </PageContent>
     );
   }
-  if (detail.loading || !lead) return <PageContent>{detail.error ? <ErrorState error={detail.error} retry={detail.reload} /> : <LoadingSkeleton detail />}</PageContent>;
+  if (detail.loading || !lead) return <PageContent detail>{detail.error ? <ErrorState error={detail.error} retry={detail.reload} /> : <LoadingSkeleton detail />}</PageContent>;
   const legalActions = lead.status === "MQL" ? ["ACCEPT_SQL", "RECYCLE"] : lead.status === "SQL" ? ["RECYCLE"] : [];
   if (!["CONVERTED", "DISQUALIFIED"].includes(lead.status)) legalActions.push("DISQUALIFY");
   const transitionLabels: Record<string, string> = { ACCEPT_SQL: "接受跟进", RECYCLE: "退回培育", DISQUALIFY: "判定无效" };
-  return <PageContent><a href="#marketing-leads" className="inline-flex w-fit items-center gap-1 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" />返回线索</a><EntityHeader icon={<UserAvatar name={lead.fullName} large showName={false} />} title={lead.fullName} meta={<><span>{lead.companyName || "未填写公司"}</span><span>{sourceLabels[lead.source] || "其他"}{lead.sourceChannel ? ` / ${marketingSourceChannelLabel(lead.sourceChannel)}` : ""}</span><StatusBadge>{statusLabels[lead.status]}</StatusBadge><UserAvatar name={lead.owner?.name} /><SystemIdField value={lead.id} label="线索 ID" /></>} actions={<>{can(me, "crm.marketing.activity.create") && lead.status !== "CONVERTED" && <Button variant="outline" onClick={() => setActivityOpen(true)}><MessageSquarePlus />记录行为</Button>}{can(me, "crm.marketing_lead.qualify") && legalActions.map((action) => <Button key={action} variant="outline" onClick={() => setTransition(action)}>{transitionLabels[action]}</Button>)}{can(me, "crm.marketing_lead.convert") && ["SQL", "QUALIFIED"].includes(lead.status) && <Button onClick={() => setConversionOpen(true)}><GitMerge />转为商机</Button>}{can(me, "crm.marketing_lead.edit") && lead.status !== "CONVERTED" && <Button variant="outline" onClick={() => setFormOpen(true)}><Pencil />编辑</Button>}</>} />
-    <SummaryStrip items={[{ label: "状态", value: statusLabels[lead.status] }, { label: "线索匹配度", value: `${lead.fitScore} · ${levelLabels[lead.fitLevel]}` }, { label: "互动活跃度", value: `${lead.engagementScoreCached} · ${levelLabels[lead.engagementLevel]}` }, { label: "最近行为", value: dateTime(lead.lastActivityAt), detail: `${lead.activities?.length || 0} 条行为记录` }, { label: "线索负责人", value: lead.owner?.name || "待分配" }]} />
-    {lead.status === "CONVERTED" && <Alert><CircleGauge /><AlertTitle>已转商机</AlertTitle><AlertDescription><div className="flex flex-wrap gap-4">{lead.convertedOrganization && <a className="underline" href={`#organizations/${lead.convertedOrganization.id}`}>公司：{lead.convertedOrganization.shortName || lead.convertedOrganization.name}</a>}{lead.convertedContact && <a className="underline" href={`#contacts/${lead.convertedContact.id}`}>联系人：{lead.convertedContact.contactName}</a>}{lead.convertedOpportunity && <a className="underline" href={`#leads/${lead.convertedOpportunity.id}`}>商机：{lead.convertedOpportunity.requirementSummary}</a>}<span>{dateTime(lead.convertedAt)} · {lead.convertedBy?.name || "—"}</span></div></AlertDescription></Alert>}
-    <DetailTabs value={tab} onChange={setTab} items={[["overview", "概览"], ["journey", "客户旅程"], ["scoring", "评分历史"], ["audit", "操作记录"]]}>
-      {tab === "overview" ? <div className="grid gap-5 xl:grid-cols-2"><Section title="身份与公司"><EntityMeta items={[{ label: "姓名", value: lead.fullName }, { label: "职位", value: lead.title }, { label: "Email", value: lead.email }, { label: "电话", value: lead.phoneNormalized || lead.phone }, { label: "WhatsApp", value: lead.whatsappNormalized || lead.whatsapp }, { label: "微信", value: lead.wechat }, { label: "LinkedIn", value: lead.linkedinUrl }, { label: "公司", value: lead.companyName }, { label: "公司网站", value: lead.companyWebsite }, { label: "国家 / 地区", value: [lead.countryCode, lead.region, lead.city].filter(Boolean).join(" · ") }]} /></Section><Section title="获客与生命周期"><EntityMeta items={[{ label: "来源", value: sourceLabels[lead.source] || "其他" }, { label: "来源渠道", value: marketingSourceChannelLabel(lead.sourceChannel) }, { label: "来源详情", value: lead.sourceDetail }, { label: "首次触达", value: dateTime(lead.firstTouchAt) }, { label: "转为 MQL 时间", value: dateTime(lead.mqlAt) }, { label: "转为 SQL 时间", value: dateTime(lead.sqlAt) }, { label: "销售首次响应", value: dateTime(lead.firstSalesResponseAt) }]} /></Section><Section title="原始询盘与补充说明"><EntityMeta columns={1} items={[{ label: "询盘类型", value: lead.inquiryType }, { label: "原始询盘", value: <p className="whitespace-pre-wrap">{lead.inquiryContent || "—"}</p> }, { label: "产品兴趣", value: lead.productInterest }, { label: "需求标签", value: lead.requirementTags?.join("、") }, { label: "预算范围", value: lead.budgetRange }, { label: "补充说明", value: <p className="whitespace-pre-wrap">{lead.note || "—"}</p> }, ...(lead.disqualifiedReason ? [{ label: "无效原因", value: lead.disqualifiedReason }] : [])]} /></Section><Section title="系统信息"><EntityMeta items={[{ label: "创建人", value: lead.createdBy?.name }, { label: "创建时间", value: dateTime(lead.createdAt) }, { label: "更新时间", value: dateTime(lead.updatedAt) }, { label: "线索 ID", value: <CopyValue value={lead.id} label="复制 ID" /> }]} /></Section></div>
-      : tab === "journey" ? <Section title="客户旅程"><div className="space-y-0">{journey.map((item) => <div key={item.id} className="grid grid-cols-[8rem_1fr] gap-4 border-b py-3 last:border-0"><time className="text-xs text-muted-foreground">{dateTime(item.at)}</time><div><p className="text-sm font-medium">{item.title}</p><p className="mt-1 text-sm text-muted-foreground">{item.detail}</p></div></div>)}{!journey.length && <p className="text-sm text-muted-foreground">暂无行为与状态事件。</p>}</div></Section>
-      : tab === "scoring" ? <Section title="评分历史"><SummaryStrip items={[{ label: "线索匹配度", value: `${lead.fitScore} · ${levelLabels[lead.fitLevel]}` }, { label: "互动活跃度", value: `${lead.engagementScoreCached} · ${levelLabels[lead.engagementLevel]}` }, { label: "线索热度", value: levelLabels[lead.leadLevel] }, { label: "计算时间", value: dateTime(lead.engagementScoreCalculatedAt) }]} /><div className="mt-5 space-y-3">{lead.scoreHistory?.map((item) => <div key={item.id} className="flex items-start justify-between gap-4 border-b pb-3"><div><p className="text-sm font-medium">{item.dimension === "FIT" ? "线索匹配度" : "互动活跃度"} · {item.reason || "评分变更"}</p><p className="text-xs text-muted-foreground">{item.changedBy?.name || "系统"} · {dateTime(item.createdAt)}</p></div><span className="tabular-nums">{item.previousScore} {item.scoreDelta >= 0 ? "+" : ""}{item.scoreDelta} = {item.newScore}</span></div>)}</div></Section>
-      : <EntityAudit id={lead.id} />}
-    </DetailTabs>
-    {formOpen && <MarketingLeadForm lead={lead} users={users} onClose={() => setFormOpen(false)} onSaved={() => { setFormOpen(false); refresh(); }} />}
-    {activityOpen && <ActivityDialog lead={lead} onClose={() => setActivityOpen(false)} onSaved={() => { setActivityOpen(false); refresh(); }} />}
-    {transition && <TransitionDialog lead={lead} action={transition} onClose={() => setTransition(null)} onSaved={() => { setTransition(null); refresh(); }} />}
-    {conversionOpen && <ConvertDialog lead={lead} me={me} users={users} onClose={() => setConversionOpen(false)} onSaved={() => { setConversionOpen(false); refresh(); }} />}
-  </PageContent>;
+  return (
+    <PageContent detail>
+      <DetailScaffold
+        top={
+          <>
+            <a className="crm-detail-back-button" href="#marketing-leads" aria-label="返回线索列表"><ArrowLeft /></a>
+            <EntityHeader
+              icon={<UserAvatar name={lead.fullName} large showName={false} />}
+              title={lead.fullName}
+              meta={<><span>{lead.companyName || "未填写公司"}</span><span>{sourceLabels[lead.source] || "其他"}{lead.sourceChannel ? ` / ${marketingSourceChannelLabel(lead.sourceChannel)}` : ""}</span><StatusBadge>{statusLabels[lead.status]}</StatusBadge><SystemIdField value={lead.id} label="线索 ID" /></>}
+              actions={<>{can(me, "crm.marketing.activity.create") && lead.status !== "CONVERTED" && <Button variant="outline" onClick={() => setActivityOpen(true)}><MessageSquarePlus />记录行为</Button>}{can(me, "crm.marketing_lead.qualify") && legalActions.map((action) => <Button key={action} variant="outline" onClick={() => setTransition(action)}>{transitionLabels[action]}</Button>)}{can(me, "crm.marketing_lead.convert") && ["SQL", "QUALIFIED"].includes(lead.status) && <Button onClick={() => setConversionOpen(true)}><GitMerge />转为商机</Button>}{can(me, "crm.marketing_lead.edit") && lead.status !== "CONVERTED" && <Button variant="outline" onClick={() => setFormOpen(true)}><Pencil />编辑</Button>}</>}
+            />
+          </>
+        }
+        sidebar={
+          <>
+            <SummaryStrip items={[
+              { label: "状态", value: statusLabels[lead.status] },
+              { label: "线索负责人", value: lead.owner?.name || "待分配" },
+              { label: "线索匹配度", value: `${lead.fitScore} · ${levelLabels[lead.fitLevel]}` },
+              { label: "互动活跃度", value: `${lead.engagementScoreCached} · ${levelLabels[lead.engagementLevel]}` },
+            ]} />
+            <Section title="身份与公司">
+              <EntityMeta items={[
+                { label: "姓名", value: lead.fullName },
+                { label: "职位", value: lead.title },
+                { label: "Email", value: lead.email },
+                { label: "电话", value: lead.phoneNormalized || lead.phone },
+                { label: "WhatsApp", value: lead.whatsappNormalized || lead.whatsapp },
+                { label: "微信", value: lead.wechat },
+                { label: "LinkedIn", value: lead.linkedinUrl },
+                { label: "公司", value: lead.companyName },
+                { label: "公司网站", value: lead.companyWebsite },
+                { label: "国家 / 地区", value: [lead.countryCode, lead.region, lead.city].filter(Boolean).join(" · ") },
+              ]} />
+            </Section>
+            <Section title="获客与生命周期">
+              <EntityMeta items={[
+                { label: "来源", value: sourceLabels[lead.source] || "其他" },
+                { label: "来源渠道", value: marketingSourceChannelLabel(lead.sourceChannel) },
+                { label: "来源详情", value: lead.sourceDetail },
+                { label: "首次触达", value: dateTime(lead.firstTouchAt) },
+                { label: "转为 MQL 时间", value: dateTime(lead.mqlAt) },
+                { label: "转为 SQL 时间", value: dateTime(lead.sqlAt) },
+                { label: "销售首次响应", value: dateTime(lead.firstSalesResponseAt) },
+                { label: "最近行为", value: dateTime(lead.lastActivityAt) },
+              ]} />
+            </Section>
+          </>
+        }
+      >
+        {lead.status === "CONVERTED" && <Alert><CircleGauge /><AlertTitle>已转商机</AlertTitle><AlertDescription><div className="flex flex-wrap gap-4">{lead.convertedOrganization && <a className="underline" href={`#organizations/${lead.convertedOrganization.id}`}>公司：{lead.convertedOrganization.shortName || lead.convertedOrganization.name}</a>}{lead.convertedContact && <a className="underline" href={`#contacts/${lead.convertedContact.id}`}>联系人：{lead.convertedContact.contactName}</a>}{lead.convertedOpportunity && <a className="underline" href={`#leads/${lead.convertedOpportunity.id}`}>商机：{lead.convertedOpportunity.requirementSummary}</a>}<span>{dateTime(lead.convertedAt)} · {lead.convertedBy?.name || "—"}</span></div></AlertDescription></Alert>}
+        <DetailTabs value={tab} onChange={setTab} items={[["overview", "需求信息"], ["journey", "客户旅程"], ["scoring", "评分历史"], ["audit", "操作记录"]]}>
+          {tab === "overview" ? <div className="space-y-3"><Section title="原始询盘与补充说明"><EntityMeta columns={1} items={[{ label: "询盘类型", value: lead.inquiryType }, { label: "原始询盘", value: <p className="whitespace-pre-wrap">{lead.inquiryContent || "—"}</p> }, { label: "产品兴趣", value: lead.productInterest }, { label: "需求标签", value: lead.requirementTags?.join("、") }, { label: "预算范围", value: lead.budgetRange }, { label: "补充说明", value: <p className="whitespace-pre-wrap">{lead.note || "—"}</p> }, ...(lead.disqualifiedReason ? [{ label: "无效原因", value: lead.disqualifiedReason }] : [])]} /></Section><Section title="系统信息"><EntityMeta items={[{ label: "创建人", value: lead.createdBy?.name }, { label: "创建时间", value: dateTime(lead.createdAt) }, { label: "更新时间", value: dateTime(lead.updatedAt) }, { label: "线索 ID", value: <CopyValue value={lead.id} label="复制 ID" /> }]} /></Section></div>
+          : tab === "journey" ? <Section title="客户旅程"><div className="space-y-0">{journey.map((item) => <div key={item.id} className="grid grid-cols-[8rem_1fr] gap-4 border-b py-3 last:border-0"><time className="text-xs text-muted-foreground">{dateTime(item.at)}</time><div><p className="text-sm font-medium">{item.title}</p><p className="mt-1 text-sm text-muted-foreground">{item.detail}</p></div></div>)}{!journey.length && <p className="text-sm text-muted-foreground">暂无行为与状态事件。</p>}</div></Section>
+          : tab === "scoring" ? <Section title="评分历史"><SummaryStrip items={[{ label: "线索匹配度", value: `${lead.fitScore} · ${levelLabels[lead.fitLevel]}` }, { label: "互动活跃度", value: `${lead.engagementScoreCached} · ${levelLabels[lead.engagementLevel]}` }, { label: "线索热度", value: levelLabels[lead.leadLevel] }, { label: "计算时间", value: dateTime(lead.engagementScoreCalculatedAt) }]} /><div className="mt-5 space-y-3">{lead.scoreHistory?.map((item) => <div key={item.id} className="flex items-start justify-between gap-4 border-b pb-3"><div><p className="text-sm font-medium">{item.dimension === "FIT" ? "线索匹配度" : "互动活跃度"} · {item.reason || "评分变更"}</p><p className="text-xs text-muted-foreground">{item.changedBy?.name || "系统"} · {dateTime(item.createdAt)}</p></div><span className="tabular-nums">{item.previousScore} {item.scoreDelta >= 0 ? "+" : ""}{item.scoreDelta} = {item.newScore}</span></div>)}</div></Section>
+          : <EntityAudit id={lead.id} />}
+        </DetailTabs>
+      </DetailScaffold>
+      {formOpen && <MarketingLeadForm lead={lead} users={users} onClose={() => setFormOpen(false)} onSaved={() => { setFormOpen(false); refresh(); }} />}
+      {activityOpen && <ActivityDialog lead={lead} onClose={() => setActivityOpen(false)} onSaved={() => { setActivityOpen(false); refresh(); }} />}
+      {transition && <TransitionDialog lead={lead} action={transition} onClose={() => setTransition(null)} onSaved={() => { setTransition(null); refresh(); }} />}
+      {conversionOpen && <ConvertDialog lead={lead} me={me} users={users} onClose={() => setConversionOpen(false)} onSaved={() => { setConversionOpen(false); refresh(); }} />}
+    </PageContent>
+  );
 }

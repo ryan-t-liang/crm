@@ -43,6 +43,7 @@ import { marketingSourceChannelLabel, marketingSourceLabel } from "@/lib/product
 import {
   PageContent,
   PageHeader,
+  DetailScaffold,
   EntityHeader,
   EntityMeta,
   ListMetrics,
@@ -97,7 +98,7 @@ export function EntitiesPage({
   const [filters, setFilters] = useState<Record<string, string>>({}),
     [search, setSearch] = useState(""),
     [page, setPage] = useState(1),
-    [tab, setTab] = useState(kind === "contact" ? "overview" : "requirement"),
+    [tab, setTab] = useState(kind === "contact" ? "leads" : "requirement"),
     [selectedIds, setSelectedIds] = useState<string[]>([]),
     [batchOwnerUserId, setBatchOwnerUserId] = useState(""),
     [batchBusy, setBatchBusy] = useState(false),
@@ -336,7 +337,7 @@ export function EntitiesPage({
     },
   ];
   return (
-    <PageContent>
+    <PageContent detail={!!id}>
       {!id ? (
         <>
           <PageHeader
@@ -600,277 +601,130 @@ export function EntitiesPage({
       ) : !row ? (
         <LoadingSkeleton detail />
       ) : (
-        <>
-          <a
-            className="flex w-fit items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-            href={`#${family}`}
-          >
-            <ArrowLeft className="size-3" />
-            返回{label}列表
-          </a>
-          <EntityHeader
-            icon={
-              kind === "contact" ? (
-                <UserAvatar name={nameOf(row)} large showName={false} />
-              ) : (
-                <div className="rounded-lg border p-2.5">
-                  <BriefcaseBusiness className="size-5" />
-                </div>
-              )
-            }
-            title={nameOf(row)}
-            meta={
-              <>
-                <StatusBadge>
-                  {kind === "contact"
-                    ? row.contactType === "INDIVIDUAL"
-                      ? "个人联系人"
-                      : "企业联系人"
-                    : leadStatuses[row.status || ""]}
-                </StatusBadge>
-                <SystemIdField value={row.id} label={kind === "contact" ? "联系人 ID" : "商机 ID"} />
-                {kind === "contact" ? (
+        <DetailScaffold
+          top={
+            <>
+              <a className="crm-detail-back-button" href={`#${family}`} aria-label={`返回${label}列表`}>
+                <ArrowLeft />
+              </a>
+              <EntityHeader
+                icon={kind === "contact" ? <UserAvatar name={nameOf(row)} large showName={false} /> : <div className="crm-detail-symbol"><BriefcaseBusiness /></div>}
+                title={nameOf(row)}
+                meta={
                   <>
-                    <span>{row.title || "未填写职位"}</span>
-                    <span>{row.email || row.phone || "未填写联系方式"}</span>
-                    {row.organizationId ? (
-                      <a
-                        href={`#organizations/${row.organizationId}`}
-                        className="hover:underline"
-                      >
-                        {row.organization?.name || row.companyName}
-                      </a>
+                    <StatusBadge>{kind === "contact" ? row.contactType === "INDIVIDUAL" ? "个人联系人" : "企业联系人" : leadStatuses[row.status || ""]}</StatusBadge>
+                    <SystemIdField value={row.id} label={kind === "contact" ? "联系人 ID" : "商机 ID"} />
+                    {kind === "contact" ? (
+                      <>
+                        <span>{row.title || "未填写职位"}</span>
+                        <span>{row.email || row.phone || "未填写联系方式"}</span>
+                        {row.organizationId ? <a href={`#organizations/${row.organizationId}`} className="hover:underline">{row.organization?.name || row.companyName}</a> : <span>{row.companyName || "未关联公司"}</span>}
+                      </>
                     ) : (
-                      <span>{row.companyName || "未关联公司"}</span>
+                      <>
+                        <StatusBadge>{priorities[row.priority || ""]}</StatusBadge>
+                        <span>销售：{row.salesOwner?.name || "待分配"}</span>
+                        <a className="hover:underline" href={`#contacts/${row.contactId}`}>{row.contact?.contactName}</a>
+                      </>
                     )}
                   </>
-                ) : (
+                }
+                actions={
                   <>
-                    <StatusBadge>{priorities[row.priority || ""]}</StatusBadge>
-                    <span>销售：{row.salesOwner?.name || "待分配"}</span>
-                    <a
-                      className="hover:underline"
-                      href={`#contacts/${row.contactId}`}
-                    >
-                      {row.contact?.contactName}
-                    </a>
-                    {row.contact?.organizationId && (
-                      <a
-                        className="hover:underline"
-                        href={`#organizations/${row.contact.organizationId}`}
-                      >
-                        {row.contact.organization?.name ||
-                          row.contact.companyName}
-                      </a>
-                    )}
+                    {can(me, `crm.${kind}.edit`) && <Button variant="outline" onClick={() => setForm({ kind, record: row })}><Pencil />编辑</Button>}
+                    {canFollow && <Button variant="outline" onClick={() => follow(row)}><MessageSquare />记录跟进</Button>}
+                    {kind === "contact" && can(me, "crm.lead.create") && <Button onClick={() => setForm({ kind: "lead", contact: { id: row.id, contactName: nameOf(row) } })}><Plus />创建商机</Button>}
+                    {can(me, `crm.${kind}.delete`) && <RowActions label={nameOf(row)} items={[{ label: "删除", destructive: true, onClick: () => setDeleting(row) }]} />}
                   </>
-                )}
-              </>
-            }
-            actions={
-              <>
-                {can(me, `crm.${kind}.edit`) && (
-                  <Button
-                    variant="outline"
-                    onClick={() => setForm({ kind, record: row })}
-                  >
-                    <Pencil />
-                    编辑
-                  </Button>
-                )}
-                {canFollow && (
-                  <Button variant="outline" onClick={() => follow(row)}>
-                    <MessageSquare />
-                    记录跟进
-                  </Button>
-                )}
-                {kind === "contact" && can(me, "crm.lead.create") && (
-                  <Button
-                    onClick={() =>
-                      setForm({
-                        kind: "lead",
-                        contact: { id: row.id, contactName: nameOf(row) },
-                      })
-                    }
-                  >
-                    <Plus />
-                    创建商机
-                  </Button>
-                )}
-                {can(me, `crm.${kind}.delete`) && (
-                  <RowActions
-                    label={nameOf(row)}
-                    items={[
-                      {
-                        label: "删除",
-                        destructive: true,
-                        onClick: () => setDeleting(row),
-                      },
-                    ]}
-                  />
-                )}
-              </>
-            }
-          />
-          <SummaryStrip
-            items={
-              kind === "contact"
-                ? [
-                    { label: "联系人负责人", value: row.owner?.name || "待分配" },
-                    { label: "关联商机", value: row.relatedLeadCount ?? 0 },
-                    {
-                      label: "最近互动",
-                      value: dateTime(
-                        journey.data?.data.summary.recentInteractionAt,
-                      ),
-                    },
-                    {
-                      label: "下次跟进",
-                      value: dateTime(
-                        journey.data?.data.summary.nextFollowupAt,
-                      ),
-                    },
-                  ]
-                : [
-                    {
-                      label: "最新进展",
-                      value: String(row.latestProgress || "暂无进展"),
-                    },
-                    { label: "下一步行动", value: row.nextAction || "待安排" },
-                    { label: "下次跟进", value: dateTime(row.nextFollowupAt) },
-                    { label: "最近沟通", value: dateTime(row.lastFollowupAt) },
-                  ]
-            }
-          />
-          {kind === "lead" && (
-            <StagePath
-              current={String(row.status || "NEW")}
-              stages={[
-                { key: "NEW", label: "新建" },
-                { key: "QUALIFIED", label: "已验证" },
-                { key: "SOLUTION", label: "方案" },
-                { key: "QUOTATION", label: "报价" },
-                { key: "WON", label: "成交" },
-                ...(row.status === "LOST"
-                  ? [{ key: "LOST", label: "丢失" }]
-                  : []),
-              ]}
-            />
-          )}
-          {kind === "lead" && row.sourceMarketingLead && (
-            <Section
-              title="来源线索"
-              action={
-                <Button variant="outline" size="sm" asChild>
-                  <a href={`#marketing-leads/${row.sourceMarketingLead.id}`}>查看原始线索</a>
-                </Button>
-              }
-            >
-              <EntityMeta
-                items={[
-                  {
-                    label: "来源线索",
-                    value: `${row.sourceMarketingLead.fullName}${row.sourceMarketingLead.companyName ? ` · ${row.sourceMarketingLead.companyName}` : ""}`,
-                  },
-                  {
-                    label: "获客来源",
-                    value: [
-                      marketingSourceLabel(row.sourceMarketingLead.source),
-                      marketingSourceChannelLabel(row.sourceMarketingLead.sourceChannel),
-                      row.sourceMarketingLead.sourceDetail,
-                    ]
-                      .filter(Boolean)
-                      .join(" / "),
-                  },
-                  {
-                    label: "原始询盘",
-                    value:
-                      row.sourceMarketingLead.inquiryContent?.slice(0, 280) ||
-                      "—",
-                  },
-                  {
-                    label: "转商机时间",
-                    value: dateTime(row.sourceMarketingLead.convertedAt),
-                  },
+                }
+              />
+            </>
+          }
+          sidebar={
+            <>
+              <SummaryStrip
+                items={kind === "contact" ? [
+                  { label: "联系人负责人", value: row.owner?.name || "待分配" },
+                  { label: "关联商机", value: row.relatedLeadCount ?? 0 },
+                  { label: "最近互动", value: dateTime(journey.data?.data.summary.recentInteractionAt) },
+                  { label: "下次跟进", value: dateTime(journey.data?.data.summary.nextFollowupAt) },
+                ] : [
+                  { label: "最新进展", value: String(row.latestProgress || "暂无进展") },
+                  { label: "下一步行动", value: row.nextAction || "待安排" },
+                  { label: "下次跟进", value: dateTime(row.nextFollowupAt) },
+                  { label: "最近沟通", value: dateTime(row.lastFollowupAt) },
                 ]}
               />
-            </Section>
-          )}
-          <div className="min-w-0">
-            <DetailTabs
-              value={tab}
-              onChange={setTab}
-              items={
-                (kind === "contact"
-                  ? [
-                      ["overview", "概览"],
-                      ["leads", "关联商机"],
-                      ["journey", "客户旅程"],
-                      ["notes", "备注与附件"],
-                      ...(can(me, "audit.view")
-                        ? [["audit", "操作记录"]]
-                        : []),
-                    ]
-                  : [
-                      ["requirement", "需求与方案"],
-                      ["followups", "跟进记录"],
-                      ...(can(me, "audit.view")
-                        ? [["audit", "操作记录"]]
-                        : []),
-                    ]) as [string, string][]
-              }
-            >
-              {tab === "overview" && kind === "contact" && (
-                <div className="grid items-start gap-5 lg:grid-cols-2">
-                <Section title="联系人资料">
-                  <EntityMeta
-                    items={[
+              {kind === "contact" ? (
+                <>
+                  <Section title="联系人资料">
+                    <EntityMeta items={[
                       { label: "电话", value: row.phone },
                       { label: "Email", value: row.email },
                       { label: "微信", value: String(row.wechat || "") },
                       { label: "部门", value: String(row.department || "") },
                       { label: "来源", value: row.source },
-                      {
-                        label: "跟进注意",
-                        value: String(row.followupAttention || ""),
-                      },
-                      {
-                        label: "初始信息",
-                        value: String(row.initialContext || ""),
-                      },
-                    ]}
-                  />
-                </Section>
-                <Section title="公司资料">
-                  <EntityMeta
-                    items={[
-                      {
-                        label: "公司",
-                        value: row.organizationId ? (
-                          <a
-                            href={`#organizations/${row.organizationId}`}
-                            className="hover:underline"
-                          >
-                            {row.organization?.name || row.companyName}
-                          </a>
-                        ) : (
-                          row.companyName
-                        ),
-                      },
+                      { label: "跟进注意", value: String(row.followupAttention || "") },
+                      { label: "初始信息", value: String(row.initialContext || "") },
+                    ]} />
+                  </Section>
+                  <Section title="公司资料">
+                    <EntityMeta items={[
+                      { label: "公司", value: row.organizationId ? <a href={`#organizations/${row.organizationId}`} className="hover:underline">{row.organization?.name || row.companyName}</a> : row.companyName },
                       { label: "网站", value: String(row.website || "") },
                       { label: "行业", value: String(row.industry || "") },
-                      {
-                        label: "地区",
-                        value: [row.country, row.region, row.city]
-                          .filter(Boolean)
-                          .join(" · "),
-                      },
+                      { label: "地区", value: [row.country, row.region, row.city].filter(Boolean).join(" · ") },
                       { label: "LinkedIn", value: String(row.linkedin || "") },
-                    ]}
-                  />
-                </Section>
-                </div>
+                    ]} />
+                  </Section>
+                </>
+              ) : (
+                <>
+                  <Section title="商机信息">
+                    <EntityMeta items={[
+                      { label: "商机阶段", value: leadStatuses[row.status || ""] },
+                      { label: "优先级", value: priorities[row.priority || ""] },
+                      { label: "商机负责人", value: row.salesOwner?.name || "待分配" },
+                      { label: "关联联系人", value: row.contact?.contactName },
+                    ]} />
+                  </Section>
+                  <StagePath current={String(row.status || "NEW")} stages={[
+                    { key: "NEW", label: "新建" },
+                    { key: "QUALIFIED", label: "已验证" },
+                    { key: "SOLUTION", label: "方案" },
+                    { key: "QUOTATION", label: "报价" },
+                    { key: "WON", label: "成交" },
+                    ...(row.status === "LOST" ? [{ key: "LOST", label: "丢失" }] : []),
+                  ]} />
+                  {row.sourceMarketingLead && (
+                    <Section title="来源线索" action={<Button variant="outline" size="sm" asChild><a href={`#marketing-leads/${row.sourceMarketingLead.id}`}>查看原始线索</a></Button>}>
+                      <EntityMeta items={[
+                        { label: "来源线索", value: `${row.sourceMarketingLead.fullName}${row.sourceMarketingLead.companyName ? ` · ${row.sourceMarketingLead.companyName}` : ""}` },
+                        { label: "获客来源", value: [marketingSourceLabel(row.sourceMarketingLead.source), marketingSourceChannelLabel(row.sourceMarketingLead.sourceChannel), row.sourceMarketingLead.sourceDetail].filter(Boolean).join(" / ") },
+                        { label: "原始询盘", value: row.sourceMarketingLead.inquiryContent?.slice(0, 280) || "—" },
+                        { label: "转商机时间", value: dateTime(row.sourceMarketingLead.convertedAt) },
+                      ]} />
+                    </Section>
+                  )}
+                </>
               )}
+            </>
+          }
+        >
+          <DetailTabs
+            value={tab}
+            onChange={setTab}
+            items={(kind === "contact" ? [
+              ["leads", `关联商机 ${row.relatedLeadCount ?? 0}`],
+              ["journey", "客户旅程"],
+              ["notes", "备注与附件"],
+              ...(can(me, "audit.view") ? [["audit", "操作记录"]] : []),
+            ] : [
+              ["requirement", "需求与方案"],
+              ["followups", "跟进记录"],
+              ...(can(me, "audit.view") ? [["audit", "操作记录"]] : []),
+            ]) as [string, string][]}
+          >
               {tab === "leads" &&
                 kind === "contact" &&
                 (can(me, "crm.lead.view") ? (
@@ -928,9 +782,8 @@ export function EntitiesPage({
               {tab === "audit" && can(me, "audit.view") && (
                 <EntityAudit id={row.id} />
               )}
-            </DetailTabs>
-          </div>
-        </>
+          </DetailTabs>
+        </DetailScaffold>
       )}
       {form && (
         <EntityForm
