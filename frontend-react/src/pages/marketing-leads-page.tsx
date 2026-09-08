@@ -87,8 +87,13 @@ function nullable(value: string) {
   return value.trim() || null;
 }
 
-function MarketingLeadForm({ lead, users, onClose, onSaved }: { lead?: MarketingLead; users: CrmUser[]; onClose: () => void; onSaved: (lead: MarketingLead) => void }) {
-  const [form, setForm] = useState(() => initialForm(lead));
+export type MarketingLeadFormDefaults = Partial<Pick<
+  LeadFormState,
+  "companyName" | "companyWebsite" | "industry" | "countryCode" | "region" | "city"
+>>;
+
+export function MarketingLeadForm({ lead, initialValues, users, onClose, onSaved }: { lead?: MarketingLead; initialValues?: MarketingLeadFormDefaults; users: CrmUser[]; onClose: () => void; onSaved: (lead: MarketingLead) => void }) {
+  const [form, setForm] = useState(() => ({ ...initialForm(lead), ...initialValues }));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});

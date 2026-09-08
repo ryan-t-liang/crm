@@ -62,6 +62,15 @@ const organizationRoleAliases = new Map([
   ["PROSPECT", "PROSPECT"], ["潜在客户", "PROSPECT"], ["CUSTOMER", "CUSTOMER"], ["客户", "CUSTOMER"],
   ["VENDOR", "VENDOR"], ["供应商", "VENDOR"], ["PARTNER", "PARTNER"], ["合作伙伴", "PARTNER"],
 ]);
+const organizationTypeAliases = new Map([
+  ["ENTERPRISE", "ENTERPRISE"], ["企业", "ENTERPRISE"],
+  ["SCHOOL", "SCHOOL"], ["学校", "SCHOOL"], ["高校", "SCHOOL"], ["学校 / 高校", "SCHOOL"],
+  ["GOVERNMENT", "GOVERNMENT"], ["政府机构", "GOVERNMENT"],
+  ["ASSOCIATION", "ASSOCIATION"], ["协会", "ASSOCIATION"], ["商会", "ASSOCIATION"], ["协会 / 商会", "ASSOCIATION"],
+  ["NONPROFIT", "NONPROFIT"], ["非营利组织", "NONPROFIT"],
+  ["FOUNDATION", "FOUNDATION"], ["基金会", "FOUNDATION"],
+  ["OTHER", "OTHER"], ["其他", "OTHER"],
+]);
 const lifecycleAliases = new Map([
   ["TARGET", "TARGET"], ["目标", "TARGET"], ["CONTACTED", "CONTACTED"], ["已触达", "CONTACTED"],
   ["NURTURING", "NURTURING"], ["孵化中", "NURTURING"], ["OPPORTUNITY", "OPPORTUNITY"], ["机会中", "OPPORTUNITY"],
@@ -271,12 +280,14 @@ async function preflightOrganizations(app: FastifyInstance, rows: Array<{ rowNum
     const errors: ValidationMessage[] = [];
     const warnings: ValidationMessage[] = [];
     const roles = splitMultiValue(raw.roles || "PROSPECT").map((value) => enumValue(value, organizationRoleAliases, "roles", "PROSPECT", errors));
+    const organizationType = enumValue(raw.organizationType, organizationTypeAliases, "organizationType", "ENTERPRISE", errors);
     const lifecycleStage = enumValue(raw.lifecycle, lifecycleAliases, "lifecycle", "TARGET", errors);
     const fitScore = trimOrNull(raw.fitScore) ? Number(raw.fitScore) : 0;
     if (!Number.isInteger(fitScore) || fitScore < 0 || fitScore > 100) errors.push({ code: "INVALID_FIT_SCORE", field: "fitScore", message: "fitScore 必须是 0 到 100 的整数" });
     const candidate = {
-      name: String(raw.name ?? "").trim(), shortName: trimOrNull(raw.shortName), website: trimOrNull(raw.website),
+      name: String(raw.name ?? "").trim(), shortName: trimOrNull(raw.shortName), organizationType, website: trimOrNull(raw.website),
       industry: trimOrNull(raw.industry), country: trimOrNull(raw.country), region: trimOrNull(raw.region), city: trimOrNull(raw.city),
+      district: trimOrNull(raw.district), street: trimOrNull(raw.street),
       roles, lifecycleStage, ownerUserId: resolveUser(raw.owner, "owner", errors), fitScore,
       fitReason: trimOrNull(raw.fitReason), note: trimOrNull(raw.note), confirmDuplicate: false,
     };
@@ -544,7 +555,17 @@ function exportWhere(objectType: CrmJobObjectType, input: CrmExportRequestInput,
     ...selected,
     lifecycleStage: filtered.lifecycleStage || undefined,
     ownerUserId: filtered.ownerUserId || (filtered.view === "mine" ? actor.userId : undefined),
-    roles: filtered.role ? { some: { role: filtered.role } } : undefined,
+    roles: filtered.role
+      ? {
+          some: {
+            role:
+              filtered.role === "CUSTOMER_RELATION"
+                ? { in: ["PROSPECT", "CUSTOMER"] }
+                : filtered.role,
+          },
+        }
+      : undefined,
+    organizationType: filtered.organizationType || undefined,
     OR: filtered.keyword ? [{ name: contains(filtered.keyword) }, { shortName: contains(filtered.keyword) }, { website: contains(filtered.keyword) }] : undefined,
   };
   if (objectType === "CONTACT") return {

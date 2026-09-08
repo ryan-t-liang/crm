@@ -5,17 +5,18 @@ import { guard } from "../common/auth.js";
 import { ApiError } from "../common/errors.js";
 import { paginationMeta, paginationSchema } from "../common/pagination.js";
 import { contentDispositionFilename, CrmAttachmentService } from "../crm-leads/attachments.js";
-import { nurtureCreateSchema, nurturePatchSchema, organizationCreateSchema, organizationLifecycleSchema, organizationPatchSchema, organizationRoleSchema } from "./schemas.js";
+import { nurtureCreateSchema, nurturePatchSchema, organizationCreateSchema, organizationLifecycleSchema, organizationPatchSchema, organizationRoleSchema, organizationTypeSchema } from "./schemas.js";
 import { OrganizationNurtureService, OrganizationService } from "./service.js";
 import { CITIES, COUNTRIES, INDUSTRY_TAXONOMY, REGIONS } from "./reference-data.js";
 
 const listQuerySchema = paginationSchema.extend({
   view: z.enum(["all", "mine", "priority", "opportunity", "customer", "reactivation", "dormant"]).default("all"),
   keyword: z.string().trim().max(200).optional(),
-  role: organizationRoleSchema.optional(),
+  role: z.union([organizationRoleSchema, z.literal("CUSTOMER_RELATION")]).optional(),
   lifecycleStage: organizationLifecycleSchema.optional(),
   ownerUserId: z.string().trim().min(1).max(32).optional(),
   industry: z.string().trim().max(160).optional(),
+  organizationType: organizationTypeSchema.optional(),
   fitLevel: z.enum(["LOW", "MEDIUM", "HIGH"]).optional(),
   engagementLevel: z.enum(["LOW", "MEDIUM", "HIGH"]).optional(),
   engagementState: z.enum(["ACTIVE", "COOLING", "DORMANT"]).optional(),

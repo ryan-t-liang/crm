@@ -281,8 +281,8 @@ export function App() {
                       ? "数据看板"
                       : family === "organizations"
                         ? entityId
-                          ? "公司 / 公司详情"
-                          : "公司"
+                          ? "组织 / 组织详情"
+                          : "组织"
                         : family === "contacts"
                           ? entityId
                             ? "联系人详情"

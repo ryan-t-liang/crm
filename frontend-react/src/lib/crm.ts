@@ -220,6 +220,7 @@ export type Organization = {
   industry?: string;
   industryCode?: string;
   industryCustom?: string;
+  organizationType: string;
   country?: string;
   countryCode?: string;
   region?: string;
@@ -227,6 +228,8 @@ export type Organization = {
   city?: string;
   cityCode?: string;
   cityCustom?: string;
+  district?: string;
+  street?: string;
   note?: string;
   ownerUserId?: string;
   owner?: CrmUser;
@@ -241,6 +244,7 @@ export type Organization = {
   engagementBreakdown: { key: string; label: string; points: number }[];
   dormantDays: number | null;
   contactCount: number;
+  marketingLeadCount?: number;
   activeLeadCount: number;
   wonLeadCount: number;
   lastInteractionAt: string | null;
@@ -250,6 +254,7 @@ export type Organization = {
   updatedAt: string;
   createdAt: string;
   contacts: Contact[];
+  marketingLeads?: MarketingLead[];
   leads: Lead[];
   tasks: Task[];
   nurtures: Nurture[];

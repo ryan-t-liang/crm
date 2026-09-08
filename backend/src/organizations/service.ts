@@ -1,4 +1,4 @@
-import type { OrganizationLifecycle, OrganizationRoleType, Prisma, PrismaClient } from "@prisma/client";
+import type { OrganizationLifecycle, OrganizationRoleType, OrganizationType, Prisma, PrismaClient } from "@prisma/client";
 import type { AppConfig } from "../common/config.js";
 import type { AuditActorContext } from "../common/audit.js";
 import { appendAuditRecord } from "../common/audit.js";
@@ -15,10 +15,11 @@ export type OrganizationListInput = {
   view?: "all" | "mine" | "priority" | "opportunity" | "customer" | "reactivation" | "dormant";
   currentUserId?: string;
   keyword?: string;
-  role?: OrganizationRoleType;
+  role?: OrganizationRoleType | "CUSTOMER_RELATION";
   lifecycleStage?: OrganizationLifecycle;
   ownerUserId?: string;
   industry?: string;
+  organizationType?: OrganizationType;
   fitLevel?: "LOW" | "MEDIUM" | "HIGH";
   engagementLevel?: "LOW" | "MEDIUM" | "HIGH";
   engagementState?: "ACTIVE" | "COOLING" | "DORMANT";
@@ -42,7 +43,7 @@ function consistentRoles(roles: OrganizationRoleType[], lifecycle: OrganizationL
 
 async function requireOrganization(db: CrmDbClient, id: string) {
   const row = await db.organization.findFirst({ where: { id, deletedAt: null } });
-  if (!row) throw new ApiError(404, "RESOURCE_NOT_FOUND", "公司不存在");
+  if (!row) throw new ApiError(404, "RESOURCE_NOT_FOUND", "组织不存在");
   return row;
 }
 
@@ -200,7 +201,17 @@ export class OrganizationService {
       lifecycleStage: input.lifecycleStage,
       ownerUserId: input.ownerUserId,
       industry: input.industry ? { contains: input.industry } : undefined,
-      roles: input.role ? { some: { role: input.role } } : undefined,
+      organizationType: input.organizationType,
+      roles: input.role
+        ? {
+            some: {
+              role:
+                input.role === "CUSTOMER_RELATION"
+                  ? { in: ["PROSPECT", "CUSTOMER"] }
+                  : input.role,
+            },
+          }
+        : undefined,
     };
     if (input.keyword) where.OR = [
       { name: { contains: input.keyword } },
@@ -233,7 +244,7 @@ export class OrganizationService {
     await assertAssignableCrmUser(this.prisma, input.ownerUserId, "ownerUserId");
     const duplicates = await this.duplicateCandidates(input.name, input.website);
     if (duplicates.length && !confirmDuplicate) {
-      throw new ApiError(409, "ORGANIZATION_DUPLICATE_WARNING", "发现可能重复的公司，请选择已有公司或确认继续创建", { candidates: duplicates });
+      throw new ApiError(409, "ORGANIZATION_DUPLICATE_WARNING", "发现可能重复的组织，请选择已有组织或确认继续创建", { candidates: duplicates });
     }
     return this.prisma.$transaction(async (tx) => {
       const row = await tx.organization.create({
@@ -247,7 +258,7 @@ export class OrganizationService {
         },
         include: { owner: { select: crmUserSummarySelect }, roles: true },
       });
-      await enqueueAssignmentNotification(tx, { entityType: "ORGANIZATION", entityId: row.id, entityLabel: `公司：${row.shortName || row.name}`, fieldKey: "ownerUserId", fromUserId: null, toUserId: row.ownerUserId, assignedByUserId: createdByUserId, path: `/crm_kivisense/#organizations/${row.id}` });
+      await enqueueAssignmentNotification(tx, { entityType: "ORGANIZATION", entityId: row.id, entityLabel: `组织：${row.shortName || row.name}`, fieldKey: "ownerUserId", fromUserId: null, toUserId: row.ownerUserId, assignedByUserId: createdByUserId, path: `/crm_kivisense/#organizations/${row.id}` });
       await appendAuditRecord(tx, audit, { action: "CREATE_ORGANIZATION", module: "crm", targetType: "organization", targetId: row.id, details: { roles, fields: Object.keys(fields), duplicateOverride: confirmDuplicate } });
       return (await new OrganizationMetricsService(tx as unknown as PrismaClient, this.config).hydrate([row]))[0];
     });
@@ -272,7 +283,7 @@ export class OrganizationService {
         },
         include: { owner: { select: crmUserSummarySelect }, roles: true },
       });
-      if (input.ownerUserId !== undefined) await enqueueAssignmentNotification(tx, { entityType: "ORGANIZATION", entityId: id, entityLabel: `公司：${row.shortName || row.name}`, fieldKey: "ownerUserId", fromUserId: existing.ownerUserId, toUserId: row.ownerUserId, assignedByUserId: audit.actorUserId!, path: `/crm_kivisense/#organizations/${id}` });
+      if (input.ownerUserId !== undefined) await enqueueAssignmentNotification(tx, { entityType: "ORGANIZATION", entityId: id, entityLabel: `组织：${row.shortName || row.name}`, fieldKey: "ownerUserId", fromUserId: existing.ownerUserId, toUserId: row.ownerUserId, assignedByUserId: audit.actorUserId!, path: `/crm_kivisense/#organizations/${id}` });
       if (input.lifecycleStage && input.lifecycleStage !== existing.lifecycleStage) {
         await tx.organizationLifecycleHistory.create({ data: { organizationId: id, fromStage: existing.lifecycleStage, toStage: input.lifecycleStage, reason: "Manual lifecycle update", changedByUserId: audit.actorUserId! } });
       }
@@ -290,7 +301,7 @@ export class OrganizationService {
       const rows = await tx.organization.findMany({ where: { id: { in: ids }, deletedAt: null }, select: { id: true, name: true, shortName: true, ownerUserId: true } });
       for (const row of rows.filter((item) => item.ownerUserId !== ownerUserId)) {
         await tx.organization.update({ where: { id: row.id }, data: { ownerUserId } });
-        await enqueueAssignmentNotification(tx, { entityType: "ORGANIZATION", entityId: row.id, entityLabel: `公司：${row.shortName || row.name}`, fieldKey: "ownerUserId", fromUserId: row.ownerUserId, toUserId: ownerUserId, assignedByUserId: audit.actorUserId!, path: `/crm_kivisense/#organizations/${row.id}` });
+        await enqueueAssignmentNotification(tx, { entityType: "ORGANIZATION", entityId: row.id, entityLabel: `组织：${row.shortName || row.name}`, fieldKey: "ownerUserId", fromUserId: row.ownerUserId, toUserId: ownerUserId, assignedByUserId: audit.actorUserId!, path: `/crm_kivisense/#organizations/${row.id}` });
       }
       await appendAuditRecord(tx, audit, { action: "BATCH_ASSIGN_ORGANIZATIONS", module: "crm", targetType: "organization", details: { requestedIds: ids.length, changedIds: rows.filter((item) => item.ownerUserId !== ownerUserId).map((item) => item.id), ownerUserId } });
       return { requested: ids.length, matched: rows.length, changed: rows.filter((item) => item.ownerUserId !== ownerUserId).length };
@@ -299,18 +310,33 @@ export class OrganizationService {
 
   async detail(id: string) {
     const row = await this.prisma.organization.findFirst({ where: { id, deletedAt: null }, include: { owner: { select: crmUserSummarySelect }, roles: true } });
-    if (!row) throw new ApiError(404, "RESOURCE_NOT_FOUND", "公司不存在");
+    if (!row) throw new ApiError(404, "RESOURCE_NOT_FOUND", "组织不存在");
     const [enriched] = await this.metrics.hydrate([row]);
     const contacts = await this.prisma.contact.findMany({ where: { organizationId: id, deletedAt: null }, include: { owner: { select: crmUserSummarySelect }, _count: { select: { leads: { where: { deletedAt: null } } } } }, orderBy: [{ updatedAt: "desc" }, { id: "desc" }] });
     const contactIds = contacts.map((item) => item.id);
-    const [leads, nurtures, tasks, files, lifecycleHistory] = await Promise.all([
+    const [leads, marketingLeads, nurtures, tasks, files, lifecycleHistory] = await Promise.all([
       this.prisma.crmLead.findMany({ where: { contactId: { in: contactIds }, deletedAt: null }, include: { contact: { select: { id: true, contactName: true } }, salesOwner: { select: crmUserSummarySelect } }, orderBy: [{ updatedAt: "desc" }, { id: "desc" }] }),
+      this.prisma.marketingLead.findMany({
+        where: { convertedOrganizationId: id, deletedAt: null },
+        include: { owner: { select: crmUserSummarySelect } },
+        orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+      }),
       this.prisma.organizationNurture.findMany({ where: { organizationId: id }, include: { owner: { select: crmUserSummarySelect }, createdBy: { select: crmUserSummarySelect } }, orderBy: [{ updatedAt: "desc" }, { id: "desc" }] }),
       this.prisma.crmTask.findMany({ where: { OR: [{ organizationId: id }, { contactId: { in: contactIds } }, { lead: { contactId: { in: contactIds } } }] }, include: { owner: { select: crmUserSummarySelect }, contact: { select: { id: true, contactName: true } }, lead: { select: { id: true, requirementSummary: true, status: true } } }, orderBy: [{ dueAt: "asc" }, { id: "asc" }] }),
       this.prisma.crmAttachment.findMany({ where: { entityType: "ORGANIZATION", entityId: id }, select: crmAttachmentSelect, orderBy: [{ createdAt: "desc" }, { id: "desc" }] }),
       this.prisma.organizationLifecycleHistory.findMany({ where: { organizationId: id }, include: { changedBy: { select: crmUserSummarySelect } }, orderBy: [{ changedAt: "desc" }, { id: "desc" }] }),
     ]);
-    return { ...enriched, contacts, leads, nurtures, tasks, files, lifecycleHistory };
+    return {
+      ...enriched,
+      contacts,
+      marketingLeads,
+      marketingLeadCount: marketingLeads.length,
+      leads,
+      nurtures,
+      tasks,
+      files,
+      lifecycleHistory,
+    };
   }
 
   async remove(id: string, audit: AuditActorContext) {
@@ -318,7 +344,7 @@ export class OrganizationService {
       const existing = await requireOrganization(tx, id);
       const contactCount = await tx.contact.count({ where: { organizationId: id, deletedAt: null } });
       const activeLeadCount = await tx.crmLead.count({ where: { contact: { organizationId: id, deletedAt: null }, deletedAt: null, status: { in: [...ACTIVE_LEAD_STATUSES] } } });
-      if (contactCount || activeLeadCount) throw new ApiError(409, "ORGANIZATION_HAS_ACTIVE_RELATIONS", `公司仍有 ${contactCount} 位联系人、${activeLeadCount} 条活跃商机，不能删除`, { contactCount, activeLeadCount });
+      if (contactCount || activeLeadCount) throw new ApiError(409, "ORGANIZATION_HAS_ACTIVE_RELATIONS", `组织仍有 ${contactCount} 位联系人、${activeLeadCount} 条活跃商机，不能删除`, { contactCount, activeLeadCount });
       await tx.organization.update({ where: { id }, data: { deletedAt: new Date(), deletedByUserId: audit.actorUserId } });
       await appendAuditRecord(tx, audit, { action: "DELETE_ORGANIZATION", module: "crm", targetType: "organization", targetId: id, details: { name: existing.name } });
       return { id };
@@ -350,7 +376,7 @@ export class OrganizationService {
     const contactById = new Map(contacts.map((item) => [item.id, item]));
     const leadById = new Map(leads.map((item) => [item.id, item]));
     const events: Array<{ id: string; occurredAt: Date; type: string; title: string; summary: string; actor?: unknown; relatedContactId?: string; relatedLeadId?: string }> = [
-      { id: `organization-${id}`, occurredAt: organization.createdAt, type: "ORGANIZATION_CREATED", title: "创建公司", summary: organization.name },
+      { id: `organization-${id}`, occurredAt: organization.createdAt, type: "ORGANIZATION_CREATED", title: "创建组织", summary: organization.name },
     ];
     contacts.forEach((item) => events.push({ id: `contact-${item.id}`, occurredAt: item.createdAt, type: "CONTACT_CREATED", title: "创建联系人", summary: item.contactName, relatedContactId: item.id }));
     contactFollowups.forEach((item) => events.push({ id: `contact-followup-${item.id}`, occurredAt: item.occurredAt, type: "CONTACT_FOLLOWUP", title: "联系人互动", summary: item.content, actor: item.owner, relatedContactId: item.contactId }));
@@ -358,7 +384,7 @@ export class OrganizationService {
     leadFollowups.forEach((item) => events.push({ id: `lead-followup-${item.id}`, occurredAt: item.occurredAt, type: "OPPORTUNITY_FOLLOWUP", title: "商机跟进", summary: item.content, actor: item.owner, relatedContactId: leadById.get(item.leadId)?.contactId, relatedLeadId: item.leadId }));
     stages.forEach((item) => events.push({ id: `stage-${item.id}`, occurredAt: item.changedAt, type: ["WON", "LOST"].includes(item.toStatus) ? `OPPORTUNITY_${item.toStatus}` : "OPPORTUNITY_STAGE_CHANGED", title: "商机阶段变更", summary: `${item.fromStatus || "-"} → ${item.toStatus}`, actor: item.changedBy, relatedContactId: leadById.get(item.leadId)?.contactId, relatedLeadId: item.leadId }));
     nurtures.forEach((item) => events.push({ id: `nurture-${item.id}`, occurredAt: item.createdAt, type: "ACCOUNT_PLAN_EVENT", title: "开始客户经营计划", summary: `${item.reason} · 下一触达：${item.touchTopic}`, actor: item.owner }));
-    lifecycle.forEach((item) => events.push({ id: `lifecycle-${item.id}`, occurredAt: item.changedAt, type: "LIFECYCLE_CHANGED", title: "公司生命周期变更", summary: `${item.fromStage || "-"} → ${item.toStage}`, actor: item.changedBy }));
+    lifecycle.forEach((item) => events.push({ id: `lifecycle-${item.id}`, occurredAt: item.changedAt, type: "LIFECYCLE_CHANGED", title: "组织生命周期变更", summary: `${item.fromStage || "-"} → ${item.toStage}`, actor: item.changedBy }));
     convertedMarketingLeads.forEach((marketingLead) => {
       marketingLead.statusHistory.filter((item) => ["MQL", "SQL"].includes(item.toStatus)).forEach((history) => events.push({ id: `marketing-${history.id}`, occurredAt: history.changedAt, type: `MARKETING_LEAD_${history.toStatus}`, title: `Marketing Lead → ${history.toStatus}`, summary: `${marketingLead.fullName} · ${marketingLead.source}`, actor: history.changedBy, relatedContactId: marketingLead.convertedContactId ?? undefined }));
       if (marketingLead.convertedAt) events.push({ id: `marketing-converted-${marketingLead.id}`, occurredAt: marketingLead.convertedAt, type: "MARKETING_LEAD_CONVERTED", title: "线索已转为商机", summary: marketingLead.convertedOpportunity?.requirementSummary || marketingLead.fullName, actor: marketingLead.convertedBy, relatedContactId: marketingLead.convertedContact?.id, relatedLeadId: marketingLead.convertedOpportunity?.id });

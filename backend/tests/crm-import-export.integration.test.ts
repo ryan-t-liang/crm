@@ -199,7 +199,7 @@ describe.skipIf(!enabled).sequential("Kivisense CRM 2.0 import and export", () =
     expect(download.statusCode).toBe(200);
     const book = new ExcelJS.Workbook();
     await book.xlsx.load(download.rawPayload as never);
-    expect(headers(book.worksheets[0]!)).toEqual(expect.arrayContaining(["公司编号", "公司名称", "业务关系", "客户阶段", "客户匹配度", "评分原因", "Logo"]));
+    expect(headers(book.worksheets[0]!)).toEqual(expect.arrayContaining(["组织编号", "组织", "组织类型", "组织关系", "客户阶段", "客户匹配度", "评分原因", "Logo"]));
   });
 
   it("联系人导入执行预检并生成失败明细", async () => {

@@ -6,10 +6,10 @@
  * users or inventing page-local translations.
  */
 export const auditActionLabels: Record<string, string> = {
-  CREATE_ORGANIZATION: "创建公司",
-  UPDATE_ORGANIZATION: "更新公司",
-  DELETE_ORGANIZATION: "删除公司",
-  BATCH_ASSIGN_ORGANIZATIONS: "批量分配公司负责人",
+  CREATE_ORGANIZATION: "创建组织",
+  UPDATE_ORGANIZATION: "更新组织",
+  DELETE_ORGANIZATION: "删除组织",
+  BATCH_ASSIGN_ORGANIZATIONS: "批量分配组织负责人",
   CREATE_CONTACT: "创建联系人",
   UPDATE_CONTACT: "更新联系人",
   DELETE_CONTACT: "删除联系人",
@@ -75,7 +75,7 @@ export function auditActionLabel(action: string): string {
 
 export const auditModuleLabels: Record<string, string> = {
   crm: "CRM",
-  crm_organization: "公司",
+  crm_organization: "组织",
   crm_marketing: "线索",
   crm_import: "数据导入",
   crm_export: "数据导出",
@@ -85,7 +85,7 @@ export const auditModuleLabels: Record<string, string> = {
 };
 
 export const auditTargetLabels: Record<string, string> = {
-  organization: "公司",
+  organization: "组织",
   contact: "联系人",
   contact_followup: "联系人跟进记录",
   marketing_lead: "线索",
@@ -184,6 +184,16 @@ export const organizationRoleLabels: Record<string, string> = {
   CUSTOMER: "客户（已成交）",
   VENDOR: "供应商",
   PARTNER: "合作伙伴",
+};
+
+export const organizationTypeLabels: Record<string, string> = {
+  ENTERPRISE: "企业",
+  SCHOOL: "学校 / 高校",
+  GOVERNMENT: "政府机构",
+  ASSOCIATION: "协会 / 商会",
+  NONPROFIT: "非营利组织",
+  FOUNDATION: "基金会",
+  OTHER: "其他",
 };
 
 export const contactTypeLabels: Record<string, string> = {

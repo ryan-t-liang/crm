@@ -39,14 +39,17 @@ const contactFields: CrmImportField[] = [
 ];
 
 const organizationFields: CrmImportField[] = [
-  { key: "name", label: "公司名称", type: "text", required: true, example: "Dena Technologies Co., Ltd." },
-  { key: "shortName", label: "公司简称", type: "text", required: false, example: "Dena" },
+  { key: "name", label: "组织", type: "text", required: true, example: "Dena Technologies Co., Ltd." },
+  { key: "shortName", label: "组织简称", type: "text", required: false, example: "Dena" },
+  { key: "organizationType", label: "组织类型", type: "enum", required: false, options: ["ENTERPRISE", "SCHOOL", "GOVERNMENT", "ASSOCIATION", "NONPROFIT", "FOUNDATION", "OTHER"], example: "ENTERPRISE" },
   { key: "website", label: "网站", type: "url", required: false, example: "https://dena.example.com" },
   { key: "industry", label: "行业", type: "text", required: false, example: "Consumer Electronics" },
   { key: "country", label: "国家", type: "text", required: false, example: "Iran" },
   { key: "region", label: "区域", type: "text", required: false, example: "Middle East" },
   { key: "city", label: "城市", type: "text", required: false, example: "Tehran" },
-  { key: "roles", label: "公司角色（每行一项）", type: "multi-text", required: false, options: ["PROSPECT", "CUSTOMER", "VENDOR", "PARTNER"], example: "PROSPECT" },
+  { key: "district", label: "区", type: "text", required: false, example: "Pudong" },
+  { key: "street", label: "街道", type: "text", required: false, example: "Century Avenue 100" },
+  { key: "roles", label: "组织关系（每行一项）", type: "multi-text", required: false, options: ["PROSPECT", "CUSTOMER", "VENDOR", "PARTNER"], example: "PROSPECT" },
   { key: "lifecycle", label: "生命周期", type: "enum", required: false, options: ["TARGET", "CONTACTED", "NURTURING", "OPPORTUNITY", "CUSTOMER", "DISQUALIFIED"], example: "TARGET" },
   { key: "owner", label: "负责人账号或用户编号", type: "owner", required: false, example: "sales@example.com" },
   { key: "fitScore", label: "适配评分", type: "decimal", required: false, example: "80" },
@@ -124,7 +127,7 @@ export async function crmTemplateWorkbook(objectType: CrmJobObjectType): Promise
   const workbook = new ExcelJS.Workbook();
   workbook.creator = "Kivisense CRM";
   workbook.created = new Date("2026-09-03T00:00:00.000Z");
-  const sheetName = objectType === "CONTACT" ? "联系人" : objectType === "CRM_LEAD" ? "商机" : objectType === "MARKETING_LEAD" ? "线索" : "公司";
+  const sheetName = objectType === "CONTACT" ? "联系人" : objectType === "CRM_LEAD" ? "商机" : objectType === "MARKETING_LEAD" ? "线索" : "组织";
   const sheet = workbook.addWorksheet(sheetName, { views: [{ state: "frozen", ySplit: 2 }] });
   fields.forEach((field, index) => {
     const column = index + 1;
@@ -161,7 +164,7 @@ export async function crmTemplateWorkbook(objectType: CrmJobObjectType): Promise
     ["负责人", "只接受启用账号的登录账号或用户编号精确匹配；多人员字段每行填写一个账号或用户编号。"],
     ["枚举", "只接受模板下拉中的标准枚举；系统同时接受需求中明确列出的中文别名。"],
     ["时间", "建议使用 YYYY-MM-DD HH:mm:ss 或带时区的 ISO 8601 时间。"],
-    ["关联", objectType === "CONTACT" ? "商机、合同和项目关联由系统管理；Meeting Minutes 只接受外部 HTTP/HTTPS URL，或留空后在 CRM 上传。" : objectType === "CRM_LEAD" ? "只通过 contactId 关联现有联系人；附件列只接受外部 HTTP/HTTPS URL，或留空后在 CRM 上传。" : objectType === "MARKETING_LEAD" ? "导入只创建线索主档，不导入评分历史或行为历史。" : "公司关联由系统主档管理。"],
+    ["关联", objectType === "CONTACT" ? "商机、合同和项目关联由系统管理；Meeting Minutes 只接受外部 HTTP/HTTPS URL，或留空后在 CRM 上传。" : objectType === "CRM_LEAD" ? "只通过 contactId 关联现有联系人；附件列只接受外部 HTTP/HTTPS URL，或留空后在 CRM 上传。" : objectType === "MARKETING_LEAD" ? "导入只创建线索主档，不导入评分历史或行为历史。" : "组织关系由系统主档管理。"],
     ["附件", "每行可填写多个外部 URL，以换行分隔。仅填写本地文件名会在预检中提示 ATTACHMENT_FILE_NOT_AVAILABLE，且不会伪造上传记录。"],
     ["跟进", "本模板不创建历史跟进时间线；仅导入当前字段和下一次跟进时间。"],
   ]);
@@ -208,8 +211,8 @@ export const marketingLeadExportFields = [
 ] as const;
 
 export const organizationExportFields = [
-  ["id", "公司编号"], ["name", "公司名称"], ["shortName", "公司简称"], ["website", "网站"],
-  ["industry", "行业"], ["country", "国家"], ["region", "区域"], ["city", "城市"],
-  ["roles", "业务关系"], ["lifecycle", "客户阶段"], ["owner", "负责人"], ["fitScore", "客户匹配度"],
+  ["id", "组织编号"], ["name", "组织"], ["shortName", "组织简称"], ["organizationType", "组织类型"], ["website", "网站"],
+  ["industry", "行业"], ["country", "国家"], ["region", "省 / 州"], ["city", "城市"], ["district", "区"], ["street", "街道"],
+  ["roles", "组织关系"], ["lifecycle", "客户阶段"], ["owner", "负责人"], ["fitScore", "客户匹配度"],
   ["fitReason", "评分原因"], ["note", "备注"], ["logo", "Logo"], ["createdAt", "创建时间"], ["updatedAt", "更新时间"],
 ] as const;

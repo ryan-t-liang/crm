@@ -16,8 +16,9 @@ import {
   Field,
   FilterControl,
   focusFirstInvalidField,
-  FormDialog,
+  FormDrawer,
 } from "./primitives";
+import { organizationTypeLabels } from "@/lib/product-language";
 
 type ReferenceNode = {
   code: string;
@@ -56,6 +57,7 @@ export function OrganizationForm({
         "industry",
         "industryCode",
         "industryCustom",
+        "organizationType",
         "country",
         "countryCode",
         "region",
@@ -63,6 +65,8 @@ export function OrganizationForm({
         "city",
         "cityCode",
         "cityCustom",
+        "district",
+        "street",
         "ownerUserId",
         "lifecycleStage",
         "fitReason",
@@ -76,7 +80,9 @@ export function OrganizationForm({
           ] ??
             (key === "fitScore"
               ? "0"
-              : key === "lifecycleStage"
+              : key === "organizationType"
+                ? "ENTERPRISE"
+                : key === "lifecycleStage"
                 ? "TARGET"
                 : key === "ownerUserId"
                   ? organization
@@ -116,22 +122,14 @@ export function OrganizationForm({
     (item) => item.code === values.industryCode,
   );
   const industryCategory = selectedIndustry?.parent || selectedIndustry?.code || "";
-  const regionOptions = [
-    ...(referenceData?.regions.filter(
-      (item) => item.parent === values.countryCode,
-    ) || []),
-    { code: "OTHER", label: "其他 / 自定义", parent: values.countryCode || null },
-  ];
-  const cityOptions = [
-    ...(referenceData?.cities.filter(
-      (item) => item.parent === values.regionCode,
-    ) || []),
-    { code: "OTHER", label: "其他 / 自定义", parent: values.regionCode || null },
-  ];
+  const regionOptions =
+    referenceData?.regions.filter((item) => item.parent === values.countryCode) || [];
+  const cityOptions =
+    referenceData?.cities.filter((item) => item.parent === values.regionCode) || [];
   async function save() {
     const clientErrors: Record<string, string> = {};
-    if (!values.name.trim()) clientErrors.name = "请填写公司名称。";
-    if (!roles.length) clientErrors.roles = "请至少选择一种业务关系。";
+    if (!values.name.trim()) clientErrors.name = "请填写组织名称。";
+    if (!roles.length) clientErrors.roles = "请至少选择一种组织关系。";
     if (values.website && !/^https?:\/\//i.test(values.website)) clientErrors.website = "网站需要完整的 http:// 或 https:// 地址。";
     if (
       scoreAllowed &&
@@ -218,10 +216,9 @@ export function OrganizationForm({
     );
   }
   return (
-    <FormDialog
-      title={organization ? "编辑公司" : "新建公司"}
-      description="公司资料、客户关系与协作信息。"
-      wide
+    <FormDrawer
+      title={organization ? "编辑组织" : "新建组织"}
+      description="组织资料、组织关系与协作信息。"
       busy={busy}
       onClose={onClose}
       footer={
@@ -239,7 +236,7 @@ export function OrganizationForm({
               ? "保存中…"
               : duplicate
                 ? "确认非同一主体，仍然创建"
-                : "保存公司"}
+                : "保存组织"}
           </Button>
         </>
       }
@@ -248,7 +245,7 @@ export function OrganizationForm({
         value={tab}
         onChange={setTab}
         items={[
-          ["info", `公司资料${Object.keys(fieldErrors).some((key) => !["ownerUserId", "lifecycleStage", "fitScore", "fitReason", "note"].includes(key)) ? " · 有错误" : ""}`],
+          ["info", `组织资料${Object.keys(fieldErrors).some((key) => !["ownerUserId", "lifecycleStage", "fitScore", "fitReason", "note"].includes(key)) ? " · 有错误" : ""}`],
           ["crm", `客户关系${Object.keys(fieldErrors).some((key) => ["ownerUserId", "lifecycleStage", "fitScore", "fitReason"].includes(key)) ? " · 有错误" : ""}`],
           ["notes", `备注与文件${fieldErrors.note ? " · 有错误" : ""}`],
         ]}
@@ -256,74 +253,76 @@ export function OrganizationForm({
         <div className="grid gap-6 sm:grid-cols-2">
           {tab === "info" && (
             <>
-              {text("name", "公司名称", "text", 240, true)}
-              {text("shortName", "公司简称")}
-              {text("website", "网站", "url", 500)}
-              <Field label="行业大类">
+              {text("name", "组织", "text", 240, true)}
+              {text("shortName", "组织简称")}
+              <Field label="组织类型">
                 {() => (
                   <FilterControl
-                    label="行业大类"
-                    value={industryCategory || "unassigned"}
+                    label="组织类型"
+                    value={values.organizationType}
                     all={false}
-                    options={{
-                      unassigned: "请选择",
-                      ...Object.fromEntries(
-                        (referenceData?.industries || [])
-                          .filter((item) => item.parent === null)
-                          .map((item) => [item.code, item.label]),
-                      ),
-                    }}
-                    onChange={(code) => {
-                      if (code === "unassigned") {
-                        set("industryCode", "");
-                        set("industry", "");
-                        return;
-                      }
-                      const item = referenceData?.industries.find(
-                        (entry) => entry.code === code,
-                      );
-                      set("industryCode", code);
-                      set("industry", item?.label || "");
-                      set("industryCustom", "");
-                    }}
+                    options={organizationTypeLabels}
+                    onChange={(value) => set("organizationType", value)}
                   />
                 )}
               </Field>
-              <Field label="细分行业">
+              {text("website", "网站", "url", 500)}
+              <Field label="行业" wide>
                 {() => (
-                  <FilterControl
-                    label="细分行业"
-                    value={values.industryCode || "unassigned"}
-                    all={false}
-                    options={{
-                      unassigned: "请选择",
-                      ...Object.fromEntries(
-                        (referenceData?.industries || [])
-                          .filter(
-                            (item) =>
-                              item.parent === industryCategory ||
-                              (industryCategory === "OTHER" && item.code === "OTHER"),
-                          )
-                          .map((item) => [item.code, item.label]),
-                      ),
-                    }}
-                    onChange={(code) => {
-                      const item = referenceData?.industries.find(
-                        (entry) => entry.code === code,
-                      );
-                      set("industryCode", code === "unassigned" ? "" : code);
-                      set("industry", code === "unassigned" ? "" : item?.label || "");
-                      if (code !== "OTHER") set("industryCustom", "");
-                    }}
-                  />
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <FilterControl
+                      label="选择行业大类"
+                      value={industryCategory || "unassigned"}
+                      all={false}
+                      options={{
+                        unassigned: "选择行业大类",
+                        ...Object.fromEntries(
+                          (referenceData?.industries || [])
+                            .filter((item) => item.parent === null)
+                            .map((item) => [item.code, item.label]),
+                        ),
+                      }}
+                      onChange={(code) => {
+                        if (code === "unassigned") {
+                          set("industryCode", "");
+                          set("industry", "");
+                          return;
+                        }
+                        const item = referenceData?.industries.find((entry) => entry.code === code);
+                        set("industryCode", code);
+                        set("industry", item?.label || "");
+                        set("industryCustom", "");
+                      }}
+                    />
+                    <FilterControl
+                      label="选择细分行业"
+                      value={selectedIndustry?.parent ? values.industryCode : "unassigned"}
+                      all={false}
+                      options={{
+                        unassigned: industryCategory ? "选择细分行业（可选）" : "请先选择行业大类",
+                        ...Object.fromEntries(
+                          (referenceData?.industries || [])
+                            .filter((item) => item.parent === industryCategory)
+                            .map((item) => [item.code, item.label]),
+                        ),
+                      }}
+                      onChange={(code) => {
+                        if (code === "unassigned") return;
+                        const item = referenceData?.industries.find((entry) => entry.code === code);
+                        set("industryCode", code);
+                        set("industry", item?.label || "");
+                        set("industryCustom", "");
+                      }}
+                    />
+                  </div>
                 )}
               </Field>
               {values.industryCode === "OTHER" &&
                 text("industryCustom", "自定义行业", "text", 160)}
-              <Field label="国家 / 地区">
+              <Field label="国家">
                 {() => (
                   <EntityCombobox
-                    label="搜索国家或地区"
+                    label="搜索国家"
                     value={values.countryCode}
                     selectedLabel={values.country}
                     options={(referenceData?.countries || []).map((item) => ({
@@ -341,42 +340,44 @@ export function OrganizationForm({
                   />
                 )}
               </Field>
-              <Field label="省 / 州 / 区域">
+              <Field label="省 / 州">
                 {() => (
                   <EntityCombobox
-                    label="搜索省、州或区域"
+                    label="搜索省或州"
                     value={values.regionCode}
                     selectedLabel={values.region}
                     options={regionOptions.map((item) => ({ id: item.code, label: item.label }))}
+                    allowCustom
                     onChange={(code, label) => {
                       set("regionCode", code);
-                      set("region", code === "OTHER" ? "" : label);
+                      set("region", label);
                       set("cityCode", "");
                       set("city", "");
                     }}
                   />
                 )}
               </Field>
-              {values.regionCode === "OTHER" && text("region", "自定义区域")}
               <Field label="城市">
                 {() => (
                   <EntityCombobox
                     label="搜索城市"
                     value={values.cityCode}
-                    selectedLabel={values.city}
+                    selectedLabel={values.cityCustom || values.city}
                     options={cityOptions.map((item) => ({ id: item.code, label: item.label }))}
+                    allowCustom
                     onChange={(code, label) => {
                       set("cityCode", code);
-                      set("city", code === "OTHER" ? "" : label);
-                      if (code !== "OTHER") set("cityCustom", "");
+                      set("city", label);
+                      set("cityCustom", "");
                     }}
                   />
                 )}
               </Field>
-              {values.cityCode === "OTHER" && text("cityCustom", "自定义城市")}
+              {text("district", "区")}
+              {text("street", "街道", "text", 300, true)}
               <fieldset className="sm:col-span-2" aria-invalid={!!fieldErrors.roles} tabIndex={-1}>
-                <legend className="mb-1 text-sm font-medium">业务关系 *</legend>
-                <p className="mb-3 text-xs text-muted-foreground">这家公司与 Kivisense 的业务关系，可同时是客户、供应商或合作伙伴。</p>
+                <legend className="mb-1 text-sm font-medium">组织关系 *</legend>
+                <p className="mb-3 text-xs text-muted-foreground">该组织与 Kivisense 的关系，可同时是客户、供应商或合作伙伴。</p>
                 <div className="flex flex-wrap gap-5">
                   {([
                     ["CUSTOMER_RELATION", "客户"],
@@ -407,10 +408,10 @@ export function OrganizationForm({
           )}
           {tab === "crm" && (
             <>
-              <Field label="公司负责人" error={fieldErrors.ownerUserId}>
+              <Field label="组织负责人" error={fieldErrors.ownerUserId}>
                 {() => (
                   <FilterControl
-                    label="公司负责人"
+                    label="组织负责人"
                     value={values.ownerUserId || "unassigned"}
                     onChange={(v) =>
                       set("ownerUserId", v === "unassigned" ? "" : v)
@@ -471,7 +472,7 @@ export function OrganizationForm({
                 )}
               </Field>
               {can(me, "crm.organization.edit") && (
-                <Field label="公司 Logo" wide>
+                <Field label="组织 Logo" wide>
                   {(id) => (
                     <>
                       <Input
@@ -496,6 +497,6 @@ export function OrganizationForm({
           {error}
         </p>
       )}
-    </FormDialog>
+    </FormDrawer>
   );
 }

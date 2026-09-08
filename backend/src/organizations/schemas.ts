@@ -7,6 +7,7 @@ const optionalId = z.preprocess(emptyToNull, z.string().trim().min(1).max(32).nu
 const optionalUrl = z.preprocess(emptyToNull, z.string().trim().max(500).url().nullable().optional());
 
 export const organizationRoleSchema = z.enum(["PROSPECT", "CUSTOMER", "VENDOR", "PARTNER"]);
+export const organizationTypeSchema = z.enum(["ENTERPRISE", "SCHOOL", "GOVERNMENT", "ASSOCIATION", "NONPROFIT", "FOUNDATION", "OTHER"]);
 export const organizationLifecycleSchema = z.enum(["TARGET", "CONTACTED", "NURTURING", "OPPORTUNITY", "CUSTOMER", "DISQUALIFIED"]);
 
 const organizationFields = {
@@ -15,11 +16,14 @@ const organizationFields = {
   industry: optionalText(160),
   industryCode: optionalText(80),
   industryCustom: optionalText(160),
+  organizationType: organizationTypeSchema.optional(),
   country: optionalText(120),
   countryCode: z.preprocess(emptyToNull, z.string().trim().toUpperCase().regex(/^[A-Z]{2}$/, "国家代码必须是 ISO 3166-1 alpha-2").nullable().optional()),
   regionCode: optionalText(80),
   cityCode: optionalText(80),
   cityCustom: optionalText(120),
+  district: optionalText(120),
+  street: optionalText(300),
   companySize: optionalText(80),
   region: optionalText(120),
   city: optionalText(120),

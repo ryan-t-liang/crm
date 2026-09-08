@@ -107,6 +107,16 @@ enum OrganizationRoleType {
   PARTNER
 }
 
+enum OrganizationType {
+  ENTERPRISE
+  SCHOOL
+  GOVERNMENT
+  ASSOCIATION
+  NONPROFIT
+  FOUNDATION
+  OTHER
+}
+
 enum OrganizationLifecycle {
   TARGET
   CONTACTED
@@ -633,6 +643,7 @@ model Organization {
   industry                String?                        @db.VarChar(160)
   industryCode            String?                        @map("industry_code") @db.VarChar(80)
   industryCustom          String?                        @map("industry_custom") @db.VarChar(160)
+  organizationType        OrganizationType               @default(ENTERPRISE) @map("organization_type")
   country                 String?                        @db.VarChar(120)
   region                  String?                        @db.VarChar(120)
   city                    String?                        @db.VarChar(120)
@@ -640,6 +651,8 @@ model Organization {
   regionCode              String?                        @map("region_code") @db.VarChar(80)
   cityCode                String?                        @map("city_code") @db.VarChar(80)
   cityCustom              String?                        @map("city_custom") @db.VarChar(120)
+  district                String?                        @db.VarChar(120)
+  street                  String?                        @db.VarChar(300)
   companySize             String?                        @map("company_size") @db.VarChar(80)
   ownerUserId             String?                        @map("owner_user_id") @db.VarChar(32)
   lifecycleStage          OrganizationLifecycle          @default(TARGET) @map("lifecycle_stage")
@@ -666,6 +679,7 @@ model Organization {
   @@index([ownerUserId, updatedAt])
   @@index([lifecycleStage, updatedAt])
   @@index([industryCode, updatedAt])
+  @@index([organizationType, updatedAt])
   @@index([countryCode, regionCode, cityCode])
   @@index([fitScore, updatedAt])
   @@index([deletedAt, updatedAt])

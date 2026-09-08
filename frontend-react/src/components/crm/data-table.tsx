@@ -43,6 +43,7 @@ export function DataTable<T extends { id: string }>({
   selectionActions,
   tableActions,
   primaryAction,
+  showColumnControl = true,
 }: {
   columns: ColumnDef<T>[];
   rows: T[];
@@ -61,6 +62,7 @@ export function DataTable<T extends { id: string }>({
   selectionActions?: ReactNode;
   tableActions?: ReactNode;
   primaryAction?: ReactNode;
+  showColumnControl?: boolean;
 }) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const table = useReactTable({
@@ -105,7 +107,7 @@ export function DataTable<T extends { id: string }>({
           </div>
           <div className="crm-table-toolbar-actions">
             {tableActions}
-            <DropdownMenu>
+            {showColumnControl && <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="shadow-none">
                   <Columns3 />列
@@ -128,7 +130,7 @@ export function DataTable<T extends { id: string }>({
                     </DropdownMenuCheckboxItem>
                   ))}
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu>}
             {primaryAction}
           </div>
         </div>

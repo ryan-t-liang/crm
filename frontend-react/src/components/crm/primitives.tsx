@@ -420,24 +420,28 @@ export type ActionItem = {
   label: string;
   onClick: () => void;
   destructive?: boolean;
+  icon?: ReactNode;
 };
 export function RowActions({
   label,
   items,
+  triggerLabel,
 }: {
   label: string;
   items: ActionItem[];
+  triggerLabel?: string;
 }) {
   if (!items.length) return null;
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="ghost"
-          size="icon-sm"
+          variant={triggerLabel ? "outline" : "ghost"}
+          size={triggerLabel ? "sm" : "icon-sm"}
           aria-label={`${label}的更多操作`}
         >
           <MoreHorizontal />
+          {triggerLabel}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -451,6 +455,7 @@ export function RowActions({
                 : undefined
             }
           >
+            {item.icon}
             {item.label}
           </DropdownMenuItem>
         ))}
@@ -752,6 +757,49 @@ export function FormDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="crm-form-body min-h-0 overflow-y-auto p-6">{children}</div>
+        <div className="crm-form-footer flex shrink-0 items-center justify-end gap-2 border-t px-6 py-4">
+          {footer}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export function FormDrawer({
+  title,
+  description,
+  children,
+  footer,
+  onClose,
+  busy = false,
+}: {
+  title: string;
+  description?: string;
+  children: ReactNode;
+  footer: ReactNode;
+  onClose: () => void;
+  busy?: boolean;
+}) {
+  return (
+    <Dialog
+      open
+      onOpenChange={(v) => {
+        if (!v && !busy) onClose();
+      }}
+    >
+      <DialogContent
+        className="crm-form-drawer flex flex-col gap-0 overflow-hidden p-0"
+        onInteractOutside={(event) => event.preventDefault()}
+      >
+        <DialogHeader className="border-b px-6 py-5">
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>
+            {description || "填写完成后统一保存。"}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="crm-form-body min-h-0 flex-1 overflow-y-auto p-6">
+          {children}
+        </div>
         <div className="crm-form-footer flex shrink-0 items-center justify-end gap-2 border-t px-6 py-4">
           {footer}
         </div>

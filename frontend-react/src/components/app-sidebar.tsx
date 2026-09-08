@@ -8,7 +8,6 @@ import {
   LogOut,
   ScrollText,
   ShieldCheck,
-  Truck,
   UsersRound,
   type LucideIcon,
 } from "lucide-react"
@@ -60,16 +59,10 @@ const navGroups: Array<{ label: string; items: NavItem[] }> = [
   {
     label: "客户管理",
     items: [
-      { label: "公司", route: "organizations", icon: Building2, permission: "crm.organization.view", countKey: "organizations" },
+      { label: "组织", route: "organizations", icon: Building2, permission: "crm.organization.view", countKey: "organizations" },
       { label: "联系人", route: "contacts", icon: ContactRound, permission: "crm.contact.view", countKey: "contacts" },
       { label: "线索", route: "marketing-leads", icon: Goal, permission: "crm.marketing_lead.view", countKey: "marketingLeads" },
       { label: "商机", route: "leads", icon: Gauge, permission: "crm.lead.view", countKey: "leads" },
-    ],
-  },
-  {
-    label: "资源",
-    items: [
-      { label: "供应商", route: "suppliers", icon: Truck, permission: "crm.organization.view" },
     ],
   },
   {
