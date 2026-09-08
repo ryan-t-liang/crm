@@ -414,7 +414,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
             }
           />
           {!supplier && (
-            <div className="flex max-w-full gap-1 overflow-x-auto border-b" aria-label="公司智能视图">
+            <div className="crm-smart-tabs flex max-w-full gap-1 overflow-x-auto" aria-label="公司智能视图">
               {[
                 ["all", "全部公司"],
                 ["mine", "我的公司"],
@@ -427,10 +427,10 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                 <Button
                   key={value}
                   variant="ghost"
-                  className={`shrink-0 rounded-none border-b-2 ${
+                  className={`crm-smart-tab shrink-0 ${
                     (filters.view || "all") === value
-                      ? "border-foreground"
-                      : "border-transparent text-muted-foreground"
+                      ? "is-active"
+                      : "text-muted-foreground"
                   }`}
                   onClick={() => setFilter("view", value)}
                 >

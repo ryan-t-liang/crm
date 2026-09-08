@@ -191,7 +191,7 @@ export function DashboardPage({ me, users }: { me: SessionUser; users: CrmUser[]
         </header>
 
         <Tabs value={view} onValueChange={(value) => setView(value as DashboardView)}>
-          <div className="max-w-full overflow-x-auto border-b">
+          <div className="crm-dashboard-tabs max-w-full overflow-x-auto">
             <TabsList variant="line" className="h-10">
               <TabsTrigger value="management">管理概览</TabsTrigger>
               {me.permissions.includes("crm.marketing.analytics.view") ? <TabsTrigger value="marketing">营销与转化</TabsTrigger> : null}

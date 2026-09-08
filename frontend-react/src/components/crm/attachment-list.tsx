@@ -93,7 +93,7 @@ export function AttachmentList({
             void upload(Array.from(e.dataTransfer.files));
           }
         }}
-        className="divide-y rounded-lg border"
+        className="crm-attachment-shell divide-y border"
       >
         {files.map((file) => {
           const url = appUrl(`${endpoint}/attachments/${file.id}/download`);
@@ -104,7 +104,7 @@ export function AttachmentList({
                 ? Image
                 : FileText;
           return (
-            <div key={file.id} className="flex items-center gap-3 px-3 py-2.5">
+            <div key={file.id} className="crm-attachment-row flex items-center gap-3 px-3 py-2.5">
               {file.kind === "IMAGE" ? (
                 <img
                   src={url}

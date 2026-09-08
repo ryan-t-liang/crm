@@ -12,7 +12,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 
 export function SiteHeader({ title = "数据看板", dashboard = true }: { title?: string; dashboard?: boolean }) {
   return (
-    <header className="crm-site-header flex h-[52px] shrink-0 items-center justify-between gap-3 border-b bg-card px-4 transition-[width,height] ease-linear">
+    <header className="crm-site-header flex shrink-0 items-center justify-between gap-3 border-b transition-[width,height] ease-linear">
       <div className="flex min-w-0 items-center gap-2">
         <SidebarTrigger className="-ml-1 rounded-[8px]" aria-label="展开或收起侧栏" />
         <Separator orientation="vertical" className="mr-1 h-4" />

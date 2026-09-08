@@ -121,7 +121,11 @@ export const SectionHeader = PageHeader;
 export const CompactEmptyState = EmptyState;
 export function StagePath({ stages, current }: { stages: Array<{ key: string; label: string }>; current: string }) {
   const currentIndex = stages.findIndex((stage) => stage.key === current);
-  return <ol aria-label="阶段路径" className="crm-stage-path flex min-w-0 overflow-x-auto rounded-xl border bg-card px-4 py-3">{stages.map((stage, index) => <li key={stage.key} className={cn("flex min-w-28 items-center gap-2 text-xs", index <= currentIndex ? "font-medium text-foreground" : "text-muted-foreground")}><span className={cn("flex size-5 items-center justify-center rounded-full border", index < currentIndex && "border-emerald-600 bg-emerald-600 text-white", index === currentIndex && "border-emerald-700 bg-emerald-50 text-emerald-800 ring-2 ring-emerald-100")}>{index < currentIndex ? <Check className="size-3" /> : index + 1}</span><span>{stage.label}</span>{index < stages.length - 1 && <span className={cn("ml-auto h-px w-5", index < currentIndex ? "bg-emerald-300" : "bg-border")} />}</li>)}</ol>;
+  return <ol aria-label="阶段路径" className="crm-stage-path flex min-w-0 overflow-x-auto border bg-card">{stages.map((stage, index) => {
+    const state = index < currentIndex ? "complete" : index === currentIndex ? "current" : "future";
+    const terminal = stage.key === "WON" ? "won" : stage.key === "LOST" ? "lost" : undefined;
+    return <li key={stage.key} data-stage-state={state} data-terminal={terminal} className="crm-stage-step flex min-w-28 items-center gap-2 text-xs"><span className="crm-stage-marker flex size-5 items-center justify-center rounded-full border">{state === "complete" ? <Check className="size-3" /> : index + 1}</span><span className="font-medium">{stage.label}</span>{index < stages.length - 1 && <span className="crm-stage-connector ml-auto h-px w-5" />}</li>;
+  })}</ol>;
 }
 export const FieldGrid = ({ children }: { children: ReactNode }) => <div className="grid gap-4 sm:grid-cols-2">{children}</div>;
 export const RecordActions = ({ children }: { children: ReactNode }) => <div className="flex flex-wrap items-center gap-2">{children}</div>;
@@ -135,8 +139,8 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-2 px-6 py-12 text-center">
-      <Inbox className="mb-1 size-6 text-muted-foreground" />
+    <div className="crm-empty-state flex flex-col items-center justify-center gap-2 px-6 py-12 text-center">
+      <span className="crm-empty-icon"><Inbox className="size-7" /></span>
       <h3 className="text-sm font-medium">{title}</h3>
       {description && (
         <p className="max-w-sm text-sm text-muted-foreground">{description}</p>
@@ -229,7 +233,7 @@ export function CompanyLogo({
   large?: boolean;
 }) {
   return (
-    <Avatar className={cn("shrink-0 rounded-md", large ? "size-11" : "size-7")}>
+    <Avatar className={cn("crm-company-logo shrink-0 rounded-md", large ? "size-11" : "size-7")}>
       <AvatarImage
         className="bg-white object-contain p-0.5"
         src={
@@ -281,7 +285,7 @@ export function SummaryStrip({
   items: { label: string; value: ReactNode; detail?: ReactNode }[];
 }) {
   return (
-    <div className="crm-summary-strip grid grid-cols-2 gap-0 overflow-hidden rounded-xl border bg-card lg:grid-cols-4">
+    <div className="crm-summary-strip grid gap-0 overflow-hidden border bg-card">
       {items.map((item) => (
         <div key={item.label} className="crm-summary-item min-w-0 px-5 py-4">
           <div className="text-xs text-muted-foreground">{item.label}</div>
@@ -320,7 +324,7 @@ export function DetailTabs({
             <TabsTrigger
               key={key}
               value={key}
-              className="h-11 rounded-none border-0 border-b-2 border-transparent px-4 text-sm shadow-none data-[state=active]:border-emerald-600 data-[state=active]:bg-emerald-50/50 data-[state=active]:text-emerald-800 data-[state=active]:shadow-none"
+              className="crm-detail-tab h-10 border-0 px-4 text-sm shadow-none"
             >
               {label}
             </TabsTrigger>
@@ -348,7 +352,7 @@ export function Section({
         <h2 className="text-base font-semibold">{title}</h2>
         {action}
       </div>
-      <div className="p-5">{children}</div>
+      <div className="crm-section-body p-5">{children}</div>
     </section>
   );
 }
@@ -603,7 +607,7 @@ export function EntityCombobox({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-[var(--radix-popover-trigger-width)] min-w-64 p-0"
+        className="crm-entity-combobox w-[var(--radix-popover-trigger-width)] min-w-64 p-0"
         align="start"
       >
         <Command shouldFilter={!load}>
@@ -688,7 +692,7 @@ export function FormDialog({
     >
       <DialogContent
         className={cn(
-          "flex max-h-[90dvh] flex-col gap-0 overflow-hidden rounded-xl p-0",
+          "crm-form-dialog flex max-h-[90dvh] flex-col gap-0 overflow-hidden p-0",
           wide ? "sm:max-w-3xl" : "sm:max-w-xl",
         )}
         onInteractOutside={(e) => e.preventDefault()}
@@ -727,7 +731,7 @@ export function ConfirmDeleteDialog({
         if (!v && !busy) onClose();
       }}
     >
-      <AlertDialogContent className="rounded-xl">
+      <AlertDialogContent className="crm-confirm-dialog">
         <AlertDialogHeader>
           <AlertDialogTitle>删除“{name}”？</AlertDialogTitle>
           <AlertDialogDescription>

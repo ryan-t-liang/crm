@@ -1871,3 +1871,36 @@ shadcn/ui remains the component implementation library, not the design language.
 5. No more than 8–12 key screenshots. Human UI review is the release gate.
 
 Reports must distinguish build, page-open smoke, language/visual review and functional regression. Never infer business-flow PASS from a page opening successfully.
+
+---
+
+# 55. v1.5 FINAL V1 visual-restoration override
+
+This section supersedes all earlier visual-source and testing-policy guidance. It does not change the v1.3 product model, current information architecture, routes, RBAC, API contracts, import/export flows, or the `MarketingLead -> MQL -> SQL -> Opportunity` lifecycle.
+
+## 55.1 Visual authority
+
+The read-only archive `crm-Kivisense_CRM_v1.zip` is the only visual source of truth. Its source priority is:
+
+1. `frontend/index.html` inline `<style>` — primary visual authority (`sha256 6bdc5c05f9d43ed05d700f28650765c25ac127a2b8835dfe2e88123cf39c4d36`).
+2. `frontend/js/app.js` — DOM/class composition context only (`sha256 7d5b18f74b6395b99fa995a8bdb2138e23b191371ba338bf57461c9d194c3e5e`).
+3. `frontend/styles/production.css` — supplementary rules only (`sha256 2db3bd4fa7e438f4e4178af5d42cfa40c61d510a9cf798d8e7a7323306a55784`).
+
+Never restore the archived DOM, product wording, routes, enums, or business behavior. Do not paste the historical stylesheet globally. Translate its visual DNA into shared React theme tokens and component patterns.
+
+## 55.2 Canonical V1 tokens and patterns
+
+- Canvas `#f3f1eb`; white surface `#ffffff`; warm surface `#faf9f5`.
+- Ink `#171717`; muted `#666666`; soft-muted `#8b8b8b`.
+- Lines `#e5e5e2` / `#d7d7d3`; dark rail `#0b0b0b` / `#242424`.
+- V1 accents: gold `#a9854b`, navy `#30465c`, rose `#9b5d61` and their pale tints.
+- Kivisense green `#04e06e` / `#03c360` is reserved for CTA, active/current, focus, success, and key progress.
+- Radius scale: panel `15px`, card `13px`, control `9px`, compact control `8px`.
+- Surface shadows: `0 12px 38px rgba(20,20,20,.055)` and floating `0 24px 70px rgba(10,10,10,.16)`.
+- Display headings use Georgia/Songti; body, table, forms, and controls remain sans-serif.
+- Sidebar, header, KPI, toolbar, table, dialog/drawer, tabs, badges, forms, empty state, timeline, pagination, attachment and import/export visuals are shared patterns. Company logos always use `object-fit: contain`.
+- Opportunity StagePath: completed is subtle-success, current is prominent, future is muted, WON is emerald, LOST is rose.
+
+## 55.3 Verification policy for this restoration
+
+Automated browser checks, screenshot capture, Playwright/Puppeteer, smoke, E2E, and UAT interaction are prohibited. After all visual work, run the frontend production build once; the build's `tsc -b` step is the single TypeScript check. Human visual review is the acceptance gate. Do not infer functional or UAT PASS from build success or deployment health.

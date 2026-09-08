@@ -249,8 +249,8 @@ export function App() {
             );
 
   const sidebarStyle = {
-    "--sidebar-width": "15rem",
-    "--sidebar-width-icon": "3.75rem",
+    "--sidebar-width": "14.75rem",
+    "--sidebar-width-icon": "5.125rem",
   } as CSSProperties;
 
   return (

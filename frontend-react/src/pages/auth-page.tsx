@@ -16,12 +16,12 @@ export function LoginPage({ onSignedIn }: { onSignedIn: () => void }) {
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   return (
-    <main className="flex min-h-svh items-center justify-center bg-muted/30 p-6">
-      <section className="w-full max-w-sm rounded-xl border bg-background p-7">
+    <main className="crm-auth-page flex min-h-svh items-center justify-center p-6">
+      <section className="crm-auth-card w-full max-w-sm border bg-background p-7">
         <div className="mb-7 flex items-center gap-3">
-          <span className="rounded-lg border p-2">
+          <span className="crm-auth-logo border p-2">
             <img
-              className="size-6"
+              className="size-6 object-contain"
               src={assetUrl("/assets/kivisense-logo.svg")}
               alt="Kivisense"
             />
@@ -31,7 +31,7 @@ export function LoginPage({ onSignedIn }: { onSignedIn: () => void }) {
             <p className="text-xs text-muted-foreground">CRM 2.0</p>
           </div>
         </div>
-        <h1 className="text-2xl font-semibold tracking-tight">登录</h1>
+        <h1 className="crm-display-title">登录</h1>
         <p className="mt-2 text-sm text-muted-foreground">使用工作账号继续。</p>
         <form
           className="mt-6 space-y-5"

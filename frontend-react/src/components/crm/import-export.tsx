@@ -264,7 +264,7 @@ function JobDialog({
         </>
       }
     >
-      <div className="space-y-4">
+      <div className="crm-data-job space-y-4">
         {busy && <LoadingSkeleton />}
         {!busy && mode === "import" && !job && !history && (
           <>

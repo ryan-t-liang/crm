@@ -97,13 +97,13 @@ export function AppSidebar({ me, counts, onLogout, route = "dashboard" }: { me: 
 
   return (
     <Sidebar collapsible="icon" variant="sidebar" aria-label="主导航" className="crm-sidebar">
-      <SidebarHeader className="border-b border-sidebar-border px-2 py-2">
+      <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild className="h-11 data-[slot=sidebar-menu-button]:hover:bg-transparent">
+            <SidebarMenuButton size="lg" asChild className="crm-brand-lockup data-[slot=sidebar-menu-button]:hover:bg-transparent">
               <a href="#dashboard" aria-label="返回数据看板">
-                <span className="crm-logo-tile flex size-8 items-center justify-center rounded-[8px] border border-sidebar-border bg-white">
-                  <img src={assetUrl("/assets/kivisense-logo.svg")} alt="Kivisense 标志" className="size-5" />
+                <span className="crm-logo-tile flex items-center justify-center border border-sidebar-border bg-white">
+                  <img src={assetUrl("/assets/kivisense-logo.svg")} alt="Kivisense 标志" />
                 </span>
                 <span className="grid flex-1 text-left leading-tight">
                   <span className="truncate text-[13px] font-semibold tracking-[0.12em]">KIVISENSE</span>
@@ -115,13 +115,13 @@ export function AppSidebar({ me, counts, onLogout, route = "dashboard" }: { me: 
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent className="gap-1 py-2">
+      <SidebarContent>
         {navGroups.map((group) => {
           const items = group.items.filter((item) => allowed(item, permissions))
           if (!items.length) return null
           return (
-            <SidebarGroup key={group.label} className="py-1">
-              <SidebarGroupLabel className="h-7 px-2 text-[11px] font-medium tracking-[0.04em] text-muted-foreground">
+            <SidebarGroup key={group.label}>
+              <SidebarGroupLabel>
                 {group.label}
               </SidebarGroupLabel>
               <SidebarGroupContent>
@@ -132,7 +132,7 @@ export function AppSidebar({ me, counts, onLogout, route = "dashboard" }: { me: 
                     const count = item.countKey ? counts[item.countKey] : undefined
                     return (
                       <SidebarMenuItem key={item.route}>
-                        <SidebarMenuButton asChild isActive={isActive} tooltip={item.label} className="h-9 rounded-[8px]">
+                        <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
                           <a href={migratedRoutes.has(item.route) ? `#${item.route}` : legacyUrl(item.route)}>
                             <Icon />
                             <span>{item.label}</span>
@@ -149,14 +149,14 @@ export function AppSidebar({ me, counts, onLogout, route = "dashboard" }: { me: 
         })}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-2">
+      <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuButton size="lg" className="h-12 rounded-[8px] data-[state=open]:bg-sidebar-accent">
-                  <Avatar className="size-8 rounded-[8px]">
-                    <AvatarFallback className="rounded-[8px] bg-neutral-900 text-xs text-white">{initials}</AvatarFallback>
+                <SidebarMenuButton size="lg" className="min-h-[52px] data-[state=open]:bg-sidebar-accent">
+                  <Avatar className="size-[34px]">
+                    <AvatarFallback className="bg-[#eee6d8] font-serif text-xs font-semibold text-[#0b0b0b]">{initials}</AvatarFallback>
                   </Avatar>
                   <span className="grid flex-1 text-left leading-tight">
                     <span className="truncate text-sm font-medium">{me.name}</span>

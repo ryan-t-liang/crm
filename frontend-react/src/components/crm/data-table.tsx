@@ -115,7 +115,7 @@ export function DataTable<T extends { id: string }>({
         </div>
       </div>
       {selectable && selectedIds.length > 0 && (
-        <div role="toolbar" aria-label="批量操作" className="flex flex-wrap items-center gap-3 border-y bg-muted/30 px-3 py-2">
+        <div role="toolbar" aria-label="批量操作" className="crm-bulk-toolbar flex flex-wrap items-center gap-3 border-y px-3 py-2">
           <span className="text-sm font-medium">已选择 {selectedIds.length} 条</span>
           {selectionActions}
           <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setSelected([])}>取消选择</Button>
@@ -142,7 +142,7 @@ export function DataTable<T extends { id: string }>({
                 {table.getHeaderGroups()[0].headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className={`h-10 whitespace-nowrap px-4 text-xs font-medium text-muted-foreground ${header.column.id === "actions" ? "sticky right-0 z-10 bg-background" : ""}`}
+                    className={`h-10 whitespace-nowrap px-4 text-xs font-medium text-muted-foreground ${header.column.id === "actions" ? "crm-sticky-actions sticky right-0 z-10" : ""}`}
                   >
                     {flexRender(
                       header.column.columnDef.header,
@@ -154,7 +154,7 @@ export function DataTable<T extends { id: string }>({
             </TableHeader>
             <TableBody>
               {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className="h-11 hover:bg-emerald-50/60 data-[state=selected]:bg-emerald-50">
+                <TableRow key={row.id}>
                   {selectable && (
                     <TableCell className="w-10 px-3">
                       <Checkbox
@@ -167,7 +167,7 @@ export function DataTable<T extends { id: string }>({
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
-            className={`px-4 py-2 text-sm ${cell.column.id === "actions" ? "sticky right-0 bg-card" : ""}`}
+                      className={`px-4 py-2 text-sm ${cell.column.id === "actions" ? "crm-sticky-actions sticky right-0" : ""}`}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
@@ -188,7 +188,7 @@ export function DataTable<T extends { id: string }>({
           />
         )}
         {onPage && (
-          <div className="flex items-center justify-between border-t px-4 py-3 text-xs text-muted-foreground">
+          <div className="crm-table-footer flex items-center justify-between border-t px-4 py-3 text-xs text-muted-foreground">
             <span>共 {total ?? rows.length} 条</span>
             <div className="flex items-center gap-3">
               <span>

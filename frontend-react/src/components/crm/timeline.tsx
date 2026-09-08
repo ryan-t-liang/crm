@@ -16,11 +16,11 @@ export function Timeline({
 }) {
   if (!events.length) return <EmptyState title="暂无客户旅程" />;
   return (
-    <ol className="divide-y">
+    <ol className="crm-timeline">
       {events.map((event) => (
-        <li key={event.id} className="flex gap-3 py-4">
-          <Activity className="mt-1 size-4 shrink-0 text-muted-foreground" />
-          <div className="min-w-0 flex-1">
+        <li key={event.id} className="crm-timeline-item">
+          <Activity className="crm-timeline-icon" />
+          <div className="crm-timeline-card min-w-0">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-sm font-medium">{productEventText(event.title)}</span>
               <time className="text-xs text-muted-foreground">
