@@ -149,11 +149,11 @@ export function DashboardPage({ me }: { me: SessionUser; users: CrmUser[] }) {
             <div className="dashboard-overview-funnel-grid">
               <DashboardPanel title="获客转化" description="从新增线索进入销售机会的阶段分布" className="dashboard-overview-funnel-panel">
                 {funnel ? (
-                  <DashboardFunnel25D stages={marketingStages(funnel)} label="获客转化漏斗" summary={<>总转化率 <strong>{conversionValue(funnel.kpis.leadToOpportunityRate)}</strong></>} footnote="阶段间转化率仅在样本量足够时展示" />
+                  <DashboardFunnel25D stages={marketingStages(funnel)} label="获客转化漏斗" summary={<>线索总数 <strong>{funnel.stages[0]?.count ?? 0}</strong></>} footnote={<>总转化率 {conversionValue(funnel.kpis.leadToOpportunityRate)}；阶段间转化率仅在样本量足够时展示</>} />
                 ) : <p className="dashboard-muted-note">当前账户没有营销分析权限。</p>}
               </DashboardPanel>
               <DashboardPanel title="商机阶段" description="当前商机从新建到成交的推进分布" className="dashboard-overview-funnel-panel">
-                <DashboardFunnel25D stages={opportunityStages(data)} label="商机阶段漏斗" summary={<>当前阶段总量 <strong>{OPPORTUNITY_STAGE_ORDER.reduce((sum, status) => sum + stageCount(data, status), 0)}</strong></>} footnote={`活跃阶段为当前存量；本期丢失 ${stageCount(data, "LOST")} 个`} />
+                <DashboardFunnel25D stages={opportunityStages(data)} label="商机阶段漏斗" summary={<>商机总数 <strong>{OPPORTUNITY_STAGE_ORDER.reduce((sum, status) => sum + stageCount(data, status), 0)}</strong></>} footnote={`活跃阶段为当前存量；本期丢失 ${stageCount(data, "LOST")} 个`} />
               </DashboardPanel>
             </div>
           </main>

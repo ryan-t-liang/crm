@@ -81,29 +81,33 @@ export function DashboardFunnel25D({ stages, label, summary, footnote }: { stage
   return (
     <div className="dashboard-funnel-25d" aria-label={label}>
       <div className="dashboard-funnel-summary">{summary}</div>
-      <ol className="dashboard-funnel-steps">
+      <ol className="dashboard-funnel-legend">
+        {stages.map((stage) => (
+          <li key={stage.key}>
+            <i aria-hidden="true" />
+            <span>{stage.label}</span>
+            {stage.conversionToNext ? <small>{stage.conversionToNext}</small> : null}
+          </li>
+        ))}
+      </ol>
+      <div className="dashboard-funnel-art">
         {stages.map((stage, index) => {
-          const decrement = stages.length === 5 ? 14 : 17
-          const width = 100 - index * decrement
-          const nextWidth = 100 - (index + 1) * decrement
-          const inset = ((width - nextWidth) / 2 / width) * 100
+          const decrement = stages.length === 5 ? 11 : 13
+          const topWidth = 100 - index * decrement
+          const bottomWidth = 100 - (index + 1) * decrement
+          const inset = ((topWidth - bottomWidth) / 2 / topWidth) * 100
           return (
-            <li key={stage.key}>
-              <span className="dashboard-funnel-stage-label">{stage.label}</span>
-              <div className="dashboard-funnel-stage">
-                <div className="dashboard-funnel-bar" style={{ "--funnel-width": `${width}%` } as CSSProperties} aria-label={`${stage.label} ${stage.count}`}>
-                  <strong>{stage.count}</strong>
-                </div>
-                {index < stages.length - 1 ? (
-                  <div className="dashboard-funnel-connector" style={{ "--funnel-width": `${width}%`, "--funnel-inset": `${inset}%` } as CSSProperties}>
-                    <span>{stage.conversionToNext ?? "阶段推进"}</span>
-                  </div>
-                ) : null}
-              </div>
-            </li>
+            <div
+              key={stage.key}
+              className="dashboard-funnel-layer"
+              style={{ "--funnel-width": `${topWidth}%`, "--funnel-inset": `${inset}%` } as CSSProperties}
+              aria-label={`${stage.label} ${stage.count}`}
+            >
+              <strong>{stage.count}</strong>
+            </div>
           )
         })}
-      </ol>
+      </div>
       {footnote ? <div className="dashboard-funnel-footnote">{footnote}</div> : null}
     </div>
   )
