@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   ArrowLeft,
   BriefcaseBusiness,
@@ -53,11 +54,9 @@ import {
   LoadingSkeleton,
   EntityHeader,
   EntityMeta,
-  SummaryStrip,
   DetailTabs,
   Section,
   ConfirmDeleteDialog,
-  SystemIdField,
   type ActionItem,
 } from "@/components/crm/primitives";
 import { DataTable } from "@/components/crm/data-table";
@@ -85,7 +84,8 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [keyword, setKeyword] = useState("");
   const [page, setPage] = useState(1);
-  const [tab, setTab] = useState("opportunities");
+  const [tab, setTab] = useState("marketing-leads");
+  const [headerActionTarget, setHeaderActionTarget] = useState<HTMLElement | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [batchOwnerUserId, setBatchOwnerUserId] = useState("");
   const [batchBusy, setBatchBusy] = useState(false);
@@ -109,7 +109,15 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
     return () => clearTimeout(timer);
   }, [keyword]);
   useEffect(() => {
-    setTab("opportunities");
+    setTab("marketing-leads");
+  }, [id]);
+  useEffect(() => {
+    if (!id) {
+      setHeaderActionTarget(null);
+      return;
+    }
+    setHeaderActionTarget(document.getElementById("crm-site-header-context-actions"));
+    return () => setHeaderActionTarget(null);
   }, [id]);
 
   const setFilter = (key: string, value: string) => {
@@ -454,25 +462,19 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                 <EntityHeader
                   icon={<CompanyLogo organization={organization} large />}
                   title={organization.name}
-                  meta={
-                    <>
-                      <span>{organization.shortName || organization.industry || "组织"}</span>
-                      <span>{organizationTypeLabels[organization.organizationType] || "其他"}</span>
-                      <span>{businessRelationText(organization.roleKeys)}</span>
-                      <SystemIdField value={organization.id} label="组织 ID" />
-                    </>
+                  meta={null}
+                  actions={
+                    <dl className="crm-organization-header-metrics" aria-label="组织摘要">
+                      <div><dt>联系人</dt><dd>{organization.contactCount}</dd></div>
+                      <div><dt>线索</dt><dd>{organization.marketingLeadCount || 0}</dd></div>
+                      <div><dt>商机</dt><dd>{organization.leads.length}</dd></div>
+                      <div title={dateTime(organization.lastInteractionAt)}>
+                        <dt>最近互动</dt><dd>{relativeDate(organization.lastInteractionAt)}</dd>
+                      </div>
+                    </dl>
                   }
-                  actions={<RowActions label={organization.name} triggerLabel="操作" items={detailActions} />}
                 />
               </div>
-              <SummaryStrip
-                items={[
-                  { label: "联系人", value: organization.contactCount },
-                  { label: "线索", value: organization.marketingLeadCount || 0 },
-                  { label: "商机", value: organization.leads.length },
-                  { label: "最近互动", value: relativeDate(organization.lastInteractionAt), detail: dateTime(organization.lastInteractionAt) },
-                ]}
-              />
             </div>
           }
           sidebar={
@@ -491,7 +493,6 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                 />
               </Section>
               <ContactModule rows={organization.contacts} onCreate={can(me, "crm.contact.create") ? () => setEntityCreate("contact") : undefined} />
-              <MarketingLeadModule rows={organization.marketingLeads || []} onCreate={can(me, "crm.marketing_lead.create") ? () => setMarketingLeadCreate(true) : undefined} />
             </>
           }
         >
@@ -499,13 +500,19 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
             value={tab}
             onChange={setTab}
             items={[
-              ["opportunities", `商机 ${organization.leads.length}`],
-              ["overview", "概览"],
-              ["journey", "客户旅程"],
+              ["marketing-leads", "线索"],
+              ["opportunities", "商机"],
+              ["journey", "旅程"],
               ["notes", "备注"],
               ...(can(me, "audit.view") ? [["audit", "操作记录"] as [string, string]] : []),
             ]}
           >
+            {tab === "marketing-leads" && (
+              <MarketingLeadModule
+                rows={organization.marketingLeads || []}
+                onCreate={can(me, "crm.marketing_lead.create") ? () => setMarketingLeadCreate(true) : undefined}
+              />
+            )}
             {tab === "opportunities" && (
               <DataTable
                 label="组织商机"
@@ -518,20 +525,8 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                 )}
               />
             )}
-            {tab === "overview" && (
-              <Section title="组织概览">
-                <EntityMeta items={[
-                  { label: "组织简称", value: organization.shortName },
-                  { label: "联系人", value: organization.contactCount },
-                  { label: "线索", value: organization.marketingLeadCount || 0 },
-                  { label: "商机", value: organization.leads.length },
-                  { label: "最近互动", value: dateTime(organization.lastInteractionAt) },
-                  { label: "更新时间", value: dateTime(organization.updatedAt) },
-                ]} />
-              </Section>
-            )}
             {tab === "journey" && (
-              <Section title="客户旅程">
+              <Section title="旅程">
                 {journey.loading ? <LoadingSkeleton /> : journey.error ? <ErrorState error={journey.error} retry={journey.reload} /> : <Timeline events={journey.data?.data.events || []} />}
               </Section>
             )}
@@ -546,6 +541,13 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
           </DetailTabs>
         </DetailScaffold>
       )}
+
+      {organization && headerActionTarget
+        ? createPortal(
+            <RowActions label={organization.name} triggerLabel="操作" items={detailActions} />,
+            headerActionTarget,
+          )
+        : null}
 
       {edit && (
         <OrganizationForm
@@ -662,7 +664,7 @@ function OrganizationAudit({ id }: { id: string }) {
         <ErrorState error={result.error} retry={result.reload} />
       ) : (
         <>
-          <p className="mb-3 text-xs text-muted-foreground">本组织的系统操作历史，业务互动请查看客户旅程。</p>
+          <p className="mb-3 text-xs text-muted-foreground">本组织的系统操作历史，业务互动请查看旅程。</p>
           {result.loading ? <LoadingSkeleton /> : rows.length ? rows.map((row) => (
             <div className="flex flex-wrap justify-between gap-3 border-b py-3 text-sm" key={row.id}>
               <span>{auditActionLabel(row.action)}</span>

@@ -295,9 +295,11 @@ export function EntityHeader({
           <h1 className="crm-display-title break-words text-2xl font-semibold tracking-tight">
             {title}
           </h1>
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
-            {meta}
-          </div>
+          {meta ? (
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground">
+              {meta}
+            </div>
+          ) : null}
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">{actions}</div>

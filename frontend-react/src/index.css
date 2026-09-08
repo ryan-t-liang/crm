@@ -1080,8 +1080,6 @@
 
 .crm-organization-detail-top {
   width: 100%;
-  display: grid;
-  gap: 14px;
 }
 
 .crm-organization-detail-heading {
@@ -1091,9 +1089,40 @@
   gap: 16px;
 }
 
-.crm-organization-detail-top .crm-summary-strip {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  border-radius: 12px;
+.crm-organization-header-metrics {
+  min-width: min(520px, 48vw);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(76px, 1fr));
+  border: 1px solid var(--v1-line);
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.crm-organization-header-metrics > div {
+  min-width: 0;
+  padding: 9px 14px;
+  border-right: 1px solid var(--v1-line);
+}
+
+.crm-organization-header-metrics > div:last-child {
+  border-right: 0;
+}
+
+.crm-organization-header-metrics dt {
+  color: var(--v1-muted);
+  font-size: 10px;
+}
+
+.crm-organization-header-metrics dd {
+  margin-top: 3px;
+  overflow: hidden;
+  color: var(--v1-ink);
+  font-family: Georgia, "Songti SC", "STSong", serif;
+  font-size: 16px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .crm-detail-top .crm-entity-header > div:first-child {
@@ -3076,8 +3105,18 @@
     align-items: flex-start;
   }
 
-  .crm-organization-detail-top .crm-summary-strip {
+  .crm-organization-header-metrics {
+    width: 100%;
+    min-width: 0;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .crm-organization-header-metrics > div:nth-child(2) {
+    border-right: 0;
+  }
+
+  .crm-organization-header-metrics > div:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--v1-line);
   }
 
   .crm-detail-top {

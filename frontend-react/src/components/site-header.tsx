@@ -26,10 +26,13 @@ export function SiteHeader({ title = "数据看板", dashboard = true }: { title
           </BreadcrumbList>
         </Breadcrumb>
       </div>
-      {dashboard && <div className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex">
-        <CircleCheck className="size-3.5 text-primary" />
-        非金额运营视图
-      </div>}
+      <div className="flex items-center gap-3">
+        {dashboard && <div className="hidden items-center gap-1.5 text-xs text-muted-foreground sm:flex">
+          <CircleCheck className="size-3.5 text-primary" />
+          非金额运营视图
+        </div>}
+        <div id="crm-site-header-context-actions" className="crm-site-header-context-actions" />
+      </div>
     </header>
   )
 }
