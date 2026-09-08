@@ -17,6 +17,14 @@ export type RatioMetric = {
 
 export type DashboardData = {
   period: { from: string; to: string; ownerUserId: string | null; organizationRole: string | null }
+  trend: Array<{
+    from: string
+    to: string
+    newMarketingLeads: number
+    newOpportunities: number
+    activeOpportunities: number
+    wonOpportunities: number
+  }>
   kpis: Record<DashboardKpiKey, number>
   pipeline: Array<{ status: string; count: number }>
   opportunities: {

@@ -16,6 +16,19 @@ function daysBetween(from: Date, to: Date) {
   return Math.max(0, (to.getTime() - from.getTime()) / DAY);
 }
 
+function trendBuckets(filter: AnalyticsFilter) {
+  const from = filter.from.getTime();
+  const to = filter.to.getTime();
+  const rangeDays = Math.max(1, Math.ceil((to - from + 1) / DAY));
+  const bucketDays = rangeDays <= 14 ? 1 : rangeDays <= 62 ? 7 : rangeDays <= 180 ? 14 : Math.ceil(rangeDays / 12);
+  const bucketSize = bucketDays * DAY;
+  const buckets: Array<{ from: Date; to: Date }> = [];
+  for (let cursor = from; cursor <= to; cursor += bucketSize) {
+    buckets.push({ from: new Date(cursor), to: new Date(Math.min(to, cursor + bucketSize - 1)) });
+  }
+  return buckets;
+}
+
 export function qualifiesAsReactivation(input: { organizationCreatedAt: Date; previousInteractionAt: Date | null; interactionAt: Date; dormantDays: number }) {
   const baseline = input.previousInteractionAt ?? input.organizationCreatedAt;
   return daysBetween(baseline, input.interactionAt) >= input.dormantDays;
@@ -102,6 +115,17 @@ export class CrmAnalyticsService {
       this.prisma.organizationNurture.findMany({ where: { organizationId: { in: organizationIds } }, select: { id: true, organizationId: true, status: true, createdAt: true, startedAt: true } }),
       this.interactions(organizationIds, contactIds),
     ]);
+    const [marketingLeads, stageHistory] = await Promise.all([
+      this.prisma.marketingLead.findMany({
+        where: { deletedAt: null, ownerUserId: filter.ownerUserId, createdAt: { gte: filter.from, lte: filter.to } },
+        select: { createdAt: true },
+      }),
+      this.prisma.leadStageHistory.findMany({
+        where: { leadId: { in: leads.map((lead) => lead.id) }, changedAt: { lte: filter.to } },
+        select: { leadId: true, fromStatus: true, toStatus: true, changedAt: true },
+        orderBy: { changedAt: "asc" },
+      }),
+    ]);
     const activeLeads = leads.filter((lead) => ACTIVE_LEAD_STATUSES.includes(lead.status as typeof ACTIVE_LEAD_STATUSES[number]));
     const closedAt = (lead: typeof leads[number]) => lead.status === "WON" ? lead.wonAt ?? lead.closedAt : lead.closedAt;
     const closedInPeriod = leads.filter((lead) => {
@@ -150,8 +174,36 @@ export class CrmAnalyticsService {
         missingNextAction: !lead.nextAction?.trim(),
       }));
     const nextSevenDays = new Date(now.getTime() + 7 * DAY);
+    const historyByLeadId = new Map<string, typeof stageHistory>();
+    for (const history of stageHistory) {
+      const timeline = historyByLeadId.get(history.leadId) ?? [];
+      timeline.push(history);
+      historyByLeadId.set(history.leadId, timeline);
+    }
+    const statusAt = (lead: typeof leads[number], at: Date) => {
+      if (lead.createdAt > at) return null;
+      const timeline = historyByLeadId.get(lead.id) ?? [];
+      const latest = [...timeline].reverse().find((history) => history.changedAt <= at);
+      if (latest) return latest.toStatus;
+      return timeline[0]?.fromStatus ?? lead.status;
+    };
+    const trend = trendBuckets(filter).map((bucket) => ({
+      from: bucket.from,
+      to: bucket.to,
+      newMarketingLeads: marketingLeads.filter((lead) => lead.createdAt >= bucket.from && lead.createdAt <= bucket.to).length,
+      newOpportunities: leads.filter((lead) => lead.createdAt >= bucket.from && lead.createdAt <= bucket.to).length,
+      activeOpportunities: leads.filter((lead) => {
+        const status = statusAt(lead, bucket.to);
+        return status != null && ACTIVE_LEAD_STATUSES.includes(status as typeof ACTIVE_LEAD_STATUSES[number]);
+      }).length,
+      wonOpportunities: leads.filter((lead) => {
+        const occurredAt = lead.status === "WON" ? lead.wonAt ?? lead.closedAt : null;
+        return occurredAt != null && occurredAt >= bucket.from && occurredAt <= bucket.to;
+      }).length,
+    }));
     return {
       period: { from: filter.from, to: filter.to, ownerUserId: filter.ownerUserId ?? null, organizationRole: filter.organizationRole ?? null },
+      trend,
       kpis: {
         activeOrganizations: organizations.filter((row) => row.engagementState === "ACTIVE").length,
         activeLeads: activeLeads.length,
