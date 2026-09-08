@@ -79,41 +79,17 @@ export function DataTable<T extends { id: string }>({
   const setSelected = (ids: string[]) => onSelectedIdsChange?.([...new Set(ids)]);
   return (
     <div className="crm-data-table min-w-0 space-y-3">
-      <div
-        role="toolbar"
-        aria-label={`${label}工具栏`}
-        className="crm-data-toolbar flex flex-wrap items-center gap-2 rounded-xl border bg-card p-3"
-      >
-        {toolbar}
-        <div className="ml-auto flex flex-wrap items-center gap-2">
-          {tableActions}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="shadow-none">
-                <Columns3 />列
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {table
-                .getAllLeafColumns()
-                .filter((c) => c.getCanHide())
-                .map((column) => (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(v) => column.toggleVisibility(v)}
-                    onSelect={(e) => e.preventDefault()}
-                  >
-                    {typeof column.columnDef.header === "string"
-                      ? column.columnDef.header
-                      : column.id}
-                  </DropdownMenuCheckboxItem>
-                ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-          {primaryAction}
-        </div>
-      </div>
+      {toolbar && (
+        <section className="crm-filter-panel" aria-label={`${label}查询`}>
+          <div
+            role="toolbar"
+            aria-label={`${label}查询条件`}
+            className="crm-data-toolbar"
+          >
+            <div className="crm-data-filter-fields">{toolbar}</div>
+          </div>
+        </section>
+      )}
       {selectable && selectedIds.length > 0 && (
         <div role="toolbar" aria-label="批量操作" className="crm-bulk-toolbar flex flex-wrap items-center gap-3 border-y px-3 py-2">
           <span className="text-sm font-medium">已选择 {selectedIds.length} 条</span>
@@ -122,6 +98,40 @@ export function DataTable<T extends { id: string }>({
         </div>
       )}
       <div className="crm-table-shell min-w-0 overflow-hidden rounded-xl border bg-card">
+        <div className="crm-table-toolbar">
+          <div className="crm-table-title">
+            <strong>{label}</strong>
+            <span>{total ?? rows.length} 条结果</span>
+          </div>
+          <div className="crm-table-toolbar-actions">
+            {tableActions}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="shadow-none">
+                  <Columns3 />列
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {table
+                  .getAllLeafColumns()
+                  .filter((c) => c.getCanHide())
+                  .map((column) => (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(v) => column.toggleVisibility(v)}
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      {typeof column.columnDef.header === "string"
+                        ? column.columnDef.header
+                        : column.id}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {primaryAction}
+          </div>
+        </div>
         {loading ? (
           <div className="p-4">
             <LoadingSkeleton />

@@ -45,6 +45,7 @@ import {
   PageHeader,
   EntityHeader,
   EntityMeta,
+  ListMetrics,
   SummaryStrip,
   UserAvatar,
   DetailTabs,
@@ -341,6 +342,50 @@ export function EntitiesPage({
           <PageHeader
             title={kind === "contact" ? "联系人" : "商机"}
             description={`管理${label}信息与下一步行动`}
+            actions={
+              <>
+                <ImportExport
+                  kind={family}
+                  me={me}
+                  onChanged={refresh}
+                  selectedIds={selectedIds}
+                  filters={filters}
+                />
+                {canCreate && (
+                  <Button onClick={() => setForm({ kind })}>
+                    <Plus />
+                    新增{label}
+                  </Button>
+                )}
+              </>
+            }
+          />
+          <ListMetrics
+            items={
+              kind === "contact"
+                ? [
+                    { label: "联系人总数", value: list.data?.meta.total ?? "—" },
+                    {
+                      label: "本页已分配负责人",
+                      value: (list.data?.data || []).filter((item) => !!item.owner).length,
+                    },
+                    {
+                      label: "本页待分配负责人",
+                      value: (list.data?.data || []).filter((item) => !item.owner).length,
+                    },
+                  ]
+                : [
+                    { label: "商机总数", value: list.data?.meta.total ?? "—" },
+                    {
+                      label: "本页进行中",
+                      value: (list.data?.data || []).filter((item) => !["WON", "LOST"].includes(item.status || "")).length,
+                    },
+                    {
+                      label: "本页已分配负责人",
+                      value: (list.data?.data || []).filter((item) => !!item.salesOwner).length,
+                    },
+                  ]
+            }
           />
           {list.error ? (
             <ErrorState error={list.error} retry={list.reload} />
@@ -381,23 +426,6 @@ export function EntitiesPage({
                   </Button>
                   <ImportExport kind={family} me={me} onChanged={refresh} selectedIds={selectedIds} filters={filters} exportOnly />
                 </>
-              }
-              tableActions={
-                <ImportExport
-                  kind={family}
-                  me={me}
-                  onChanged={refresh}
-                  selectedIds={selectedIds}
-                  filters={filters}
-                />
-              }
-              primaryAction={
-                canCreate ? (
-                  <Button onClick={() => setForm({ kind })}>
-                    <Plus />
-                    新增{label}
-                  </Button>
-                ) : undefined
               }
               toolbar={
                 <>

@@ -305,6 +305,23 @@ export function SummaryStrip({
     </div>
   );
 }
+export function ListMetrics({
+  items,
+}: {
+  items: { label: string; value: ReactNode; note?: ReactNode }[];
+}) {
+  return (
+    <div className="crm-list-metrics" aria-label="列表指标">
+      {items.map((item) => (
+        <article className="crm-list-metric" key={item.label}>
+          <div className="crm-list-metric-label">{item.label}</div>
+          <div className="crm-list-metric-value">{item.value ?? "—"}</div>
+          {item.note && <div className="crm-list-metric-note">{item.note}</div>}
+        </article>
+      ))}
+    </div>
+  );
+}
 export function DetailTabs({
   value,
   onChange,
@@ -432,25 +449,28 @@ export function FilterControl({
   className?: string;
 }) {
   return (
-    <Select
-      value={value || "all"}
-      onValueChange={(v) => onChange(v === "all" ? "" : v)}
-    >
-      <SelectTrigger
-        aria-label={label}
-        className={cn("h-9 min-w-32 bg-background shadow-none", className)}
+    <label className="crm-filter-control">
+      <span className="crm-filter-label">{label}</span>
+      <Select
+        value={value || "all"}
+        onValueChange={(v) => onChange(v === "all" ? "" : v)}
       >
-        <SelectValue placeholder={label} />
-      </SelectTrigger>
-      <SelectContent>
-        {all && <SelectItem value="all">全部{label}</SelectItem>}
-        {Object.entries(options).map(([key, text]) => (
-          <SelectItem key={key} value={key}>
-            {text}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+        <SelectTrigger
+          aria-label={label}
+          className={cn("h-9 min-w-32 bg-background shadow-none", className)}
+        >
+          <SelectValue placeholder={label} />
+        </SelectTrigger>
+        <SelectContent>
+          {all && <SelectItem value="all">全部{label}</SelectItem>}
+          {Object.entries(options).map(([key, text]) => (
+            <SelectItem key={key} value={key}>
+              {text}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </label>
   );
 }
 export function SearchInput({
@@ -465,16 +485,19 @@ export function SearchInput({
   placeholder?: string;
 }) {
   return (
-    <div className="relative w-full sm:w-72">
-      <Search className="pointer-events-none absolute top-2.5 left-3 size-4 text-muted-foreground" />
-      <Input
-        aria-label={label}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="h-9 pl-9 shadow-none"
-      />
-    </div>
+    <label className="crm-search-control">
+      <span className="crm-filter-label">查询内容</span>
+      <span className="crm-search-field">
+        <Search className="pointer-events-none size-4 text-muted-foreground" />
+        <Input
+          aria-label={label}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="h-9 shadow-none"
+        />
+      </span>
+    </label>
   );
 }
 export function FilterPopover({
@@ -487,7 +510,7 @@ export function FilterPopover({
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="shadow-none">
+        <Button variant="outline" className="crm-filter-popover-trigger shadow-none">
           <SlidersHorizontal />
           更多筛选
           {active && <span className="size-1.5 rounded-full bg-primary" />}

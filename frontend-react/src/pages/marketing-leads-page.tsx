@@ -16,6 +16,7 @@ import {
   focusFirstInvalidField,
   FormDialog,
   LoadingSkeleton,
+  ListMetrics,
   PageContent,
   PageHeader,
   RowActions,
@@ -283,7 +284,105 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
     { id: "createdAt", header: "创建时间", cell: ({ row }) => dateTime(row.original.createdAt) },
     { id: "actions", header: "操作", enableHiding: false, cell: ({ row }) => <RowActions label={row.original.fullName} items={actionsFor(row.original)} /> },
   ];
-  if (!id) return <PageContent><PageHeader title="线索" description="管理获客来源、原始询盘、评分与资格确认。" />{list.error ? <ErrorState error={list.error} retry={list.reload} /> : <DataTable label="线索目录" columns={columns} rows={list.data?.data || []} total={list.data?.meta.total} page={page} onPage={setPage} loading={list.loading} selectable selectedIds={selectedIds} onSelectedIdsChange={setSelectedIds} selectionActions={<>{can(me, "crm.marketing_lead.assign") && <><FilterControl label="批量分配负责人" value={batchOwnerUserId || "unassigned"} all={false} options={{ unassigned: "选择负责人", ...Object.fromEntries(users.map((user) => [user.id, user.name])) }} onChange={(ownerUserId) => setBatchOwnerUserId(ownerUserId === "unassigned" ? "" : ownerUserId)} /><Button size="sm" disabled={!batchOwnerUserId} onClick={() => { void crmApi("/api/v1/crm/marketing-leads/batch-assign", { method: "POST", body: JSON.stringify({ ids: selectedIds, ownerUserId: batchOwnerUserId }) }).then(() => { setSelectedIds([]); refresh(); }); }}>批量分配</Button></>}<ImportExport kind="marketing-leads" me={me} onChanged={refresh} selectedIds={selectedIds} filters={filters} exportOnly /></>} toolbar={<><form onSubmit={(event) => { event.preventDefault(); setFilters((current) => ({ ...current, keyword: search })); setPage(1); }}><SearchInput value={search} onChange={setSearch} placeholder="搜索姓名、公司、Email、电话或询盘" /></form><FilterControl label="状态" value={filters.status || "all"} options={statusLabels} onChange={(value) => { setFilters((current) => ({ ...current, status: value })); setPage(1); }} /><FilterControl label="来源" value={filters.source || "all"} options={sourceLabels} onChange={(value) => { setFilters((current) => ({ ...current, source: value })); setPage(1); }} /><FilterControl label="负责人" value={filters.ownerUserId || "all"} options={Object.fromEntries(users.map((user) => [user.id, user.name]))} onChange={(value) => { setFilters((current) => ({ ...current, ownerUserId: value })); setPage(1); }} /></>} tableActions={<ImportExport kind="marketing-leads" me={me} onChanged={refresh} selectedIds={selectedIds} filters={filters} />} primaryAction={can(me, "crm.marketing_lead.create") ? <Button onClick={() => setFormOpen(true)}><Plus />新增线索</Button> : undefined} />}{formOpen && <MarketingLeadForm users={users} onClose={() => setFormOpen(false)} onSaved={() => { setFormOpen(false); refresh(); }} />}{deleting && <ConfirmDeleteDialog name={deleting.fullName} description="线索将被软删除，评分、行为和审计历史会保留。" onClose={() => setDeleting(null)} onConfirm={async () => { await crmApi(`/api/v1/crm/marketing-leads/${deleting.id}`, { method: "DELETE" }); refresh(); }} />}</PageContent>;
+  if (!id) {
+    const rows = list.data?.data || [];
+    return (
+      <PageContent>
+        <PageHeader
+          title="线索"
+          description="管理获客来源、原始询盘、评分与资格确认。"
+          actions={
+            <>
+              <ImportExport kind="marketing-leads" me={me} onChanged={refresh} selectedIds={selectedIds} filters={filters} />
+              {can(me, "crm.marketing_lead.create") && (
+                <Button onClick={() => setFormOpen(true)}><Plus />新增线索</Button>
+              )}
+            </>
+          }
+        />
+        <ListMetrics
+          items={[
+            { label: "线索总数", value: list.data?.meta.total ?? "—" },
+            { label: "本页待分配", value: rows.filter((item) => !item.ownerUserId).length },
+            { label: "本页重点线索", value: rows.filter((item) => ["MQL", "SQL"].includes(item.status)).length },
+            { label: "本页已转化", value: rows.filter((item) => item.status === "CONVERTED").length },
+          ]}
+        />
+        {list.error ? (
+          <ErrorState error={list.error} retry={list.reload} />
+        ) : (
+          <DataTable
+            label="线索目录"
+            columns={columns}
+            rows={rows}
+            total={list.data?.meta.total}
+            page={page}
+            onPage={setPage}
+            loading={list.loading}
+            selectable
+            selectedIds={selectedIds}
+            onSelectedIdsChange={setSelectedIds}
+            selectionActions={
+              <>
+                {can(me, "crm.marketing_lead.assign") && (
+                  <>
+                    <FilterControl
+                      label="批量分配负责人"
+                      value={batchOwnerUserId || "unassigned"}
+                      all={false}
+                      options={{ unassigned: "选择负责人", ...Object.fromEntries(users.map((user) => [user.id, user.name])) }}
+                      onChange={(ownerUserId) => setBatchOwnerUserId(ownerUserId === "unassigned" ? "" : ownerUserId)}
+                    />
+                    <Button
+                      size="sm"
+                      disabled={!batchOwnerUserId}
+                      onClick={() => {
+                        void crmApi("/api/v1/crm/marketing-leads/batch-assign", {
+                          method: "POST",
+                          body: JSON.stringify({ ids: selectedIds, ownerUserId: batchOwnerUserId }),
+                        }).then(() => {
+                          setSelectedIds([]);
+                          refresh();
+                        });
+                      }}
+                    >
+                      批量分配
+                    </Button>
+                  </>
+                )}
+                <ImportExport kind="marketing-leads" me={me} onChanged={refresh} selectedIds={selectedIds} filters={filters} exportOnly />
+              </>
+            }
+            toolbar={
+              <>
+                <form onSubmit={(event) => {
+                  event.preventDefault();
+                  setFilters((current) => ({ ...current, keyword: search }));
+                  setPage(1);
+                }}>
+                  <SearchInput value={search} onChange={setSearch} placeholder="搜索姓名、公司、Email、电话或询盘" />
+                </form>
+                <FilterControl label="状态" value={filters.status || "all"} options={statusLabels} onChange={(value) => {
+                  setFilters((current) => ({ ...current, status: value }));
+                  setPage(1);
+                }} />
+                <FilterControl label="来源" value={filters.source || "all"} options={sourceLabels} onChange={(value) => {
+                  setFilters((current) => ({ ...current, source: value }));
+                  setPage(1);
+                }} />
+                <FilterControl label="负责人" value={filters.ownerUserId || "all"} options={Object.fromEntries(users.map((user) => [user.id, user.name]))} onChange={(value) => {
+                  setFilters((current) => ({ ...current, ownerUserId: value }));
+                  setPage(1);
+                }} />
+              </>
+            }
+          />
+        )}
+        {formOpen && <MarketingLeadForm users={users} onClose={() => setFormOpen(false)} onSaved={() => { setFormOpen(false); refresh(); }} />}
+        {deleting && <ConfirmDeleteDialog name={deleting.fullName} description="线索将被软删除，评分、行为和审计历史会保留。" onClose={() => setDeleting(null)} onConfirm={async () => { await crmApi(`/api/v1/crm/marketing-leads/${deleting.id}`, { method: "DELETE" }); refresh(); }} />}
+      </PageContent>
+    );
+  }
   if (detail.loading || !lead) return <PageContent>{detail.error ? <ErrorState error={detail.error} retry={detail.reload} /> : <LoadingSkeleton detail />}</PageContent>;
   const legalActions = lead.status === "MQL" ? ["ACCEPT_SQL", "RECYCLE"] : lead.status === "SQL" ? ["RECYCLE"] : [];
   if (!["CONVERTED", "DISQUALIFIED"].includes(lead.status)) legalActions.push("DISQUALIFY");

@@ -38,6 +38,7 @@ import {
   LoadingSkeleton,
   EntityHeader,
   EntityMeta,
+  ListMetrics,
   SummaryStrip,
   DetailTabs,
   Section,
@@ -412,6 +413,39 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                 ? "管理供应商与交付合作关系。"
                 : "管理潜在客户、客户、供应商与合作伙伴。"
             }
+            actions={
+              <>
+                <ImportExport
+                  kind="organizations"
+                  me={me}
+                  onChanged={refresh}
+                  selectedIds={selectedIds}
+                  filters={{ ...filters, role: supplier ? "VENDOR" : filters.role || "" }}
+                />
+                {can(me, "crm.organization.create") && (
+                  <Button onClick={() => setEdit("new")}>
+                    <Plus />
+                    {supplier ? "新增供应商" : "新增公司"}
+                  </Button>
+                )}
+              </>
+            }
+          />
+          <ListMetrics
+            items={[
+              {
+                label: supplier ? "供应商总数" : "公司总数",
+                value: list.data?.meta.total ?? "—",
+              },
+              {
+                label: "本页已分配负责人",
+                value: (list.data?.data || []).filter((row) => !!row.ownerUserId).length,
+              },
+              {
+                label: "本页待分配负责人",
+                value: (list.data?.data || []).filter((row) => !row.ownerUserId).length,
+              },
+            ]}
           />
           {!supplier && (
             <div className="crm-smart-tabs flex max-w-full gap-1 overflow-x-auto" aria-label="公司智能视图">
@@ -473,23 +507,6 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                   </Button>
                   <ImportExport kind="organizations" me={me} onChanged={refresh} selectedIds={selectedIds} filters={{ ...filters, role: supplier ? "VENDOR" : filters.role || "" }} exportOnly />
                 </>
-              }
-              tableActions={
-                <ImportExport
-                  kind="organizations"
-                  me={me}
-                  onChanged={refresh}
-                  selectedIds={selectedIds}
-                  filters={{ ...filters, role: supplier ? "VENDOR" : filters.role || "" }}
-                />
-              }
-              primaryAction={
-                can(me, "crm.organization.create") ? (
-                  <Button onClick={() => setEdit("new")}>
-                    <Plus />
-                    {supplier ? "新增供应商" : "新增公司"}
-                  </Button>
-                ) : undefined
               }
               toolbar={
                 <>

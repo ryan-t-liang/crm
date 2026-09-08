@@ -74,6 +74,16 @@ export function ImportExport({
   const [mode, setMode] = useState<"import" | "export" | null>(null);
   return (
     <>
+      {can(me, `crm.${key}.export`) && (
+        <Button
+          variant={exportOnly ? "outline" : "ghost"}
+          className="shadow-none"
+          onClick={() => setMode("export")}
+        >
+          <Download />
+          {exportOnly ? "导出所选" : "导出"}
+        </Button>
+      )}
       {!exportOnly && can(me, `crm.${key}.import`) && (
         <Button
           variant="outline"
@@ -81,17 +91,7 @@ export function ImportExport({
           onClick={() => setMode("import")}
         >
           <Upload />
-          导入
-        </Button>
-      )}
-      {can(me, `crm.${key}.export`) && (
-        <Button
-          variant="outline"
-          className="shadow-none"
-          onClick={() => setMode("export")}
-        >
-          <Download />
-          {exportOnly ? "导出所选" : "导出"}
+          批量导入
         </Button>
       )}
       {mode && (
