@@ -1,7 +1,7 @@
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table"
 
+import { DashboardDataTable } from "@/components/dashboard-composition"
 import { Avatar, AvatarFallback } from "@/components/v1/ui"
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/v1/ui"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/v1/ui"
 import type { TeamRow } from "@/lib/dashboard"
 
@@ -34,21 +34,14 @@ const columns: ColumnDef<TeamRow>[] = [
 export function TeamExecutionTable({ rows }: { rows: TeamRow[] }) {
   const table = useReactTable({ data: rows, columns, getCoreRowModel: getCoreRowModel() })
 
-  if (!rows.length) return null
-
   return (
-    <Card className="gap-0 overflow-hidden border-border/90 py-0 shadow-none">
-      <CardHeader className="border-b px-5 py-4">
-        <CardTitle className="text-base">团队表现</CardTitle>
-        <CardDescription>按负责人归属统计线索、商机、互动与执行质量，不含金额排名</CardDescription>
-      </CardHeader>
-      <div className="max-w-full overflow-x-auto">
+    <DashboardDataTable title="成员表现" description={`${rows.length} 位成员，按负责人归属统计线索、商机、互动与执行质量`}>
         <Table className="min-w-[1180px]">
-          <TableHeader className="bg-muted/35">
+          <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="h-10 hover:bg-transparent">
+              <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
-                  <TableHead key={header.id} className="h-10 whitespace-nowrap px-4 text-xs font-medium">
+                  <TableHead key={header.id} className="whitespace-nowrap">
                     {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>
                 ))}
@@ -56,18 +49,17 @@ export function TeamExecutionTable({ rows }: { rows: TeamRow[] }) {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id} className="h-11">
+            {table.getRowModel().rows.length ? table.getRowModel().rows.map((row) => (
+              <TableRow key={row.id}>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="whitespace-nowrap px-4 py-2 text-[13px] tabular-nums">
+                  <TableCell key={cell.id} className="whitespace-nowrap tabular-nums">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}
               </TableRow>
-            ))}
+            )) : <TableRow><TableCell colSpan={columns.length} className="dashboard-empty-row">当前筛选下暂无团队数据。</TableCell></TableRow>}
           </TableBody>
         </Table>
-      </div>
-    </Card>
+    </DashboardDataTable>
   )
 }

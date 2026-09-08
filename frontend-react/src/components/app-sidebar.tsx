@@ -5,7 +5,6 @@ import {
   Goal,
   Gauge,
   LayoutDashboard,
-  ListTodo,
   LogOut,
   ScrollText,
   ShieldCheck,
@@ -56,7 +55,6 @@ const navGroups: Array<{ label: string; items: NavItem[] }> = [
     label: "概览",
     items: [
       { label: "数据看板", route: "dashboard", icon: LayoutDashboard, anyPermissions: ["crm.dashboard.self.view", "crm.dashboard.management.view"] },
-      { label: "我的工作台", route: "workbench", icon: ListTodo, permission: "crm.task.view" },
     ],
   },
   {

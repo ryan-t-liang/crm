@@ -19,6 +19,28 @@ export type DashboardData = {
   period: { from: string; to: string; ownerUserId: string | null; organizationRole: string | null }
   kpis: Record<DashboardKpiKey, number>
   pipeline: Array<{ status: string; count: number }>
+  opportunities: {
+    rows: Array<{
+      id: string
+      requirementSummary: string
+      status: string
+      priority: string
+      company: string
+      contactName: string
+      owner: { id: string; name: string; loginAccount?: string } | null
+      latestProgress: string | null
+      nextAction: string | null
+      nextFollowupAt: string | null
+      lastFollowupAt: string | null
+      updatedAt: string
+    }>
+    risk: {
+      stale: number
+      withoutNextAction: number
+      dueNextSevenDays: number
+      overdueFollowups: number
+    }
+  }
   lifecycle: Array<{ stage: string; count: number }>
   execution: {
     winRate: RatioMetric

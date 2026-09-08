@@ -68,7 +68,32 @@ export class CrmAnalyticsService {
     const [leads, tasks, nurtures, interactions] = await Promise.all([
       this.prisma.crmLead.findMany({
         where: { contactId: { in: contactIds }, salesOwnerUserId: filter.ownerUserId, deletedAt: null },
-        select: { id: true, contactId: true, status: true, priority: true, createdAt: true, closedAt: true, lastFollowupAt: true, nextAction: true, salesOwnerUserId: true },
+        select: {
+          id: true,
+          contactId: true,
+          requirementSummary: true,
+          status: true,
+          priority: true,
+          createdAt: true,
+          updatedAt: true,
+          wonAt: true,
+          closedAt: true,
+          lastFollowupAt: true,
+          nextFollowupAt: true,
+          latestProgress: true,
+          nextAction: true,
+          salesOwnerUserId: true,
+          salesOwner: { select: crmUserSummarySelect },
+          contact: {
+            select: {
+              contactName: true,
+              companyName: true,
+              companyShortName: true,
+              organization: { select: { id: true, name: true, shortName: true } },
+            },
+          },
+        },
+        orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
       }),
       this.prisma.crmTask.findMany({
         where: { ownerUserId: filter.ownerUserId, OR: [{ organizationId: { in: opportunityOrganizationIds } }, { contactId: { in: contactIds } }, { lead: { contactId: { in: contactIds } } }] },
@@ -78,7 +103,11 @@ export class CrmAnalyticsService {
       this.interactions(organizationIds, contactIds),
     ]);
     const activeLeads = leads.filter((lead) => ACTIVE_LEAD_STATUSES.includes(lead.status as typeof ACTIVE_LEAD_STATUSES[number]));
-    const closedInPeriod = leads.filter((lead) => ["WON", "LOST"].includes(lead.status) && lead.closedAt && lead.closedAt >= filter.from && lead.closedAt <= filter.to);
+    const closedAt = (lead: typeof leads[number]) => lead.status === "WON" ? lead.wonAt ?? lead.closedAt : lead.closedAt;
+    const closedInPeriod = leads.filter((lead) => {
+      const occurredAt = closedAt(lead);
+      return ["WON", "LOST"].includes(lead.status) && occurredAt && occurredAt >= filter.from && occurredAt <= filter.to;
+    });
     const won = closedInPeriod.filter((lead) => lead.status === "WON").length;
     const dueInPeriod = tasks.filter((task) => task.status !== "CANCELED" && task.dueAt >= filter.from && task.dueAt <= filter.to);
     const doneInPeriod = dueInPeriod.filter((task) => task.status === "DONE");
@@ -96,7 +125,29 @@ export class CrmAnalyticsService {
     const pipelineStages = ["NEW", "QUALIFIED", "SOLUTION", "QUOTATION"].map((status) => ({ status, count: activeLeads.filter((lead) => lead.status === status).length }));
     pipelineStages.push({ status: "WON", count: closedInPeriod.filter((lead) => lead.status === "WON").length }, { status: "LOST", count: closedInPeriod.filter((lead) => lead.status === "LOST").length });
     const lifecycle = ["TARGET", "CONTACTED", "NURTURING", "OPPORTUNITY", "CUSTOMER"].map((stage) => ({ stage, count: organizations.filter((row) => row.lifecycleStage === stage).length }));
-    const salesCycles = closedInPeriod.map((lead) => daysBetween(lead.createdAt, lead.closedAt!));
+    const salesCycles = closedInPeriod.map((lead) => daysBetween(lead.createdAt, closedAt(lead)!));
+    const opportunityRows = [...activeLeads, ...closedInPeriod]
+      .filter((lead, index, rows) => rows.findIndex((row) => row.id === lead.id) === index)
+      .sort((a, b) => {
+        const activeOrder = Number(ACTIVE_LEAD_STATUSES.includes(b.status as typeof ACTIVE_LEAD_STATUSES[number])) - Number(ACTIVE_LEAD_STATUSES.includes(a.status as typeof ACTIVE_LEAD_STATUSES[number]));
+        return activeOrder || b.updatedAt.getTime() - a.updatedAt.getTime();
+      })
+      .slice(0, 40)
+      .map((lead) => ({
+        id: lead.id,
+        requirementSummary: lead.requirementSummary,
+        status: lead.status,
+        priority: lead.priority,
+        company: lead.contact.organization?.shortName ?? lead.contact.organization?.name ?? lead.contact.companyShortName ?? lead.contact.companyName ?? "—",
+        contactName: lead.contact.contactName,
+        owner: lead.salesOwner,
+        latestProgress: lead.latestProgress,
+        nextAction: lead.nextAction,
+        nextFollowupAt: lead.nextFollowupAt,
+        lastFollowupAt: lead.lastFollowupAt,
+        updatedAt: lead.updatedAt,
+      }));
+    const nextSevenDays = new Date(now.getTime() + 7 * DAY);
     return {
       period: { from: filter.from, to: filter.to, ownerUserId: filter.ownerUserId ?? null, organizationRole: filter.organizationRole ?? null },
       kpis: {
@@ -108,6 +159,15 @@ export class CrmAnalyticsService {
         staleLeads: activeLeads.filter((lead) => (lead.lastFollowupAt ?? lead.createdAt) < staleBoundary).length,
       },
       pipeline: pipelineStages,
+      opportunities: {
+        rows: opportunityRows,
+        risk: {
+          stale: activeLeads.filter((lead) => (lead.lastFollowupAt ?? lead.createdAt) < staleBoundary).length,
+          withoutNextAction: activeLeads.filter((lead) => !lead.nextAction?.trim()).length,
+          dueNextSevenDays: activeLeads.filter((lead) => lead.nextFollowupAt && lead.nextFollowupAt >= now && lead.nextFollowupAt <= nextSevenDays).length,
+          overdueFollowups: activeLeads.filter((lead) => lead.nextFollowupAt && lead.nextFollowupAt < now).length,
+        },
+      },
       lifecycle,
       execution: {
         winRate: { numerator: won, denominator: closedInPeriod.length, percent: percentage(won, closedInPeriod.length) },
@@ -160,7 +220,7 @@ export class CrmAnalyticsService {
             ? { organization: { roles: { some: { role: filter.organizationRole } } } }
             : undefined,
         },
-        select: { id: true, salesOwnerUserId: true, status: true, lastFollowupAt: true, createdAt: true, closedAt: true, nextAction: true },
+        select: { id: true, salesOwnerUserId: true, status: true, lastFollowupAt: true, createdAt: true, wonAt: true, closedAt: true, nextAction: true },
       }),
       this.prisma.marketingLead.findMany({
         where: { deletedAt: null, ownerUserId: { in: userIds } },
@@ -169,6 +229,9 @@ export class CrmAnalyticsService {
           ownerUserId: true,
           status: true,
           createdAt: true,
+          mqlAt: true,
+          sqlAt: true,
+          convertedAt: true,
           convertedOpportunityId: true,
           statusHistory: { select: { toStatus: true, changedAt: true } },
         },
@@ -192,8 +255,11 @@ export class CrmAnalyticsService {
       const userMarketingLeads = marketingLeads.filter((lead) => lead.ownerUserId === user.id);
       const activeLeads = userLeads.filter((lead) => ACTIVE_LEAD_STATUSES.includes(lead.status as typeof ACTIVE_LEAD_STATUSES[number]));
       const openTasks = userTasks.filter((task) => task.status === "OPEN");
-      const reached = (lead: typeof userMarketingLeads[number], status: "MQL" | "SQL") =>
-        lead.statusHistory.some((history) => history.toStatus === status && history.changedAt >= filter.from && history.changedAt <= filter.to);
+      const reached = (lead: typeof userMarketingLeads[number], status: "MQL" | "SQL") => {
+        const canonicalAt = status === "MQL" ? lead.mqlAt : lead.sqlAt;
+        if (canonicalAt) return canonicalAt >= filter.from && canonicalAt <= filter.to;
+        return lead.statusHistory.some((history) => history.toStatus === status && history.changedAt >= filter.from && history.changedAt <= filter.to);
+      };
       const mql = userMarketingLeads.filter((lead) => reached(lead, "MQL"));
       const sql = userMarketingLeads.filter((lead) => reached(lead, "SQL"));
       const convertedSql = sql.filter((lead) => lead.convertedOpportunityId);
@@ -203,7 +269,10 @@ export class CrmAnalyticsService {
         mql: mql.length,
         sql: sql.length,
         newOpportunities: userLeads.filter((lead) => lead.createdAt >= filter.from && lead.createdAt <= filter.to).length,
-        wonOpportunities: userLeads.filter((lead) => lead.status === "WON" && lead.closedAt && lead.closedAt >= filter.from && lead.closedAt <= filter.to).length,
+        wonOpportunities: userLeads.filter((lead) => {
+          const occurredAt = lead.wonAt ?? lead.closedAt;
+          return lead.status === "WON" && occurredAt && occurredAt >= filter.from && occurredAt <= filter.to;
+        }).length,
         overdueTasks: openTasks.filter((task) => task.dueAt < now).length,
         interactions: (contactInteractionsByOwner.get(user.id) ?? 0) + (leadInteractionsByOwner.get(user.id) ?? 0),
         staleLeads: activeLeads.filter((lead) => (lead.lastFollowupAt ?? lead.createdAt) < staleBoundary).length,
