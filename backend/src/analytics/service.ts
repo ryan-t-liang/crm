@@ -146,6 +146,8 @@ export class CrmAnalyticsService {
         nextFollowupAt: lead.nextFollowupAt,
         lastFollowupAt: lead.lastFollowupAt,
         updatedAt: lead.updatedAt,
+        stale: (lead.lastFollowupAt ?? lead.createdAt) < staleBoundary,
+        missingNextAction: !lead.nextAction?.trim(),
       }));
     const nextSevenDays = new Date(now.getTime() + 7 * DAY);
     return {
@@ -263,6 +265,7 @@ export class CrmAnalyticsService {
       const mql = userMarketingLeads.filter((lead) => reached(lead, "MQL"));
       const sql = userMarketingLeads.filter((lead) => reached(lead, "SQL"));
       const convertedSql = sql.filter((lead) => lead.convertedOpportunityId);
+      const opportunitiesWithNextAction = activeLeads.filter((lead) => lead.nextAction?.trim()).length;
       return {
         user,
         newMarketingLeads: userMarketingLeads.filter((lead) => lead.createdAt >= filter.from && lead.createdAt <= filter.to).length,
@@ -276,7 +279,9 @@ export class CrmAnalyticsService {
         overdueTasks: openTasks.filter((task) => task.dueAt < now).length,
         interactions: (contactInteractionsByOwner.get(user.id) ?? 0) + (leadInteractionsByOwner.get(user.id) ?? 0),
         staleLeads: activeLeads.filter((lead) => (lead.lastFollowupAt ?? lead.createdAt) < staleBoundary).length,
-        leadsWithNextActionPercent: percentage(activeLeads.filter((lead) => lead.nextAction?.trim() && tasks.some((task) => task.leadId === lead.id && task.status === "OPEN")).length, activeLeads.length),
+        activeOpportunities: activeLeads.length,
+        opportunitiesWithNextAction,
+        leadsWithNextActionPercent: percentage(opportunitiesWithNextAction, activeLeads.length),
         mqlToSqlPercent: percentage(sql.length, mql.length),
         sqlToOpportunityPercent: percentage(convertedSql.length, sql.length),
       };

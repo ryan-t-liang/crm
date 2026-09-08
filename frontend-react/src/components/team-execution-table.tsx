@@ -26,9 +26,13 @@ const columns: ColumnDef<TeamRow>[] = [
   { accessorKey: "interactions", header: "互动" },
   { accessorKey: "overdueTasks", header: "逾期任务" },
   { accessorKey: "staleLeads", header: "停滞商机" },
-  { accessorKey: "leadsWithNextActionPercent", header: "有下一步行动", cell: ({ getValue }) => `${getValue<number>()}%` },
-  { accessorKey: "mqlToSqlPercent", header: "MQL → SQL", cell: ({ getValue }) => `${getValue<number>()}%` },
-  { accessorKey: "sqlToOpportunityPercent", header: "SQL → 商机", cell: ({ getValue }) => `${getValue<number>()}%` },
+  {
+    accessorKey: "opportunitiesWithNextAction",
+    header: "有下一步行动",
+    cell: ({ row }) => row.original.activeOpportunities
+      ? `${row.original.opportunitiesWithNextAction}/${row.original.activeOpportunities}`
+      : "—",
+  },
 ]
 
 export function TeamExecutionTable({ rows }: { rows: TeamRow[] }) {
@@ -36,7 +40,7 @@ export function TeamExecutionTable({ rows }: { rows: TeamRow[] }) {
 
   return (
     <DashboardDataTable title="成员表现" description={`${rows.length} 位成员，按负责人归属统计线索、商机、互动与执行质量`}>
-        <Table className="min-w-[1180px]">
+        <Table className="min-w-[1040px]">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>

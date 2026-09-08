@@ -1,5 +1,6 @@
 import type { Prisma, PrismaClient } from "@prisma/client";
 import type { AppConfig } from "../common/config.js";
+import { crmUserSummarySelect } from "../common/crm-users.js";
 import { leadScoreLevel, leadTemperature } from "./scoring.js";
 
 export type MarketingAnalyticsFilter = {
@@ -93,9 +94,37 @@ export class MarketingAnalyticsService {
   }
 
   async scoring(filter: MarketingAnalyticsFilter) {
-    const leads = await this.cohort(filter);
+    const leads = await this.prisma.marketingLead.findMany({
+      where: this.where(filter),
+      include: { owner: { select: crmUserSummarySelect } },
+      orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+    });
     const active = leads.filter((lead) => !["CONVERTED", "DISQUALIFIED"].includes(lead.status));
     const highScoreBoundary = new Date(filter.to.getTime() - this.config.crmHighFitUntouchedDays * 24 * HOUR);
+    const isHighFitHighEngagement = (lead: typeof active[number]) => lead.fitScore >= 70 && lead.engagementScoreCached >= 70;
+    const isHighFitUntouched = (lead: typeof active[number]) => lead.fitScore >= 70 && (!lead.lastActivityAt || lead.lastActivityAt < highScoreBoundary);
+    const attentionRows = active.map((lead) => {
+      const reasons = [
+        lead.status === "MQL" ? "PENDING_MQL" : null,
+        isHighFitHighEngagement(lead) ? "HIGH_FIT_HIGH_ENGAGEMENT" : null,
+        isHighFitUntouched(lead) ? "HIGH_FIT_UNTOUCHED" : null,
+        lead.status === "RECYCLED" ? "RECYCLED" : null,
+      ].filter((reason): reason is string => Boolean(reason));
+      return {
+        id: lead.id,
+        fullName: lead.fullName,
+        companyName: lead.companyName,
+        status: lead.status,
+        fitScore: lead.fitScore,
+        engagementScore: lead.engagementScoreCached,
+        owner: lead.owner,
+        lastActivityAt: lead.lastActivityAt,
+        updatedAt: lead.updatedAt,
+        reasons,
+      };
+    }).filter((lead) => lead.reasons.length)
+      .sort((a, b) => b.reasons.length - a.reasons.length || (b.fitScore + b.engagementScore) - (a.fitScore + a.engagementScore) || b.updatedAt.getTime() - a.updatedAt.getTime())
+      .slice(0, 20);
     const ids = leads.map((lead) => lead.id);
     const activities = ids.length ? await this.prisma.leadActivityEvent.groupBy({
       by: ["eventType"],
@@ -114,8 +143,17 @@ export class MarketingAnalyticsService {
         hotLeads: active.filter((lead) => leadTemperature(lead.fitScore, lead.engagementScoreCached) === "HOT").length,
         warmLeads: active.filter((lead) => leadTemperature(lead.fitScore, lead.engagementScoreCached) === "WARM").length,
         coldLeads: active.filter((lead) => leadTemperature(lead.fitScore, lead.engagementScoreCached) === "COLD").length,
-        highScoreUntouched: active.filter((lead) => (lead.fitScore >= 70 || lead.engagementScoreCached >= 70) && (!lead.lastActivityAt || lead.lastActivityAt < highScoreBoundary)).length,
+        highScoreUntouched: active.filter(isHighFitUntouched).length,
         recycledLeads: active.filter((lead) => lead.status === "RECYCLED").length,
+      },
+      attention: {
+        counts: {
+          pendingMql: active.filter((lead) => lead.status === "MQL").length,
+          highFitHighEngagement: active.filter(isHighFitHighEngagement).length,
+          highFitUntouched: active.filter(isHighFitUntouched).length,
+          recycled: active.filter((lead) => lead.status === "RECYCLED").length,
+        },
+        rows: attentionRows,
       },
       distribution: levels.flatMap((fitLevel) => levels.map((engagementLevel) => ({
         fitLevel,

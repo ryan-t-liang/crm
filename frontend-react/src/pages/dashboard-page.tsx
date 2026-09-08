@@ -4,12 +4,9 @@ import { AlertCircle, RefreshCw } from "lucide-react"
 import {
   DashboardAttentionList,
   DashboardDataTable,
-  DashboardMatrix,
   DashboardMetricStrip,
   DashboardPanel,
-  DashboardSectionHeader,
   DashboardStageFlow,
-  type DashboardMetric,
   type DashboardStage,
 } from "@/components/dashboard-composition"
 import { TeamExecutionTable } from "@/components/team-execution-table"
@@ -20,6 +17,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { getData, type CrmUser, type SessionUser } from "@/lib/api"
 import {
   marketingActivityLabel,
+  marketingLeadStatusLabels,
   marketingSourceLabel,
   marketingSourceLabels,
   opportunityStageLabels,
@@ -55,7 +53,21 @@ type MarketingFunnel = {
 }
 type MarketingScoring = {
   summary: { activeLeads: number; mql: number; hotLeads: number; warmLeads: number; coldLeads: number; highScoreUntouched: number; recycledLeads: number }
-  distribution: Array<{ fitLevel: string; engagementLevel: string; count: number }>
+  attention: {
+    counts: { pendingMql: number; highFitHighEngagement: number; highFitUntouched: number; recycled: number }
+    rows: Array<{
+      id: string
+      fullName: string
+      companyName: string | null
+      status: string
+      fitScore: number
+      engagementScore: number
+      owner: { id: string; name: string; loginAccount?: string } | null
+      lastActivityAt: string | null
+      updatedAt: string
+      reasons: string[]
+    }>
+  }
   topSignals: Array<{ eventType: string; count: number; engagementDelta: number; fitDelta: number }>
 }
 type MarketingSources = {
@@ -190,7 +202,7 @@ export function DashboardPage({ me, users }: { me: SessionUser; users: CrmUser[]
             ) : null}
             <label>
               <span>负责人</span>
-              <Select value={ownerUserId} onValueChange={setOwnerUserId} disabled={!management}>
+              <Select value={ownerUserId} onValueChange={(value) => { setOwnerUserId(value); setTeamMember("all") }} disabled={!management}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {management ? <SelectItem value="all">全部负责人</SelectItem> : null}
@@ -241,17 +253,16 @@ export function DashboardPage({ me, users }: { me: SessionUser; users: CrmUser[]
 function ManagementView({ data, funnel, scoring }: { data: DashboardData; funnel: MarketingFunnel | null; scoring: MarketingScoring | null }) {
   const won = stageCount(data, "WON")
   const opportunityStages = stageFlow(data)
+  const focusRows = priorityOpportunityRows(data.opportunities.rows).slice(0, 8)
   return (
     <div className="dashboard-composition">
       <DashboardMetricStrip
-        label="核心业务指标"
+        label="核心业务结果"
         items={[
           { label: "新增线索", value: funnel?.kpis.newLeads ?? "—", note: "本期新增" },
           { label: "新增商机", value: data.kpis.newLeads, note: "本期新增" },
           { label: "活跃商机", value: data.kpis.activeLeads, note: "当前推进", tone: "positive" },
           { label: "成交商机", value: won, note: "本期成交", tone: "positive" },
-          { label: "逾期任务", value: data.kpis.overdueTasks, note: "需处理", tone: data.kpis.overdueTasks ? "risk" : "neutral" },
-          { label: "停滞商机", value: data.kpis.staleLeads, note: "需处理", tone: data.kpis.staleLeads ? "attention" : "neutral" },
         ]}
       />
       <div className="dashboard-workspace-grid">
@@ -267,24 +278,18 @@ function ManagementView({ data, funnel, scoring }: { data: DashboardData; funnel
         </DashboardPanel>
         <DashboardPanel title="需要关注" description="优先处理影响转化与推进的问题" className="dashboard-attention-panel">
           <DashboardAttentionList items={[
-            { label: "逾期任务", value: data.kpis.overdueTasks, note: "独立任务入口暂不展示", tone: data.kpis.overdueTasks ? "risk" : "neutral" },
-            { label: "停滞商机", value: data.opportunities.risk.stale, note: "查看商机记录", href: "#leads", tone: data.opportunities.risk.stale ? "attention" : "neutral" },
-            { label: "MQL 待处理", value: scoring?.summary.mql ?? "—", note: "查看营销线索", href: scoring ? "#marketing-leads" : undefined, tone: scoring?.summary.mql ? "attention" : "neutral" },
-            { label: "缺少下一步", value: data.opportunities.risk.withoutNextAction, note: "查看商机记录", href: "#leads", tone: data.opportunities.risk.withoutNextAction ? "risk" : "neutral" },
+            { label: "待处理 MQL", value: scoring?.attention.counts.pendingMql ?? "—", note: "进入线索列表", href: scoring ? "#marketing-leads" : undefined, tone: scoring?.attention.counts.pendingMql ? "attention" : "neutral" },
+            { label: "缺少下一步行动", value: data.opportunities.risk.withoutNextAction, note: "进入商机列表", href: "#leads", tone: data.opportunities.risk.withoutNextAction ? "risk" : "neutral" },
+            { label: "停滞商机", value: data.opportunities.risk.stale, note: "进入商机列表", href: "#leads", tone: data.opportunities.risk.stale ? "attention" : "neutral" },
+            { label: "逾期任务", value: data.kpis.overdueTasks, note: "任务入口暂不展示", tone: data.kpis.overdueTasks ? "risk" : "neutral" },
           ]} />
         </DashboardPanel>
       </div>
-      <section className="dashboard-execution-section">
-        <DashboardSectionHeader title="执行健康" description="成交、行动与覆盖质量" />
-        <DashboardMetricStrip compact label="执行健康指标" items={[
-          ratioMetric("成交率", data.execution.winRate),
-          { label: "平均销售周期", value: `${data.execution.averageSalesCycleDays} 天`, note: "已关闭商机" },
-          ratioMetric("下一步行动覆盖率", data.execution.nextActionCoverage),
-          ratioMetric("任务完成率", data.execution.followupCompletion),
-          ratioMetric("客户覆盖率", data.execution.customerCoverage),
-          { label: "MQL 平均响应时间", value: hours(funnel?.kpis.mqlResponseHours ?? null), note: "从 MQL 到首次销售响应", tone: "info" },
-        ]} />
-      </section>
+      <OpportunityTable
+        rows={focusRows}
+        title="当前重点商机"
+        description="优先展示活跃、方案、报价、停滞或缺少下一步行动的商机"
+      />
     </div>
   )
 }
@@ -298,33 +303,11 @@ function MarketingView({ funnel, scoring, sources, source, onSourceChange }: { f
         className="dashboard-funnel-panel"
         action={<SourceFilter value={source} onChange={onSourceChange} />}
       >
-        <DashboardStageFlow stages={marketingStages(funnel)} label="线索到商机转化漏斗" footnote={<span>网站访客追踪尚未接入，本漏斗从 CRM 线索开始。</span>} />
+        <DashboardStageFlow stages={marketingStages(funnel)} label="线索到商机转化漏斗" footnote={<span>网站访客追踪尚未接入；转化样本少于 3 条时显示 —。</span>} />
       </DashboardPanel>
-      <DashboardMetricStrip compact label="营销转化指标" items={[
-        { label: "新增线索", value: funnel.kpis.newLeads, note: "本期创建" },
-        ratioMetric("MQL 转化率", funnel.kpis.mqlRate),
-        ratioMetric("MQL → SQL", funnel.kpis.mqlToSqlRate),
-        ratioMetric("SQL → 商机", funnel.kpis.sqlToOpportunityRate),
-        { label: "平均线索 → 商机", value: hours(funnel.kpis.avgLeadToOpportunityHours), note: "转化耗时" },
-        { label: "MQL 平均响应", value: hours(funnel.kpis.mqlResponseHours), note: "首次销售响应" },
-      ]} />
       {sources ? <SourceQualityTable sources={sources} /> : null}
-      <section className="dashboard-quality-section">
-        <DashboardSectionHeader title="线索质量分析" description="评分用于辅助营销与销售协作，不替代人工判断" />
-        <DashboardMetricStrip compact label="线索质量摘要" items={qualityMetrics(scoring)} />
-      </section>
-      <div className="dashboard-analysis-grid">
-        <DashboardPanel title="评分分布" description="纵轴为互动活跃度，横轴为线索匹配度" className="dashboard-matrix-panel">
-          <DashboardMatrix
-            rows={[{ key: "HIGH", label: "高活跃" }, { key: "MEDIUM", label: "中活跃" }, { key: "LOW", label: "低活跃" }]}
-            columns={[{ key: "HIGH", label: "高匹配" }, { key: "MEDIUM", label: "中匹配" }, { key: "LOW", label: "低匹配" }]}
-            cells={scoring.distribution.map((cell) => ({ row: cell.engagementLevel, column: cell.fitLevel, count: cell.count }))}
-            rowLabel="互动活跃度"
-            columnLabel="线索匹配度"
-          />
-        </DashboardPanel>
-        <ScoringSignalsTable scoring={scoring} />
-      </div>
+      <MarketingAttentionTable scoring={scoring} />
+      <ScoringSignalsTable scoring={scoring} />
     </div>
   )
 }
@@ -337,16 +320,8 @@ function OpportunityView({ data, stage, onStageChange }: { data: DashboardData; 
       <DashboardPanel title="商机阶段" description="活跃阶段显示当前分布，成交与丢失显示本期结果" className="dashboard-opportunity-path">
         <DashboardStageFlow stages={stageFlow(data)} label="商机阶段路径" footnote={<span>本期丢失 <strong>{stageCount(data, "LOST")}</strong></span>} />
       </DashboardPanel>
-      <DashboardMetricStrip compact label="商机推进摘要" items={[
-        { label: "新增商机", value: data.kpis.newLeads, note: "本期创建" },
-        { label: "活跃商机", value: data.kpis.activeLeads, note: "当前推进", tone: "positive" },
-        { label: "成交商机", value: stageCount(data, "WON"), note: "本期成交", tone: "positive" },
-        { label: "丢失商机", value: stageCount(data, "LOST"), note: "本期关闭", tone: stageCount(data, "LOST") ? "risk" : "neutral" },
-        { label: "停滞商机", value: data.opportunities.risk.stale, note: "超过停滞阈值", tone: data.opportunities.risk.stale ? "attention" : "neutral" },
-        { label: "无下一步行动", value: data.opportunities.risk.withoutNextAction, note: "需补充行动", tone: data.opportunities.risk.withoutNextAction ? "risk" : "neutral" },
-      ]} />
       <div className="dashboard-workspace-grid">
-        <OpportunityTable rows={rows} stage={stage} onStageChange={onStageChange} />
+        <OpportunityTable rows={rows} stage={stage} onStageChange={onStageChange} title="当前商机" description={`${rows.length} 条记录，优先显示正在推进的商机`} />
         <DashboardPanel title="推进风险" description={`${active.length} 个活跃商机的执行提醒`} className="dashboard-risk-panel">
           <DashboardAttentionList items={[
             { label: "停滞超过阈值", value: data.opportunities.risk.stale, tone: data.opportunities.risk.stale ? "attention" : "neutral" },
@@ -361,7 +336,7 @@ function OpportunityView({ data, stage, onStageChange }: { data: DashboardData; 
 }
 
 function TeamView({ rows, allRows, member, onMemberChange }: { rows: TeamRow[]; allRows: TeamRow[]; member: string; onMemberChange: (value: string) => void }) {
-  const total = (key: keyof Pick<TeamRow, "newMarketingLeads" | "newOpportunities" | "wonOpportunities" | "overdueTasks">) => rows.reduce((sum, row) => sum + row[key], 0)
+  const total = (key: keyof Pick<TeamRow, "newMarketingLeads" | "newOpportunities" | "wonOpportunities">) => rows.reduce((sum, row) => sum + row[key], 0)
   const participating = rows.filter((row) => row.newMarketingLeads + row.newOpportunities + row.wonOpportunities + row.interactions > 0).length
   return (
     <div className="dashboard-composition">
@@ -370,11 +345,10 @@ function TeamView({ rows, allRows, member, onMemberChange }: { rows: TeamRow[]; 
         <MemberFilter rows={allRows} value={member} onChange={onMemberChange} />
       </div>
       <DashboardMetricStrip compact label="团队表现摘要" items={[
-        { label: "参与销售", value: participating, note: member === "all" ? "本期有产出或互动" : "已选择成员" },
+        { label: "参与销售人数", value: participating, note: member === "all" ? "本期有产出或互动" : "已选择成员" },
         { label: "新增线索", value: total("newMarketingLeads"), note: "本期创建" },
         { label: "新增商机", value: total("newOpportunities"), note: "本期创建" },
         { label: "成交商机", value: total("wonOpportunities"), note: "本期成交", tone: "positive" },
-        { label: "逾期任务", value: total("overdueTasks"), note: "需处理", tone: total("overdueTasks") ? "risk" : "neutral" },
       ]} />
       <TeamExecutionTable rows={rows} />
     </div>
@@ -420,9 +394,20 @@ function OpportunityStageFilter({ value, onChange }: { value: string; onChange: 
   )
 }
 
-function OpportunityTable({ rows, stage, onStageChange }: { rows: DashboardData["opportunities"]["rows"]; stage: string; onStageChange: (value: string) => void }) {
+function OpportunityTable({ rows, title, description, stage, onStageChange }: {
+  rows: DashboardData["opportunities"]["rows"]
+  title: string
+  description: string
+  stage?: string
+  onStageChange?: (value: string) => void
+}) {
   return (
-    <DashboardDataTable title="当前商机" description={`${rows.length} 条记录，优先显示正在推进的商机`} action={<OpportunityStageFilter value={stage} onChange={onStageChange} />} className="dashboard-opportunity-table">
+    <DashboardDataTable
+      title={title}
+      description={description}
+      action={stage && onStageChange ? <OpportunityStageFilter value={stage} onChange={onStageChange} /> : undefined}
+      className="dashboard-opportunity-table"
+    >
       <Table className="min-w-[1040px]">
         <TableHeader><TableRow>{["商机", "公司", "阶段", "负责人", "最新进展", "下一步行动", "下次跟进"].map((label) => <TableHead key={label}>{label}</TableHead>)}</TableRow></TableHeader>
         <TableBody>
@@ -443,13 +428,45 @@ function OpportunityTable({ rows, stage, onStageChange }: { rows: DashboardData[
   )
 }
 
+function MarketingAttentionTable({ scoring }: { scoring: MarketingScoring }) {
+  const counts = scoring.attention.counts
+  return (
+    <DashboardDataTable title="当前值得关注的线索" description="只展示能直接形成跟进动作的线索">
+      <div className="dashboard-focus-summary" aria-label="待处理线索摘要">
+        {[
+          ["待处理 MQL", counts.pendingMql],
+          ["高匹配 + 高活跃", counts.highFitHighEngagement],
+          ["高匹配未触达", counts.highFitUntouched],
+          ["重新培育", counts.recycled],
+        ].map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}
+      </div>
+      <Table className="min-w-[860px]">
+        <TableHeader><TableRow>{["线索", "公司", "处理原因", "状态", "匹配 / 活跃", "负责人", "最近互动"].map((label) => <TableHead key={label}>{label}</TableHead>)}</TableRow></TableHeader>
+        <TableBody>
+          {scoring.attention.rows.length ? scoring.attention.rows.map((row) => (
+            <TableRow key={row.id}>
+              <TableCell><a className="dashboard-record-link" href={`#marketing-leads/${row.id}`}>{row.fullName}</a></TableCell>
+              <TableCell>{row.companyName || "—"}</TableCell>
+              <TableCell><div className="dashboard-reason-list">{row.reasons.map((reason) => <span key={reason}>{attentionReasonLabel(reason)}</span>)}</div></TableCell>
+              <TableCell>{marketingLeadStatusLabels[row.status] ?? "其他状态"}</TableCell>
+              <TableCell><strong className="dashboard-score-pair">{row.fitScore}<i>/</i>{row.engagementScore}</strong></TableCell>
+              <TableCell>{row.owner?.name ?? "未分配"}</TableCell>
+              <TableCell>{dateTime(row.lastActivityAt)}</TableCell>
+            </TableRow>
+          )) : <TableRow><TableCell colSpan={7} className="dashboard-empty-row">当前没有需要优先处理的线索。</TableCell></TableRow>}
+        </TableBody>
+      </Table>
+    </DashboardDataTable>
+  )
+}
+
 function SourceQualityTable({ sources }: { sources: MarketingSources }) {
   return (
     <DashboardDataTable title="线索来源质量" description="比较不同来源从线索到商机的转化质量">
       <Table className="min-w-[980px]">
         <TableHeader><TableRow>{["来源", "线索数", "MQL", "MQL 转化率", "SQL", "SQL 转化率", "商机", "线索 → 商机", "平均转化时间"].map((label) => <TableHead key={label}>{label}</TableHead>)}</TableRow></TableHeader>
         <TableBody>
-          {sources.rows.length ? sources.rows.map((row) => <TableRow key={row.source}><TableCell className="font-medium">{marketingSourceLabel(row.source)}</TableCell><TableCell>{row.leadCount}</TableCell><TableCell>{row.mqlCount}</TableCell><TableCell>{row.mqlRate}%</TableCell><TableCell>{row.sqlCount}</TableCell><TableCell>{row.sqlRate}%</TableCell><TableCell>{row.opportunityCount}</TableCell><TableCell>{row.leadToOpportunityRate}%</TableCell><TableCell>{hours(row.avgConversionHours)}</TableCell></TableRow>) : <TableRow><TableCell colSpan={9} className="dashboard-empty-row">当前筛选下暂无来源数据。</TableCell></TableRow>}
+          {sources.rows.length ? sources.rows.map((row) => <TableRow key={row.source}><TableCell className="font-medium">{marketingSourceLabel(row.source)}</TableCell><TableCell>{row.leadCount}</TableCell><TableCell>{row.mqlCount}</TableCell><TableCell>{smallSamplePercent(row.mqlRate, row.leadCount)}</TableCell><TableCell>{row.sqlCount}</TableCell><TableCell>{smallSamplePercent(row.sqlRate, row.leadCount)}</TableCell><TableCell>{row.opportunityCount}</TableCell><TableCell>{smallSamplePercent(row.leadToOpportunityRate, row.leadCount)}</TableCell><TableCell>{row.opportunityCount < 2 ? "—" : hours(row.avgConversionHours)}</TableCell></TableRow>) : <TableRow><TableCell colSpan={9} className="dashboard-empty-row">当前筛选下暂无来源数据。</TableCell></TableRow>}
         </TableBody>
       </Table>
     </DashboardDataTable>
@@ -474,13 +491,13 @@ function DashboardUnavailable({ title, message }: { title: string; message: stri
 }
 
 function marketingStages(funnel: MarketingFunnel): DashboardStage[] {
-  const conversion = [funnel.kpis.mqlRate.percent, funnel.kpis.mqlToSqlRate.percent, funnel.kpis.sqlToOpportunityRate.percent]
+  const conversion = [funnel.kpis.mqlRate, funnel.kpis.mqlToSqlRate, funnel.kpis.sqlToOpportunityRate]
   const labels: Record<string, string> = { LEAD: "线索", MQL: "MQL", SQL: "SQL", OPPORTUNITY: "商机" }
   return funnel.stages.map((stage, index) => ({
     key: stage.key,
     label: labels[stage.key] ?? stage.label,
     count: stage.count,
-    conversionToNext: index < conversion.length ? `${conversion[index]}%` : undefined,
+    conversionToNext: index < conversion.length ? smallSamplePercent(conversion[index].percent, conversion[index].denominator) : undefined,
     tone: index === funnel.stages.length - 1 ? "positive" : index === 0 ? "info" : "neutral",
   }))
 }
@@ -499,25 +516,32 @@ function stageCount(data: DashboardData, status: string) {
   return data.pipeline.find((item) => item.status === status)?.count ?? 0
 }
 
-function ratioMetric(label: string, metric: Rate): DashboardMetric {
-  return { label, value: `${metric.percent}%`, note: `${metric.numerator}/${metric.denominator}`, tone: metric.denominator && metric.percent < 50 ? "attention" : "neutral" }
+function priorityOpportunityRows(rows: DashboardData["opportunities"]["rows"]) {
+  const stagePriority: Record<string, number> = { QUOTATION: 5, SOLUTION: 4, QUALIFIED: 3, NEW: 2 }
+  return rows
+    .filter((row) => ACTIVE_OPPORTUNITY_STAGES.includes(row.status))
+    .sort((a, b) => {
+      const aRisk = Number(a.stale) * 3 + Number(a.missingNextAction) * 2 + (stagePriority[a.status] ?? 0)
+      const bRisk = Number(b.stale) * 3 + Number(b.missingNextAction) * 2 + (stagePriority[b.status] ?? 0)
+      return bRisk - aRisk || new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    })
 }
 
-function qualityMetrics(scoring: MarketingScoring): DashboardMetric[] {
-  const summary = scoring.summary
-  return [
-    { label: "活跃线索", value: summary.activeLeads, note: "当前样本" },
-    { label: "待处理 MQL", value: summary.mql, note: "需销售接受", tone: summary.mql ? "attention" : "neutral" },
-    { label: "高活跃线索", value: summary.hotLeads, note: "优先触达", tone: "positive" },
-    { label: "中活跃线索", value: summary.warmLeads, note: "持续培育" },
-    { label: "低活跃线索", value: summary.coldLeads, note: "观察" },
-    { label: "高匹配未触达", value: summary.highScoreUntouched, note: "需处理", tone: summary.highScoreUntouched ? "attention" : "neutral" },
-    { label: "重新培育", value: summary.recycledLeads, note: "回流线索" },
-  ]
+function attentionReasonLabel(reason: string) {
+  return ({
+    PENDING_MQL: "待处理 MQL",
+    HIGH_FIT_HIGH_ENGAGEMENT: "高匹配 + 高活跃",
+    HIGH_FIT_UNTOUCHED: "高匹配未触达",
+    RECYCLED: "重新培育",
+  } as Record<string, string>)[reason] ?? "需关注"
 }
 
 function hours(value: number | null) {
   return value == null ? "—" : `${value} 小时`
+}
+
+function smallSamplePercent(value: number, denominator: number) {
+  return denominator < 3 ? "—" : `${value}%`
 }
 
 function dateTime(value?: string | null) {

@@ -33,6 +33,8 @@ export type DashboardData = {
       nextFollowupAt: string | null
       lastFollowupAt: string | null
       updatedAt: string
+      stale: boolean
+      missingNextAction: boolean
     }>
     risk: {
       stale: number
@@ -76,6 +78,8 @@ export type TeamRow = {
   overdueTasks: number
   interactions: number
   staleLeads: number
+  activeOpportunities: number
+  opportunitiesWithNextAction: number
   leadsWithNextActionPercent: number
   mqlToSqlPercent: number
   sqlToOpportunityPercent: number
