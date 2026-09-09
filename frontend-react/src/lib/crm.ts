@@ -31,6 +31,7 @@ export type Contact = {
   title?: string;
   email?: string;
   phone?: string;
+  whatsapp?: string;
   stage: string;
   organizationId?: string;
   companyName?: string;

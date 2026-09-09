@@ -1,4 +1,5 @@
 import { useCallback, useState } from "react";
+import { Radio, RadioGroup } from "@douyinfe/semi-ui";
 import {
   CONTACT_FIELDS,
   LEAD_FIELDS,
@@ -25,6 +26,7 @@ import {
   FormDialog,
 } from "./primitives";
 import { AttachmentList, attachmentAccept } from "./attachment-list";
+import { CRMFormSection, CRMFormSideSheet } from "./interaction-patterns";
 
 export type EntityRecord = {
   id: string;
@@ -177,7 +179,7 @@ export function EntityForm({
         return r.data.map((o) => ({
           id: o.id,
           label: o.name,
-          description: o.shortName,
+          description: [o.shortName, o.industry].filter(Boolean).join(" · ") || undefined,
         }));
       }
       const r = await crmApi<PageResult<Contact>>(
@@ -442,9 +444,143 @@ export function EntityForm({
       </div>
     );
   }
+  const renderContactFields = (keys: string[]) => definitions
+    .filter((definition) => keys.includes(definition.key))
+    .map((definition) => (
+      <div
+        key={definition.key}
+        className={definition.wide ? "sm:col-span-2" : undefined}
+      >
+        <Field
+          label={definition.label}
+          required={definition.required}
+          error={fieldErrors[definition.key]}
+          wide={definition.wide}
+        >
+          {(id) => control(definition, id)}
+        </Field>
+      </div>
+    ));
+
+  if (kind === "contact") {
+    const mode = record ? "edit" : "create";
+    return (
+      <CRMFormSideSheet
+        mode={mode}
+        entityLabel="联系人"
+        busy={busy}
+        onClose={onClose}
+        footer={(
+          <>
+            <Button variant="outline" onClick={onClose} disabled={busy}>取消</Button>
+            <Button onClick={() => void save()} disabled={busy}>
+              {busy ? "保存中…" : record ? "保存修改" : "保存联系人"}
+            </Button>
+          </>
+        )}
+      >
+        <div className="crm-contact-form-sections">
+          <CRMFormSection title="基本信息" description="填写联系人的身份信息。">
+            <div className="crm-pattern-form-grid">
+              <Field label="联系人类型" required>
+                {() => (
+                  <FilterControl
+                    label="联系人类型"
+                    value={contactMode === "individual" ? "individual" : "business"}
+                    all={false}
+                    className="w-full"
+                    options={{ business: "企业联系人", individual: "个人联系人" }}
+                    onChange={(value) => {
+                      const nextMode = value === "individual"
+                        ? "individual"
+                        : contactMode === "individual"
+                          ? "linked"
+                          : contactMode;
+                      setContactMode(nextMode);
+                      if (nextMode !== "linked") {
+                        setRelationId("");
+                        setRelationLabel("");
+                      }
+                    }}
+                  />
+                )}
+              </Field>
+              {renderContactFields(["contactName", "title", "department"])}
+            </div>
+          </CRMFormSection>
+
+          <CRMFormSection title="联系方式">
+            <div className="crm-pattern-form-grid">
+              {renderContactFields(["email", "phone", "whatsapp", "wechat", "linkedin"])}
+            </div>
+          </CRMFormSection>
+
+          <CRMFormSection title="关联组织" description="选择已有组织，或在确认后创建新的组织主数据。">
+            {contactMode === "individual" ? (
+              <p className="crm-pattern-form-note">个人联系人暂不关联组织，组织字段会保持为空。</p>
+            ) : (
+              <div className="crm-pattern-form-grid">
+                <Field label="关联方式" required wide>
+                  {() => (
+                    <RadioGroup
+                      className="crm-contact-association-modes"
+                      value={contactMode}
+                      onChange={(event) => {
+                        const nextMode = String(event.target.value) as typeof contactMode;
+                        setContactMode(nextMode);
+                        setRelationId("");
+                        setRelationLabel("");
+                      }}
+                    >
+                      <Radio value="linked">关联已有组织</Radio>
+                      <Radio value="create">新建组织</Radio>
+                      <Radio value="unconfirmed">组织暂未确认</Radio>
+                    </RadioGroup>
+                  )}
+                </Field>
+                {contactMode === "linked" ? (
+                  <Field label="组织" required wide error={fieldErrors.organizationId}>
+                    {() => (
+                      <EntityCombobox
+                        label="组织名称"
+                        value={relationId}
+                        selectedLabel={relationLabel}
+                        onChange={(nextId, nextLabel) => {
+                          setRelationId(nextId);
+                          setRelationLabel(nextLabel);
+                        }}
+                        load={loadRelation}
+                      />
+                    )}
+                  </Field>
+                ) : null}
+                {["create", "unconfirmed"].includes(contactMode)
+                  ? renderContactFields(["companyName", "companyShortName", "industry", "website", "country", "region", "city"])
+                  : null}
+              </div>
+            )}
+          </CRMFormSection>
+
+          <CRMFormSection title="业务信息">
+            <div className="crm-pattern-form-grid">
+              {renderContactFields(["ownerUserId", "source", "initialContext", "followupAttention"])}
+            </div>
+          </CRMFormSection>
+
+          <CRMFormSection title="备注与附件">
+            <div className="crm-pattern-form-grid">
+              {renderContactFields(["remark"])}
+              {fileField("meetingMinutesFiles", "历史会议资料")}
+            </div>
+          </CRMFormSection>
+        </div>
+        {error ? <p role="alert" className="crm-pattern-form-error">{error}</p> : null}
+      </CRMFormSideSheet>
+    );
+  }
   return (
     <FormDialog
-      title={`${record ? "编辑" : "新增"}${kind === "contact" ? "联系人" : "商机"}`}
+      title={`${record ? "编辑" : "新增"}商机`}
       wide
       onClose={onClose}
       busy={busy}
@@ -459,7 +595,7 @@ export function EntityForm({
             }}
             disabled={busy}
           >
-            {busy ? "保存中…" : kind === "contact" ? "保存联系人" : "保存商机"}
+            {busy ? "保存中…" : "保存商机"}
           </Button>
         </>
       }
@@ -473,60 +609,11 @@ export function EntityForm({
         ])}
       >
         <div className="grid gap-6 sm:grid-cols-2">
-          {tab === "basic" && kind === "contact" && (
-            <Field label="联系人类型" required wide>
-              {() => (
-                <FilterControl
-                  label="联系人类型"
-                  value={contactMode === "individual" ? "individual" : "business"}
-                  all={false}
-                  className="w-full"
-                  options={{
-                    business: "企业联系人",
-                    individual: "个人联系人",
-                  }}
-                  onChange={(value) => {
-                    const mode = value === "individual" ? "individual" : contactMode === "individual" ? "linked" : contactMode;
-                    setContactMode(mode);
-                    if (mode !== "linked") {
-                      setRelationId("");
-                      setRelationLabel("");
-                    }
-                  }}
-                />
-              )}
-            </Field>
-          )}
-          {tab === "basic" && kind === "contact" && contactMode !== "individual" && (
-            <Field label="组织关联方式" required wide>
-              {() => (
-                <FilterControl
-                  label="组织关联方式"
-                  value={contactMode}
-                  all={false}
-                  className="w-full"
-                  options={{ linked: "选择已有组织", create: "快速创建组织", unconfirmed: "组织暂未确认" }}
-                  onChange={(value) => {
-                    const mode = value as typeof contactMode;
-                    setContactMode(mode);
-                    setRelationId("");
-                    setRelationLabel("");
-                  }}
-                />
-              )}
-            </Field>
-          )}
-          {tab === "basic" &&
-            (kind === "lead" ||
-              (kind === "contact" && contactMode === "linked")) && (
+          {tab === "basic" && (
             <Field
-              label={kind === "contact" ? "所属组织" : "关联联系人"}
+              label="关联联系人"
               required
-              error={
-                kind === "contact"
-                  ? fieldErrors.organizationId
-                  : fieldErrors.contactId
-              }
+              error={fieldErrors.contactId}
               wide
             >
               {() =>
@@ -535,11 +622,7 @@ export function EntityForm({
                 ) : (
                   <>
                     <EntityCombobox
-                      label={
-                        kind === "contact"
-                          ? "组织"
-                          : "联系人、组织、Email 或电话"
-                      }
+                      label="联系人、组织、Email 或电话"
                       value={relationId}
                       selectedLabel={relationLabel}
                       onChange={(id, label) => {
@@ -553,23 +636,8 @@ export function EntityForm({
               }
             </Field>
           )}
-          {tab === "basic" &&
-            kind === "contact" &&
-            contactMode === "individual" && (
-              <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm text-muted-foreground sm:col-span-2">
-                个人联系人不关联组织，组织相关字段将保持为空。
-              </div>
-            )}
           {definitions
-            .filter(
-              (d) =>
-                d.tab === tab &&
-                !(
-                  kind === "contact" &&
-                  companyFields.has(d.key) &&
-                  !["create", "unconfirmed"].includes(contactMode)
-                ),
-            )
+            .filter((d) => d.tab === tab)
             .map((d) => (
               <div
                 key={d.key}
@@ -592,9 +660,6 @@ export function EntityForm({
                   )}
               </div>
             ))}
-          {kind === "contact" &&
-            tab === "notes" &&
-            fileField("meetingMinutesFiles", "历史会议资料")}
         </div>
       </DetailTabs>
       {error && (

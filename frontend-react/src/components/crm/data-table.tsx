@@ -50,6 +50,8 @@ export function DataTable<T extends { id: string }>({
   views,
   activeView,
   onViewChange,
+  flat = false,
+  emptyDescription,
 }: {
   columns: CrmColumnDef<T>[];
   rows: T[];
@@ -72,6 +74,8 @@ export function DataTable<T extends { id: string }>({
   views?: CrmTableView[];
   activeView?: string;
   onViewChange?: (view: string) => void;
+  flat?: boolean;
+  emptyDescription?: string;
 }) {
   const normalized = columns;
   const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
@@ -111,12 +115,12 @@ export function DataTable<T extends { id: string }>({
   } : undefined;
 
   return (
-    <div className="crm-data-table">
+    <div className={`crm-data-table${flat ? " is-flat" : ""}`}>
       <div className="crm-data-workspace">
         {views?.length ? (
           <section className="crm-data-views" aria-label={`${label}视图`}>
             <Tabs
-              type="button"
+              type={flat ? "line" : "button"}
               size="small"
               collapsible="auto"
               activeKey={activeView || views[0].key}
@@ -174,7 +178,7 @@ export function DataTable<T extends { id: string }>({
           size="small"
           bordered={false}
           scroll={{ x: "max-content" }}
-          empty={<EmptyState title={emptyTitle} description="试试调整筛选条件，或添加一条新记录。" action={emptyAction} />}
+          empty={<EmptyState title={emptyTitle} description={emptyDescription || "试试调整筛选条件，或添加一条新记录。"} action={emptyAction} />}
         />
         {onPage && (
           <div className="crm-table-footer">

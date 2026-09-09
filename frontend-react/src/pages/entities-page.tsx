@@ -8,6 +8,7 @@ import {
 } from "@douyinfe/semi-icons";
 import { Pagination } from "@douyinfe/semi-ui";
 import {
+  CONTACT_STAGES,
   LEAD_FIELDS,
   LEAD_STATUSES,
   LEAD_PRIORITIES,
@@ -45,7 +46,22 @@ import { AttachmentList } from "@/components/crm/attachment-list";
 import { Timeline } from "@/components/crm/timeline";
 import { EntityAudit } from "@/components/crm/entity-audit";
 import { ImportExport } from "@/components/crm/import-export";
+import { TaskForm, type TaskTarget } from "@/components/crm/task-interactions";
 import { marketingSourceChannelLabel, marketingSourceLabel } from "@/lib/product-language";
+import {
+  CRMActionMenu,
+  CRMAssociationCard,
+  CRMDescriptions,
+  CRMEmptyState,
+  CRMEntityCell,
+  CRMFilterBar,
+  CRMListPage,
+  CRMPageHeader,
+  CRMRecordHeader,
+  CRMRecordListItem,
+  CRMRecordTabs,
+  CRMSystemInfoPopover,
+} from "@/components/crm/interaction-patterns";
 import {
   PageContent,
   PageHeader,
@@ -74,7 +90,8 @@ import {
 type RecordRow = EntityRecord & Partial<Contact & Lead>;
 const optionMap = (options: { value: string; label: string }[]) =>
   Object.fromEntries(options.map((o) => [o.value, o.label]));
-const leadStatuses = optionMap(LEAD_STATUSES),
+const contactStages = optionMap(CONTACT_STAGES),
+  leadStatuses = optionMap(LEAD_STATUSES),
   priorities = optionMap(LEAD_PRIORITIES);
 const contactTypeViews = [
   { key: "all", label: "全部联系人" },
@@ -124,7 +141,8 @@ export function EntitiesPage({
       contact?: Pick<Contact, "id" | "contactName">;
     } | null>(null),
     [deleting, setDeleting] = useState<RecordRow | null>(null),
-    [followup, setFollowup] = useState<FollowupTarget | null>(null);
+    [followup, setFollowup] = useState<FollowupTarget | null>(null),
+    [task, setTask] = useState<TaskTarget | null>(null);
   const [organizationLabel, setOrganizationLabel] = useState("");
   const list = useResource<PageResult<RecordRow>>(
     id
@@ -150,6 +168,21 @@ export function EntitiesPage({
     setFilters((f) => ({ ...f, [key]: value }));
     setPage(1);
   };
+  const clearFilters = () => {
+    setFilters({});
+    setSearch("");
+    setOrganizationLabel("");
+    setPage(1);
+  };
+  const activeContactFilters = kind === "contact" ? [
+    ...(filters.keyword ? [{ key: "keyword", label: `搜索：${filters.keyword}`, onRemove: () => { change("keyword", ""); setSearch(""); } }] : []),
+    ...(filters.contactType ? [{ key: "contactType", label: `类型：${filters.contactType === "INDIVIDUAL" ? "个人联系人" : "企业联系人"}`, onRemove: () => change("contactType", "") }] : []),
+    ...(filters.ownerUserId ? [{ key: "ownerUserId", label: `负责人：${users.find((user) => user.id === filters.ownerUserId)?.name || "已选择"}`, onRemove: () => change("ownerUserId", "") }] : []),
+    ...(filters.organizationId ? [{ key: "organizationId", label: `组织：${organizationLabel || "已选择"}`, onRemove: () => { change("organizationId", ""); setOrganizationLabel(""); } }] : []),
+    ...(filters.source ? [{ key: "source", label: `来源：${filters.source}`, onRemove: () => change("source", "") }] : []),
+    ...(filters.nextFollowupFrom ? [{ key: "nextFollowupFrom", label: "下次跟进：已设置起始日", onRemove: () => change("nextFollowupFrom", "") }] : []),
+    ...(filters.nextFollowupTo ? [{ key: "nextFollowupTo", label: "下次跟进：已设置截止日", onRemove: () => change("nextFollowupTo", "") }] : []),
+  ] : [];
   const refresh = () => {
     list.reload();
     detail.reload();
@@ -202,8 +235,14 @@ export function EntitiesPage({
         ]
       : []),
     ...(canFollow ? [{ label: "记录跟进", onClick: () => follow(r) }] : []),
+    ...(kind === "contact" && can(me, "crm.lead.create")
+      ? [{ label: "新增商机", dividerBefore: true, onClick: () => setForm({ kind: "lead", contact: { id: r.id, contactName: nameOf(r) } }) }]
+      : []),
+    ...(kind === "contact" && can(me, "crm.task.create")
+      ? [{ label: "创建任务", onClick: () => setTask({ contactId: r.id, label: nameOf(r) }) }]
+      : []),
     ...(can(me, `crm.${kind}.delete`)
-      ? [{ label: "删除", destructive: true, onClick: () => setDeleting(r) }]
+      ? [{ label: "删除", destructive: true, dividerBefore: true, onClick: () => setDeleting(r) }]
       : []),
   ];
   const organizationOptions = useCallback(
@@ -221,21 +260,17 @@ export function EntitiesPage({
       id: "name",
       header: label,
       enableHiding: false,
-      cell: ({ row: { original: r } }) => (
-        <a
-          href={`#${family}/${r.id}`}
-          className="flex min-w-40 max-w-72 items-center gap-2.5 hover:underline"
-        >
-          {kind === "contact" && (
-            <UserAvatar name={nameOf(r)} showName={false} />
-          )}
+      cell: ({ row: { original: r } }) => kind === "contact" ? (
+        <CRMEntityCell
+          name={nameOf(r)}
+          secondary={r.email || r.phone}
+          href={`#contacts/${r.id}`}
+        />
+      ) : (
+        <a href={`#${family}/${r.id}`} className="flex min-w-40 max-w-72 items-center gap-2.5 hover:underline">
           <div className="min-w-0">
             <p className="truncate font-medium">{nameOf(r)}</p>
-            <p className="truncate text-xs text-muted-foreground">
-              {kind === "contact"
-                ? r.email || r.phone || "—"
-                : r.contact?.contactName}
-            </p>
+            <p className="truncate text-xs text-muted-foreground">{r.contact?.contactName}</p>
           </div>
         </a>
       ),
@@ -246,18 +281,15 @@ export function EntitiesPage({
       cell: ({ row: { original: r } }) => {
         const c = kind === "contact" ? r : r.contact;
         return c?.organizationId ? (
-          <a
-            href={`#organizations/${c.organizationId}`}
-            className="block max-w-44 truncate hover:underline"
-          >
-            {c.organization?.shortName ||
-              c.organization?.name ||
-              c.companyShortName ||
-              c.companyName}
-          </a>
+          <div className="crm-contact-organization-cell">
+            <a href={`#organizations/${c.organizationId}`}>
+              {c.organization?.shortName || c.organization?.name || c.companyShortName || c.companyName}
+            </a>
+            {kind === "contact" && c.title ? <span>{c.title}</span> : null}
+          </div>
         ) : (
-          <span className="block max-w-44 truncate">
-            {c?.companyShortName || c?.companyName || "—"}
+          <span className="crm-contact-organization-empty">
+            {c?.companyShortName || c?.companyName || "未关联组织"}
           </span>
         );
       },
@@ -278,14 +310,14 @@ export function EntitiesPage({
             ),
           },
           {
-            accessorKey: "title",
-            header: "职位",
+            accessorKey: "phone",
+            header: "手机",
             cell: ({
               row: { original: r },
             }: {
               row: { original: RecordRow };
             }) => (
-              <span className="block max-w-36 truncate">{r.title || "—"}</span>
+              <span className={r.phone ? "crm-contact-phone" : "crm-contact-phone is-empty"}>{r.phone || "—"}</span>
             ),
           },
         ]
@@ -317,26 +349,6 @@ export function EntitiesPage({
           },
         ]
       : []),
-    {
-      id: "owner",
-      header: kind === "contact" ? "联系人负责人" : "商机负责人",
-      cell: ({ row: { original: r } }) => (
-        <OwnerCell name={(kind === "contact" ? r.owner : r.salesOwner)?.name} />
-      ),
-    },
-    {
-      id: "next",
-      header: kind === "contact" ? "下次跟进" : "下一步行动",
-      cell: ({ row: { original: r } }) => kind === "contact" ? (
-        <RelativeDateCell value={r.nextFollowupAt} emptyLabel="未安排" />
-      ) : (
-        <NextActionCell
-          title={r.nextAction}
-          date={r.nextFollowupAt}
-          overdue={Boolean(r.nextFollowupAt && Date.parse(r.nextFollowupAt) < Date.now())}
-        />
-      ),
-    },
     ...(kind === "contact"
       ? [{
           accessorKey: "relatedLeadCount",
@@ -351,6 +363,26 @@ export function EntitiesPage({
         }]
       : []),
     {
+      id: "owner",
+      header: kind === "contact" ? "联系人负责人" : "商机负责人",
+      cell: ({ row: { original: r } }) => (
+        <OwnerCell name={(kind === "contact" ? r.owner : r.salesOwner)?.name} />
+      ),
+    },
+    {
+      id: "next",
+      header: kind === "contact" ? "最近互动" : "下一步行动",
+      cell: ({ row: { original: r } }) => kind === "contact" ? (
+        <RelativeDateCell value={r.lastFollowupAt} emptyLabel="暂无互动" />
+      ) : (
+        <NextActionCell
+          title={r.nextAction}
+          date={r.nextFollowupAt}
+          overdue={Boolean(r.nextFollowupAt && Date.parse(r.nextFollowupAt) < Date.now())}
+        />
+      ),
+    },
+    {
       id: "updated",
       header: "更新时间",
       cell: ({ row: { original: r } }) => <RelativeDateCell value={r.updatedAt} />,
@@ -360,47 +392,56 @@ export function EntitiesPage({
       header: "操作",
       enableHiding: false,
       cell: ({ row: { original: r } }) => (
-        <RowActions label={nameOf(r)} items={actions(r)} />
+        kind === "contact"
+          ? <CRMActionMenu label={nameOf(r)} items={actions(r)} />
+          : <RowActions label={nameOf(r)} items={actions(r)} />
       ),
     },
   ];
   return (
     <PageContent detail={!!id}>
       {!id ? (
-        <>
-          <PageHeader
-            title={kind === "contact" ? "联系人" : "商机"}
-            description={`管理${label}信息与下一步行动`}
-            actions={
-              <>
-                <ImportExport
-                  kind={family}
-                  me={me}
-                  onChanged={refresh}
-                  selectedIds={selectedIds}
-                  filters={filters}
-                />
-                {canCreate && (
-                  <Button onClick={() => setForm({ kind })}>
-                    <Plus />
-                    新增{label}
-                  </Button>
-                )}
-              </>
-            }
-          />
-          <ListMetrics
-            items={
+        <CRMListPage
+          header={kind === "contact" ? (
+            <CRMPageHeader
+              title="联系人"
+              description="管理客户、合作伙伴及其他业务联系人的信息与关系。"
+              actions={(
+                <>
+                  <ImportExport kind={family} me={me} onChanged={refresh} selectedIds={selectedIds} filters={filters} />
+                  {canCreate ? <Button onClick={() => setForm({ kind })}><Plus />新增联系人</Button> : null}
+                </>
+              )}
+            />
+          ) : (
+            <PageHeader
+              title="商机"
+              description="管理商机信息与下一步行动"
+              actions={(
+                <>
+                  <ImportExport kind={family} me={me} onChanged={refresh} selectedIds={selectedIds} filters={filters} />
+                  {canCreate ? <Button onClick={() => setForm({ kind })}><Plus />新增商机</Button> : null}
+                </>
+              )}
+            />
+          )}
+          metrics={(
+            <ListMetrics
+              items={
               kind === "contact"
                 ? [
                     { label: "联系人总数", value: list.data?.meta.total ?? "—" },
                     {
-                      label: "本页已分配负责人",
-                      value: (list.data?.data || []).filter((item) => !!item.owner).length,
+                      label: "本页企业联系人",
+                      value: (list.data?.data || []).filter((item) => item.contactType === "BUSINESS").length,
                     },
                     {
-                      label: "本页待分配负责人",
-                      value: (list.data?.data || []).filter((item) => !item.owner).length,
+                      label: "本页有商机",
+                      value: (list.data?.data || []).filter((item) => Number(item.relatedLeadCount || 0) > 0).length,
+                    },
+                    {
+                      label: "本页待跟进",
+                      value: (list.data?.data || []).filter((item) => !!item.nextFollowupAt).length,
                     },
                   ]
                 : [
@@ -414,8 +455,10 @@ export function EntitiesPage({
                       value: (list.data?.data || []).filter((item) => !!item.salesOwner).length,
                     },
                   ]
-            }
-          />
+              }
+            />
+          )}
+        >
           {list.error ? (
             <ErrorState error={list.error} retry={list.reload} />
           ) : (
@@ -436,6 +479,9 @@ export function EntitiesPage({
               total={list.data?.meta.total}
               onPage={setPage}
               loading={list.loading}
+              flat={kind === "contact"}
+              emptyTitle={kind === "contact" ? "暂无联系人" : undefined}
+              emptyDescription={kind === "contact" ? "当前范围内还没有联系人。调整筛选条件，或新增第一位联系人。" : undefined}
               selectable={can(me, `crm.${kind}.edit`)}
               selectedIds={selectedIds}
               onSelectedIdsChange={setSelectedIds}
@@ -466,7 +512,10 @@ export function EntitiesPage({
                 </>
               }
               toolbar={
-                <>
+                <CRMFilterBar
+                  activeFilters={activeContactFilters}
+                  onClear={kind === "contact" ? clearFilters : undefined}
+                >
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -554,7 +603,7 @@ export function EntitiesPage({
                         )}
                       </Field>
                     )}
-                    {kind === "contact" ? (
+                    {(kind as string) === "contact" ? (
                       <Field label="来源">
                         {(fieldId) => (
                           <Input
@@ -605,19 +654,10 @@ export function EntitiesPage({
                       )}
                     </Field>
                   </FilterPopover>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setFilters({});
-                      setSearch("");
-                      setOrganizationLabel("");
-                      setPage(1);
-                    }}
-                  >
-                    重置
-                  </Button>
-                </>
+                  {kind === "lead" ? (
+                    <Button variant="ghost" size="sm" onClick={clearFilters}>重置</Button>
+                  ) : null}
+                </CRMFilterBar>
               }
             />
           )}
@@ -626,58 +666,84 @@ export function EntitiesPage({
               {batchError}
             </p>
           )}
-        </>
+        </CRMListPage>
       ) : detail.error ? (
         <ErrorState error={detail.error} retry={detail.reload} />
       ) : !row ? (
         <LoadingSkeleton detail />
       ) : (
         <DetailScaffold
-          top={
+          top={kind === "contact" ? (
+            <CRMRecordHeader
+              backHref="#contacts"
+              backLabel="返回联系人"
+              name={nameOf(row)}
+              subtitle={(
+                <>
+                  {row.title || "职位待补充"}
+                  {row.organizationId ? (
+                    <> at <a href={`#organizations/${row.organizationId}`}>{row.organization?.shortName || row.organization?.name || row.companyName}</a></>
+                  ) : null}
+                </>
+              )}
+              tags={(
+                <>
+                  <StatusBadge>{row.contactType === "INDIVIDUAL" ? "个人联系人" : "企业联系人"}</StatusBadge>
+                  {row.stage ? <StatusBadge>{contactStages[row.stage] || row.stage}</StatusBadge> : null}
+                </>
+              )}
+              actions={(
+                <>
+                  {can(me, "crm.contact.edit") ? <Button variant="outline" onClick={() => setForm({ kind, record: row })}><Pencil />编辑</Button> : null}
+                  {canFollow ? <Button variant="outline" onClick={() => follow(row)}><MessageSquare />记录跟进</Button> : null}
+                  {can(me, "crm.lead.create") ? <Button onClick={() => setForm({ kind: "lead", contact: { id: row.id, contactName: nameOf(row) } })}><Plus />新增商机</Button> : null}
+                  <CRMSystemInfoPopover
+                    id={row.id}
+                    createdAt={row.createdAt ? dateTime(String(row.createdAt)) : undefined}
+                    updatedAt={row.updatedAt ? dateTime(row.updatedAt) : undefined}
+                    createdBy={(row.createdBy as CrmUser | undefined)?.name}
+                    updatedBy={(row.updatedBy as CrmUser | undefined)?.name}
+                    footer={can(me, "crm.contact.delete") ? (
+                      <Button variant="destructive" size="sm" onClick={() => setDeleting(row)}>删除联系人</Button>
+                    ) : undefined}
+                  />
+                </>
+              )}
+            />
+          ) : (
             <>
               <a className="crm-detail-back-button" href={`#${family}`} aria-label={`返回${label}列表`}>
                 <ArrowLeft />
               </a>
               <EntityHeader
-                icon={kind === "contact" ? <UserAvatar name={nameOf(row)} large showName={false} /> : <div className="crm-detail-symbol"><BriefcaseBusiness /></div>}
+                icon={<div className="crm-detail-symbol"><BriefcaseBusiness /></div>}
                 title={nameOf(row)}
                 meta={
                   <>
-                    <StatusBadge>{kind === "contact" ? row.contactType === "INDIVIDUAL" ? "个人联系人" : "企业联系人" : leadStatuses[row.status || ""]}</StatusBadge>
-                    <SystemIdField value={row.id} label={kind === "contact" ? "联系人 ID" : "商机 ID"} />
-                    {kind === "contact" ? (
-                      <>
-                        <span>{row.title || "未填写职位"}</span>
-                        <span>{row.email || row.phone || "未填写联系方式"}</span>
-                        {row.organizationId ? <a href={`#organizations/${row.organizationId}`} className="hover:underline">{row.organization?.name || row.companyName}</a> : <span>{row.companyName || "未关联组织"}</span>}
-                      </>
-                    ) : (
-                      <>
-                        <StatusBadge>{priorities[row.priority || ""]}</StatusBadge>
-                        <span>销售：{row.salesOwner?.name || "待分配"}</span>
-                        <a className="hover:underline" href={`#contacts/${row.contactId}`}>{row.contact?.contactName}</a>
-                      </>
-                    )}
+                    <StatusBadge>{leadStatuses[row.status || ""]}</StatusBadge>
+                    <SystemIdField value={row.id} label="商机 ID" />
+                    <StatusBadge>{priorities[row.priority || ""]}</StatusBadge>
+                    <span>销售：{row.salesOwner?.name || "待分配"}</span>
+                    <a className="hover:underline" href={`#contacts/${row.contactId}`}>{row.contact?.contactName}</a>
                   </>
                 }
                 actions={
                   <>
                     {can(me, `crm.${kind}.edit`) && <Button variant="outline" onClick={() => setForm({ kind, record: row })}><Pencil />编辑</Button>}
                     {canFollow && <Button variant="outline" onClick={() => follow(row)}><MessageSquare />记录跟进</Button>}
-                    {kind === "contact" && can(me, "crm.lead.create") && <Button onClick={() => setForm({ kind: "lead", contact: { id: row.id, contactName: nameOf(row) } })}><Plus />创建商机</Button>}
                     {can(me, `crm.${kind}.delete`) && <RowActions label={nameOf(row)} items={[{ label: "删除", destructive: true, onClick: () => setDeleting(row) }]} />}
                   </>
                 }
               />
             </>
-          }
+          )}
           highlights={
             <SummaryStrip
               items={kind === "contact" ? [
-                { label: "联系人负责人", value: row.owner?.name || "待分配" },
                 { label: "关联商机", value: row.relatedLeadCount ?? 0 },
+                { label: "进行中商机", value: journey.data?.data.summary.activeLeadCount ?? 0 },
                 { label: "最近互动", value: dateTime(journey.data?.data.summary.recentInteractionAt) },
-                { label: "下次跟进", value: dateTime(journey.data?.data.summary.nextFollowupAt) },
+                { label: "附件", value: row.attachments?.length ?? 0 },
               ] : [
                 { label: "最新进展", value: String(row.latestProgress || "暂无进展") },
                 { label: "下一步行动", value: row.nextAction || "待安排" },
@@ -696,33 +762,57 @@ export function EntitiesPage({
               ...(row.status === "LOST" ? [{ key: "LOST", label: "丢失" }] : []),
             ]} />
           ) : undefined}
-          sidebar={
+          sidebar={kind === "contact" ? (
+            <div className="crm-contact-profile">
+              <CRMDescriptions
+                title="联系人信息"
+                items={[
+                  { label: "职位", value: row.title },
+                  { label: "部门", value: String(row.department || "") },
+                  { label: "联系人类型", value: row.contactType === "INDIVIDUAL" ? "个人联系人" : "企业联系人" },
+                ]}
+              />
+              <CRMDescriptions
+                title="联系方式"
+                items={[
+                  { label: "Email", value: row.email ? <a href={`mailto:${row.email}`}>{row.email}</a> : undefined },
+                  { label: "手机", value: row.phone ? <a href={`tel:${row.phone}`}>{row.phone}</a> : undefined },
+                ]}
+              />
+              <CRMDescriptions
+                title="其他联系方式"
+                items={[
+                  { label: "微信", value: String(row.wechat || "") },
+                  { label: "WhatsApp", value: row.whatsapp ? <a href={`https://wa.me/${String(row.whatsapp).replace(/\D/g, "")}`} target="_blank" rel="noreferrer">{String(row.whatsapp)}</a> : undefined },
+                  { label: "LinkedIn", value: row.linkedin ? <a href={String(row.linkedin)} target="_blank" rel="noreferrer">打开主页</a> : undefined },
+                ]}
+                emptyTitle="暂无补充联系方式"
+                emptyDescription="可通过编辑联系人补充微信或 LinkedIn。"
+                emptyAction={can(me, "crm.contact.edit") ? <Button variant="outline" size="sm" onClick={() => setForm({ kind, record: row })}>添加</Button> : undefined}
+              />
+              <CRMDescriptions
+                title="业务信息"
+                items={[
+                  { label: "负责人", value: row.owner?.name || "未分配" },
+                  { label: "来源", value: row.source },
+                  { label: "初始背景", value: String(row.initialContext || "") },
+                  { label: "跟进关注", value: String(row.followupAttention || "") },
+                ]}
+              />
+              <CRMAssociationCard
+                title="业务关系"
+                name={row.organization?.shortName || row.organization?.name || row.companyName}
+                href={row.organizationId ? `#organizations/${row.organizationId}` : undefined}
+                meta="当前组织"
+                detail={row.title}
+                emptyTitle="暂无关联组织"
+                emptyDescription="关联组织后，可在联系人与组织之间快速查看业务关系。"
+                emptyAction={can(me, "crm.contact.edit") ? <Button variant="outline" size="sm" onClick={() => setForm({ kind, record: row })}>关联组织</Button> : undefined}
+              />
+            </div>
+          ) : (
             <>
-              {kind === "contact" ? (
-                <>
-                  <Section title="联系人资料">
-                    <EntityMeta items={[
-                      { label: "电话", value: row.phone },
-                      { label: "Email", value: row.email },
-                      { label: "微信", value: String(row.wechat || "") },
-                      { label: "部门", value: String(row.department || "") },
-                      { label: "来源", value: row.source },
-                      { label: "跟进注意", value: String(row.followupAttention || "") },
-                      { label: "初始信息", value: String(row.initialContext || "") },
-                    ]} />
-                  </Section>
-                  <Section title="组织资料">
-                    <EntityMeta items={[
-                      { label: "组织", value: row.organizationId ? <a href={`#organizations/${row.organizationId}`} className="hover:underline">{row.organization?.name || row.companyName}</a> : row.companyName },
-                      { label: "网站", value: String(row.website || "") },
-                      { label: "行业", value: String(row.industry || "") },
-                      { label: "地区", value: [row.country, row.region, row.city].filter(Boolean).join(" · ") },
-                      { label: "LinkedIn", value: String(row.linkedin || "") },
-                    ]} />
-                  </Section>
-                </>
-              ) : (
-                <>
+              <>
                   <Section title="商机信息">
                     <EntityMeta items={[
                       { label: "商机阶段", value: leadStatuses[row.status || ""] },
@@ -742,62 +832,60 @@ export function EntitiesPage({
                     </Section>
                   )}
                 </>
-              )}
             </>
-          }
+          )}
         >
-          <DetailTabs
+          {kind === "contact" ? <CRMRecordTabs
             value={tab}
             onChange={setTab}
-            items={(kind === "contact" ? [
+            items={[
               ["overview", "概览"],
               ["leads", `关联商机 ${row.relatedLeadCount ?? 0}`],
               ["journey", "客户旅程"],
               ["notes", "备注与附件"],
               ...(can(me, "audit.view") ? [["audit", "操作记录"]] : []),
-            ] : [
+            ] as [string, string][]}
+          >
+            {tab === "overview" && (
+              <ContactOverview
+                contact={row}
+                journey={journey.data?.data}
+                journeyLoading={journey.loading}
+                journeyError={journey.error}
+                retryJourney={journey.reload}
+                canViewOpportunities={can(me, "crm.lead.view")}
+                onOpenJourney={() => setTab("journey")}
+                onOpenOpportunities={() => setTab("leads")}
+              />
+            )}
+            {tab === "leads" && (can(me, "crm.lead.view") ? (
+              <ContactLeads
+                id={row.id}
+                onCreate={can(me, "crm.lead.create") ? () => setForm({ kind: "lead", contact: { id: row.id, contactName: nameOf(row) } }) : undefined}
+              />
+            ) : <p className="text-sm text-muted-foreground">当前账号没有查看商机的权限。</p>)}
+            {tab === "journey" && (
+              <Section title="客户旅程">
+                {journey.error ? <ErrorState error={journey.error} retry={journey.reload} /> : journey.loading ? <LoadingSkeleton /> : <Timeline events={journey.data?.data.events || []} contactId={row.id} me={me} />}
+              </Section>
+            )}
+            {tab === "notes" && (
+              <Section title="备注与资料">
+                <p className="mb-5 whitespace-pre-wrap break-words text-sm leading-6">{String(row.remark || "暂无备注")}</p>
+                <AttachmentList files={row.attachments || []} endpoint={`${endpoint}/${row.id}`} fieldKey="meetingMinutesFiles" title="历史会议资料" editable={can(me, "crm.contact.edit")} compact onChanged={detail.reload} />
+              </Section>
+            )}
+            {tab === "audit" && can(me, "audit.view") ? <EntityAudit id={row.id} /> : null}
+          </CRMRecordTabs> : <DetailTabs
+            value={tab}
+            onChange={setTab}
+            items={[
               ["requirement", "需求与方案"],
               ["followups", "跟进记录"],
               ...(can(me, "audit.view") ? [["audit", "操作记录"]] : []),
-            ]) as [string, string][]}
+            ] as [string, string][]}
           >
-              {tab === "overview" && kind === "contact" && (
-                <ContactOverview
-                  contact={row}
-                  journey={journey.data?.data}
-                  journeyLoading={journey.loading}
-                  journeyError={journey.error}
-                  retryJourney={journey.reload}
-                  canViewOpportunities={can(me, "crm.lead.view")}
-                  onOpenJourney={() => setTab("journey")}
-                  onOpenOpportunities={() => setTab("leads")}
-                />
-              )}
-              {tab === "leads" &&
-                kind === "contact" &&
-                (can(me, "crm.lead.view") ? (
-                  <ContactLeads id={row.id} />
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    当前账号没有查看商机的权限。
-                  </p>
-                ))}
-              {tab === "journey" && kind === "contact" && (
-                <Section title="客户旅程">
-                  {journey.error ? (
-                    <ErrorState error={journey.error} retry={journey.reload} />
-                  ) : journey.loading ? (
-                    <LoadingSkeleton />
-                  ) : (
-                    <Timeline
-                      events={journey.data?.data.events || []}
-                      contactId={row.id}
-                      me={me}
-                    />
-                  )}
-                </Section>
-              )}
-              {tab === "requirement" && kind === "lead" && (
+              {tab === "requirement" && (
                 <LeadContent
                   row={row}
                   me={me}
@@ -805,32 +893,18 @@ export function EntitiesPage({
                   users={users}
                 />
               )}
-              {tab === "followups" && kind === "lead" && (
+              {tab === "followups" && (
                 <LeadFollowups
                   id={row.id}
                   me={me}
                   key={`${row.id}-${row.updatedAt}`}
                 />
               )}
-              {tab === "notes" && kind === "contact" && (
-                <Section title="备注与资料">
-                  <p className="mb-5 whitespace-pre-wrap break-words text-sm leading-6">
-                    {String(row.remark || "暂无备注")}
-                  </p>
-                  <AttachmentList
-                    files={row.attachments || []}
-                    endpoint={`${endpoint}/${row.id}`}
-                    fieldKey="meetingMinutesFiles"
-                    title="历史会议资料"
-                    editable={can(me, "crm.contact.edit")}
-                    onChanged={detail.reload}
-                  />
-                </Section>
-              )}
               {tab === "audit" && can(me, "audit.view") && (
                 <EntityAudit id={row.id} />
               )}
           </DetailTabs>
+          }
         </DetailScaffold>
       )}
       {form && (
@@ -856,6 +930,15 @@ export function EntitiesPage({
           onSaved={refresh}
         />
       )}
+      {task && (
+        <TaskForm
+          target={task}
+          me={me}
+          users={users}
+          onClose={() => setTask(null)}
+          onSaved={refresh}
+        />
+      )}
       {deleting && (
         <ConfirmDeleteDialog
           name={nameOf(deleting)}
@@ -877,53 +960,46 @@ export function EntitiesPage({
   );
 }
 
-function ContactLeads({ id }: { id: string }) {
+function ContactLeads({ id, onCreate }: { id: string; onCreate?: () => void }) {
   const [page, setPage] = useState(1),
     result = useResource<PageResult<Lead>>(
       `/api/v1/crm/contacts/${id}/leads?page=${page}&pageSize=20`,
     );
   if (result.error)
     return <ErrorState error={result.error} retry={result.reload} />;
+  if (result.loading) return <LoadingSkeleton />;
+  const rows = result.data?.data || [];
   return (
-    <DataTable
-      label="关联商机"
-      rows={result.data?.data || []}
-      loading={result.loading}
-      page={page}
-      total={result.data?.meta.total}
-      onPage={setPage}
-      columns={[
-        {
-          id: "title",
-          header: "项目需求",
-          cell: ({ row }) => (
-            <a
-              href={`#leads/${row.original.id}`}
-              className="font-medium hover:underline"
-            >
-              {row.original.requirementSummary}
-            </a>
-          ),
-        },
-        {
-          id: "status",
-          header: "阶段",
-          cell: ({ row }) => (
-            <StatusBadge>{leadStatuses[row.original.status]}</StatusBadge>
-          ),
-        },
-        {
-          id: "owner",
-          header: "销售负责人",
-          cell: ({ row }) => row.original.salesOwner?.name || "—",
-        },
-        {
-          id: "next",
-          header: "下次跟进",
-          cell: ({ row }) => dateTime(row.original.nextFollowupAt),
-        },
-      ]}
-    />
+    <Section
+      title={`关联商机 ${result.data?.meta.total || 0}`}
+      action={onCreate ? <Button size="sm" onClick={onCreate}><Plus />新增商机</Button> : undefined}
+    >
+      {rows.length ? (
+        <div className="crm-pattern-record-list">
+          {rows.map((opportunity) => (
+            <CRMRecordListItem
+              key={opportunity.id}
+              title={opportunity.requirementSummary}
+              href={`#leads/${opportunity.id}`}
+              meta={<><StatusBadge>{leadStatuses[opportunity.status]}</StatusBadge><span>{priorities[opportunity.priority]}</span></>}
+              detail={opportunity.nextAction || "下一步行动待安排"}
+              aside={<><OwnerCell name={opportunity.salesOwner?.name} /><RelativeDateCell value={opportunity.updatedAt} /></>}
+            />
+          ))}
+          {(result.data?.meta.total || 0) > 20 ? (
+            <div className="crm-followup-pagination-wrap">
+              <Pagination currentPage={page} total={result.data?.meta.total || 0} pageSize={20} showSizeChanger={false} onPageChange={setPage} />
+            </div>
+          ) : null}
+        </div>
+      ) : (
+        <CRMEmptyState
+          title="暂无关联商机"
+          description="该联系人还没有进入正式商机阶段。"
+          action={onCreate ? <Button onClick={onCreate}><Plus />创建商机</Button> : undefined}
+        />
+      )}
+    </Section>
   );
 }
 type Followup = {

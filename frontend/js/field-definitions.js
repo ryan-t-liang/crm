@@ -52,6 +52,7 @@ export const CONTACT_FIELDS = [
   field("department", "部门", "person", "text", { tab: "basic", maxLength: 160 }),
   field("email", "Email", "person", "email", { tab: "basic", maxLength: 191 }),
   field("phone", "电话", "person", "tel", { tab: "basic", maxLength: 64 }),
+  field("whatsapp", "WhatsApp", "person", "tel", { tab: "basic", maxLength: 64 }),
   field("wechat", "微信", "person", "text", { tab: "basic", maxLength: 191 }),
   field("linkedin", "LinkedIn", "person", "url", { tab: "basic", maxLength: 500 }),
   field("companyShortName", "公司简称", "company", "text", { tab: "basic", maxLength: 120 }),

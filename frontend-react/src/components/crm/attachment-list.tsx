@@ -12,6 +12,7 @@ import { ApiError, appUrl, crmApi } from "@/lib/api";
 import { dateTime, friendlyError, type Attachment } from "@/lib/crm";
 import { Button } from "@/components/crm/ui";
 import { ConfirmDeleteDialog } from "./primitives";
+import { CRMEmptyState } from "./interaction-patterns";
 
 export const attachmentAccept =
   ".jpg,.jpeg,.png,.gif,.webp,.mp4,.mov,.webm,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt";
@@ -23,6 +24,7 @@ export function AttachmentList({
   onChanged,
   title = "附件",
   accept = attachmentAccept,
+  compact = false,
 }: {
   files: Attachment[];
   endpoint: string;
@@ -31,11 +33,13 @@ export function AttachmentList({
   onChanged?: () => void;
   title?: string;
   accept?: string;
+  compact?: boolean;
 }) {
   const activeUploads = useRef(0);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
-    [deleting, setDeleting] = useState<Attachment | null>(null);
+    [deleting, setDeleting] = useState<Attachment | null>(null),
+    [showUploader, setShowUploader] = useState(!compact);
   function finishUpload() {
     activeUploads.current = Math.max(0, activeUploads.current - 1);
     setBusy(activeUploads.current > 0);
@@ -106,7 +110,18 @@ export function AttachmentList({
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">{title}</h3>
-        {editable && (
+        {editable && compact && (
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={busy}
+            onClick={() => setShowUploader((visible) => !visible)}
+          >
+            <Upload />
+            {busy ? "上传中…" : showUploader ? "收起上传" : "上传文件"}
+          </Button>
+        )}
+        {editable && !compact && (
           <SemiUpload
             accept={accept}
             action={appUrl(`${endpoint}/attachments/${fieldKey}`)}
@@ -139,6 +154,31 @@ export function AttachmentList({
           </SemiUpload>
         )}
       </div>
+      {editable && compact && showUploader && (
+        <div className="crm-attachment-compact-upload">
+          <SemiUpload
+            accept={accept}
+            action={appUrl(`${endpoint}/attachments/${fieldKey}`)}
+            className="crm-attachment-upload"
+            customRequest={upload}
+            disabled={busy}
+            draggable={false}
+            fileName="file"
+            multiple
+            name="file"
+            onAcceptInvalid={() => {
+              const message = "文件类型不受支持。";
+              setError(message);
+              Toast.warning(message);
+            }}
+            showRetry
+            showUploadList
+          >
+            <Button variant="outline" size="sm" disabled={busy}>选择文件</Button>
+          </SemiUpload>
+          <span>支持图片、文档与视频；选择后立即上传。</span>
+        </div>
+      )}
       {error && (
         <p role="alert" className="text-sm text-destructive">
           {error}
@@ -201,11 +241,22 @@ export function AttachmentList({
             </div>
           );
         })}
-        {!files.length && (
+        {!files.length && (compact ? (
+          <CRMEmptyState
+            compact
+            title="暂无附件"
+            description="上传与该联系人相关的会议纪要、图片或文档。"
+            action={editable && !showUploader ? (
+              <Button variant="outline" size="sm" onClick={() => setShowUploader(true)}>
+                <Upload />上传附件
+              </Button>
+            ) : undefined}
+          />
+        ) : (
           <p className="px-4 py-4 text-xs text-muted-foreground">
             暂无附件{editable ? " · 上传文件或拖放至此" : ""}
           </p>
-        )}
+        ))}
       </div>
       {deleting && (
         <ConfirmDeleteDialog
