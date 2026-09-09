@@ -1,10 +1,10 @@
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 
 import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
-import { SidebarInset, SidebarProvider } from "@/components/v1/ui";
-import { Skeleton } from "@/components/v1/ui";
-import { TooltipProvider } from "@/components/v1/ui";
+import { Skeleton } from "@/components/crm/ui";
+import { TooltipProvider } from "@/components/crm/ui";
+import { CrmShellMain, CrmShellProvider } from "@/components/crm/shell";
 import { DashboardPage } from "@/pages/dashboard-page";
 import { OrganizationsPage } from "@/pages/organizations-page";
 import { EntitiesPage } from "@/pages/entities-page";
@@ -248,17 +248,9 @@ export function App() {
               `crm.${["organizations", "operations", "suppliers", "vendors"].includes(family) ? "organization" : family === "workbench" ? "task" : entityKind}.view`,
             );
 
-  const sidebarStyle = {
-    "--sidebar-width": "14.75rem",
-    "--sidebar-width-icon": "5.125rem",
-  } as CSSProperties;
-
   return (
     <TooltipProvider delayDuration={250}>
-      <SidebarProvider
-        defaultOpen={window.innerWidth >= 1180}
-        style={sidebarStyle}
-      >
+      <CrmShellProvider defaultCollapsed={window.innerWidth < 1180}>
         <AppSidebar
           me={me}
           counts={counts}
@@ -267,12 +259,12 @@ export function App() {
             void logout();
           }}
         />
-        <SidebarInset className="min-w-0 overflow-hidden bg-background">
+        <CrmShellMain className="min-w-0 overflow-hidden bg-background">
           <SiteHeader
             title={
               titles[family] ||
               (family === "operations"
-                ? "客户运营"
+                ? "组织运营"
                 : family === "workbench"
                   ? "工作台"
                   : ["suppliers", "vendors"].includes(family)
@@ -350,8 +342,8 @@ export function App() {
               id={entityId}
             />
           )}
-        </SidebarInset>
-      </SidebarProvider>
+        </CrmShellMain>
+      </CrmShellProvider>
     </TooltipProvider>
   );
 }

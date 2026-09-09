@@ -1,0 +1,1187 @@
+{
+  "generatedAt": "2026-09-08T20:00:53.648Z",
+  "baseUrl": "http://127.0.0.1:3100",
+  "browser": "Google Chrome via Playwright, headless, cache disabled",
+  "authentication": "Existing storage state used without inspecting or emitting its path or cookie contents",
+  "session": {
+    "id": "cmtsoelch001kqpo3vibkul48",
+    "name": "Semi QA Admin",
+    "role": {
+      "id": "cmtsoela8001gqpo3ejy8rkox",
+      "key": "SUPER_ADMIN",
+      "name": "超级管理员"
+    },
+    "permissionCount": 52
+  },
+  "fixture": {
+    "organization": {
+      "id": "cmtsoszxd0008qppgg0r3csjl",
+      "name": "Semi Migration QA Organization"
+    },
+    "contact": {
+      "id": "cmtsp6r0n000jqppgsbghi9ri",
+      "name": "Semi QA Contact"
+    },
+    "marketingLead": {
+      "id": "cmtspd5nw0012qppghu7e2mx5",
+      "name": "Semi QA Marketing Lead"
+    },
+    "opportunity": {
+      "id": "cmtsp8pvx000oqppgczh5ujnt",
+      "name": "Semi Design enterprise CRM rollout"
+    }
+  },
+  "build": [
+    {
+      "path": "frontend/react-build/assets/app.js",
+      "bytes": 1458898,
+      "modifiedAt": "2026-09-08T19:26:06.858Z",
+      "sha256": "bef6efa438fe086f2ef9fe89e9435b913e4a1d0d9cdc863532fa74dcd71c46d8"
+    },
+    {
+      "path": "frontend/react-build/assets/app.css",
+      "bytes": 652228,
+      "modifiedAt": "2026-09-08T19:26:06.860Z",
+      "sha256": "40d5c9bc190073206ec1f2379eedf77caaf4ca51ac1b0779fdaf18bf241b400a"
+    }
+  ],
+  "verdict": "PASS",
+  "summary": {
+    "routes": 20,
+    "passed": 20,
+    "failed": 0,
+    "documentOverflow": 0,
+    "consoleErrors": 0,
+    "consoleWarnings": 0,
+    "pageErrors": 0,
+    "httpFailures": 0,
+    "requestFailures": 0
+  },
+  "consoleErrors": [],
+  "consoleWarnings": [],
+  "pageErrors": [],
+  "httpFailures": [],
+  "requestFailures": [],
+  "results": [
+    {
+      "key": "dashboard",
+      "label": "数据看板",
+      "hash": "dashboard",
+      "url": "http://127.0.0.1:3100/?visualBaseline=1#dashboard",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "01-dashboard-1440x900.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 945
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 945
+        },
+        "main": {
+          "left": 256,
+          "right": 1416,
+          "width": 1160,
+          "height": 760
+        },
+        "bodyTextLength": 542,
+        "h1": "数据看板",
+        "documentHorizontalOverflow": false,
+        "tables": []
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "workbench",
+      "label": "我的工作台",
+      "hash": "workbench",
+      "url": "http://127.0.0.1:3100/?visualBaseline=1#workbench",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "02-workbench-1440x900.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 923
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 923
+        },
+        "main": {
+          "left": 232,
+          "right": 1440,
+          "width": 1208,
+          "height": 869
+        },
+        "bodyTextLength": 1033,
+        "h1": "我的工作台",
+        "documentHorizontalOverflow": false,
+        "tables": []
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "organizations-list",
+      "label": "组织列表",
+      "hash": "organizations",
+      "url": "http://127.0.0.1:3100/?visualBaseline=1#organizations",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "03-organizations-list-1440x900.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "main": {
+          "left": 232,
+          "right": 1440,
+          "width": 1208,
+          "height": 553
+        },
+        "bodyTextLength": 484,
+        "h1": "组织",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 1382,
+            "scrollWidth": 1382,
+            "parentClientWidth": 1158,
+            "parentScrollWidth": 1382,
+            "parentOverflowX": "auto"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "organization-detail",
+      "label": "组织详情",
+      "hash": "organizations/cmtsoszxd0008qppgg0r3csjl",
+      "url": "http://127.0.0.1:3100/?visualBaseline=1#organizations/cmtsoszxd0008qppgg0r3csjl",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "04-organization-detail-1440x900.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 6637
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 6637
+        },
+        "main": {
+          "left": 232,
+          "right": 1440,
+          "width": 1208,
+          "height": 6583
+        },
+        "bodyTextLength": 3036,
+        "h1": "Semi Migration QA Organization",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 265,
+            "scrollWidth": 265,
+            "parentClientWidth": 329,
+            "parentScrollWidth": 329,
+            "parentOverflowX": "visible"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "contacts-list",
+      "label": "联系人列表",
+      "hash": "contacts",
+      "url": "http://127.0.0.1:3100/?visualBaseline=1#contacts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "05-contacts-list-1440x900.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 1608
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 1608
+        },
+        "main": {
+          "left": 232,
+          "right": 1440,
+          "width": 1208,
+          "height": 1554
+        },
+        "bodyTextLength": 3220,
+        "h1": "联系人",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 1170,
+            "scrollWidth": 1170,
+            "parentClientWidth": 1158,
+            "parentScrollWidth": 1170,
+            "parentOverflowX": "auto"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "contact-detail",
+      "label": "联系人详情",
+      "hash": "contacts/cmtsp6r0n000jqppgsbghi9ri",
+      "url": "http://127.0.0.1:3100/?visualBaseline=1#contacts/cmtsp6r0n000jqppgsbghi9ri",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "06-contact-detail-1440x900.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 940
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 940
+        },
+        "main": {
+          "left": 232,
+          "right": 1440,
+          "width": 1208,
+          "height": 886
+        },
+        "bodyTextLength": 826,
+        "h1": "Semi QA Contact",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 260,
+            "scrollWidth": 260,
+            "parentClientWidth": 329,
+            "parentScrollWidth": 329,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 265,
+            "scrollWidth": 265,
+            "parentClientWidth": 329,
+            "parentScrollWidth": 329,
+            "parentOverflowX": "visible"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "marketing-leads-list",
+      "label": "线索列表",
+      "hash": "marketing-leads",
+      "url": "http://127.0.0.1:3100/?visualBaseline=1#marketing-leads",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "07-marketing-leads-list-1440x900.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "main": {
+          "left": 232,
+          "right": 1440,
+          "width": 1208,
+          "height": 544
+        },
+        "bodyTextLength": 461,
+        "h1": "线索",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 1167,
+            "scrollWidth": 1167,
+            "parentClientWidth": 1158,
+            "parentScrollWidth": 1167,
+            "parentOverflowX": "auto"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "marketing-lead-detail",
+      "label": "线索详情",
+      "hash": "marketing-leads/cmtspd5nw0012qppghu7e2mx5",
+      "url": "http://127.0.0.1:3100/?visualBaseline=1#marketing-leads/cmtspd5nw0012qppghu7e2mx5",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "08-marketing-lead-detail-1440x900.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 946
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 946
+        },
+        "main": {
+          "left": 232,
+          "right": 1440,
+          "width": 1208,
+          "height": 892
+        },
+        "bodyTextLength": 711,
+        "h1": "Semi QA Marketing Lead",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 276,
+            "scrollWidth": 276,
+            "parentClientWidth": 329,
+            "parentScrollWidth": 329,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 214,
+            "scrollWidth": 214,
+            "parentClientWidth": 329,
+            "parentScrollWidth": 329,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 83,
+            "scrollWidth": 83,
+            "parentClientWidth": 786,
+            "parentScrollWidth": 786,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 259,
+            "scrollWidth": 259,
+            "parentClientWidth": 786,
+            "parentScrollWidth": 786,
+            "parentOverflowX": "visible"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "opportunities-list",
+      "label": "商机列表",
+      "hash": "leads",
+      "url": "http://127.0.0.1:3100/?visualBaseline=1#leads",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "09-opportunities-list-1440x900.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "main": {
+          "left": 232,
+          "right": 1440,
+          "width": 1208,
+          "height": 555
+        },
+        "bodyTextLength": 454,
+        "h1": "商机",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 1158,
+            "scrollWidth": 1158,
+            "parentClientWidth": 1158,
+            "parentScrollWidth": 1158,
+            "parentOverflowX": "auto"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "opportunity-detail",
+      "label": "商机详情",
+      "hash": "leads/cmtsp8pvx000oqppgczh5ujnt",
+      "url": "http://127.0.0.1:3100/?visualBaseline=1#leads/cmtsp8pvx000oqppgczh5ujnt",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "10-opportunity-detail-1440x900.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 2121
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 2121
+        },
+        "main": {
+          "left": 232,
+          "right": 1440,
+          "width": 1208,
+          "height": 2067
+        },
+        "bodyTextLength": 842,
+        "h1": "Semi Design enterprise CRM rollout",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 187,
+            "scrollWidth": 187,
+            "parentClientWidth": 329,
+            "parentScrollWidth": 329,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 177,
+            "scrollWidth": 177,
+            "parentClientWidth": 786,
+            "parentScrollWidth": 786,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 201,
+            "scrollWidth": 201,
+            "parentClientWidth": 786,
+            "parentScrollWidth": 786,
+            "parentOverflowX": "visible"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "dashboard",
+      "label": "数据看板",
+      "hash": "dashboard",
+      "url": "http://127.0.0.1:3100/?visualBaseline=1#dashboard",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "11-dashboard-1280x800.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 945
+        },
+        "body": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 945
+        },
+        "main": {
+          "left": 228,
+          "right": 1260,
+          "width": 1032,
+          "height": 760
+        },
+        "bodyTextLength": 542,
+        "h1": "数据看板",
+        "documentHorizontalOverflow": false,
+        "tables": []
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "workbench",
+      "label": "我的工作台",
+      "hash": "workbench",
+      "url": "http://127.0.0.1:3100/?visualBaseline=1#workbench",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "12-workbench-1280x800.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 923
+        },
+        "body": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 923
+        },
+        "main": {
+          "left": 208,
+          "right": 1280,
+          "width": 1072,
+          "height": 869
+        },
+        "bodyTextLength": 1033,
+        "h1": "我的工作台",
+        "documentHorizontalOverflow": false,
+        "tables": []
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "organizations-list",
+      "label": "组织列表",
+      "hash": "organizations",
+      "url": "http://127.0.0.1:3100/?visualBaseline=1#organizations",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "13-organizations-list-1280x800.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 800
+        },
+        "body": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 800
+        },
+        "main": {
+          "left": 208,
+          "right": 1280,
+          "width": 1072,
+          "height": 553
+        },
+        "bodyTextLength": 484,
+        "h1": "组织",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 1382,
+            "scrollWidth": 1382,
+            "parentClientWidth": 1030,
+            "parentScrollWidth": 1382,
+            "parentOverflowX": "auto"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "organization-detail",
+      "label": "组织详情",
+      "hash": "organizations/cmtsoszxd0008qppgg0r3csjl",
+      "url": "http://127.0.0.1:3100/?visualBaseline=1#organizations/cmtsoszxd0008qppgg0r3csjl",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "14-organization-detail-1280x800.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 6637
+        },
+        "body": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 6637
+        },
+        "main": {
+          "left": 208,
+          "right": 1280,
+          "width": 1072,
+          "height": 6583
+        },
+        "bodyTextLength": 3036,
+        "h1": "Semi Migration QA Organization",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 265,
+            "scrollWidth": 265,
+            "parentClientWidth": 291,
+            "parentScrollWidth": 291,
+            "parentOverflowX": "visible"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "contacts-list",
+      "label": "联系人列表",
+      "hash": "contacts",
+      "url": "http://127.0.0.1:3100/?visualBaseline=1#contacts",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "15-contacts-list-1280x800.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 1608
+        },
+        "body": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 1608
+        },
+        "main": {
+          "left": 208,
+          "right": 1280,
+          "width": 1072,
+          "height": 1554
+        },
+        "bodyTextLength": 3220,
+        "h1": "联系人",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 1170,
+            "scrollWidth": 1170,
+            "parentClientWidth": 1030,
+            "parentScrollWidth": 1170,
+            "parentOverflowX": "auto"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "contact-detail",
+      "label": "联系人详情",
+      "hash": "contacts/cmtsp6r0n000jqppgsbghi9ri",
+      "url": "http://127.0.0.1:3100/?visualBaseline=1#contacts/cmtsp6r0n000jqppgsbghi9ri",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "16-contact-detail-1280x800.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 840
+        },
+        "body": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 840
+        },
+        "main": {
+          "left": 208,
+          "right": 1280,
+          "width": 1072,
+          "height": 786
+        },
+        "bodyTextLength": 826,
+        "h1": "Semi QA Contact",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 260,
+            "scrollWidth": 260,
+            "parentClientWidth": 291,
+            "parentScrollWidth": 291,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 265,
+            "scrollWidth": 265,
+            "parentClientWidth": 291,
+            "parentScrollWidth": 291,
+            "parentOverflowX": "visible"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "marketing-leads-list",
+      "label": "线索列表",
+      "hash": "marketing-leads",
+      "url": "http://127.0.0.1:3100/?visualBaseline=1#marketing-leads",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "17-marketing-leads-list-1280x800.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 800
+        },
+        "body": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 800
+        },
+        "main": {
+          "left": 208,
+          "right": 1280,
+          "width": 1072,
+          "height": 544
+        },
+        "bodyTextLength": 461,
+        "h1": "线索",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 1167,
+            "scrollWidth": 1167,
+            "parentClientWidth": 1030,
+            "parentScrollWidth": 1167,
+            "parentOverflowX": "auto"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "marketing-lead-detail",
+      "label": "线索详情",
+      "hash": "marketing-leads/cmtspd5nw0012qppghu7e2mx5",
+      "url": "http://127.0.0.1:3100/?visualBaseline=1#marketing-leads/cmtspd5nw0012qppghu7e2mx5",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "18-marketing-lead-detail-1280x800.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 946
+        },
+        "body": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 946
+        },
+        "main": {
+          "left": 208,
+          "right": 1280,
+          "width": 1072,
+          "height": 892
+        },
+        "bodyTextLength": 711,
+        "h1": "Semi QA Marketing Lead",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 276,
+            "scrollWidth": 276,
+            "parentClientWidth": 291,
+            "parentScrollWidth": 291,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 214,
+            "scrollWidth": 214,
+            "parentClientWidth": 291,
+            "parentScrollWidth": 291,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 83,
+            "scrollWidth": 83,
+            "parentClientWidth": 700,
+            "parentScrollWidth": 700,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 259,
+            "scrollWidth": 259,
+            "parentClientWidth": 700,
+            "parentScrollWidth": 700,
+            "parentOverflowX": "visible"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "opportunities-list",
+      "label": "商机列表",
+      "hash": "leads",
+      "url": "http://127.0.0.1:3100/?visualBaseline=1#leads",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "19-opportunities-list-1280x800.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 800
+        },
+        "body": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 800
+        },
+        "main": {
+          "left": 208,
+          "right": 1280,
+          "width": 1072,
+          "height": 555
+        },
+        "bodyTextLength": 454,
+        "h1": "商机",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 1074,
+            "scrollWidth": 1074,
+            "parentClientWidth": 1030,
+            "parentScrollWidth": 1074,
+            "parentOverflowX": "auto"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "opportunity-detail",
+      "label": "商机详情",
+      "hash": "leads/cmtsp8pvx000oqppgczh5ujnt",
+      "url": "http://127.0.0.1:3100/?visualBaseline=1#leads/cmtsp8pvx000oqppgczh5ujnt",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "20-opportunity-detail-1280x800.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 2121
+        },
+        "body": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 2121
+        },
+        "main": {
+          "left": 208,
+          "right": 1280,
+          "width": 1072,
+          "height": 2067
+        },
+        "bodyTextLength": 842,
+        "h1": "Semi Design enterprise CRM rollout",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 187,
+            "scrollWidth": 187,
+            "parentClientWidth": 291,
+            "parentScrollWidth": 291,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 177,
+            "scrollWidth": 177,
+            "parentClientWidth": 700,
+            "parentScrollWidth": 700,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 201,
+            "scrollWidth": 201,
+            "parentClientWidth": 700,
+            "parentScrollWidth": 700,
+            "parentOverflowX": "visible"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    }
+  ]
+}

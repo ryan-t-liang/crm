@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react"
-import { ArrowRight } from "lucide-react"
+import { IconArrowRight as ArrowRight } from "@douyinfe/semi-icons"
 
 type DashboardTone = "neutral" | "positive" | "info" | "attention" | "risk"
 

@@ -20,7 +20,6 @@ export default defineConfig({
         chunkFileNames: "assets/chunks/[name]-[hash].js",
         manualChunks: (id) => {
           if (id.includes("recharts") || id.includes("d3-")) return "charts"
-          if (id.includes("@tanstack")) return "table"
           if (id.includes("react-dom") || id.includes("/react/")) return "react"
           return undefined
         },

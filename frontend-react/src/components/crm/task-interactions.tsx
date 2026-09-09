@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Clock3 } from "lucide-react";
+import { IconClock as Clock3, IconTick as Check } from "@douyinfe/semi-icons";
 import { crmApi, type SessionUser, type CrmUser } from "@/lib/api";
 import {
   canManageTask,
@@ -11,9 +11,7 @@ import {
   type Organization,
   type Nurture,
 } from "@/lib/crm";
-import { Button } from "@/components/v1/ui";
-import { Input } from "@/components/v1/ui";
-import { Textarea } from "@/components/v1/ui";
+import { Button, DateInput, Input, Textarea } from "@/components/crm/ui";
 import {
   EmptyState,
   Field,
@@ -151,11 +149,11 @@ export function TaskForm({
         </Field>
         <Field label="到期时间" required wide>
           {(id) => (
-            <Input
+            <DateInput
               id={id}
-              type="datetime-local"
+              mode="dateTime"
               value={due}
-              onChange={(e) => setDue(e.target.value)}
+              onValueChange={setDue}
             />
           )}
         </Field>
@@ -457,11 +455,11 @@ export function NurtureForm({
         ))}
         <Field label="下一次触达" required>
           {(id) => (
-            <Input
+            <DateInput
               id={id}
-              type="datetime-local"
+              mode="dateTime"
               value={values.nextTouchAt}
-              onChange={(e) => set("nextTouchAt", e.target.value)}
+              onValueChange={(value) => set("nextTouchAt", value)}
             />
           )}
         </Field>

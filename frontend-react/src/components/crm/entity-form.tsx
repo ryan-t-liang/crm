@@ -15,10 +15,7 @@ import {
   type PageResult,
   type Attachment,
 } from "@/lib/crm";
-import { Input } from "@/components/v1/ui";
-import { Button } from "@/components/v1/ui";
-import { Textarea } from "@/components/v1/ui";
-import { Checkbox } from "@/components/v1/ui";
+import { Button, Checkbox, DateInput, FilePicker, Input, Textarea } from "@/components/crm/ui";
 import {
   DetailTabs,
   EntityCombobox,
@@ -217,13 +214,13 @@ export function EntityForm({
     }
     if (kind === "lead" && !relationId) errors.contactId = "请选择关联联系人";
     if (kind === "contact" && contactMode === "linked" && !relationId)
-      errors.organizationId = "请选择已存在的公司";
+      errors.organizationId = "请选择已存在的组织";
     if (
       kind === "contact" &&
       ["create", "unconfirmed"].includes(contactMode) &&
       !String(values.companyName || "").trim()
     )
-      errors.companyName = contactMode === "create" ? "请填写新公司名称" : "请填写待确认公司名称";
+      errors.companyName = contactMode === "create" ? "请填写新组织名称" : "请填写待确认组织名称";
     if (kind === "lead" && values.estimatedQuote && !values.currency)
       errors.currency = "填写报价时必须选择币种";
     setFieldErrors(errors);
@@ -373,6 +370,17 @@ export function EntityForm({
           ))}
         </div>
       );
+    if (d.type === "date" || d.type === "datetime-local")
+      return (
+        <DateInput
+          id={id}
+          mode={d.type === "datetime-local" ? "dateTime" : "date"}
+          value={String(value || "")}
+          onValueChange={(next) => update(d.key, next)}
+          aria-invalid={!!fieldErrors[d.key]}
+          aria-describedby={fieldErrors[d.key] ? `${id}-error` : undefined}
+        />
+      );
     if (["textarea", "multi-text", "multi-select"].includes(d.type))
       return (
         <Textarea
@@ -405,15 +413,15 @@ export function EntityForm({
       <div className="space-y-2 sm:col-span-2" key={key}>
         <Field label={label} wide>
           {(id) => (
-            <Input
+            <FilePicker
               id={id}
-              type="file"
               accept={accept}
               multiple
-              onChange={(e) =>
+              files={files[key] || []}
+              onFilesChange={(selected) =>
                 setFiles((f) => ({
                   ...f,
-                  [key]: Array.from(e.target.files || []),
+                  [key]: selected,
                 }))
               }
             />
@@ -490,14 +498,14 @@ export function EntityForm({
             </Field>
           )}
           {tab === "basic" && kind === "contact" && contactMode !== "individual" && (
-            <Field label="公司关联方式" required wide>
+            <Field label="组织关联方式" required wide>
               {() => (
                 <FilterControl
-                  label="公司关联方式"
+                  label="组织关联方式"
                   value={contactMode}
                   all={false}
                   className="w-full"
-                  options={{ linked: "选择已有公司", create: "快速创建公司", unconfirmed: "公司暂未确认" }}
+                  options={{ linked: "选择已有组织", create: "快速创建组织", unconfirmed: "组织暂未确认" }}
                   onChange={(value) => {
                     const mode = value as typeof contactMode;
                     setContactMode(mode);
@@ -512,7 +520,7 @@ export function EntityForm({
             (kind === "lead" ||
               (kind === "contact" && contactMode === "linked")) && (
             <Field
-              label={kind === "contact" ? "所属公司" : "关联联系人"}
+              label={kind === "contact" ? "所属组织" : "关联联系人"}
               required
               error={
                 kind === "contact"
@@ -529,8 +537,8 @@ export function EntityForm({
                     <EntityCombobox
                       label={
                         kind === "contact"
-                          ? "公司"
-                          : "联系人、公司、Email 或电话"
+                          ? "组织"
+                          : "联系人、组织、Email 或电话"
                       }
                       value={relationId}
                       selectedLabel={relationLabel}
@@ -549,7 +557,7 @@ export function EntityForm({
             kind === "contact" &&
             contactMode === "individual" && (
               <div className="rounded-lg border bg-muted/30 px-4 py-3 text-sm text-muted-foreground sm:col-span-2">
-                个人联系人不关联公司，公司相关字段将保持为空。
+                个人联系人不关联组织，组织相关字段将保持为空。
               </div>
             )}
           {definitions

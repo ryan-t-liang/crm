@@ -1,0 +1,2293 @@
+{
+  "generatedAt": "2026-09-08T20:12:59.489Z",
+  "baseUrl": "http://127.0.0.1:3100",
+  "browser": "Google Chrome via Playwright, headless, cache disabled",
+  "authentication": "Existing storage state used without inspecting or emitting its cookie contents",
+  "session": {
+    "name": "Semi QA Admin",
+    "role": {
+      "id": "cmtsoela8001gqpo3ejy8rkox",
+      "key": "SUPER_ADMIN",
+      "name": "超级管理员"
+    },
+    "permissionCount": 52
+  },
+  "fixture": {
+    "organization": {
+      "id": "cmtsoszxd0008qppgg0r3csjl",
+      "name": "Semi Migration QA Organization"
+    },
+    "contact": {
+      "id": "cmtsp6r0n000jqppgsbghi9ri",
+      "name": "Semi QA Contact"
+    },
+    "marketingLead": {
+      "id": "cmtspd5nw0012qppghu7e2mx5",
+      "name": "Semi QA Marketing Lead"
+    },
+    "opportunity": {
+      "id": "cmtsp8pvx000oqppgczh5ujnt",
+      "name": "Semi Design enterprise CRM rollout"
+    }
+  },
+  "build": [
+    {
+      "path": "frontend/react-build/index.html",
+      "bytes": 645,
+      "modifiedAt": "2026-09-08T19:26:06.860Z",
+      "sha256": "848769745339ae81bc87a26a3798c8c40e419fbd9e354849ddee652a900c869f"
+    },
+    {
+      "path": "frontend/react-build/assets/app.js",
+      "bytes": 1458898,
+      "modifiedAt": "2026-09-08T19:26:06.858Z",
+      "sha256": "bef6efa438fe086f2ef9fe89e9435b913e4a1d0d9cdc863532fa74dcd71c46d8"
+    },
+    {
+      "path": "frontend/react-build/assets/app.css",
+      "bytes": 652228,
+      "modifiedAt": "2026-09-08T19:26:06.860Z",
+      "sha256": "40d5c9bc190073206ec1f2379eedf77caaf4ca51ac1b0779fdaf18bf241b400a"
+    }
+  ],
+  "verdict": "PASS",
+  "summary": {
+    "cases": 22,
+    "passed": 22,
+    "failed": 0,
+    "documentHorizontalOverflow": 0,
+    "interactiveOverlapCandidates": 0,
+    "regionOverlapCandidates": 0,
+    "outsideViewportCandidates": 0,
+    "clippedTextCandidates": 0,
+    "comboboxesChecked": 16,
+    "unnamedComboboxes": 0,
+    "expectedUnauthenticatedHttp": 2,
+    "expectedUnauthenticatedConsole": 2,
+    "unexpectedConsoleErrors": 0,
+    "consoleWarnings": 0,
+    "pageErrors": 0,
+    "unexpectedHttpFailures": 0,
+    "requestFailures": 0
+  },
+  "events": {
+    "expectedUnauthenticatedHttp": [
+      {
+        "case": "login-1440x900",
+        "context": "unauthenticated",
+        "method": "GET",
+        "status": 401,
+        "url": "http://127.0.0.1:3100/api/v1/auth/me",
+        "pageUrl": "http://127.0.0.1:3100/?finalAudit=1788898377509#login"
+      },
+      {
+        "case": "login-1024x768",
+        "context": "unauthenticated",
+        "method": "GET",
+        "status": 401,
+        "url": "http://127.0.0.1:3100/api/v1/auth/me",
+        "pageUrl": "http://127.0.0.1:3100/?finalAudit=1788898378496#login"
+      }
+    ],
+    "unexpectedHttpFailures": [],
+    "expectedUnauthenticatedConsole": [
+      {
+        "case": "login-1440x900",
+        "context": "unauthenticated",
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "pageUrl": "http://127.0.0.1:3100/?finalAudit=1788898377509#login"
+      },
+      {
+        "case": "login-1024x768",
+        "context": "unauthenticated",
+        "type": "error",
+        "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+        "pageUrl": "http://127.0.0.1:3100/?finalAudit=1788898378496#login"
+      }
+    ],
+    "unexpectedConsoleErrors": [],
+    "consoleWarnings": [],
+    "pageErrors": [],
+    "requestFailures": []
+  },
+  "results": [
+    {
+      "key": "dashboard",
+      "label": "数据看板",
+      "hash": "dashboard",
+      "context": "authenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898358276#dashboard",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshot": "01-dashboard-1024x768.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 1255
+        },
+        "body": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 1255
+        },
+        "h1": "数据看板",
+        "bodyTextLength": 490,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-dashboard-content",
+          "text": "业务趋势关键指标随所选周期的变化新增线索1本期创建新增商机1本期创建活跃商机1当前推进成交商机0本期成交8/13–8/198/20–8/268/27–9/29/3–9/901234当前查看：新增线索团",
+          "rect": {
+            "left": 84,
+            "top": 205,
+            "right": 1004,
+            "bottom": 1227,
+            "width": 920,
+            "height": 1022
+          }
+        },
+        "tables": [],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 0,
+          "unnamed": [],
+          "controls": []
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "workbench",
+      "label": "我的工作台",
+      "hash": "workbench",
+      "context": "authenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898359293#workbench",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshot": "02-workbench-1024x768.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 951
+        },
+        "body": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 951
+        },
+        "h1": "我的工作台",
+        "bodyTextLength": 978,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-page flex min-w-0 flex-1 flex-col",
+          "text": "我的工作台今天要联系谁、为什么联系、下一步做什么。创建任务新 MQL0逾期0今日0未来 7 天0停滞商机0缺少下一步1任务队列6 条任务待完成已完成已取消任务负责人Semi QA AdminQA-Se",
+          "rect": {
+            "left": 64,
+            "top": 54,
+            "right": 1024,
+            "bottom": 951,
+            "width": 960,
+            "height": 897
+          }
+        },
+        "tables": [],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 1,
+          "unnamed": [],
+          "controls": [
+            {
+              "tag": "div",
+              "id": "lk8upyx",
+              "role": "combobox",
+              "ariaLabel": "selected",
+              "className": "semi-select crm-select h-9 min-w-32 bg-background",
+              "text": "Semi QA Admin",
+              "rect": {
+                "left": 527,
+                "top": 273,
+                "right": 691,
+                "bottom": 307,
+                "width": 164,
+                "height": 34
+              },
+              "labelledBy": "_r_0_-label",
+              "labelledByText": "任务负责人",
+              "explicitLabelText": null,
+              "accessibleName": "任务负责人",
+              "hasAccessibleName": true
+            }
+          ]
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "organizations-list",
+      "label": "组织列表",
+      "hash": "organizations",
+      "context": "authenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898360255#organizations",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshot": "03-organizations-list-1024x768.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 768
+        },
+        "body": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 768
+        },
+        "h1": "组织",
+        "bodyTextLength": 430,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-page flex min-w-0 flex-1 flex-col",
+          "text": "组织管理客户、合作伙伴与供应商的统一组织主档。导出批量导入新增组织组织总数1本页客户1本页合作伙伴0本页供应商0全部组织客户合作伙伴供应商查询内容组织关系全部组织关系更多筛选组织目录1 条结果列组织组",
+          "rect": {
+            "left": 64,
+            "top": 54,
+            "right": 1024,
+            "bottom": 607,
+            "width": 960,
+            "height": 553
+          }
+        },
+        "tables": [
+          {
+            "tag": "table",
+            "id": null,
+            "role": "grid",
+            "ariaLabel": null,
+            "className": "semi-table semi-table-fixed",
+            "text": "组织组织关系组织类型行业互动活跃度组织负责人联系人活跃商机最近互动下一步行动更新时间操作SeSemi Migration QA OrganizationSemi QA Edited客户企业—30低SS",
+            "rect": {
+              "left": 85,
+              "top": 411,
+              "right": 1467,
+              "bottom": 512,
+              "width": 1382,
+              "height": 101
+            },
+            "clientWidth": 1382,
+            "scrollWidth": 1382,
+            "horizontalScroll": false
+          }
+        ],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 1,
+          "unnamed": [],
+          "controls": [
+            {
+              "tag": "div",
+              "id": "2etpme7",
+              "role": "combobox",
+              "ariaLabel": "selected",
+              "className": "semi-select crm-select h-9 min-w-32 bg-background",
+              "text": "全部组织关系",
+              "rect": {
+                "left": 725,
+                "top": 324,
+                "right": 895,
+                "bottom": 356,
+                "width": 170,
+                "height": 32
+              },
+              "labelledBy": "_r_0_-label",
+              "labelledByText": "组织关系",
+              "explicitLabelText": null,
+              "accessibleName": "组织关系",
+              "hasAccessibleName": true
+            }
+          ]
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "organization-detail",
+      "label": "组织详情",
+      "hash": "organizations/cmtsoszxd0008qppgg0r3csjl",
+      "context": "authenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898361217#organizations/cmtsoszxd0008qppgg0r3csjl",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshot": "04-organization-detail-1024x768.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 6637
+        },
+        "body": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 6637
+        },
+        "h1": "Semi Migration QA Organization",
+        "bodyTextLength": 2982,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-page flex min-w-0 flex-1 flex-col",
+          "text": "SeSemi Migration QA Organization企业客户未填写行业组织 IDcmtsoszxd0008qppgg0r3csjl联系人23线索0商机1最近互动暂无互动组织信息组织Semi",
+          "rect": {
+            "left": 64,
+            "top": 54,
+            "right": 1024,
+            "bottom": 6637,
+            "width": 960,
+            "height": 6583
+          }
+        },
+        "tables": [],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 0,
+          "unnamed": [],
+          "controls": []
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "contacts-list",
+      "label": "联系人列表",
+      "hash": "contacts",
+      "context": "authenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898362156#contacts",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshot": "05-contacts-list-1024x768.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 1669
+        },
+        "body": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 1669
+        },
+        "h1": "联系人",
+        "bodyTextLength": 3166,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-page flex min-w-0 flex-1 flex-col",
+          "text": "联系人管理联系人信息与下一步行动导出批量导入新增联系人联系人总数23本页已分配负责人20本页待分配负责人0全部联系人企业联系人个人联系人查询内容搜索联系人类型全部联系人类型联系人负责人全部联系人负责人",
+          "rect": {
+            "left": 64,
+            "top": 54,
+            "right": 1024,
+            "bottom": 1669,
+            "width": 960,
+            "height": 1615
+          }
+        },
+        "tables": [
+          {
+            "tag": "table",
+            "id": null,
+            "role": "grid",
+            "ariaLabel": null,
+            "className": "semi-table semi-table-fixed",
+            "text": "联系人组织联系人类型职位联系人负责人下次跟进商机数更新时间操作PPagination Contact 22pagination-22@semi-qa.example.testSemi QA Edite",
+            "rect": {
+              "left": 85,
+              "top": 474,
+              "right": 1255,
+              "bottom": 1574,
+              "width": 1170,
+              "height": 1100
+            },
+            "clientWidth": 1170,
+            "scrollWidth": 1170,
+            "horizontalScroll": false
+          }
+        ],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 2,
+          "unnamed": [],
+          "controls": [
+            {
+              "tag": "div",
+              "id": "ukepbo0",
+              "role": "combobox",
+              "ariaLabel": "selected",
+              "className": "semi-select crm-select h-9 min-w-32 bg-background",
+              "text": "全部联系人类型",
+              "rect": {
+                "left": 97,
+                "top": 387,
+                "right": 267,
+                "bottom": 419,
+                "width": 170,
+                "height": 32
+              },
+              "labelledBy": "_r_0_-label",
+              "labelledByText": "联系人类型",
+              "explicitLabelText": null,
+              "accessibleName": "联系人类型",
+              "hasAccessibleName": true
+            },
+            {
+              "tag": "div",
+              "id": "5vk1lrv",
+              "role": "combobox",
+              "ariaLabel": "selected",
+              "className": "semi-select crm-select h-9 min-w-32 bg-background",
+              "text": "全部联系人负责人",
+              "rect": {
+                "left": 275,
+                "top": 387,
+                "right": 445,
+                "bottom": 419,
+                "width": 170,
+                "height": 32
+              },
+              "labelledBy": "_r_2_-label",
+              "labelledByText": "联系人负责人",
+              "explicitLabelText": null,
+              "accessibleName": "联系人负责人",
+              "hasAccessibleName": true
+            }
+          ]
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "contact-detail",
+      "label": "联系人详情",
+      "hash": "contacts/cmtsp6r0n000jqppgsbghi9ri",
+      "context": "authenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898363089#contacts/cmtsp6r0n000jqppgsbghi9ri",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshot": "06-contact-detail-1024x768.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 1140
+        },
+        "body": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 1140
+        },
+        "h1": "Semi QA Contact",
+        "bodyTextLength": 772,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-page flex min-w-0 flex-1 flex-col",
+          "text": "SSemi QA Contact企业联系人联系人 IDcmtsp6r0n000jqppgsbghi9riQA Directorcontact@semi-qa.example.testSemi Migr",
+          "rect": {
+            "left": 64,
+            "top": 54,
+            "right": 1024,
+            "bottom": 1140,
+            "width": 960,
+            "height": 1086
+          }
+        },
+        "tables": [],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 0,
+          "unnamed": [],
+          "controls": []
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "marketing-leads-list",
+      "label": "营销线索列表",
+      "hash": "marketing-leads",
+      "context": "authenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898364022#marketing-leads",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshot": "07-marketing-leads-list-1024x768.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 768
+        },
+        "body": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 768
+        },
+        "h1": "线索",
+        "bodyTextLength": 407,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-page flex min-w-0 flex-1 flex-col",
+          "text": "线索管理获客来源、原始询盘、评分与资格确认。导出批量导入新增线索线索总数1本页待分配1本页重点线索0本页已转化0全部线索新线索培育中营销合格（MQL）销售合格（SQL）已确认机会已转商机重新培育无效线",
+          "rect": {
+            "left": 64,
+            "top": 54,
+            "right": 1024,
+            "bottom": 659,
+            "width": 960,
+            "height": 605
+          }
+        },
+        "tables": [
+          {
+            "tag": "table",
+            "id": null,
+            "role": "grid",
+            "ariaLabel": null,
+            "className": "semi-table semi-table-fixed",
+            "text": "姓名组织来源状态线索匹配度互动活跃度线索负责人最近行为创建时间操作SSemi QA Marketing LeadSemi Migration QA Organization手工录入新线索0 · 低0 ",
+            "rect": {
+              "left": 85,
+              "top": 474,
+              "right": 1252,
+              "bottom": 564,
+              "width": 1167,
+              "height": 90
+            },
+            "clientWidth": 1167,
+            "scrollWidth": 1167,
+            "horizontalScroll": false
+          }
+        ],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 3,
+          "unnamed": [],
+          "controls": [
+            {
+              "tag": "div",
+              "id": "iua0kru",
+              "role": "combobox",
+              "ariaLabel": "selected",
+              "className": "semi-select crm-select h-9 min-w-32 bg-background",
+              "text": "全部状态",
+              "rect": {
+                "left": 97,
+                "top": 387,
+                "right": 267,
+                "bottom": 419,
+                "width": 170,
+                "height": 32
+              },
+              "labelledBy": "_r_0_-label",
+              "labelledByText": "状态",
+              "explicitLabelText": null,
+              "accessibleName": "状态",
+              "hasAccessibleName": true
+            },
+            {
+              "tag": "div",
+              "id": "1dk6vga",
+              "role": "combobox",
+              "ariaLabel": "selected",
+              "className": "semi-select crm-select h-9 min-w-32 bg-background",
+              "text": "全部来源",
+              "rect": {
+                "left": 275,
+                "top": 387,
+                "right": 445,
+                "bottom": 419,
+                "width": 170,
+                "height": 32
+              },
+              "labelledBy": "_r_2_-label",
+              "labelledByText": "来源",
+              "explicitLabelText": null,
+              "accessibleName": "来源",
+              "hasAccessibleName": true
+            },
+            {
+              "tag": "div",
+              "id": "64rsm45",
+              "role": "combobox",
+              "ariaLabel": "selected",
+              "className": "semi-select crm-select h-9 min-w-32 bg-background",
+              "text": "全部负责人",
+              "rect": {
+                "left": 453,
+                "top": 387,
+                "right": 623,
+                "bottom": 419,
+                "width": 170,
+                "height": 32
+              },
+              "labelledBy": "_r_4_-label",
+              "labelledByText": "负责人",
+              "explicitLabelText": null,
+              "accessibleName": "负责人",
+              "hasAccessibleName": true
+            }
+          ]
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "marketing-lead-detail",
+      "label": "营销线索详情",
+      "hash": "marketing-leads/cmtspd5nw0012qppghu7e2mx5",
+      "context": "authenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898364956#marketing-leads/cmtspd5nw0012qppghu7e2mx5",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshot": "08-marketing-lead-detail-1024x768.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 946
+        },
+        "body": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 946
+        },
+        "h1": "Semi QA Marketing Lead",
+        "bodyTextLength": 657,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-page flex min-w-0 flex-1 flex-col",
+          "text": "SSemi QA Marketing LeadSemi Migration QA Organization手工录入新线索线索 IDcmtspd5nw0012qppghu7e2mx5记录行为判定无效编辑",
+          "rect": {
+            "left": 64,
+            "top": 54,
+            "right": 1024,
+            "bottom": 946,
+            "width": 960,
+            "height": 892
+          }
+        },
+        "tables": [],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 0,
+          "unnamed": [],
+          "controls": []
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "opportunities-list",
+      "label": "商机列表",
+      "hash": "leads",
+      "context": "authenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898365892#leads",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshot": "09-opportunities-list-1024x768.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 768
+        },
+        "body": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 768
+        },
+        "h1": "商机",
+        "bodyTextLength": 400,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-page flex min-w-0 flex-1 flex-col",
+          "text": "商机管理商机信息与下一步行动导出批量导入新增商机商机总数1本页进行中1本页已分配负责人1全部商机新建已验证方案报价成交丢失查询内容搜索商机阶段全部商机阶段商机负责人全部商机负责人商机优先级全部商机优先",
+          "rect": {
+            "left": 64,
+            "top": 54,
+            "right": 1024,
+            "bottom": 670,
+            "width": 960,
+            "height": 616
+          }
+        },
+        "tables": [
+          {
+            "tag": "table",
+            "id": null,
+            "role": "grid",
+            "ariaLabel": null,
+            "className": "semi-table semi-table-fixed",
+            "text": "商机组织商机优先级商机阶段商机负责人下一步行动更新时间操作Semi Design enterprise CRM rolloutSemi QA ContactSemi QA Edited中新建SSemi",
+            "rect": {
+              "left": 85,
+              "top": 474,
+              "right": 1159,
+              "bottom": 575,
+              "width": 1074,
+              "height": 101
+            },
+            "clientWidth": 1074,
+            "scrollWidth": 1074,
+            "horizontalScroll": false
+          }
+        ],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 3,
+          "unnamed": [],
+          "controls": [
+            {
+              "tag": "div",
+              "id": "gyxgaep",
+              "role": "combobox",
+              "ariaLabel": "selected",
+              "className": "semi-select crm-select h-9 min-w-32 bg-background",
+              "text": "全部商机阶段",
+              "rect": {
+                "left": 97,
+                "top": 387,
+                "right": 267,
+                "bottom": 419,
+                "width": 170,
+                "height": 32
+              },
+              "labelledBy": "_r_0_-label",
+              "labelledByText": "商机阶段",
+              "explicitLabelText": null,
+              "accessibleName": "商机阶段",
+              "hasAccessibleName": true
+            },
+            {
+              "tag": "div",
+              "id": "penw6gr",
+              "role": "combobox",
+              "ariaLabel": "selected",
+              "className": "semi-select crm-select h-9 min-w-32 bg-background",
+              "text": "全部商机负责人",
+              "rect": {
+                "left": 275,
+                "top": 387,
+                "right": 445,
+                "bottom": 419,
+                "width": 170,
+                "height": 32
+              },
+              "labelledBy": "_r_2_-label",
+              "labelledByText": "商机负责人",
+              "explicitLabelText": null,
+              "accessibleName": "商机负责人",
+              "hasAccessibleName": true
+            },
+            {
+              "tag": "div",
+              "id": "s7els38",
+              "role": "combobox",
+              "ariaLabel": "selected",
+              "className": "semi-select crm-select h-9 min-w-32 bg-background",
+              "text": "全部商机优先级",
+              "rect": {
+                "left": 453,
+                "top": 387,
+                "right": 623,
+                "bottom": 419,
+                "width": 170,
+                "height": 32
+              },
+              "labelledBy": "_r_4_-label",
+              "labelledByText": "商机优先级",
+              "explicitLabelText": null,
+              "accessibleName": "商机优先级",
+              "hasAccessibleName": true
+            }
+          ]
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "opportunity-detail",
+      "label": "商机详情",
+      "hash": "leads/cmtsp8pvx000oqppgczh5ujnt",
+      "context": "authenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898366844#leads/cmtsp8pvx000oqppgczh5ujnt",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshot": "10-opportunity-detail-1024x768.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 2121
+        },
+        "body": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 2121
+        },
+        "h1": "Semi Design enterprise CRM rollout",
+        "bodyTextLength": 787,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-page flex min-w-0 flex-1 flex-col",
+          "text": "Semi Design enterprise CRM rollout新建商机 IDcmtsp8pvx000oqppgczh5ujnt中销售：Semi QA AdminSemi QA Contact编辑",
+          "rect": {
+            "left": 64,
+            "top": 54,
+            "right": 1024,
+            "bottom": 2121,
+            "width": 960,
+            "height": 2067
+          }
+        },
+        "tables": [],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 0,
+          "unnamed": [],
+          "controls": []
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "suppliers",
+      "label": "供应商",
+      "hash": "suppliers",
+      "context": "authenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898367831#suppliers",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "11-suppliers-1440x900.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "h1": "供应商",
+        "bodyTextLength": 325,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-page flex min-w-0 flex-1 flex-col",
+          "text": "供应商查看组织关系为供应商的统一组织主档。导出批量导入新增组织供应商总数0本页有联系人0本页有商机0本页已分配负责人0查询内容更多筛选供应商组织0 条结果列组织组织关系组织类型行业互动活跃度组织负责人",
+          "rect": {
+            "left": 232,
+            "top": 54,
+            "right": 1440,
+            "bottom": 740,
+            "width": 1208,
+            "height": 686
+          }
+        },
+        "tables": [
+          {
+            "tag": "table",
+            "id": null,
+            "role": "grid",
+            "ariaLabel": null,
+            "className": "semi-table semi-table-fixed",
+            "text": "组织组织关系组织类型行业互动活跃度组织负责人联系人活跃商机最近互动下一步行动更新时间操作",
+            "rect": {
+              "left": 257,
+              "top": 362,
+              "right": 1415,
+              "bottom": 402,
+              "width": 1158,
+              "height": 40
+            },
+            "clientWidth": 1158,
+            "scrollWidth": 1158,
+            "horizontalScroll": false
+          }
+        ],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 0,
+          "unnamed": [],
+          "controls": []
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "suppliers",
+      "label": "供应商",
+      "hash": "suppliers",
+      "context": "authenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898368809#suppliers",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshot": "12-suppliers-1024x768.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 768
+        },
+        "body": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 768
+        },
+        "h1": "供应商",
+        "bodyTextLength": 273,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-page flex min-w-0 flex-1 flex-col",
+          "text": "供应商查看组织关系为供应商的统一组织主档。导出批量导入新增组织供应商总数0本页有联系人0本页有商机0本页已分配负责人0查询内容更多筛选供应商组织0 条结果列组织组织关系组织类型行业互动活跃度组织负责人",
+          "rect": {
+            "left": 64,
+            "top": 54,
+            "right": 1024,
+            "bottom": 740,
+            "width": 960,
+            "height": 686
+          }
+        },
+        "tables": [
+          {
+            "tag": "table",
+            "id": null,
+            "role": "grid",
+            "ariaLabel": null,
+            "className": "semi-table semi-table-fixed",
+            "text": "组织组织关系组织类型行业互动活跃度组织负责人联系人活跃商机最近互动下一步行动更新时间操作",
+            "rect": {
+              "left": 85,
+              "top": 362,
+              "right": 1003,
+              "bottom": 402,
+              "width": 918,
+              "height": 40
+            },
+            "clientWidth": 918,
+            "scrollWidth": 918,
+            "horizontalScroll": false
+          }
+        ],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 0,
+          "unnamed": [],
+          "controls": []
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "accounts",
+      "label": "账户管理",
+      "hash": "accounts",
+      "context": "authenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898369759#accounts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "13-accounts-1440x900.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 963
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 963
+        },
+        "h1": "账户管理",
+        "bodyTextLength": 1453,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-page flex min-w-0 flex-1 flex-col",
+          "text": "账户管理管理团队账号、角色与登录状态。新增账号查询内容状态全部状态账户目录11 条结果列姓名Email角色状态最近登录创建时间操作QQA Target Viewer 8897895002qa-targ",
+          "rect": {
+            "left": 232,
+            "top": 54,
+            "right": 1440,
+            "bottom": 963,
+            "width": 1208,
+            "height": 909
+          }
+        },
+        "tables": [
+          {
+            "tag": "table",
+            "id": null,
+            "role": "grid",
+            "ariaLabel": null,
+            "className": "semi-table semi-table-fixed",
+            "text": "姓名Email角色状态最近登录创建时间操作QQA Target Viewer 8897895002qa-target-viewer-8897895002@example.test只读用户禁用2026/",
+            "rect": {
+              "left": 257,
+              "top": 278,
+              "right": 1415,
+              "bottom": 868,
+              "width": 1158,
+              "height": 590
+            },
+            "clientWidth": 1158,
+            "scrollWidth": 1158,
+            "horizontalScroll": false
+          }
+        ],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 1,
+          "unnamed": [],
+          "controls": [
+            {
+              "tag": "div",
+              "id": "x24zn5m",
+              "role": "combobox",
+              "ariaLabel": "selected",
+              "className": "semi-select crm-select h-9 min-w-32 bg-background",
+              "text": "全部状态",
+              "rect": {
+                "left": 1233,
+                "top": 191,
+                "right": 1403,
+                "bottom": 223,
+                "width": 170,
+                "height": 32
+              },
+              "labelledBy": "_r_0_-label",
+              "labelledByText": "状态",
+              "explicitLabelText": null,
+              "accessibleName": "状态",
+              "hasAccessibleName": true
+            }
+          ]
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "accounts",
+      "label": "账户管理",
+      "hash": "accounts",
+      "context": "authenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898370740#accounts",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshot": "14-accounts-1024x768.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 963
+        },
+        "body": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 963
+        },
+        "h1": "账户管理",
+        "bodyTextLength": 1401,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-page flex min-w-0 flex-1 flex-col",
+          "text": "账户管理管理团队账号、角色与登录状态。新增账号查询内容状态全部状态账户目录11 条结果列姓名Email角色状态最近登录创建时间操作QQA Target Viewer 8897895002qa-targ",
+          "rect": {
+            "left": 64,
+            "top": 54,
+            "right": 1024,
+            "bottom": 963,
+            "width": 960,
+            "height": 909
+          }
+        },
+        "tables": [
+          {
+            "tag": "table",
+            "id": null,
+            "role": "grid",
+            "ariaLabel": null,
+            "className": "semi-table semi-table-fixed",
+            "text": "姓名Email角色状态最近登录创建时间操作QQA Target Viewer 8897895002qa-target-viewer-8897895002@example.test只读用户禁用2026/",
+            "rect": {
+              "left": 85,
+              "top": 278,
+              "right": 1211,
+              "bottom": 868,
+              "width": 1126,
+              "height": 590
+            },
+            "clientWidth": 1126,
+            "scrollWidth": 1126,
+            "horizontalScroll": false
+          }
+        ],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 1,
+          "unnamed": [],
+          "controls": [
+            {
+              "tag": "div",
+              "id": "06wu4ki",
+              "role": "combobox",
+              "ariaLabel": "selected",
+              "className": "semi-select crm-select h-9 min-w-32 bg-background",
+              "text": "全部状态",
+              "rect": {
+                "left": 821,
+                "top": 191,
+                "right": 991,
+                "bottom": 223,
+                "width": 170,
+                "height": 32
+              },
+              "labelledBy": "_r_0_-label",
+              "labelledByText": "状态",
+              "explicitLabelText": null,
+              "accessibleName": "状态",
+              "hasAccessibleName": true
+            }
+          ]
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "roles",
+      "label": "角色与权限",
+      "hash": "roles",
+      "context": "authenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898371713#roles",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "15-roles-1440x900.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "h1": "角色与权限",
+        "bodyTextLength": 340,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-page flex min-w-0 flex-1 flex-col",
+          "text": "角色与权限按业务模块查看权限；系统角色保持只读。角色目录3 条结果列角色说明权限用户类型操作只读用户只读查看联系人、营销线索、商机和跟进记录910可配置角色配置权限超级管理员管理 Kivisense ",
+          "rect": {
+            "left": 232,
+            "top": 54,
+            "right": 1440,
+            "bottom": 421,
+            "width": 1208,
+            "height": 367
+          }
+        },
+        "tables": [
+          {
+            "tag": "table",
+            "id": null,
+            "role": "grid",
+            "ariaLabel": null,
+            "className": "semi-table semi-table-fixed",
+            "text": "角色说明权限用户类型操作只读用户只读查看联系人、营销线索、商机和跟进记录910可配置角色配置权限超级管理员管理 Kivisense CRM 全部数据、账号、权限和审计521系统角色查看权限销售人员创建",
+            "rect": {
+              "left": 257,
+              "top": 202,
+              "right": 1415,
+              "bottom": 392,
+              "width": 1158,
+              "height": 190
+            },
+            "clientWidth": 1158,
+            "scrollWidth": 1158,
+            "horizontalScroll": false
+          }
+        ],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 0,
+          "unnamed": [],
+          "controls": []
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "roles",
+      "label": "角色与权限",
+      "hash": "roles",
+      "context": "authenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898372669#roles",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshot": "16-roles-1024x768.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 768
+        },
+        "body": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 768
+        },
+        "h1": "角色与权限",
+        "bodyTextLength": 288,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-page flex min-w-0 flex-1 flex-col",
+          "text": "角色与权限按业务模块查看权限；系统角色保持只读。角色目录3 条结果列角色说明权限用户类型操作只读用户只读查看联系人、营销线索、商机和跟进记录910可配置角色配置权限超级管理员管理 Kivisense ",
+          "rect": {
+            "left": 64,
+            "top": 54,
+            "right": 1024,
+            "bottom": 421,
+            "width": 960,
+            "height": 367
+          }
+        },
+        "tables": [
+          {
+            "tag": "table",
+            "id": null,
+            "role": "grid",
+            "ariaLabel": null,
+            "className": "semi-table semi-table-fixed",
+            "text": "角色说明权限用户类型操作只读用户只读查看联系人、营销线索、商机和跟进记录910可配置角色配置权限超级管理员管理 Kivisense CRM 全部数据、账号、权限和审计521系统角色查看权限销售人员创建",
+            "rect": {
+              "left": 85,
+              "top": 202,
+              "right": 1003,
+              "bottom": 392,
+              "width": 918,
+              "height": 190
+            },
+            "clientWidth": 918,
+            "scrollWidth": 918,
+            "horizontalScroll": false
+          }
+        ],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 0,
+          "unnamed": [],
+          "controls": []
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "scoring-rules",
+      "label": "评分规则",
+      "hash": "scoring-rules",
+      "context": "authenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898373595#scoring-rules",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "17-scoring-rules-1440x900.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 1066
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 1066
+        },
+        "h1": "评分规则",
+        "bodyTextLength": 1207,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-page flex min-w-0 flex-1 flex-col",
+          "text": "评分规则配置营销行为对线索匹配度和互动活跃度的影响；历史分值不会被回写。新增规则评分规则15 条结果列行为管理员分类评分维度分值变化重复规则冷却时间状态操作页面浏览技术代码：PAGE_VIEWDIGI",
+          "rect": {
+            "left": 232,
+            "top": 54,
+            "right": 1440,
+            "bottom": 1066,
+            "width": 1208,
+            "height": 1012
+          }
+        },
+        "tables": [
+          {
+            "tag": "table",
+            "id": null,
+            "role": "grid",
+            "ariaLabel": null,
+            "className": "semi-table semi-table-fixed",
+            "text": "行为管理员分类评分维度分值变化重复规则冷却时间状态操作页面浏览技术代码：PAGE_VIEWDIGITAL互动活跃度+1可重复1 小时启用关键内容浏览技术代码：KEY_CONTENT_VIEWDIGIT",
+            "rect": {
+              "left": 257,
+              "top": 202,
+              "right": 1415,
+              "bottom": 1037,
+              "width": 1158,
+              "height": 835
+            },
+            "clientWidth": 1158,
+            "scrollWidth": 1158,
+            "horizontalScroll": false
+          }
+        ],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 0,
+          "unnamed": [],
+          "controls": []
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "scoring-rules",
+      "label": "评分规则",
+      "hash": "scoring-rules",
+      "context": "authenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898374545#scoring-rules",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshot": "18-scoring-rules-1024x768.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 1066
+        },
+        "body": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 1066
+        },
+        "h1": "评分规则",
+        "bodyTextLength": 1155,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-page flex min-w-0 flex-1 flex-col",
+          "text": "评分规则配置营销行为对线索匹配度和互动活跃度的影响；历史分值不会被回写。新增规则评分规则15 条结果列行为管理员分类评分维度分值变化重复规则冷却时间状态操作页面浏览技术代码：PAGE_VIEWDIGI",
+          "rect": {
+            "left": 64,
+            "top": 54,
+            "right": 1024,
+            "bottom": 1066,
+            "width": 960,
+            "height": 1012
+          }
+        },
+        "tables": [
+          {
+            "tag": "table",
+            "id": null,
+            "role": "grid",
+            "ariaLabel": null,
+            "className": "semi-table semi-table-fixed",
+            "text": "行为管理员分类评分维度分值变化重复规则冷却时间状态操作页面浏览技术代码：PAGE_VIEWDIGITAL互动活跃度+1可重复1 小时启用关键内容浏览技术代码：KEY_CONTENT_VIEWDIGIT",
+            "rect": {
+              "left": 85,
+              "top": 202,
+              "right": 1003,
+              "bottom": 1037,
+              "width": 918,
+              "height": 835
+            },
+            "clientWidth": 918,
+            "scrollWidth": 918,
+            "horizontalScroll": false
+          }
+        ],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 0,
+          "unnamed": [],
+          "controls": []
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "audit",
+      "label": "审计日志",
+      "hash": "audit",
+      "context": "authenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898375494#audit",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "19-audit-1440x900.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 1411
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 1411
+        },
+        "h1": "审计日志",
+        "bodyTextLength": 1972,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-page flex min-w-0 flex-1 flex-col",
+          "text": "审计日志系统操作历史；业务互动请在客户旅程中查看。模块全部模块操作类型全部操作类型更多筛选重置审计目录182 条结果列时间操作者操作模块对象详情2026/09/09 04:12Semi QA Admi",
+          "rect": {
+            "left": 232,
+            "top": 54,
+            "right": 1440,
+            "bottom": 1411,
+            "width": 1208,
+            "height": 1357
+          }
+        },
+        "tables": [
+          {
+            "tag": "table",
+            "id": null,
+            "role": "grid",
+            "ariaLabel": null,
+            "className": "semi-table semi-table-fixed",
+            "text": "时间操作者操作模块对象详情2026/09/09 04:12Semi QA Admin下载附件CRM其他对象3f917ffacbfe698328856ea3d3912de4查看记录2026/09/09 ",
+            "rect": {
+              "left": 257,
+              "top": 276,
+              "right": 1415,
+              "bottom": 1316,
+              "width": 1158,
+              "height": 1040
+            },
+            "clientWidth": 1158,
+            "scrollWidth": 1158,
+            "horizontalScroll": false
+          }
+        ],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 2,
+          "unnamed": [],
+          "controls": [
+            {
+              "tag": "div",
+              "id": "8ay71mb",
+              "role": "combobox",
+              "ariaLabel": "selected",
+              "className": "semi-select crm-select h-9 min-w-32 bg-background",
+              "text": "全部模块",
+              "rect": {
+                "left": 269,
+                "top": 189,
+                "right": 439,
+                "bottom": 221,
+                "width": 170,
+                "height": 32
+              },
+              "labelledBy": "_r_0_-label",
+              "labelledByText": "模块",
+              "explicitLabelText": null,
+              "accessibleName": "模块",
+              "hasAccessibleName": true
+            },
+            {
+              "tag": "div",
+              "id": "1z81398",
+              "role": "combobox",
+              "ariaLabel": "selected",
+              "className": "semi-select crm-select h-9 min-w-32 bg-background",
+              "text": "全部操作类型",
+              "rect": {
+                "left": 447,
+                "top": 189,
+                "right": 617,
+                "bottom": 221,
+                "width": 170,
+                "height": 32
+              },
+              "labelledBy": "_r_2_-label",
+              "labelledByText": "操作类型",
+              "explicitLabelText": null,
+              "accessibleName": "操作类型",
+              "hasAccessibleName": true
+            }
+          ]
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "audit",
+      "label": "审计日志",
+      "hash": "audit",
+      "context": "authenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898376445#audit",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshot": "20-audit-1024x768.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 1411
+        },
+        "body": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 1411
+        },
+        "h1": "审计日志",
+        "bodyTextLength": 1920,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-page flex min-w-0 flex-1 flex-col",
+          "text": "审计日志系统操作历史；业务互动请在客户旅程中查看。模块全部模块操作类型全部操作类型更多筛选重置审计目录182 条结果列时间操作者操作模块对象详情2026/09/09 04:12Semi QA Admi",
+          "rect": {
+            "left": 64,
+            "top": 54,
+            "right": 1024,
+            "bottom": 1411,
+            "width": 960,
+            "height": 1357
+          }
+        },
+        "tables": [
+          {
+            "tag": "table",
+            "id": null,
+            "role": "grid",
+            "ariaLabel": null,
+            "className": "semi-table semi-table-fixed",
+            "text": "时间操作者操作模块对象详情2026/09/09 04:12Semi QA Admin下载附件CRM其他对象3f917ffacbfe698328856ea3d3912de4查看记录2026/09/09 ",
+            "rect": {
+              "left": 85,
+              "top": 276,
+              "right": 1010,
+              "bottom": 1316,
+              "width": 925,
+              "height": 1040
+            },
+            "clientWidth": 925,
+            "scrollWidth": 925,
+            "horizontalScroll": false
+          }
+        ],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 2,
+          "unnamed": [],
+          "controls": [
+            {
+              "tag": "div",
+              "id": "40e5mg4",
+              "role": "combobox",
+              "ariaLabel": "selected",
+              "className": "semi-select crm-select h-9 min-w-32 bg-background",
+              "text": "全部模块",
+              "rect": {
+                "left": 97,
+                "top": 189,
+                "right": 267,
+                "bottom": 221,
+                "width": 170,
+                "height": 32
+              },
+              "labelledBy": "_r_0_-label",
+              "labelledByText": "模块",
+              "explicitLabelText": null,
+              "accessibleName": "模块",
+              "hasAccessibleName": true
+            },
+            {
+              "tag": "div",
+              "id": "tyly8u6",
+              "role": "combobox",
+              "ariaLabel": "selected",
+              "className": "semi-select crm-select h-9 min-w-32 bg-background",
+              "text": "全部操作类型",
+              "rect": {
+                "left": 275,
+                "top": 189,
+                "right": 445,
+                "bottom": 221,
+                "width": 170,
+                "height": 32
+              },
+              "labelledBy": "_r_2_-label",
+              "labelledByText": "操作类型",
+              "explicitLabelText": null,
+              "accessibleName": "操作类型",
+              "hasAccessibleName": true
+            }
+          ]
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "login",
+      "label": "登录页",
+      "hash": "login",
+      "context": "unauthenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898377509#login",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "21-login-1440x900.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "h1": "登录",
+        "bodyTextLength": 63,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-auth-page flex min-h-svh items-center justify-center",
+          "text": "KIVISENSECRM 2.0登录使用工作账号继续。登录账号密码登录忘记密码？请联系系统管理员重置。",
+          "rect": {
+            "left": 0,
+            "top": 0,
+            "right": 1440,
+            "bottom": 900,
+            "width": 1440,
+            "height": 900
+          }
+        },
+        "tables": [],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 0,
+          "unnamed": [],
+          "controls": []
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [
+        {
+          "case": "login-1440x900",
+          "context": "unauthenticated",
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "pageUrl": "http://127.0.0.1:3100/?finalAudit=1788898377509#login"
+        }
+      ],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [
+        {
+          "case": "login-1440x900",
+          "context": "unauthenticated",
+          "method": "GET",
+          "status": 401,
+          "url": "http://127.0.0.1:3100/api/v1/auth/me",
+          "pageUrl": "http://127.0.0.1:3100/?finalAudit=1788898377509#login"
+        }
+      ],
+      "requestFailures": []
+    },
+    {
+      "key": "login",
+      "label": "登录页",
+      "hash": "login",
+      "context": "unauthenticated",
+      "url": "http://127.0.0.1:3100/?finalAudit=1788898378496#login",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "screenshot": "22-login-1024x768.png",
+      "status": "PASS",
+      "loadFailure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 768
+        },
+        "body": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "scrollHeight": 768
+        },
+        "h1": "登录",
+        "bodyTextLength": 63,
+        "documentHorizontalOverflow": false,
+        "sidebar": null,
+        "main": {
+          "tag": "main",
+          "id": null,
+          "role": null,
+          "ariaLabel": null,
+          "className": "crm-auth-page flex min-h-svh items-center justify-center",
+          "text": "KIVISENSECRM 2.0登录使用工作账号继续。登录账号密码登录忘记密码？请联系系统管理员重置。",
+          "rect": {
+            "left": 0,
+            "top": 0,
+            "right": 1024,
+            "bottom": 768,
+            "width": 1024,
+            "height": 768
+          }
+        },
+        "tables": [],
+        "overlapRisk": {
+          "interactiveOverlaps": [],
+          "regionOverlaps": [],
+          "outsideViewport": [],
+          "clippedTextCandidates": []
+        },
+        "comboboxAccessibility": {
+          "total": 0,
+          "unnamed": [],
+          "controls": []
+        }
+      },
+      "unexpectedConsoleErrors": [],
+      "unexpectedHttpFailures": [],
+      "consoleErrors": [
+        {
+          "case": "login-1024x768",
+          "context": "unauthenticated",
+          "type": "error",
+          "text": "Failed to load resource: the server responded with a status of 401 (Unauthorized)",
+          "pageUrl": "http://127.0.0.1:3100/?finalAudit=1788898378496#login"
+        }
+      ],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [
+        {
+          "case": "login-1024x768",
+          "context": "unauthenticated",
+          "method": "GET",
+          "status": 401,
+          "url": "http://127.0.0.1:3100/api/v1/auth/me",
+          "pageUrl": "http://127.0.0.1:3100/?finalAudit=1788898378496#login"
+        }
+      ],
+      "requestFailures": []
+    }
+  ]
+}

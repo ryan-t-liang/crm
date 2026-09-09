@@ -1,0 +1,877 @@
+{
+  "generatedAt": "2026-09-08T19:54:54.244Z",
+  "baseUrl": "http://127.0.0.1:3100",
+  "browser": "Google Chrome via Playwright",
+  "build": [
+    {
+      "path": "frontend/react-build/assets/app.js",
+      "bytes": 1458898,
+      "modifiedAt": "2026-09-08T19:26:06.858Z",
+      "sha256": "bef6efa438fe086f2ef9fe89e9435b913e4a1d0d9cdc863532fa74dcd71c46d8"
+    },
+    {
+      "path": "frontend/react-build/assets/app.css",
+      "bytes": 652228,
+      "modifiedAt": "2026-09-08T19:26:06.860Z",
+      "sha256": "40d5c9bc190073206ec1f2379eedf77caaf4ca51ac1b0779fdaf18bf241b400a"
+    }
+  ],
+  "importFixture": {
+    "path": "docs/qa-evidence-semi-migration-final/interactions/qa-contact-import-0909134217.xlsx",
+    "bytes": 6529,
+    "modifiedAt": "2026-09-08T18:13:02.117Z",
+    "sha256": "dc9d70fbc39630bf716b0289e7782e55003a74ad26037b2123c00fe9e7866902"
+  },
+  "qaData": {
+    "loginUserId": "cmtt37oj7000pqpxaz3y2cns0",
+    "loginDisplayName": "QA Semi Login 8897213438",
+    "loginRole": "VIEWER",
+    "contactName": "QA-Semi-Contact-8897213438",
+    "contactId": "cmtt37ssg000wqpxab8zzfmcr",
+    "followupId": "cmtt37ufn0012qpxa9xlxug4x",
+    "exportJobId": "cmtt39a6c001lqpxattpjs5sw",
+    "importJobId": "cmtt398xo001dqpxab20u97nr",
+    "importedContactName": "QA-Semi-Import-0909134217",
+    "importedContactId": "cmtt3995z001iqpxamswckd1v",
+    "finalState": "contacts soft-deleted; QA login fixtures disabled"
+  },
+  "summary": {
+    "verdict": "PASS",
+    "total": 20,
+    "passed": 20,
+    "failed": 0,
+    "screenshots": 31,
+    "criticalWrites": 12
+  },
+  "cases": [
+    {
+      "id": "LOGIN-ERROR",
+      "title": "登录错误状态",
+      "status": "PASS",
+      "assertions": [
+        {
+          "message": "错误凭据返回 HTTP 401",
+          "details": {
+            "status": 401
+          }
+        },
+        {
+          "message": "页面显示非空登录错误提示"
+        }
+      ],
+      "screenshots": [
+        "01-login-error.png"
+      ],
+      "durationMs": 1433
+    },
+    {
+      "id": "LOGIN-SUCCESS",
+      "title": "登录成功并建立会话",
+      "status": "PASS",
+      "assertions": [
+        {
+          "message": "有效凭据返回成功状态",
+          "details": {
+            "status": 200
+          }
+        },
+        {
+          "message": "登录后 /auth/me 可读取"
+        },
+        {
+          "message": "登录会话角色为 VIEWER"
+        },
+        {
+          "message": "首次登录进入强制修改密码页面"
+        }
+      ],
+      "screenshots": [
+        "02-login-success-password-gate.png"
+      ],
+      "durationMs": 362
+    },
+    {
+      "id": "VIEWER-RBAC",
+      "title": "VIEWER 强制改密与只读权限",
+      "status": "PASS",
+      "assertions": [
+        {
+          "message": "VIEWER 首次登录强制改密成功",
+          "details": {
+            "status": 200
+          }
+        },
+        {
+          "message": "改密后的 /auth/me 可读取"
+        },
+        {
+          "message": "正式页面会话角色仍为 VIEWER"
+        },
+        {
+          "message": "改密门禁已解除"
+        },
+        {
+          "message": "VIEWER 不显示“新增联系人”操作"
+        },
+        {
+          "message": "VIEWER 不显示“批量导入”操作"
+        },
+        {
+          "message": "VIEWER 不显示“导出”操作"
+        },
+        {
+          "message": "VIEWER 不显示“导出所选”操作"
+        },
+        {
+          "message": "VIEWER 不显示“批量分配”操作"
+        },
+        {
+          "message": "VIEWER 不显示批量选择入口"
+        },
+        {
+          "message": "VIEWER 行菜单不显示“编辑”"
+        },
+        {
+          "message": "VIEWER 行菜单不显示“删除”"
+        },
+        {
+          "message": "VIEWER 行菜单不显示“记录跟进”"
+        },
+        {
+          "message": "VIEWER 保留只读详情入口"
+        }
+      ],
+      "screenshots": [
+        "03-viewer-contact-read-only.png"
+      ],
+      "durationMs": 549
+    },
+    {
+      "id": "SIDEBAR-PERSISTENCE",
+      "title": "Semi Navigation 侧栏折叠持久化",
+      "status": "PASS",
+      "assertions": [
+        {
+          "message": "侧栏折叠后页面无文档级横向溢出"
+        },
+        {
+          "message": "折叠状态写入 localStorage"
+        },
+        {
+          "message": "刷新后侧栏保持折叠"
+        },
+        {
+          "message": "刷新后的折叠布局仍无横向溢出"
+        },
+        {
+          "message": "验收结束前恢复展开状态"
+        }
+      ],
+      "screenshots": [
+        "04-sidebar-collapsed.png"
+      ],
+      "durationMs": 602
+    },
+    {
+      "id": "NAVIGATION",
+      "title": "Semi Navigation 路由切换",
+      "status": "PASS",
+      "assertions": [
+        {
+          "message": "主导航由 Semi Navigation 渲染"
+        },
+        {
+          "message": "点击导航进入联系人路由"
+        },
+        {
+          "message": "联系人目录由 Semi Table 渲染"
+        }
+      ],
+      "screenshots": [
+        "05-navigation-contacts.png"
+      ],
+      "durationMs": 526
+    },
+    {
+      "id": "LIST-CONTROLS",
+      "title": "列表搜索、筛选与分页",
+      "status": "PASS",
+      "assertions": [
+        {
+          "message": "联系人夹具足以验证第二页",
+          "details": {
+            "total": 23
+          }
+        },
+        {
+          "message": "分页到第二页请求成功",
+          "details": {
+            "status": 200
+          }
+        },
+        {
+          "message": "分页由 Semi Pagination 渲染"
+        },
+        {
+          "message": "联系人类型筛选请求成功",
+          "details": {
+            "status": 200
+          }
+        },
+        {
+          "message": "筛选 Select 暴露正确 accessible name"
+        },
+        {
+          "message": "关键词搜索请求成功",
+          "details": {
+            "status": 200
+          }
+        }
+      ],
+      "screenshots": [
+        "06-contacts-page-2.png",
+        "07-contacts-filter-search.png"
+      ],
+      "durationMs": 1211
+    },
+    {
+      "id": "CONTACT-CREATE",
+      "title": "联系人 SideSheet 与 EntityCombobox 清除",
+      "status": "PASS",
+      "assertions": [
+        {
+          "message": "新增表单由 Semi SideSheet 渲染"
+        },
+        {
+          "message": "SideSheet Select 暴露正确 accessible name"
+        },
+        {
+          "message": "SideSheet Input 与可见标签正确关联"
+        },
+        {
+          "message": "EntityCombobox 选择已有组织"
+        },
+        {
+          "message": "清除 EntityCombobox 后旧 organizationId 未提交"
+        },
+        {
+          "message": "联系人创建 HTTP 请求成功",
+          "details": {
+            "status": 201
+          }
+        },
+        {
+          "message": "创建结果在联系人目录可见"
+        },
+        {
+          "message": "API 持久化正确 organizationId"
+        },
+        {
+          "message": "API 持久化联系人姓名"
+        },
+        {
+          "message": "刷新详情页后联系人与组织关联仍可见"
+        }
+      ],
+      "screenshots": [
+        "08-contact-combobox-cleared-validation.png",
+        "09-contact-created-list.png"
+      ],
+      "durationMs": 2114
+    },
+    {
+      "id": "CONTACT-EDIT",
+      "title": "联系人编辑 SideSheet 持久化",
+      "status": "PASS",
+      "assertions": [
+        {
+          "message": "联系人编辑 HTTP 请求成功",
+          "details": {
+            "status": 200
+          }
+        },
+        {
+          "message": "API 持久化编辑后的职位"
+        },
+        {
+          "message": "刷新详情页后编辑值仍可见"
+        }
+      ],
+      "screenshots": [
+        "10-contact-edit-persisted.png"
+      ],
+      "durationMs": 621
+    },
+    {
+      "id": "DATE-UPLOAD",
+      "title": "Semi DatePicker 与 Upload 跟进持久化",
+      "status": "PASS",
+      "assertions": [
+        {
+          "message": "日期时间面板由 Semi DatePicker 渲染"
+        },
+        {
+          "message": "通过 Semi 面板选择日期和时间"
+        },
+        {
+          "message": "附件选择由 Semi Upload 渲染"
+        },
+        {
+          "message": "跟进创建 HTTP 请求成功",
+          "details": {
+            "status": 201
+          }
+        },
+        {
+          "message": "既有跟进附件端点上传成功",
+          "details": {
+            "status": 201
+          }
+        },
+        {
+          "message": "API 持久化跟进内容"
+        },
+        {
+          "message": "API 持久化下一步行动"
+        },
+        {
+          "message": "API 持久化 DatePicker 日期时间",
+          "details": {
+            "expected": "2026-09-16T06:30:00.000Z",
+            "actual": "2026-09-16T06:30:00.000Z"
+          }
+        },
+        {
+          "message": "API 返回已持久化附件"
+        },
+        {
+          "message": "跟进与附件在客户旅程可见"
+        },
+        {
+          "message": "刷新后跟进与附件仍可见"
+        }
+      ],
+      "screenshots": [
+        "11-followup-datepicker-open.png",
+        "12-followup-date-file-ready.png",
+        "13-followup-visible-journey.png",
+        "14-followup-reload-persisted.png"
+      ],
+      "durationMs": 1693
+    },
+    {
+      "id": "DETAIL-TABS",
+      "title": "Semi Tabs 详情切换",
+      "status": "PASS",
+      "assertions": [
+        {
+          "message": "详情页由 Semi Tabs 渲染"
+        },
+        {
+          "message": "详情 Tabs 可往返切换且内容正确"
+        }
+      ],
+      "screenshots": [
+        "15-contact-detail-tabs.png"
+      ],
+      "durationMs": 277
+    },
+    {
+      "id": "ROW-ACTION-MODAL",
+      "title": "行操作 Dropdown 与确认 Modal",
+      "status": "PASS",
+      "assertions": [
+        {
+          "message": "行操作由 Semi Dropdown 渲染"
+        },
+        {
+          "message": "删除确认由 Semi Modal 渲染"
+        },
+        {
+          "message": "取消确认未发送 DELETE 请求"
+        },
+        {
+          "message": "取消后联系人仍存在"
+        }
+      ],
+      "screenshots": [
+        "16-row-dropdown-delete-modal.png"
+      ],
+      "durationMs": 771
+    },
+    {
+      "id": "BATCH-ASSIGN",
+      "title": "Semi Table 批量分配与持久化",
+      "status": "PASS",
+      "assertions": [
+        {
+          "message": "搜索结果仅包含本轮 QA 联系人"
+        },
+        {
+          "message": "批量勾选由 Semi Checkbox 渲染"
+        },
+        {
+          "message": "批量分配 POST 成功",
+          "details": {
+            "status": 200
+          }
+        },
+        {
+          "message": "批量分配仅命中本轮联系人"
+        },
+        {
+          "message": "API 持久化 VIEWER 负责人编号"
+        },
+        {
+          "message": "刷新后 VIEWER 负责人仍在列表可见"
+        },
+        {
+          "message": "验收后批量恢复管理员负责人成功",
+          "details": {
+            "status": 200
+          }
+        },
+        {
+          "message": "API 确认负责人已恢复为 QA 管理员"
+        }
+      ],
+      "screenshots": [
+        "17-contact-batch-assigned-viewer.png"
+      ],
+      "durationMs": 2071
+    },
+    {
+      "id": "IMPORT-COMPLETE",
+      "title": "Semi Upload 完整导入与持久化",
+      "status": "PASS",
+      "assertions": [
+        {
+          "message": "明确允许重复上传同一 QA 文件"
+        },
+        {
+          "message": "XLSX 文件选择由 Semi Upload 渲染"
+        },
+        {
+          "message": "选择 XLSX 后预检操作可用"
+        },
+        {
+          "message": "联系人导入预检返回 HTTP 201",
+          "details": {
+            "status": 201
+          }
+        },
+        {
+          "message": "预检识别到 1 行受控数据"
+        },
+        {
+          "message": "预检结果为 1 行可导入"
+        },
+        {
+          "message": "预检没有错误行"
+        },
+        {
+          "message": "预检明细由 Semi Table 展示"
+        },
+        {
+          "message": "确认导入 HTTP 请求成功",
+          "details": {
+            "status": 200
+          }
+        },
+        {
+          "message": "执行结果成功导入 1 行"
+        },
+        {
+          "message": "执行结果失败 0 行"
+        },
+        {
+          "message": "API 持久化个人联系人类型"
+        },
+        {
+          "message": "API 持久化受控邮箱"
+        },
+        {
+          "message": "刷新后导入联系人仍在正式列表中"
+        }
+      ],
+      "screenshots": [
+        "18-import-sidesheet-file-selected.png",
+        "19-import-preflight-ready.png",
+        "20-import-execute-completed.png",
+        "21-import-contact-visible-list.png"
+      ],
+      "durationMs": 1914
+    },
+    {
+      "id": "EXPORT-SIDESHEET",
+      "title": "导出 SideSheet、任务与重载持久化",
+      "status": "PASS",
+      "assertions": [
+        {
+          "message": "导出范围使用 Semi Select"
+        },
+        {
+          "message": "导出任务创建 HTTP 请求成功",
+          "details": {
+            "status": 202
+          }
+        },
+        {
+          "message": "页面显示导出完成与记录数"
+        },
+        {
+          "message": "API 返回导出任务 COMPLETED",
+          "details": {
+            "status": "COMPLETED"
+          }
+        },
+        {
+          "message": "API 返回可下载地址"
+        },
+        {
+          "message": "页面重载后导出记录仍可读取"
+        }
+      ],
+      "screenshots": [
+        "22-export-sidesheet-estimate.png",
+        "23-export-completed.png",
+        "24-export-history-reload.png"
+      ],
+      "durationMs": 1574
+    },
+    {
+      "id": "ROLE-PERMISSIONS",
+      "title": "角色权限 SideSheet",
+      "status": "PASS",
+      "assertions": [
+        {
+          "message": "角色权限在 Semi SideSheet 中展示"
+        },
+        {
+          "message": "权限按业务模块分组展示"
+        }
+      ],
+      "screenshots": [
+        "25-role-permission-sidesheet.png"
+      ],
+      "durationMs": 368
+    },
+    {
+      "id": "AUDIT-COLLAPSE",
+      "title": "审计详情 Semi Collapse",
+      "status": "PASS",
+      "assertions": [
+        {
+          "message": "技术信息默认折叠"
+        },
+        {
+          "message": "审计技术信息由 Semi Collapse 渲染"
+        },
+        {
+          "message": "点击后技术信息展开"
+        }
+      ],
+      "screenshots": [
+        "26-audit-collapse-expanded.png"
+      ],
+      "durationMs": 621
+    },
+    {
+      "id": "RESPONSIVE-RUNTIME",
+      "title": "核心页面响应式溢出与运行时检查",
+      "status": "PASS",
+      "assertions": [
+        {
+          "message": "1280px 数据看板无文档级横向溢出"
+        },
+        {
+          "message": "1280px 联系人目录无文档级横向溢出"
+        },
+        {
+          "message": "1280px 商机详情无文档级横向溢出"
+        },
+        {
+          "message": "1024px 数据看板无文档级横向溢出"
+        },
+        {
+          "message": "1024px 联系人目录无文档级横向溢出"
+        },
+        {
+          "message": "1024px 商机详情无文档级横向溢出"
+        }
+      ],
+      "screenshots": [
+        "27-opportunity-detail-1024.png"
+      ],
+      "durationMs": 377
+    },
+    {
+      "id": "IMPORTED-CONTACT-DELETE",
+      "title": "导入联系人真实软删除",
+      "status": "PASS",
+      "assertions": [
+        {
+          "message": "删除前目录中仅匹配目标联系人 QA-Semi-Import-0909134217"
+        },
+        {
+          "message": "真实删除由可见 Semi Modal 二次确认"
+        },
+        {
+          "message": "DELETE 请求成功",
+          "details": {
+            "status": 200
+          }
+        },
+        {
+          "message": "软删除后联系人从列表查询中消失"
+        },
+        {
+          "message": "软删除后详情 API 返回 404",
+          "details": {
+            "status": 404
+          }
+        },
+        {
+          "message": "刷新后联系人仍不在正式列表中"
+        }
+      ],
+      "screenshots": [
+        "28-imported-contact-delete-confirmation.png",
+        "29-imported-contact-deleted-after-reload.png"
+      ],
+      "durationMs": 1318
+    },
+    {
+      "id": "QA-CONTACT-DELETE",
+      "title": "本轮联系人真实软删除",
+      "status": "PASS",
+      "assertions": [
+        {
+          "message": "删除前目录中仅匹配目标联系人 QA-Semi-Contact-8897213438"
+        },
+        {
+          "message": "真实删除由可见 Semi Modal 二次确认"
+        },
+        {
+          "message": "DELETE 请求成功",
+          "details": {
+            "status": 200
+          }
+        },
+        {
+          "message": "软删除后联系人从列表查询中消失"
+        },
+        {
+          "message": "软删除后详情 API 返回 404",
+          "details": {
+            "status": 404
+          }
+        },
+        {
+          "message": "刷新后联系人仍不在正式列表中"
+        }
+      ],
+      "screenshots": [
+        "30-qa-contact-delete-confirmation.png",
+        "31-qa-contact-deleted-after-reload.png"
+      ],
+      "durationMs": 1284
+    },
+    {
+      "id": "FIXTURE-CLEANUP",
+      "title": "QA 账号停用与夹具清理核验",
+      "status": "PASS",
+      "assertions": [
+        {
+          "message": "本轮 VIEWER 账号停用请求成功",
+          "details": {
+            "status": 200
+          }
+        },
+        {
+          "message": "停用响应状态为 DISABLED"
+        },
+        {
+          "message": "API 确认本轮 VIEWER 已停用"
+        },
+        {
+          "message": "所有可确认由 harness 创建的 QA VIEWER 均已停用",
+          "details": {
+            "count": 9
+          }
+        },
+        {
+          "message": "已记录无法安全软删除的历史 QA 联系人残留数量",
+          "details": {
+            "count": 0
+          }
+        }
+      ],
+      "screenshots": [],
+      "durationMs": 54
+    }
+  ],
+  "writes": [
+    {
+      "kind": "qa-login-user",
+      "action": "create",
+      "id": "cmtt37oj7000pqpxaz3y2cns0",
+      "displayName": "QA Semi Login 8897213438",
+      "role": "VIEWER",
+      "status": 201
+    },
+    {
+      "kind": "contact",
+      "action": "create",
+      "id": "cmtt37ssg000wqpxab8zzfmcr",
+      "name": "QA-Semi-Contact-8897213438",
+      "status": 201
+    },
+    {
+      "kind": "contact",
+      "action": "edit",
+      "id": "cmtt37ssg000wqpxab8zzfmcr",
+      "field": "title",
+      "value": "QA-Semi-Edited-8897213438",
+      "status": 200
+    },
+    {
+      "kind": "contact-followup",
+      "action": "create",
+      "id": "cmtt37ufn0012qpxa9xlxug4x",
+      "contactId": "cmtt37ssg000wqpxab8zzfmcr",
+      "status": 201
+    },
+    {
+      "kind": "followup-attachment",
+      "action": "upload",
+      "followupId": "cmtt37ufn0012qpxa9xlxug4x",
+      "fileName": "qa-followup-note.txt",
+      "status": 201
+    },
+    {
+      "kind": "contact",
+      "action": "batch-assign",
+      "id": "cmtt37ssg000wqpxab8zzfmcr",
+      "ownerDisplayName": "QA Semi Login 8897213438",
+      "status": 200
+    },
+    {
+      "kind": "contact",
+      "action": "batch-assign-restore",
+      "id": "cmtt37ssg000wqpxab8zzfmcr",
+      "ownerDisplayName": "Semi QA Admin",
+      "status": 200
+    },
+    {
+      "kind": "contact-import",
+      "action": "execute",
+      "id": "cmtt398xo001dqpxab20u97nr",
+      "contactId": "cmtt3995z001iqpxamswckd1v",
+      "imported": 1,
+      "failed": 0,
+      "status": 200
+    },
+    {
+      "kind": "contact-export",
+      "action": "create",
+      "id": "cmtt39a6c001lqpxattpjs5sw",
+      "status": 202
+    },
+    {
+      "kind": "contact",
+      "action": "soft-delete",
+      "id": "cmtt3995z001iqpxamswckd1v",
+      "name": "QA-Semi-Import-0909134217",
+      "status": 200
+    },
+    {
+      "kind": "contact",
+      "action": "soft-delete",
+      "id": "cmtt37ssg000wqpxab8zzfmcr",
+      "name": "QA-Semi-Contact-8897213438",
+      "status": 200
+    },
+    {
+      "kind": "qa-login-user",
+      "action": "disable",
+      "id": "cmtt37oj7000pqpxaz3y2cns0",
+      "displayName": "QA Semi Login 8897213438",
+      "status": 200
+    }
+  ],
+  "fixtureCleanup": [
+    {
+      "kind": "qa-login-user",
+      "displayName": "QA Semi Login 8897213438",
+      "action": "disable",
+      "status": 200
+    }
+  ],
+  "fixtureResiduals": {
+    "qaLoginUsers": [
+      {
+        "displayName": "QA Semi Login 8897213438",
+        "status": "DISABLED"
+      },
+      {
+        "displayName": "QA Semi Login 8896685749",
+        "status": "DISABLED"
+      },
+      {
+        "displayName": "QA Semi Login 0909025801",
+        "status": "DISABLED"
+      },
+      {
+        "displayName": "QA Semi Login 0909024501",
+        "status": "DISABLED"
+      },
+      {
+        "displayName": "QA Semi Login 0909015408",
+        "status": "DISABLED"
+      },
+      {
+        "displayName": "QA Semi Login 0909014522",
+        "status": "DISABLED"
+      },
+      {
+        "displayName": "QA Semi Login 0909013501",
+        "status": "DISABLED"
+      },
+      {
+        "displayName": "QA Semi Login 8887630222",
+        "status": "DISABLED"
+      },
+      {
+        "displayName": "QA Semi Login 8887379184",
+        "status": "DISABLED"
+      }
+    ],
+    "qaContacts": []
+  },
+  "network": {
+    "expectedHttpFailures": [
+      {
+        "case": "LOGIN-ERROR",
+        "context": "unauthenticated",
+        "method": "GET",
+        "status": 401,
+        "url": "http://127.0.0.1:3100/api/v1/auth/me",
+        "pageUrl": "http://127.0.0.1:3100/#login"
+      },
+      {
+        "case": "LOGIN-ERROR",
+        "context": "unauthenticated",
+        "method": "POST",
+        "status": 401,
+        "url": "http://127.0.0.1:3100/api/v1/auth/login",
+        "pageUrl": "http://127.0.0.1:3100/#login"
+      }
+    ],
+    "unexpectedHttpFailures": [],
+    "unexpectedRequestFailures": [],
+    "unexpectedConsoleErrors": [],
+    "consoleWarnings": [],
+    "pageErrors": []
+  }
+}

@@ -1,180 +1,113 @@
+import { Avatar, Button, Dropdown, Nav as Navigation, Typography } from "@douyinfe/semi-ui";
 import {
-  Building2,
-  ChevronsUpDown,
-  ContactRound,
-  Goal,
-  Gauge,
-  LayoutDashboard,
-  LogOut,
-  ScrollText,
-  ShieldCheck,
-  UsersRound,
-  type LucideIcon,
-} from "lucide-react"
+  IconBriefcaseStroked,
+  IconExit,
+  IconHistogram,
+  IconHomeStroked,
+  IconKanban,
+  IconKeyStroked,
+  IconSettingStroked,
+  IconShieldStroked,
+  IconUserGroup,
+  IconUserListStroked,
+} from "@douyinfe/semi-icons";
+import type { ReactNode } from "react";
 
-import { Avatar, AvatarFallback } from "@/components/v1/ui"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/v1/ui"
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuBadge,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-} from "@/components/v1/ui"
-import { assetUrl, legacyUrl, type SessionUser } from "@/lib/api"
-import { migratedRoutes } from "@/lib/crm"
+import { useCrmShell } from "@/components/crm/shell";
+import { assetUrl, type SessionUser } from "@/lib/api";
 
-type NavItem = {
-  label: string
-  route: string
-  icon: LucideIcon
-  permission?: string
-  anyPermissions?: string[]
-  countKey?: "organizations" | "contacts" | "leads" | "marketingLeads"
-}
-
-type NavigationCounts = Partial<Record<NonNullable<NavItem["countKey"]>, number>>
+type CountKey = "organizations" | "contacts" | "leads" | "marketingLeads";
+type NavigationCounts = Partial<Record<CountKey, number>>;
+type NavItem = { label: string; route: string; icon: ReactNode; permission?: string; anyPermissions?: string[]; countKey?: CountKey };
 
 const navGroups: Array<{ label: string; items: NavItem[] }> = [
   {
     label: "概览",
     items: [
-      { label: "数据看板", route: "dashboard", icon: LayoutDashboard, anyPermissions: ["crm.dashboard.self.view", "crm.dashboard.management.view"] },
+      { label: "数据看板", route: "dashboard", icon: <IconHomeStroked />, anyPermissions: ["crm.dashboard.self.view", "crm.dashboard.management.view"] },
+      { label: "我的工作台", route: "workbench", icon: <IconKanban />, permission: "crm.task.view" },
     ],
   },
   {
     label: "客户管理",
     items: [
-      { label: "组织", route: "organizations", icon: Building2, permission: "crm.organization.view", countKey: "organizations" },
-      { label: "联系人", route: "contacts", icon: ContactRound, permission: "crm.contact.view", countKey: "contacts" },
-      { label: "线索", route: "marketing-leads", icon: Goal, permission: "crm.marketing_lead.view", countKey: "marketingLeads" },
-      { label: "商机", route: "leads", icon: Gauge, permission: "crm.lead.view", countKey: "leads" },
+      { label: "组织", route: "organizations", icon: <IconBriefcaseStroked />, permission: "crm.organization.view", countKey: "organizations" },
+      { label: "联系人", route: "contacts", icon: <IconUserListStroked />, permission: "crm.contact.view", countKey: "contacts" },
+      { label: "线索", route: "marketing-leads", icon: <IconHistogram />, permission: "crm.marketing_lead.view", countKey: "marketingLeads" },
+      { label: "商机", route: "leads", icon: <IconKanban />, permission: "crm.lead.view", countKey: "leads" },
     ],
+  },
+  {
+    label: "资源",
+    items: [{ label: "供应商", route: "suppliers", icon: <IconUserGroup />, permission: "crm.organization.view" }],
   },
   {
     label: "系统",
     items: [
-      { label: "账户管理", route: "accounts", icon: UsersRound, permission: "account.view" },
-      { label: "角色与权限", route: "roles", icon: ShieldCheck, permission: "roles.view" },
-      { label: "评分规则", route: "scoring-rules", icon: Goal, permission: "crm.marketing.score_rule.view" },
-      { label: "审计日志", route: "audit", icon: ScrollText, permission: "audit.view" },
+      { label: "账户管理", route: "accounts", icon: <IconUserGroup />, permission: "account.view" },
+      { label: "角色与权限", route: "roles", icon: <IconShieldStroked />, permission: "roles.view" },
+      { label: "评分规则", route: "scoring-rules", icon: <IconSettingStroked />, permission: "crm.marketing.score_rule.view" },
+      { label: "审计日志", route: "audit", icon: <IconKeyStroked />, permission: "audit.view" },
     ],
   },
-]
+];
 
 function allowed(item: NavItem, permissions: Set<string>) {
-  if (item.permission) return permissions.has(item.permission)
-  if (item.anyPermissions) return item.anyPermissions.some((permission) => permissions.has(permission))
-  return true
+  if (item.permission) return permissions.has(item.permission);
+  if (item.anyPermissions) return item.anyPermissions.some((permission) => permissions.has(permission));
+  return true;
+}
+
+function UserMenu({ me, onLogout }: { me: SessionUser; onLogout: () => void }) {
+  const initials = me.name.trim().slice(0, 1).toUpperCase() || "K";
+  return (
+    <Dropdown
+      trigger="click"
+      position="rightBottom"
+      render={
+        <Dropdown.Menu className="crm-user-menu">
+          <Dropdown.Title><div className="crm-user-menu-copy"><strong>{me.name}</strong><span>{me.loginAccount}</span></div></Dropdown.Title>
+          <Dropdown.Divider />
+          <Dropdown.Item icon={<IconShieldStroked />} onClick={() => { window.location.hash = "security"; }}>账户安全</Dropdown.Item>
+          <Dropdown.Item icon={<IconExit />} type="danger" onClick={onLogout}>退出登录</Dropdown.Item>
+        </Dropdown.Menu>
+      }
+    >
+      <Button theme="borderless" type="tertiary" className="crm-sidebar-user" aria-label="打开用户菜单">
+        <Avatar size="small" color="light-green">{initials}</Avatar>
+        <span className="crm-sidebar-user-copy"><strong>{me.name}</strong><small>{me.role.name}</small></span>
+      </Button>
+    </Dropdown>
+  );
 }
 
 export function AppSidebar({ me, counts, onLogout, route = "dashboard" }: { me: SessionUser; counts: NavigationCounts; onLogout: () => void; route?: string }) {
-  const permissions = new Set(me.permissions)
-  const initials = me.name.trim().slice(0, 1).toUpperCase() || "K"
-
+  const permissions = new Set(me.permissions);
+  const { collapsed } = useCrmShell();
+  const visibleGroups = navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => allowed(item, permissions)),
+    }))
+    .filter((group) => group.items.length > 0);
   return (
-    <Sidebar collapsible="icon" variant="sidebar" aria-label="主导航" className="crm-sidebar">
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild className="crm-brand-lockup data-[slot=sidebar-menu-button]:hover:bg-transparent">
-              <a href="#dashboard" aria-label="返回数据看板">
-                <span className="crm-logo-tile flex items-center justify-center border border-sidebar-border bg-white">
-                  <img src={assetUrl("/assets/kivisense-logo.svg")} alt="Kivisense 标志" />
-                </span>
-                <span className="grid flex-1 text-left leading-tight">
-                  <span className="truncate text-[13px] font-semibold tracking-[0.12em]">KIVISENSE</span>
-                  <span className="truncate text-xs text-muted-foreground">CRM 2.0</span>
-                </span>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarHeader>
-
-      <SidebarContent>
-        {navGroups.map((group) => {
-          const items = group.items.filter((item) => allowed(item, permissions))
-          if (!items.length) return null
-          return (
-            <SidebarGroup key={group.label}>
-              <SidebarGroupLabel>
-                {group.label}
-              </SidebarGroupLabel>
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  {items.map((item) => {
-                    const Icon = item.icon
-                    const isActive = item.route === route
-                    const count = item.countKey ? counts[item.countKey] : undefined
-                    return (
-                      <SidebarMenuItem key={item.route}>
-                        <SidebarMenuButton asChild isActive={isActive} tooltip={item.label}>
-                          <a href={migratedRoutes.has(item.route) ? `#${item.route}` : legacyUrl(item.route)}>
-                            <Icon />
-                            <span>{item.label}</span>
-                          </a>
-                        </SidebarMenuButton>
-                        {typeof count === "number" ? <SidebarMenuBadge>{count > 999 ? "999+" : count}</SidebarMenuBadge> : null}
-                      </SidebarMenuItem>
-                    )
-                  })}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          )
-        })}
-      </SidebarContent>
-
-      <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <SidebarMenuButton size="lg" className="min-h-[52px] data-[state=open]:bg-sidebar-accent">
-                  <Avatar className="size-[34px]">
-                    <AvatarFallback className="bg-[#eee6d8] font-serif text-xs font-semibold text-[#0b0b0b]">{initials}</AvatarFallback>
-                  </Avatar>
-                  <span className="grid flex-1 text-left leading-tight">
-                    <span className="truncate text-sm font-medium">{me.name}</span>
-                    <span className="truncate text-xs text-muted-foreground">{me.role.name}</span>
-                  </span>
-                  <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
-                </SidebarMenuButton>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent side="right" align="end" sideOffset={8} className="w-56 rounded-[8px]">
-                <DropdownMenuLabel className="font-normal">
-                  <div className="grid gap-1">
-                    <span className="text-sm font-medium">{me.name}</span>
-                    <span className="text-xs text-muted-foreground">{me.loginAccount}</span>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild><a href="#security"><ShieldCheck />账户安全</a></DropdownMenuItem>
-                <DropdownMenuItem onSelect={onLogout}>
-                  <LogOut />
-                  退出登录
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
-      <SidebarRail />
-    </Sidebar>
-  )
+    <aside className="crm-sidebar" data-collapsed={collapsed} aria-label="主导航">
+      <Navigation className="crm-navigation" mode="vertical" isCollapsed={collapsed} selectedKeys={[route]} header={
+        <a className="crm-brand-lockup" href="#dashboard" aria-label="返回数据看板">
+          <span className="crm-logo-tile"><img src={assetUrl("/assets/kivisense-logo.svg")} alt="Kivisense 标志" /></span>
+          {!collapsed && <span className="crm-brand-copy"><Typography.Text strong>KIVISENSE</Typography.Text><small>CRM 2.0</small></span>}
+        </a>
+      } footer={<UserMenu me={me} onLogout={onLogout} />}>
+        {visibleGroups.flatMap((group) => [
+          <li key={`${group.label}-label`} className="crm-nav-group" role="presentation">
+            {!collapsed && <div className="crm-nav-group-label">{group.label}</div>}
+          </li>,
+          ...group.items.map((item) => {
+            const count = item.countKey ? counts[item.countKey] : undefined;
+            return <Navigation.Item key={item.route} itemKey={item.route} icon={item.icon} link={`#${item.route}`} text={<span className="crm-nav-item-text"><span>{item.label}</span>{typeof count === "number" && <b>{count > 999 ? "999+" : count}</b>}</span>} />;
+          }),
+        ])}
+      </Navigation>
+    </aside>
+  );
 }

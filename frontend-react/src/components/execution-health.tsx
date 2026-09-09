@@ -1,4 +1,4 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/v1/ui"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/crm/ui"
 import { lifecycleLabels, type DashboardData } from "@/lib/dashboard"
 
 export function ExecutionHealth({ data }: { data: DashboardData }) {
@@ -9,7 +9,7 @@ export function ExecutionHealth({ data }: { data: DashboardData }) {
     ["任务完成率", `${data.execution.followupCompletion.percent}%`, `${data.execution.followupCompletion.numerator}/${data.execution.followupCompletion.denominator}`],
     ["客户覆盖率", `${data.execution.customerCoverage.percent}%`, `${data.execution.customerCoverage.numerator}/${data.execution.customerCoverage.denominator}`],
     ["经营计划转商机", `${data.execution.nurtureConversion.percent}%`, `${data.execution.nurtureConversion.numerator}/${data.execution.nurtureConversion.denominator}`],
-    ["唤醒公司", String(data.execution.reactivation.count), "所选期间"],
+    ["唤醒组织", String(data.execution.reactivation.count), "所选期间"],
     ["高匹配未触达", String(data.execution.highFitUntouched), "需要优先行动"],
   ]
   const maxLifecycle = Math.max(1, ...data.lifecycle.map((item) => item.count))

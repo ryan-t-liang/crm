@@ -1,19 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
-import { Download, RotateCw, Upload } from "lucide-react";
+import {
+  IconDownloadStroked as Download,
+  IconRefresh as RotateCw,
+  IconUpload as Upload,
+} from "@douyinfe/semi-icons";
+import { Table as SemiTable } from "@douyinfe/semi-ui";
 import { appUrl, crmApi, type SessionUser } from "@/lib/api";
 import { can, dateTime, friendlyError } from "@/lib/crm";
-import { Button } from "@/components/v1/ui";
-import { Input } from "@/components/v1/ui";
-import { Checkbox } from "@/components/v1/ui";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/v1/ui";
-import {
-  Table,
-  TableHeader,
-  TableHead,
-  TableRow,
-  TableBody,
-  TableCell,
-} from "@/components/v1/ui";
+import { Button, Checkbox, FilePicker } from "@/components/crm/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/crm/ui";
 import { FormDialog, SummaryStrip, LoadingSkeleton } from "./primitives";
 import { dataJobStatusLabels, dataObjectLabels, exportScopeLabels } from "@/lib/product-language";
 
@@ -275,11 +270,12 @@ function JobDialog({
             >
               下载标准模板
             </a>
-            <Input
+            <FilePicker
               aria-label="XLSX 文件"
-              type="file"
               accept=".xlsx"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              files={file ? [file] : []}
+              onFilesChange={(selected) => setFile(selected[0] || null)}
+              label={file ? file.name : "选择 XLSX 文件"}
             />
             {kind === "contacts" && (
               <label className="flex items-center gap-2 text-sm">
@@ -287,7 +283,7 @@ function JobDialog({
                   checked={createMissing}
                   onCheckedChange={(v) => setCreateMissing(v === true)}
                 />
-                创建未匹配的公司（默认关闭）
+                创建未匹配的组织（默认关闭）
               </label>
             )}
             <label className="flex items-center gap-2 text-sm">
@@ -334,29 +330,19 @@ function JobDialog({
                 { label: "有错误", value: job.preflight.errorRows },
               ]}
             />
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {["行号", "识别信息", "状态", "说明"].map((x) => (
-                    <TableHead key={x}>{x}</TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {job.rows?.map((row) => (
-                  <TableRow key={row.rowNumber}>
-                    <TableCell>{row.rowNumber}</TableCell>
-                    <TableCell>{row.identity}</TableCell>
-                    <TableCell>{({ VALID: "可导入", WARNING: "需注意", ERROR: "有错误" } as Record<string, string>)[row.status] || "未知状态"}</TableCell>
-                    <TableCell>
-                      {[...(row.errors || []), ...(row.warnings || [])]
-                        .map((x) => x.message)
-                        .join("；") || "可导入"}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <SemiTable<ImportRow>
+              className="crm-import-preview-table"
+              rowKey="rowNumber"
+              size="small"
+              pagination={false}
+              dataSource={job.rows || []}
+              columns={[
+                { title: "行号", dataIndex: "rowNumber", width: 72 },
+                { title: "识别信息", dataIndex: "identity" },
+                { title: "状态", dataIndex: "status", width: 100, render: (status: string) => ({ VALID: "可导入", WARNING: "需注意", ERROR: "有错误" } as Record<string, string>)[status] || "未知状态" },
+                { title: "说明", render: (_value: unknown, row: ImportRow) => [...(row.errors || []), ...(row.warnings || [])].map((item) => item.message).join("；") || "可导入" },
+              ]}
+            />
           </>
         )}
         {result && (
@@ -367,20 +353,17 @@ function JobDialog({
                 : `成功 ${result.imported} 条，失败 ${result.failed} 条，需注意 ${result.warnings} 条。`}
             </p>
             {result.downloadUrl && (
-              <Button asChild>
-                <a href={appUrl(result.downloadUrl)} download>
-                  下载 XLSX
-                </a>
+              <Button onClick={() => { window.location.href = appUrl(result.downloadUrl || ""); }}>
+                下载 XLSX
               </Button>
             )}
             {job?.failureFilePath && (
-              <a
-                className="text-sm underline"
-                href={appUrl(`/api/v1/crm/imports/${job.id}/failures`)}
-                download
+              <Button
+                variant="link"
+                onClick={() => { window.location.href = appUrl(`/api/v1/crm/imports/${job.id}/failures`); }}
               >
                 下载失败明细
-              </a>
+              </Button>
             )}
           </>
         )}

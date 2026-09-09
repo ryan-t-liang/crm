@@ -6,10 +6,7 @@ import {
   lifecycleLabels,
   type Organization,
 } from "@/lib/crm";
-import { Button } from "@/components/v1/ui";
-import { Input } from "@/components/v1/ui";
-import { Textarea } from "@/components/v1/ui";
-import { Checkbox } from "@/components/v1/ui";
+import { Button, Checkbox, FilePicker, Input, Textarea } from "@/components/crm/ui";
 import {
   DetailTabs,
   EntityCombobox,
@@ -475,11 +472,12 @@ export function OrganizationForm({
                 <Field label="组织 Logo" wide>
                   {(id) => (
                     <>
-                      <Input
+                      <FilePicker
                         id={id}
-                        type="file"
                         accept=".jpg,.jpeg,.png,.gif,.webp"
-                        onChange={(e) => setLogo(e.target.files?.[0] || null)}
+                        files={logo ? [logo] : []}
+                        onFilesChange={(selected) => setLogo(selected[0] || null)}
+                        label={logo ? logo.name : "选择 Logo"}
                       />
                       <p className="text-xs text-muted-foreground">
                         仅图片；上传后替换当前 Logo。

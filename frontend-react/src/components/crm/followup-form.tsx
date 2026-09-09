@@ -7,10 +7,7 @@ import {
   type Contact,
   type PageResult,
 } from "@/lib/crm";
-import { Button } from "@/components/v1/ui";
-import { Input } from "@/components/v1/ui";
-import { Textarea } from "@/components/v1/ui";
-import { Checkbox } from "@/components/v1/ui";
+import { Button, Checkbox, DateInput, FilePicker, Input, Textarea } from "@/components/crm/ui";
 import { EntityCombobox, Field, FilterControl, FormDialog } from "./primitives";
 import { attachmentAccept } from "./attachment-list";
 
@@ -152,11 +149,11 @@ export function FollowupForm({
         )}
         <Field label="互动时间" required>
           {(id) => (
-            <Input
+            <DateInput
               id={id}
-              type="datetime-local"
+              mode="dateTime"
               value={occurredAt}
-              onChange={(e) => setOccurredAt(e.target.value)}
+              onValueChange={setOccurredAt}
             />
           )}
         </Field>
@@ -233,11 +230,11 @@ export function FollowupForm({
         </Field>
         <Field label="下次跟进">
           {(id) => (
-            <Input
+            <DateInput
               id={id}
-              type="datetime-local"
+              mode="dateTime"
               value={nextDate}
-              onChange={(e) => setNextDate(e.target.value)}
+              onValueChange={setNextDate}
             />
           )}
         </Field>
@@ -245,12 +242,12 @@ export function FollowupForm({
       <div className="mt-6">
         <Field label="互动附件" wide>
           {(id) => (
-            <Input
+            <FilePicker
               id={id}
-              type="file"
               accept={attachmentAccept}
               multiple
-              onChange={(e) => setFiles(Array.from(e.target.files || []))}
+              files={files}
+              onFilesChange={setFiles}
             />
           )}
         </Field>

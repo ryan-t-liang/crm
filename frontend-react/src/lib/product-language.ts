@@ -243,8 +243,8 @@ export const dataJobStatusLabels: Record<string, string> = {
 };
 
 export const dataObjectLabels: Record<string, string> = {
-  organizations: "公司",
-  ORGANIZATION: "公司",
+  organizations: "组织",
+  ORGANIZATION: "组织",
   contacts: "联系人",
   CONTACT: "联系人",
   "marketing-leads": "线索",

@@ -1,7 +1,7 @@
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/v1/ui"
-import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/v1/ui"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/crm/ui"
+import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/crm/ui"
 import type { DashboardData } from "@/lib/dashboard"
 import { opportunityStageLabels } from "@/lib/product-language"
 

@@ -11,11 +11,16 @@ import { preflightMessage, preflightStatusLabel } from "../frontend/js/crm-jobs.
 const [appSource, markup, styles, contactSource, leadSource, jobSource, followupSource, fixtureSource, operationsSource] = await Promise.all([
   "app.js", "../legacy/index.html", "../styles/production.css", "contacts.js", "leads.js", "crm-jobs.js", "followups.js", "../../scripts/frontend-browser-fixture.mjs", "customer-operations.js",
 ].map((file) => readFile(new URL(`../frontend/js/${file}`, import.meta.url), "utf8")));
-const [rootMarkup, reactAppSource, reactSidebarSource, reactDashboardSource, reactPackage] = await Promise.all([
+const [rootMarkup, reactAppSource, reactSidebarSource, reactDashboardSource, reactDataTableSource, reactPrimitivesSource, reactUiSource, reactOrganizationsSource, reactMarketingLeadsSource, reactPackage] = await Promise.all([
   "../frontend/index.html",
   "../frontend-react/src/app.tsx",
   "../frontend-react/src/components/app-sidebar.tsx",
   "../frontend-react/src/pages/dashboard-page.tsx",
+  "../frontend-react/src/components/crm/data-table.tsx",
+  "../frontend-react/src/components/crm/primitives.tsx",
+  "../frontend-react/src/components/crm/ui.tsx",
+  "../frontend-react/src/pages/organizations-page.tsx",
+  "../frontend-react/src/pages/marketing-leads-page.tsx",
   "../frontend-react/package.json",
 ].map((file) => readFile(new URL(file, import.meta.url), "utf8")));
 
@@ -25,18 +30,27 @@ assert.match(markup, /<html lang="zh-CN">/);
 assert.match(markup, /assets\/kivisense-logo\.svg/);
 assert.match(rootMarkup, /react-build\/assets\/app\.js/, "主入口必须加载 React 构建产物");
 assert.match(rootMarkup, /react-build\/assets\/app\.css/, "主入口必须加载 Tailwind 构建样式");
-assert.match(reactAppSource, /SidebarProvider/, "React App Shell 必须使用 V1 SidebarProvider");
-assert.match(reactAppSource, /SidebarInset/, "React App Shell 必须使用 V1 SidebarInset");
-assert.match(reactSidebarSource, /from "@\/components\/v1\/ui"/, "导航必须使用 V1 原生侧栏组件");
-assert.doesNotMatch(`${reactAppSource}\n${reactSidebarSource}\n${reactDashboardSource}`, /@\/components\/ui\//, "React 页面不得继续引用旧 UI 组件目录");
-assert.doesNotMatch(reactPackage, /radix-ui|cmdk|class-variance-authority|tailwind-merge|tw-animate-css/, "V1 前端不得保留旧 UI 组件依赖");
-assert.match(reactDashboardSource, /function MetricCards/, "React Dashboard 必须包含紧凑指标组件");
-assert.match(reactDashboardSource, /PipelineChart/, "React Dashboard 必须包含主图表");
-assert.match(reactDashboardSource, /TeamExecutionTable/, "React Dashboard 必须包含 TanStack 运营数据表");
+assert.match(reactAppSource, /CrmShellProvider/, "React App Shell 必须使用 CRM Shell Provider");
+assert.match(reactAppSource, /CrmShellMain/, "React App Shell 必须使用 CRM Shell Main");
+assert.match(reactSidebarSource, /from "@douyinfe\/semi-ui"/, "导航必须使用 Semi Design 组件");
+assert.match(reactSidebarSource, /from "@douyinfe\/semi-icons"/, "导航必须使用 Semi Design 图标");
+assert.match(reactDataTableSource, /import \{[^}]*\bTable\b[^}]*\} from "@douyinfe\/semi-ui"/s, "CRM DataTable 必须使用 Semi Table");
+assert.match(reactDataTableSource, /<Table<T>/, "CRM DataTable 必须渲染 Semi Table");
+assert.match(reactPrimitivesSource, /aria-labelledby=\{labelId\}/, "筛选 Select 必须关联可访问名称");
+assert.match(reactUiSource, /<SemiSelect[\s\S]*?aria-labelledby=\{labelledBy\}/, "Semi Select 适配器必须透传可访问名称");
+assert.match(reactUiSource, /findElement\(children, AlertTitle\)/, "Semi Banner 适配器必须识别嵌套 Alert 标题");
+assert.match(reactUiSource, /findElement\(children, AlertDescription\)/, "Semi Banner 适配器必须识别嵌套 Alert 内容");
+assert.match(reactOrganizationsSource, /emptyTitle=\{supplier \? "暂无供应商" : "暂无组织"\}/, "供应商空状态必须使用供应商术语");
+assert.match(reactMarketingLeadsSource, /selectable=\{[\s\S]*?crm\.marketing_lead\.assign[\s\S]*?crm\.marketing_lead\.export[\s\S]*?\}/, "线索批量选择必须受分配或导出权限控制");
+assert.doesNotMatch(`${reactAppSource}\n${reactSidebarSource}\n${reactDashboardSource}\n${reactDataTableSource}`, /@\/components\/(?:ui|v1\/ui)/, "React 页面不得继续引用旧 UI 组件目录");
+assert.doesNotMatch(reactPackage, /radix-ui|cmdk|class-variance-authority|tailwind-merge|tw-animate-css|lucide-react|@tanstack\/react-table/, "Semi 前端不得保留旧 UI 组件依赖");
+assert.match(reactDashboardSource, /function DashboardTrendPanel/, "React Dashboard 必须包含紧凑趋势指标组件");
+assert.match(reactDashboardSource, /DashboardFunnel25D/, "React Dashboard 必须包含主漏斗图表");
+assert.match(reactDashboardSource, /function TeamPerformancePanel/, "React Dashboard 必须包含团队运营数据面板");
 for (const view of ["管理概览", "营销与转化", "商机推进", "团队表现"]) assert.match(reactDashboardSource, new RegExp(view), `React Dashboard 缺少业务视图：${view}`);
 assert.doesNotMatch(reactSidebarSource, /客户运营/, "React 一级导航不得继续暴露客户运营");
-assert.match(reactPackage, /"@tanstack\/react-table"/, "React Foundation 必须安装 TanStack Table");
-assert.match(reactPackage, /"lucide-react"/, "React Foundation 必须安装 Lucide");
+assert.match(reactPackage, /"@douyinfe\/semi-ui"/, "React Foundation 必须安装 Semi Design");
+assert.match(reactPackage, /"@douyinfe\/semi-icons"/, "React Foundation 必须安装 Semi Design Icons");
 assert.match(styles, /\.app-brand-logo-shell[^{]*\{[^}]*overflow:\s*visible/s, "Logo 容器不得裁剪");
 assert.match(styles, /\.app-brand-logo[^{]*\{[^}]*object-fit:\s*contain/s, "Logo 必须按比例完整显示");
 assert.doesNotMatch(appSource, /Object\.groupBy/, "前端不得依赖兼容性不足的 Object.groupBy");

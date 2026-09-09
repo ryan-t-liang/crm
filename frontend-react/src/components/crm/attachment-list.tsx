@@ -1,8 +1,16 @@
 import { useRef, useState } from "react";
-import { Download, FileText, Film, Image, Upload, X } from "lucide-react";
-import { appUrl, crmApi } from "@/lib/api";
+import {
+  IconClose as X,
+  IconDownloadStroked as Download,
+  IconFile as FileText,
+  IconImageStroked as Image,
+  IconUpload as Upload,
+  IconVideoStroked as Film,
+} from "@douyinfe/semi-icons";
+import { Toast, Upload as SemiUpload } from "@douyinfe/semi-ui";
+import { ApiError, appUrl, crmApi } from "@/lib/api";
 import { dateTime, friendlyError, type Attachment } from "@/lib/crm";
-import { Button } from "@/components/v1/ui";
+import { Button } from "@/components/crm/ui";
 import { ConfirmDeleteDialog } from "./primitives";
 
 export const attachmentAccept =
@@ -24,58 +32,111 @@ export function AttachmentList({
   title?: string;
   accept?: string;
 }) {
-  const input = useRef<HTMLInputElement>(null);
+  const activeUploads = useRef(0);
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
     [deleting, setDeleting] = useState<Attachment | null>(null);
-  async function upload(selected: File[]) {
-    if (busy || !selected.length) return;
+  function finishUpload() {
+    activeUploads.current = Math.max(0, activeUploads.current - 1);
+    setBusy(activeUploads.current > 0);
+    onChanged?.();
+  }
+  function upload({
+    action,
+    fileInstance,
+    onError,
+    onProgress,
+    onSuccess,
+  }: {
+    action: string;
+    fileInstance: File;
+    onError: (xhr: { status?: number }, event?: Event) => void;
+    onProgress: (event?: { total: number; loaded: number }) => void;
+    onSuccess: (response: unknown, event?: Event) => void;
+  }) {
+    activeUploads.current += 1;
     setBusy(true);
     setError("");
-    try {
-      for (const file of selected) {
-        const body = new FormData();
-        body.append("file", file, file.name);
-        await crmApi(`${endpoint}/attachments/${fieldKey}`, {
-          method: "POST",
-          body,
-        });
+    const request = new XMLHttpRequest();
+    request.open("POST", action);
+    request.withCredentials = true;
+    request.setRequestHeader("accept", "application/json");
+    request.upload.onprogress = (event) => {
+      if (event.lengthComputable) onProgress({ total: event.total, loaded: event.loaded });
+    };
+    request.onerror = (event) => {
+      const message = "上传失败，请检查网络后重试。";
+      setError(message);
+      Toast.error(message);
+      onError({ status: request.status }, event);
+      finishUpload();
+    };
+    request.onload = (event) => {
+      let payload: unknown;
+      try {
+        payload = request.responseText ? JSON.parse(request.responseText) : null;
+      } catch {
+        payload = null;
       }
-    } catch (e) {
-      setError(friendlyError(e));
-    } finally {
-      setBusy(false);
-      if (input.current) input.current.value = "";
-      onChanged?.();
-    }
+      if (request.status >= 200 && request.status < 300) {
+        onProgress({ total: fileInstance.size, loaded: fileInstance.size });
+        onSuccess(payload, event);
+        Toast.success(`${fileInstance.name} 上传成功`);
+      } else {
+        if (request.status === 401) window.dispatchEvent(new Event("crm:session-expired"));
+        const body = payload as { error?: { message?: string; code?: string }; traceId?: string } | null;
+        const failure = new ApiError(
+          body?.error?.message || `上传失败（${request.status}）`,
+          request.status,
+          body?.error?.code,
+          body?.traceId,
+        );
+        const message = friendlyError(failure);
+        setError(message);
+        Toast.error(message);
+        onError({ status: request.status }, event);
+      }
+      finishUpload();
+    };
+    const body = new FormData();
+    body.append("file", fileInstance, fileInstance.name);
+    request.send(body);
   }
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium">{title}</h3>
         {editable && (
-          <>
-            <input
-              ref={input}
-              aria-label={`上传${title}`}
-              type="file"
-              multiple
-              accept={accept}
-              className="sr-only"
-              onChange={(e) => {
-                void upload(Array.from(e.target.files || []));
-              }}
-            />
+          <SemiUpload
+            accept={accept}
+            action={appUrl(`${endpoint}/attachments/${fieldKey}`)}
+            className="crm-attachment-upload"
+            customRequest={upload}
+            disabled={busy}
+            draggable
+            dragMainText={`拖放${title}到此处`}
+            dragSubText="支持图片、文档与视频"
+            fileName="file"
+            multiple
+            name="file"
+            onAcceptInvalid={() => {
+              const message = "文件类型不受支持。";
+              setError(message);
+              Toast.warning(message);
+            }}
+            prompt="上传状态会显示在文件列表中"
+            showRetry
+            showUploadList
+          >
             <Button
               variant="outline"
               size="sm"
               disabled={busy}
-              onClick={() => input.current?.click()}
             >
               <Upload />
               {busy ? "上传中…" : "上传文件"}
             </Button>
-          </>
+          </SemiUpload>
         )}
       </div>
       {error && (
@@ -83,18 +144,7 @@ export function AttachmentList({
           {error}
         </p>
       )}
-      <div
-        onDragOver={(e) => {
-          if (editable) e.preventDefault();
-        }}
-        onDrop={(e) => {
-          if (editable) {
-            e.preventDefault();
-            void upload(Array.from(e.dataTransfer.files));
-          }
-        }}
-        className="crm-attachment-shell divide-y border"
-      >
+      <div className="crm-attachment-shell divide-y border">
         {files.map((file) => {
           const url = appUrl(`${endpoint}/attachments/${file.id}/download`);
           const Icon =
@@ -130,15 +180,13 @@ export function AttachmentList({
                   · {file.uploadedBy?.name || "—"} · {dateTime(file.createdAt)}
                 </p>
               </div>
-              <Button asChild variant="ghost" size="icon-sm">
-                <a
-                  aria-label={`下载${file.originalName}`}
-                  href={url}
-                  download={file.originalName}
-                  rel="noreferrer"
-                >
-                  <Download />
-                </a>
+              <Button
+                aria-label={`下载${file.originalName}`}
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => { window.location.href = url; }}
+              >
+                <Download />
               </Button>
               {editable && (
                 <Button

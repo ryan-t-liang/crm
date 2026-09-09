@@ -1,8 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { AlertCircle, CalendarDays, Check, ChevronDown, RefreshCw } from "lucide-react"
+import {
+  IconAlertCircle as AlertCircle,
+  IconCalendarStroked as CalendarDays,
+  IconChevronDown as ChevronDown,
+  IconRefresh as RefreshCw,
+  IconTick as Check,
+} from "@douyinfe/semi-icons"
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
+import { DatePicker, Popover as SemiPopover } from "@douyinfe/semi-ui"
 
-import { DashboardFunnel25D, DashboardPanel, type DashboardStage } from "@/components/dashboard-composition"
+import { DashboardFunnel25D, type DashboardStage } from "@/components/dashboard-composition"
 import {
   Alert,
   AlertDescription,
@@ -13,13 +20,9 @@ import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  Input,
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
   Skeleton,
   type ChartConfig,
-} from "@/components/v1/ui"
+} from "@/components/crm/ui"
 import { getData, type CrmUser, type SessionUser } from "@/lib/api"
 import { opportunityStageLabels } from "@/lib/product-language"
 import { containsFinancialKey, customDateRange, localDateValue, type DashboardData, type TeamData, type TeamRow } from "@/lib/dashboard"
@@ -67,15 +70,12 @@ const chartConfig = Object.fromEntries(TREND_METRICS.map((metric) => [metric.key
 
 function DashboardSkeleton() {
   return (
-    <div className="dashboard-overview-skeleton" aria-label="正在加载管理概览">
-      <div className="dashboard-overview-top-grid">
-        <Skeleton className="h-[408px] rounded-[14px]" />
-        <Skeleton className="h-[408px] rounded-[14px]" />
+    <div className="crm-dashboard-skeleton" aria-label="正在加载管理概览">
+      <div className="crm-dashboard-primary-grid">
+        <Skeleton className="crm-dashboard-skeleton-trend" />
+        <Skeleton className="crm-dashboard-skeleton-team" />
       </div>
-      <div className="dashboard-overview-funnel-grid">
-        <Skeleton className="h-[330px] rounded-[14px]" />
-        <Skeleton className="h-[330px] rounded-[14px]" />
-      </div>
+      <Skeleton className="crm-dashboard-skeleton-analysis" />
     </div>
   )
 }
@@ -122,8 +122,8 @@ export function DashboardPage({ me }: { me: SessionUser; users: CrmUser[] }) {
 
   return (
     <div className="flex flex-1 flex-col">
-      <div className="crm-page dashboard-page dashboard-overview-page @container/main flex flex-1 flex-col gap-4 p-4 md:p-5 lg:p-6">
-        <header className="crm-page-header dashboard-page-header dashboard-overview-header">
+      <div className="crm-page dashboard-page crm-dashboard-page @container/main flex flex-1 flex-col">
+        <header className="crm-page-header crm-dashboard-page-header">
           <div>
             <h1 className="crm-display-title text-2xl font-semibold tracking-tight">数据看板</h1>
             <p className="mt-1 text-sm text-muted-foreground">管理概览</p>
@@ -133,29 +133,53 @@ export function DashboardPage({ me }: { me: SessionUser; users: CrmUser[] }) {
 
         {loading && !data ? <DashboardSkeleton /> : null}
         {error ? (
-          <Alert variant="destructive" className="grid-cols-[auto_1fr_auto] items-center border-destructive/20 bg-destructive/5">
-            <AlertCircle />
-            <div className="min-w-0"><AlertTitle>管理概览加载失败</AlertTitle><AlertDescription>{error}</AlertDescription></div>
-            <Button variant="outline" size="sm" onClick={() => setReloadKey((value) => value + 1)}><RefreshCw />重试</Button>
+          <Alert variant="destructive" icon={<AlertCircle />} className="crm-dashboard-error border-destructive/20 bg-destructive/5">
+            <AlertTitle>管理概览加载失败</AlertTitle>
+            <AlertDescription>
+              <span>{error}</span>
+              <Button variant="outline" size="sm" onClick={() => setReloadKey((value) => value + 1)}><RefreshCw />重试</Button>
+            </AlertDescription>
           </Alert>
         ) : null}
 
         {data && !error ? (
-          <main className="dashboard-overview" aria-busy={loading}>
-            <div className="dashboard-overview-top-grid">
+          <main className="crm-dashboard-content" aria-busy={loading}>
+            <div className="crm-dashboard-primary-grid">
               <DashboardTrendPanel data={data} />
               <TeamPerformancePanel rows={team.rows} management={management} />
             </div>
-            <div className="dashboard-overview-funnel-grid">
-              <DashboardPanel title="获客转化" description="从新增线索进入销售机会的阶段分布" className="dashboard-overview-funnel-panel">
-                {funnel ? (
-                  <DashboardFunnel25D stages={marketingStages(funnel)} label="获客转化漏斗" summary={<>线索总数 <strong>{funnel.stages[0]?.count ?? 0}</strong></>} footnote={<>总转化率 {conversionValue(funnel.kpis.leadToOpportunityRate)}；阶段间转化率仅在样本量足够时展示</>} />
-                ) : <p className="dashboard-muted-note">当前账户没有营销分析权限。</p>}
-              </DashboardPanel>
-              <DashboardPanel title="商机阶段" description="当前商机从新建到成交的推进分布" className="dashboard-overview-funnel-panel">
-                <DashboardFunnel25D stages={opportunityStages(data)} label="商机阶段漏斗" summary={<>商机总数 <strong>{OPPORTUNITY_STAGE_ORDER.reduce((sum, status) => sum + stageCount(data, status), 0)}</strong></>} footnote={`活跃阶段为当前存量；本期丢失 ${stageCount(data, "LOST")} 个`} />
-              </DashboardPanel>
-            </div>
+
+            <section className="crm-dashboard-analysis" aria-labelledby="dashboard-analysis-title">
+              <header className="crm-dashboard-analysis-header">
+                <div>
+                  <h2 id="dashboard-analysis-title">转化与推进</h2>
+                  <p>从营销获客进入销售，再到商机推进</p>
+                </div>
+              </header>
+              <div className="crm-dashboard-analysis-grid">
+                <article className="crm-dashboard-funnel-section" aria-labelledby="dashboard-marketing-funnel-title">
+                  <header className="crm-dashboard-funnel-header">
+                    <h3 id="dashboard-marketing-funnel-title">营销与转化</h3>
+                  </header>
+                  <div className="crm-dashboard-funnel-body">
+                    {funnel ? (
+                      <DashboardFunnel25D stages={marketingStages(funnel)} label="营销与转化漏斗" summary={<>线索总数 <strong>{funnel.stages[0]?.count ?? 0}</strong></>} footnote={<>总转化率 {conversionValue(funnel.kpis.leadToOpportunityRate)}；阶段间转化率仅在样本量足够时展示</>} />
+                    ) : <p className="crm-dashboard-analysis-unavailable">当前账户没有营销分析权限。</p>}
+                  </div>
+                </article>
+
+                <div className="crm-dashboard-analysis-divider" aria-hidden="true" />
+
+                <article className="crm-dashboard-funnel-section" aria-labelledby="dashboard-opportunity-funnel-title">
+                  <header className="crm-dashboard-funnel-header">
+                    <h3 id="dashboard-opportunity-funnel-title">商机推进</h3>
+                  </header>
+                  <div className="crm-dashboard-funnel-body">
+                    <DashboardFunnel25D stages={opportunityStages(data)} label="商机推进漏斗" summary={<>商机总数 <strong>{OPPORTUNITY_STAGE_ORDER.reduce((sum, status) => sum + stageCount(data, status), 0)}</strong></>} footnote={`当前阶段存量；本期丢失 ${stageCount(data, "LOST")} 个`} />
+                  </div>
+                </article>
+              </div>
+            </section>
           </main>
         ) : null}
       </div>
@@ -174,17 +198,23 @@ function DashboardTrendPanel({ data }: { data: DashboardData }) {
   }
   const rows = data.trend.map((point) => ({ ...point, label: trendLabel(point.from, point.to) }))
   return (
-    <section className="dashboard-trend-panel">
-      <div className="dashboard-trend-metrics" aria-label="核心业务指标">
+    <section className="crm-dashboard-trend" aria-labelledby="dashboard-trend-title">
+      <header className="crm-dashboard-trend-header">
+        <div>
+          <h2 id="dashboard-trend-title">业务趋势</h2>
+          <p>关键指标随所选周期的变化</p>
+        </div>
+      </header>
+      <div className="crm-dashboard-metric-selector" aria-label="核心业务指标">
         {TREND_METRICS.map((item) => (
-          <button type="button" key={item.key} className={item.key === metricKey ? "is-active" : ""} aria-pressed={item.key === metricKey} onClick={() => setMetricKey(item.key)}>
+          <Button variant="ghost" key={item.key} className={`crm-dashboard-metric-option${item.key === metricKey ? " is-active" : ""}`} aria-pressed={item.key === metricKey} onClick={() => setMetricKey(item.key)}>
             <span>{item.label}</span>
             <strong>{metrics[item.key]}</strong>
             <small>{item.note}</small>
-          </button>
+          </Button>
         ))}
       </div>
-      <div className="dashboard-trend-chart">
+      <div className="crm-dashboard-trend-chart">
         <ChartContainer config={chartConfig} className="h-full w-full aspect-auto">
           <LineChart accessibilityLayer data={rows} margin={{ top: 18, right: 18, bottom: 0, left: -12 }}>
             <CartesianGrid vertical={false} stroke="#e7e6e1" strokeDasharray="0" />
@@ -195,7 +225,7 @@ function DashboardTrendPanel({ data }: { data: DashboardData }) {
           </LineChart>
         </ChartContainer>
       </div>
-      <div className="dashboard-trend-caption"><span className="dashboard-trend-key" style={{ background: metric.color }} />当前查看：{metric.label}</div>
+      <footer className="crm-dashboard-trend-caption"><span className="crm-dashboard-trend-key" style={{ background: metric.color }} />当前查看：{metric.label}</footer>
     </section>
   )
 }
@@ -204,28 +234,28 @@ function TeamPerformancePanel({ rows, management }: { rows: TeamRow[]; managemen
   const [metric, setMetric] = useState<TeamMetric>("leads")
   const rankedRows = [...rows].sort((a, b) => teamMetricValue(b, metric) - teamMetricValue(a, metric) || a.user.name.localeCompare(b.user.name, "zh-CN"))
   return (
-    <section className="dashboard-team-panel">
-      <header>
-        <div><h2>团队表现</h2><p>按本期提交数量查看成员产出</p></div>
-        <div className="dashboard-team-switch" aria-label="团队表现指标">
-          <button type="button" className={metric === "leads" ? "is-active" : ""} onClick={() => setMetric("leads")}>线索</button>
-          <button type="button" className={metric === "opportunities" ? "is-active" : ""} onClick={() => setMetric("opportunities")}>商机</button>
+    <aside className="crm-dashboard-team" aria-labelledby="dashboard-team-title">
+      <header className="crm-dashboard-team-header">
+        <div><h2 id="dashboard-team-title">团队表现</h2><p>按本期提交数量查看成员产出</p></div>
+        <div className="crm-dashboard-team-switch" aria-label="团队表现指标">
+          <Button variant="ghost" className={`crm-dashboard-team-switch-option${metric === "leads" ? " is-active" : ""}`} onClick={() => setMetric("leads")}>线索</Button>
+          <Button variant="ghost" className={`crm-dashboard-team-switch-option${metric === "opportunities" ? " is-active" : ""}`} onClick={() => setMetric("opportunities")}>商机</Button>
         </div>
       </header>
-      <div className="dashboard-team-columns" aria-hidden="true"><span>团队成员</span><span>提交数量</span></div>
-      <ol className="dashboard-team-ranking">
+      <div className="crm-dashboard-team-columns" aria-hidden="true"><span>团队成员</span><span>提交数量</span></div>
+      <ol className="crm-dashboard-team-ranking">
         {rankedRows.length ? rankedRows.map((row, index) => (
-          <li key={row.user.id}>
-            <span className="dashboard-team-rank">{String(index + 1).padStart(2, "0")}</span>
-            <Avatar className="dashboard-team-avatar"><AvatarFallback>{avatarText(row.user.name)}</AvatarFallback></Avatar>
-            <span className="dashboard-team-member"><strong>{row.user.name}</strong><small>{row.user.loginAccount || "销售成员"}</small></span>
-            <strong className="dashboard-team-value">{teamMetricValue(row, metric)}</strong>
+          <li className="crm-dashboard-team-row" key={row.user.id}>
+            <span className="crm-dashboard-team-rank">{String(index + 1).padStart(2, "0")}</span>
+            <Avatar className="crm-dashboard-team-avatar"><AvatarFallback>{avatarText(row.user.name)}</AvatarFallback></Avatar>
+            <span className="crm-dashboard-team-member"><strong>{row.user.name}</strong><small>{row.user.loginAccount || "销售成员"}</small></span>
+            <strong className="crm-dashboard-team-value">{teamMetricValue(row, metric)}</strong>
           </li>
         )) : (
-          <li className="is-empty">{management ? "当前周期暂无团队提交。" : "当前账户仅可查看个人经营数据。"}</li>
+          <li className="crm-dashboard-team-empty">{management ? "当前周期暂无团队提交。" : "当前账户仅可查看个人经营数据。"}</li>
         )}
       </ol>
-    </section>
+    </aside>
   )
 }
 
@@ -246,41 +276,46 @@ function DashboardDateRangePicker({ value, onApply }: { value: AppliedRange; onA
   }
   const cancel = () => { resetDraft(); setOpen(false) }
   return (
-    <Popover open={open} onOpenChange={(next) => { setOpen(next); if (next) resetDraft() }}>
-      <PopoverTrigger asChild>
+    <SemiPopover
+      trigger="click"
+      visible={open}
+      onVisibleChange={(next) => { setOpen(next); if (next) resetDraft() }}
+      position="bottomRight"
+      content={(
+        <div className="dashboard-date-popover">
+          <div className="dashboard-date-layout">
+            <nav className="dashboard-date-presets" aria-label="常用统计周期">
+              <strong>统计周期</strong>
+              {DATE_PRESETS.map((preset) => (
+                <Button variant="ghost" key={preset.key} className={draft.preset === preset.key ? "is-active" : ""} onClick={() => selectPreset(preset.key)}>
+                  <span>{preset.label}</span>{draft.preset === preset.key ? <Check /> : null}
+                </Button>
+              ))}
+            </nav>
+            <section className="dashboard-date-custom">
+              <header><strong>自定义日期</strong><span>选择开始与结束日期</span></header>
+              <div className="dashboard-date-fields">
+                <label><span>开始日期</span><DatePicker type="date" value={draft.from || undefined} format="yyyy-MM-dd" onChange={(_date, dateString) => setDraft({ ...draft, from: String(dateString || ""), preset: "custom" })} /></label>
+                <i>—</i>
+                <label><span>结束日期</span><DatePicker type="date" value={draft.to || undefined} format="yyyy-MM-dd" onChange={(_date, dateString) => setDraft({ ...draft, to: String(dateString || ""), preset: "custom" })} /></label>
+              </div>
+              <div className="dashboard-date-preview">
+                <CalendarDays />
+                <span><small>当前选择</small><strong>{formatDateRange(draft)}</strong></span>
+              </div>
+              {dateError ? <p className="dashboard-date-error">{dateError}</p> : null}
+            </section>
+          </div>
+          <footer className="dashboard-date-actions"><Button variant="ghost" onClick={cancel}>取消</Button><Button onClick={apply}>应用</Button></footer>
+        </div>
+      )}
+    >
         <Button variant="outline" className="dashboard-date-trigger">
           <CalendarDays />
           <span><small>{presetLabel(value.preset)}</small><strong>{formatDateRange(value)}</strong></span>
           <ChevronDown />
         </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="dashboard-date-popover">
-        <div className="dashboard-date-layout">
-          <nav className="dashboard-date-presets" aria-label="常用统计周期">
-            <strong>统计周期</strong>
-            {DATE_PRESETS.map((preset) => (
-              <button type="button" key={preset.key} className={draft.preset === preset.key ? "is-active" : ""} onClick={() => selectPreset(preset.key)}>
-                <span>{preset.label}</span>{draft.preset === preset.key ? <Check /> : null}
-              </button>
-            ))}
-          </nav>
-          <section className="dashboard-date-custom">
-            <header><strong>自定义日期</strong><span>选择开始与结束日期</span></header>
-            <div className="dashboard-date-fields">
-              <label><span>开始日期</span><Input type="date" value={draft.from} onChange={(event) => setDraft({ ...draft, from: event.target.value, preset: "custom" })} /></label>
-              <i>—</i>
-              <label><span>结束日期</span><Input type="date" value={draft.to} onChange={(event) => setDraft({ ...draft, to: event.target.value, preset: "custom" })} /></label>
-            </div>
-            <div className="dashboard-date-preview">
-              <CalendarDays />
-              <span><small>当前选择</small><strong>{formatDateRange(draft)}</strong></span>
-            </div>
-            {dateError ? <p className="dashboard-date-error">{dateError}</p> : null}
-          </section>
-        </div>
-        <footer className="dashboard-date-actions"><Button variant="ghost" onClick={cancel}>取消</Button><Button onClick={apply}>应用</Button></footer>
-      </PopoverContent>
-    </Popover>
+    </SemiPopover>
   )
 }
 

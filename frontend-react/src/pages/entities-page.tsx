@@ -1,12 +1,12 @@
 import { useCallback, useState } from "react";
-import type { ColumnDef } from "@tanstack/react-table";
 import {
-  ArrowLeft,
-  Plus,
-  Pencil,
-  MessageSquare,
-  BriefcaseBusiness,
-} from "lucide-react";
+  IconArrowLeft as ArrowLeft,
+  IconBriefcaseStroked as BriefcaseBusiness,
+  IconCommentStroked as MessageSquare,
+  IconEditStroked as Pencil,
+  IconPlus as Plus,
+} from "@douyinfe/semi-icons";
+import { Pagination } from "@douyinfe/semi-ui";
 import {
   LEAD_FIELDS,
   LEAD_STATUSES,
@@ -27,9 +27,15 @@ import {
   type JourneyEvent,
   type Attachment,
 } from "@/lib/crm";
-import { Button } from "@/components/v1/ui";
-import { Input } from "@/components/v1/ui";
-import { DataTable } from "@/components/crm/data-table";
+import { Button, DateInput, Input } from "@/components/crm/ui";
+import { DataTable, type CrmColumnDef } from "@/components/crm/data-table";
+import { ContactOverview } from "@/components/crm/contact-overview";
+import {
+  NextActionCell,
+  OwnerCell,
+  RelationCountCell,
+  RelativeDateCell,
+} from "@/components/crm/cells";
 import { EntityForm, type EntityRecord } from "@/components/crm/entity-form";
 import {
   FollowupForm,
@@ -70,6 +76,15 @@ const optionMap = (options: { value: string; label: string }[]) =>
   Object.fromEntries(options.map((o) => [o.value, o.label]));
 const leadStatuses = optionMap(LEAD_STATUSES),
   priorities = optionMap(LEAD_PRIORITIES);
+const contactTypeViews = [
+  { key: "all", label: "全部联系人" },
+  { key: "BUSINESS", label: "企业联系人" },
+  { key: "INDIVIDUAL", label: "个人联系人" },
+];
+const opportunityStageViews = [
+  { key: "all", label: "全部商机" },
+  ...LEAD_STATUSES.map((stage) => ({ key: stage.value, label: stage.label })),
+];
 const postSalesOpportunityFields = new Set([
   "wonAt",
   "deliveryFollowupAt",
@@ -98,7 +113,7 @@ export function EntitiesPage({
   const [filters, setFilters] = useState<Record<string, string>>({}),
     [search, setSearch] = useState(""),
     [page, setPage] = useState(1),
-    [tab, setTab] = useState(kind === "contact" ? "leads" : "requirement"),
+    [tab, setTab] = useState(kind === "contact" ? "overview" : "requirement"),
     [selectedIds, setSelectedIds] = useState<string[]>([]),
     [batchOwnerUserId, setBatchOwnerUserId] = useState(""),
     [batchBusy, setBatchBusy] = useState(false),
@@ -123,7 +138,12 @@ export function EntitiesPage({
   const journey = useResource<{
     data: {
       events: JourneyEvent[];
-      summary: { recentInteractionAt?: string; nextFollowupAt?: string };
+      summary: {
+        activeLeadCount?: number;
+        wonLeadCount?: number;
+        recentInteractionAt?: string;
+        nextFollowupAt?: string;
+      };
     };
   }>(kind === "contact" && id ? `${endpoint}/${id}/journey` : null);
   const change = (key: string, value: string) => {
@@ -196,7 +216,7 @@ export function EntitiesPage({
     },
     [],
   );
-  const columns: ColumnDef<RecordRow>[] = [
+  const columns: CrmColumnDef<RecordRow>[] = [
     {
       id: "name",
       header: label,
@@ -222,7 +242,7 @@ export function EntitiesPage({
     },
     {
       id: "company",
-      header: "公司",
+      header: "组织",
       cell: ({ row: { original: r } }) => {
         const c = kind === "contact" ? r : r.contact;
         return c?.organizationId ? (
@@ -301,31 +321,39 @@ export function EntitiesPage({
       id: "owner",
       header: kind === "contact" ? "联系人负责人" : "商机负责人",
       cell: ({ row: { original: r } }) => (
-        <span className="whitespace-nowrap">
-          {(kind === "contact" ? r.owner : r.salesOwner)?.name || "待分配"}
-        </span>
+        <OwnerCell name={(kind === "contact" ? r.owner : r.salesOwner)?.name} />
       ),
     },
     {
       id: "next",
-      header: "下次跟进",
-      cell: ({ row: { original: r } }) => (
-        <span className="whitespace-nowrap tabular-nums">
-          {dateTime(r.nextFollowupAt)}
-        </span>
+      header: kind === "contact" ? "下次跟进" : "下一步行动",
+      cell: ({ row: { original: r } }) => kind === "contact" ? (
+        <RelativeDateCell value={r.nextFollowupAt} emptyLabel="未安排" />
+      ) : (
+        <NextActionCell
+          title={r.nextAction}
+          date={r.nextFollowupAt}
+          overdue={Boolean(r.nextFollowupAt && Date.parse(r.nextFollowupAt) < Date.now())}
+        />
       ),
     },
     ...(kind === "contact"
-      ? [{ accessorKey: "relatedLeadCount", header: "商机数" }]
+      ? [{
+          accessorKey: "relatedLeadCount",
+          header: "商机数",
+          cell: ({ row: { original: r } }: { row: { original: RecordRow } }) => (
+            <RelationCountCell
+              count={r.relatedLeadCount}
+              label="个商机"
+              href={`#contacts/${r.id}`}
+            />
+          ),
+        }]
       : []),
     {
       id: "updated",
       header: "更新时间",
-      cell: ({ row: { original: r } }) => (
-        <span className="whitespace-nowrap text-muted-foreground">
-          {dateTime(r.updatedAt)}
-        </span>
-      ),
+      cell: ({ row: { original: r } }) => <RelativeDateCell value={r.updatedAt} />,
     },
     {
       id: "actions",
@@ -395,6 +423,15 @@ export function EntitiesPage({
               label={`${label}目录`}
               columns={columns}
               rows={list.data?.data || []}
+              views={kind === "contact" ? contactTypeViews : opportunityStageViews}
+              activeView={filters[kind === "contact" ? "contactType" : "status"] || "all"}
+              onViewChange={(view) => {
+                change(
+                  kind === "contact" ? "contactType" : "status",
+                  view === "all" ? "" : view,
+                );
+                setSelectedIds([]);
+              }}
               page={page}
               total={list.data?.meta.total}
               onPage={setPage}
@@ -439,11 +476,11 @@ export function EntitiesPage({
                     <SearchInput
                       value={search}
                       onChange={setSearch}
-                      placeholder={`搜索${label}、公司${kind === "contact" ? "、Email 或电话" : ""}`}
+                      placeholder={`搜索${label}、组织${kind === "contact" ? "、Email 或电话" : ""}`}
                     />
-                    <button type="submit" className="sr-only">
+                    <Button type="submit" className="sr-only">
                       搜索
-                    </button>
+                    </Button>
                   </form>
                   {kind === "contact" ? (
                     <FilterControl
@@ -502,10 +539,10 @@ export function EntitiesPage({
                     }
                   >
                     {can(me, "crm.organization.view") && (
-                      <Field label="公司">
+                      <Field label="组织">
                         {() => (
                           <EntityCombobox
-                            label="筛选公司"
+                            label="筛选组织"
                             value={filters.organizationId || ""}
                             selectedLabel={organizationLabel}
                             load={organizationOptions}
@@ -539,16 +576,13 @@ export function EntitiesPage({
                     )}
                     <Field label="下次跟进自">
                       {(fieldId) => (
-                        <Input
+                        <DateInput
                           id={fieldId}
-                          type="date"
-                          onChange={(e) =>
+                          onValueChange={(value) =>
                             change(
                               "nextFollowupFrom",
-                              e.target.value
-                                ? new Date(
-                                    `${e.target.value}T00:00:00`,
-                                  ).toISOString()
+                              value
+                                ? new Date(`${value}T00:00:00`).toISOString()
                                 : "",
                             )
                           }
@@ -557,16 +591,13 @@ export function EntitiesPage({
                     </Field>
                     <Field label="下次跟进至">
                       {(fieldId) => (
-                        <Input
+                        <DateInput
                           id={fieldId}
-                          type="date"
-                          onChange={(e) =>
+                          onValueChange={(value) =>
                             change(
                               "nextFollowupTo",
-                              e.target.value
-                                ? new Date(
-                                    `${e.target.value}T23:59:59.999`,
-                                  ).toISOString()
+                              value
+                                ? new Date(`${value}T23:59:59.999`).toISOString()
                                 : "",
                             )
                           }
@@ -618,7 +649,7 @@ export function EntitiesPage({
                       <>
                         <span>{row.title || "未填写职位"}</span>
                         <span>{row.email || row.phone || "未填写联系方式"}</span>
-                        {row.organizationId ? <a href={`#organizations/${row.organizationId}`} className="hover:underline">{row.organization?.name || row.companyName}</a> : <span>{row.companyName || "未关联公司"}</span>}
+                        {row.organizationId ? <a href={`#organizations/${row.organizationId}`} className="hover:underline">{row.organization?.name || row.companyName}</a> : <span>{row.companyName || "未关联组织"}</span>}
                       </>
                     ) : (
                       <>
@@ -640,21 +671,33 @@ export function EntitiesPage({
               />
             </>
           }
+          highlights={
+            <SummaryStrip
+              items={kind === "contact" ? [
+                { label: "联系人负责人", value: row.owner?.name || "待分配" },
+                { label: "关联商机", value: row.relatedLeadCount ?? 0 },
+                { label: "最近互动", value: dateTime(journey.data?.data.summary.recentInteractionAt) },
+                { label: "下次跟进", value: dateTime(journey.data?.data.summary.nextFollowupAt) },
+              ] : [
+                { label: "最新进展", value: String(row.latestProgress || "暂无进展") },
+                { label: "下一步行动", value: row.nextAction || "待安排" },
+                { label: "下次跟进", value: dateTime(row.nextFollowupAt) },
+                { label: "最近沟通", value: dateTime(row.lastFollowupAt) },
+              ]}
+            />
+          }
+          stages={kind === "lead" ? (
+            <StagePath current={String(row.status || "NEW")} stages={[
+              { key: "NEW", label: "新建" },
+              { key: "QUALIFIED", label: "已验证" },
+              { key: "SOLUTION", label: "方案" },
+              { key: "QUOTATION", label: "报价" },
+              { key: "WON", label: "成交" },
+              ...(row.status === "LOST" ? [{ key: "LOST", label: "丢失" }] : []),
+            ]} />
+          ) : undefined}
           sidebar={
             <>
-              <SummaryStrip
-                items={kind === "contact" ? [
-                  { label: "联系人负责人", value: row.owner?.name || "待分配" },
-                  { label: "关联商机", value: row.relatedLeadCount ?? 0 },
-                  { label: "最近互动", value: dateTime(journey.data?.data.summary.recentInteractionAt) },
-                  { label: "下次跟进", value: dateTime(journey.data?.data.summary.nextFollowupAt) },
-                ] : [
-                  { label: "最新进展", value: String(row.latestProgress || "暂无进展") },
-                  { label: "下一步行动", value: row.nextAction || "待安排" },
-                  { label: "下次跟进", value: dateTime(row.nextFollowupAt) },
-                  { label: "最近沟通", value: dateTime(row.lastFollowupAt) },
-                ]}
-              />
               {kind === "contact" ? (
                 <>
                   <Section title="联系人资料">
@@ -668,9 +711,9 @@ export function EntitiesPage({
                       { label: "初始信息", value: String(row.initialContext || "") },
                     ]} />
                   </Section>
-                  <Section title="公司资料">
+                  <Section title="组织资料">
                     <EntityMeta items={[
-                      { label: "公司", value: row.organizationId ? <a href={`#organizations/${row.organizationId}`} className="hover:underline">{row.organization?.name || row.companyName}</a> : row.companyName },
+                      { label: "组织", value: row.organizationId ? <a href={`#organizations/${row.organizationId}`} className="hover:underline">{row.organization?.name || row.companyName}</a> : row.companyName },
                       { label: "网站", value: String(row.website || "") },
                       { label: "行业", value: String(row.industry || "") },
                       { label: "地区", value: [row.country, row.region, row.city].filter(Boolean).join(" · ") },
@@ -688,16 +731,8 @@ export function EntitiesPage({
                       { label: "关联联系人", value: row.contact?.contactName },
                     ]} />
                   </Section>
-                  <StagePath current={String(row.status || "NEW")} stages={[
-                    { key: "NEW", label: "新建" },
-                    { key: "QUALIFIED", label: "已验证" },
-                    { key: "SOLUTION", label: "方案" },
-                    { key: "QUOTATION", label: "报价" },
-                    { key: "WON", label: "成交" },
-                    ...(row.status === "LOST" ? [{ key: "LOST", label: "丢失" }] : []),
-                  ]} />
                   {row.sourceMarketingLead && (
-                    <Section title="来源线索" action={<Button variant="outline" size="sm" asChild><a href={`#marketing-leads/${row.sourceMarketingLead.id}`}>查看原始线索</a></Button>}>
+                    <Section title="来源线索" action={<Button variant="outline" size="sm" onClick={() => { window.location.hash = `marketing-leads/${row.sourceMarketingLead?.id}`; }}>查看原始线索</Button>}>
                       <EntityMeta items={[
                         { label: "来源线索", value: `${row.sourceMarketingLead.fullName}${row.sourceMarketingLead.companyName ? ` · ${row.sourceMarketingLead.companyName}` : ""}` },
                         { label: "获客来源", value: [marketingSourceLabel(row.sourceMarketingLead.source), marketingSourceChannelLabel(row.sourceMarketingLead.sourceChannel), row.sourceMarketingLead.sourceDetail].filter(Boolean).join(" / ") },
@@ -715,6 +750,7 @@ export function EntitiesPage({
             value={tab}
             onChange={setTab}
             items={(kind === "contact" ? [
+              ["overview", "概览"],
               ["leads", `关联商机 ${row.relatedLeadCount ?? 0}`],
               ["journey", "客户旅程"],
               ["notes", "备注与附件"],
@@ -725,6 +761,18 @@ export function EntitiesPage({
               ...(can(me, "audit.view") ? [["audit", "操作记录"]] : []),
             ]) as [string, string][]}
           >
+              {tab === "overview" && kind === "contact" && (
+                <ContactOverview
+                  contact={row}
+                  journey={journey.data?.data}
+                  journeyLoading={journey.loading}
+                  journeyError={journey.error}
+                  retryJourney={journey.reload}
+                  canViewOpportunities={can(me, "crm.lead.view")}
+                  onOpenJourney={() => setTab("journey")}
+                  onOpenOpportunities={() => setTab("leads")}
+                />
+              )}
               {tab === "leads" &&
                 kind === "contact" &&
                 (can(me, "crm.lead.view") ? (
@@ -964,23 +1012,17 @@ function LeadFollowups({ id, me }: { id: string; me: SessionUser }) {
           ))}
         </div>
       )}
-      <div className="mt-4 flex justify-end gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={page === 1}
-          onClick={() => setPage((p) => p - 1)}
-        >
-          上一页
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={page * 20 >= (result.data?.meta.total || 0)}
-          onClick={() => setPage((p) => p + 1)}
-        >
-          下一页
-        </Button>
+      <div className="crm-followup-pagination-wrap mt-4 flex justify-end">
+        <Pagination
+          className="crm-followup-pagination"
+          currentPage={page}
+          total={result.data?.meta.total || 0}
+          pageSize={20}
+          size="small"
+          showSizeChanger={false}
+          disabled={result.loading}
+          onPageChange={setPage}
+        />
       </div>
     </Section>
   );
@@ -1028,7 +1070,7 @@ function LeadContent({
     );
   };
   return (
-    <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,2fr)_minmax(280px,1fr)]">
+    <div className="crm-lead-content-grid grid items-start gap-5">
       <div className="space-y-5">
         {[
           ["requirement", "需求信息"],

@@ -1,6 +1,6 @@
-# Kivisense CRM Design System v1.3
+# Kivisense CRM Design System v2.0
 
-Status: FROZEN UI FOUNDATION
+Status: ACTIVE SEMI UI FOUNDATION
 
 Purpose:
 
@@ -57,9 +57,9 @@ Premium
 
 Primary Reference：
 
-用户提供的 `crm-Kivisense_CRM_v1.zip`
+当前 Kivisense CRM 2.0 的产品模型、Canonical IA 与正式业务页面。
 
-参考：
+视觉方向：
 
 - App Shell
 - Sidebar
@@ -72,35 +72,42 @@ Primary Reference：
 - Border
 - Interaction Density
 
-不再使用任何通用 UI Kit、Dashboard Demo 或其他 SaaS 产品作为视觉参考。
+用户提供的 `crm-Kivisense_CRM_v1.zip` 仅作为历史业务密度参考，不是视觉、组件结构、DOM、主题或 token 的权威来源。
+
+Semi Design 提供基础交互能力，Kivisense CRM Design System 决定最终视觉。成品必须与 V1 有可感知差异，同时不能呈现为 Semi 官方默认 Demo、通用 Dashboard 模板或其他 SaaS 产品的复制品。
 
 ---
 
 # 3. Technical Foundation
 
-Preferred UI Stack：
+Required UI Stack：
 
-React
-Tailwind CSS
-Lucide
-TanStack Table
+- React
+- `@douyinfe/semi-ui`
+- `@douyinfe/semi-icons`
+- CSS / existing layout utilities
 
-所有基础组件必须来自 `frontend-react/src/components/v1/`。
+正式 CRM 页面的基础交互组件必须来自 Semi Design。Semi Icons 是唯一图标体系。
 
-禁止引入或保留外部 UI 组件体系来决定 DOM、布局或视觉。
+共享适配器、组合组件和业务组件必须位于 `frontend-react/src/components/crm/`。
 
 禁止：
 
-绕开 V1 组件体系创建另一套 Button / Select / Dialog。
+- 正式 CRM 页面引用 `frontend-react/src/components/v1/ui` 或 `@/components/v1/ui`
+- Lucide
+- TanStack Table
+- shadcn 或 Radix UI 组件
+- 在 Semi 已提供相应能力时，用 Tailwind / CSS 和普通 `div` 重造 Button、Select、Dialog、SideSheet、Table 等交互控件
 
 自定义应主要发生在：
 
-Composition
-Tokens
-Layout
-Business Components
+- Composition
+- Tokens
+- Layout
+- Business Components
+- Semi Theme Tokens
 
-而不是重新造基础交互组件。
+而不是重新造基础交互组件。Semi 决定交互行为与可访问性基础，Kivisense tokens 和 CRM composition 决定信息层级、密度与视觉表达。
 
 ---
 
@@ -427,7 +434,7 @@ Clear
 
 Icon：
 
-Lucide
+Semi Icons
 
 16–18px。
 
@@ -452,41 +459,12 @@ Brand-50 + small green indicator。
 
 # 13. Navigation IA
 
-Dashboard
+- 概览：数据看板、我的工作台
+- 客户管理：组织、联系人、线索、商机
+- 资源：供应商
+- 系统：账户管理、角色与权限、评分规则、审计日志
 
-
-客户管理
-────────
-
-公司
-
-客户联系人
-
-线索
-
-
-客户运营
-────────
-
-客户运营
-
-我的工作台
-
-
-资源
-────────
-
-供应商
-
-
-系统管理
-────────
-
-账户管理
-
-角色与权限
-
-审计日志
+客户运营不是顶级入口。不存在的独立 Reports 或 Activities 路由不得为了视觉迁移而创建。
 
 ---
 
@@ -557,7 +535,7 @@ Outline / Ghost。
 
 # 16. KPI Card
 
-视觉基准：V1 指标卡和业务面板。
+视觉基准：共享 CRM Metric 组件与 Kivisense Semi theme tokens。
 
 结构：
 
@@ -1618,7 +1596,7 @@ Error association
 
 # 47. Login
 
-参考 V1 登录窗口和表单语言。
+使用与正式 CRM 一致的 Semi Form、Kivisense tokens 和品牌语言。
 
 Kivisense Logo
 
@@ -1737,11 +1715,11 @@ Better information architecture
 
 最终公式：
 
-V1 原生组件结构
+Semi Design primitives
 
 +
 
-Kivisense Emerald identity
+Kivisense CRM components and tokens
 
 +
 
@@ -1753,25 +1731,25 @@ Kivisense CRM Design Language
 
 ---
 
-# 53. v1.3 Product-model and dense-enterprise addendum
+# 53. Canonical product-model and dense-enterprise rules
 
-This addendum supersedes earlier examples wherever product-model language or information architecture conflicts. Its product-model rules remain active; all visual and component-foundation language is superseded by the V1 restoration sections below.
+This section supersedes earlier examples wherever product-model language or information architecture conflicts. Its product model, canonical information architecture, lifecycle, RBAC, API, import/export, assignment and verification rules remain active. Its visual and component-foundation language is governed by the Semi foundation in this document and `docs/CODEX_UI_REBUILD_PROMPT.md`.
 
 ## 53.1 Canonical information architecture
 
 - 概览: 数据看板, 我的工作台
-- 客户管理: 公司, 联系人, 线索, 商机
+- 客户管理: 组织, 联系人, 线索, 商机
 - 资源: 供应商
 - 系统: 账户管理, 角色与权限, 评分规则, 审计日志
 
-客户运营 is not a top-level destination. Company Smart Views, Company 360 and 我的工作台 absorb its current capabilities. The compatibility route may remain, but new navigation and new product copy must not recreate the removed module.
+客户运营 is not a top-level destination. Organization views, Organization detail and 我的工作台 absorb its current capabilities. The compatibility route may remain, but new navigation and new product copy must not recreate the removed module.
 
 ## 53.2 Canonical object language
 
 - `MarketingLead` is 线索. Fit and Engagement are 线索匹配度 and 互动活跃度.
 - `CrmLead` is persistence compatibility for Opportunity and is always 商机 in ordinary UI.
-- `Organization` is 公司; Supplier is a Company with the 供应商 business relationship.
-- Company lifecycle is 客户阶段. Company roles are 业务关系 and may be multi-valued.
+- `Organization` is 组织; it is the unified company master, and Supplier is an Organization with the 供应商 business relationship.
+- Organization lifecycle is 客户阶段. Organization roles are 业务关系 and may be multi-valued.
 - Contact is 联系人 and must state 企业联系人 or 个人联系人. The legacy Contact stage must not appear as a generic “CRM 状态”.
 
 Do not expose internal compatibility names such as CrmLead, Lead Owner, Lead Stage, `START_NURTURING`, enum keys, or route keys to ordinary users.
@@ -1825,70 +1803,39 @@ Every critical UI write requires: visible browser result, successful HTTP respon
 
 ---
 
-# 54. v1.4 V1 visual-language and review-policy override
+# 54. Semi Design implementation and acceptance override
 
-This section supersedes earlier visual guidance that treats generic UI-kit defaults, all-white surfaces, weak borders or card scarcity as the target. It also supersedes the multi-phase and 90-screenshot browser gate for this product-language/visual-restyle round. It does not change the v1.3 product model, information architecture, routes, Dashboard four-view structure, Workbench, import/export, assignment notification or RBAC contracts.
+This section supersedes every earlier V1 visual-source, component-foundation, icon-family, technical-stack and browser-testing instruction. It does not change the canonical product model, information architecture, routes, lifecycle, RBAC, API contracts, import/export flows, assignment rules or data-preservation requirements in section 53 and `docs/kivisense-crm-maintainer.md`.
 
-## 54.1 Visual source of truth
+## 54.1 Component authority
+
+- `@douyinfe/semi-ui` is the only base UI component library for formal CRM pages.
+- `@douyinfe/semi-icons` is the only icon family.
+- `frontend-react/src/components/crm/` is the shared layer for theme adapters, composition primitives and CRM business components.
+- Formal CRM pages must not import `frontend-react/src/components/v1/ui`, `@/components/v1/ui`, Lucide, TanStack Table, shadcn or Radix UI.
+- CSS, CSS Modules and existing utility classes may implement tokens, layout, density and business composition. They must not recreate an interactive primitive that Semi provides.
+- The historical V1 archive may be consulted only for business-density context. It cannot determine the current DOM, component implementation, palette, typography, theme tokens or page composition.
+
+## 54.2 Product visual standard
 
 The supported composition is:
 
-`Current React architecture + current product structure + current domain model + V1 visual language`.
+`Current product model + canonical IA + Kivisense CRM Design System + Semi Design primitives`.
 
-`frontend/styles/production.css` is the historical V1 visual reference. Reuse its warm neutral canvas, white business surfaces, stronger neutral borders, restrained surface shadows, mature dark sidebar, serif display headings, warm table headers, grouped forms and visible business sections. Do not restore the legacy DOM, legacy IA, legacy routes or its Lead/Opportunity ambiguity.
+The migration must change the complete product surface, including App Shell, navigation, toolbars, data tables, record headers, detail layouts, forms, overlays, upload, feedback, empty/loading/error states, Dashboard and system pages. Replacing only Button and Input is not a completed migration.
 
-The V1-native React component library is the only component implementation layer. Kivisense Emerald is reserved for primary actions, active navigation, success and current stage. Low-saturation blue, amber, red and gray establish information, pending/risk, error/lost and disabled/history states.
+Semi supplies interaction behavior and accessibility. Kivisense tokens and shared CRM components supply hierarchy, density, surfaces, borders, semantic color and brand identity. The result must be visibly distinguishable from V1 and must not look like a default Semi demo, an Ant-style admin template or a generic dashboard with Kivisense colors.
 
-## 54.2 Shared surface rules
+Core lists share one mature CRM table composition with search, compact filters, column controls, import/export, row actions, selection, contextual batch actions and pagination. Core records share one detail composition that exposes identity, state, owner, relationships, recent activity and next action in the first viewport. Pages use available width deliberately and avoid card walls, oversized whitespace, heavy shadows, large-radius surfaces and decorative gradients.
 
-- Page canvas is warm neutral; business modules sit on white panels.
-- A complete business module may use one card/panel; individual fields do not become cards.
-- Page and record titles use the V1 serif display treatment; tables/forms/body copy remain sans-serif.
-- Section headers use a warm tint, clear divider and restrained Emerald anchor.
-- Tables keep the current checkbox, toolbar, filter, import, export, columns and pagination structure, with stronger headers, hover and selected states.
-- Forms keep the current fields and tabs, with grouped section surfaces and a stable tinted footer.
-- Sidebar keeps the current IA and uses a dark neutral rail with an Emerald active indicator.
-- Lucide is the only icon family.
+## 54.3 Required verification
 
-## 54.3 Minimum validation for this round
+1. Run the relevant TypeScript, production build, automated test and frontend interaction checks, and report each result separately.
+2. Audit production source and the dependency graph for `components/v1/ui`, Lucide, TanStack Table, shadcn and Radix UI residue.
+3. Inspect formal CRM routes in a real browser at 1440x900, 1280x800 and 1024-wide viewports. Capture reviewable screenshots for the core list/detail routes and representative Dashboard, form and overlay states.
+4. At every viewport, check the shell and document for horizontal overflow, while allowing wide tables to scroll inside their own table surface.
+5. Check browser console errors and failed network responses. Unexpected console errors or HTTP 4xx/5xx responses fail the browser gate.
+6. Verify navigation, list, search, filter, pagination, detail, create, edit, delete confirmation, batch actions, import/export overlays, upload, permissions, audit, activity and associations in proportion to the migration surface.
+7. For every critical UI write, record the visible result, successful HTTP response, persisted database state and reload result.
 
-1. Frontend production build.
-2. Backend build/typecheck only when backend code changed.
-3. One 1440px browser smoke of Dashboard, Company, Contact, Marketing Lead, Opportunity, Workbench and Supplier, checking open state, no white screen and no obvious console crash.
-4. One real UI write only if this round changes business behavior. A language/visual-only round reports existing writes as not retested.
-5. No more than 8–12 key screenshots. Human UI review is the release gate.
-
-Reports must distinguish build, page-open smoke, language/visual review and functional regression. Never infer business-flow PASS from a page opening successfully.
-
----
-
-# 55. v1.5 FINAL V1 visual-restoration override
-
-This section supersedes all earlier visual-source and testing-policy guidance. It does not change the v1.3 product model, current information architecture, routes, RBAC, API contracts, import/export flows, or the `MarketingLead -> MQL -> SQL -> Opportunity` lifecycle.
-
-## 55.1 Visual authority
-
-The read-only archive `crm-Kivisense_CRM_v1.zip` is the only visual source of truth. Its source priority is:
-
-1. `frontend/index.html` inline `<style>` — primary visual authority (`sha256 6bdc5c05f9d43ed05d700f28650765c25ac127a2b8835dfe2e88123cf39c4d36`).
-2. `frontend/js/app.js` — DOM/class composition context only (`sha256 7d5b18f74b6395b99fa995a8bdb2138e23b191371ba338bf57461c9d194c3e5e`).
-3. `frontend/styles/production.css` — supplementary rules only (`sha256 2db3bd4fa7e438f4e4178af5d42cfa40c61d510a9cf798d8e7a7323306a55784`).
-
-Never restore the archived DOM, product wording, routes, enums, or business behavior. Do not paste the historical stylesheet globally. Translate its visual DNA into shared React theme tokens and component patterns.
-
-## 55.2 Canonical V1 tokens and patterns
-
-- Canvas `#f3f1eb`; white surface `#ffffff`; warm surface `#faf9f5`.
-- Ink `#171717`; muted `#666666`; soft-muted `#8b8b8b`.
-- Lines `#e5e5e2` / `#d7d7d3`; dark rail `#0b0b0b` / `#242424`.
-- V1 accents: gold `#a9854b`, navy `#30465c`, rose `#9b5d61` and their pale tints.
-- Kivisense green `#04e06e` / `#03c360` is reserved for CTA, active/current, focus, success, and key progress.
-- Radius scale: panel `15px`, card `13px`, control `9px`, compact control `8px`.
-- Surface shadows: `0 12px 38px rgba(20,20,20,.055)` and floating `0 24px 70px rgba(10,10,10,.16)`.
-- Display headings use Georgia/Songti; body, table, forms, and controls remain sans-serif.
-- Sidebar, header, KPI, toolbar, table, dialog/drawer, tabs, badges, forms, empty state, timeline, pagination, attachment and import/export visuals are shared patterns. Company logos always use `object-fit: contain`.
-- Opportunity StagePath: completed is subtle-success, current is prominent, future is muted, WON is emerald, LOST is rose.
-
-## 55.3 Verification policy for this restoration
-
-Automated browser checks, screenshot capture, Playwright/Puppeteer, smoke, E2E, and UAT interaction are prohibited. After all visual work, run the frontend production build once; the build's `tsc -b` step is the single TypeScript check. Human visual review is the acceptance gate. Do not infer functional or UAT PASS from build success or deployment health.
+Human visual review remains required, but it does not replace the automated, browser, network and persistence evidence above. A successful build alone is not evidence that a page, interaction or business flow passed.

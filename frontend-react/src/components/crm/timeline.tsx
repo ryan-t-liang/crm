@@ -1,4 +1,5 @@
-import { Activity } from "lucide-react";
+import { IconActivity as Activity } from "@douyinfe/semi-icons";
+import { Timeline as SemiTimeline } from "@douyinfe/semi-ui";
 import { can, dateTime, type JourneyEvent } from "@/lib/crm";
 import type { SessionUser } from "@/lib/api";
 import { AttachmentList } from "./attachment-list";
@@ -16,17 +17,21 @@ export function Timeline({
 }) {
   if (!events.length) return <EmptyState title="暂无客户旅程" />;
   return (
-    <ol className="crm-timeline">
+    <SemiTimeline className="crm-timeline" aria-label="客户旅程">
       {events.map((event) => (
-        <li key={event.id} className="crm-timeline-item">
-          <Activity className="crm-timeline-icon" />
+        <SemiTimeline.Item
+          key={event.id}
+          className="crm-semi-timeline-item"
+          dot={<Activity />}
+          time={(
+            <time className="text-xs text-muted-foreground">
+              {dateTime(event.occurredAt)}
+            </time>
+          )}
+          type="default"
+        >
           <div className="crm-timeline-card min-w-0">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-sm font-medium">{productEventText(event.title)}</span>
-              <time className="text-xs text-muted-foreground">
-                {dateTime(event.occurredAt)}
-              </time>
-            </div>
+            <span className="text-sm font-medium">{productEventText(event.title)}</span>
             <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6">
               {productEventText(event.summary)}
             </p>
@@ -104,8 +109,8 @@ export function Timeline({
                 </div>
               )}
           </div>
-        </li>
+        </SemiTimeline.Item>
       ))}
-    </ol>
+    </SemiTimeline>
   );
 }

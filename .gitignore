@@ -6,6 +6,7 @@ frontend/react-build/
 !.env.example
 storage/imports/*
 storage/exports/*
+storage/crm-attachments/*
 !storage/imports/.gitkeep
 !storage/exports/.gitkeep
 *.log
@@ -13,3 +14,11 @@ storage/exports/*
 coverage/
 outputs/
 docs/reference/
+
+# Keep only the final Semi migration evidence sets under version control.
+docs/qa-evidence-semi-migration-after/
+docs/qa-evidence-semi-redesign-after/
+docs/qa-evidence-semi-redesign-after-v2/
+docs/qa-evidence-semi-redesign-after-v3/
+docs/qa-evidence-semi-redesign-after-v4/
+docs/qa-evidence-semi-redesign-current-baseline/

@@ -1,0 +1,51 @@
+{
+  "generatedAt": "2026-09-08T20:09:45.274Z",
+  "baseUrl": "http://127.0.0.1:3100",
+  "browser": "Google Chrome via Playwright, headless, cache disabled",
+  "authentication": "Temporary local QA states used without persisting accounts, passwords, cookies, or storage-state contents",
+  "verdict": "PASS",
+  "assertions": {
+    "viewerMarketingLeads": {
+      "role": "VIEWER",
+      "route": "#marketing-leads",
+      "semiTablePresent": true,
+      "selectionCheckboxCount": 0,
+      "pass": true
+    },
+    "dashboardAnalyticsFailure": {
+      "route": "#dashboard",
+      "injectedStatus": 500,
+      "title": "管理概览加载失败",
+      "errorBodyVisible": true,
+      "retryVisible": true,
+      "retryEnabled": true,
+      "requestsBeforeRetry": 1,
+      "requestsAfterRetry": 2,
+      "pass": true
+    }
+  },
+  "cleanup": {
+    "isolatedViewerStatus": "DISABLED",
+    "httpStatus": 200
+  },
+  "build": [
+    {
+      "path": "frontend/react-build/index.html",
+      "bytes": 645,
+      "modifiedAt": "2026-09-08T19:26:06.860Z",
+      "sha256": "848769745339ae81bc87a26a3798c8c40e419fbd9e354849ddee652a900c869f"
+    },
+    {
+      "path": "frontend/react-build/assets/app.js",
+      "bytes": 1458898,
+      "modifiedAt": "2026-09-08T19:26:06.858Z",
+      "sha256": "bef6efa438fe086f2ef9fe89e9435b913e4a1d0d9cdc863532fa74dcd71c46d8"
+    },
+    {
+      "path": "frontend/react-build/assets/app.css",
+      "bytes": 652228,
+      "modifiedAt": "2026-09-08T19:26:06.860Z",
+      "sha256": "40d5c9bc190073206ec1f2379eedf77caaf4ca51ac1b0779fdaf18bf241b400a"
+    }
+  ]
+}

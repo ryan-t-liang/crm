@@ -1,9 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import type { ColumnDef } from "@tanstack/react-table";
-import { ArrowLeft, CircleGauge, GitMerge, MessageSquarePlus, Pencil, Plus } from "lucide-react";
+import {
+  IconArrowLeft as ArrowLeft,
+  IconBranch as GitMerge,
+  IconCommentStroked as MessageSquarePlus,
+  IconEditStroked as Pencil,
+  IconPlus as Plus,
+  IconPulse as CircleGauge,
+} from "@douyinfe/semi-icons";
 
 import { ImportExport } from "@/components/crm/import-export";
-import { DataTable } from "@/components/crm/data-table";
+import { DataTable, type CrmColumnDef } from "@/components/crm/data-table";
+import { OwnerCell, RelativeDateCell } from "@/components/crm/cells";
 import { EntityAudit } from "@/components/crm/entity-audit";
 import {
   ConfirmDeleteDialog,
@@ -29,11 +36,11 @@ import {
   UserAvatar,
   FilterControl,
 } from "@/components/crm/primitives";
-import { Alert, AlertDescription, AlertTitle } from "@/components/v1/ui";
-import { Button } from "@/components/v1/ui";
-import { Input } from "@/components/v1/ui";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/v1/ui";
-import { Textarea } from "@/components/v1/ui";
+import { Alert, AlertDescription, AlertTitle } from "@/components/crm/ui";
+import { Button } from "@/components/crm/ui";
+import { Input } from "@/components/crm/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/crm/ui";
+import { Textarea } from "@/components/crm/ui";
 import { ApiError, crmApi, type CrmUser, type SessionUser } from "@/lib/api";
 import {
   marketingActivitySourceLabel,
@@ -61,6 +68,10 @@ const statusLabels = marketingLeadStatusLabels as Record<MarketingLeadStatus, st
 const sourceLabels = marketingSourceLabels;
 const levelLabels = scoreLevelLabels;
 const sourceChannelLabels = marketingSourceChannelLabels;
+const marketingLeadStatusViews = [
+  { key: "all", label: "全部线索" },
+  ...Object.entries(statusLabels).map(([key, label]) => ({ key, label })),
+];
 
 type LeadFormState = {
   fullName: string; email: string; phone: string; whatsapp: string; wechat: string; linkedinUrl: string;
@@ -146,8 +157,8 @@ export function MarketingLeadForm({ lead, initialValues, users, onClose, onSaved
   return (
     <FormDialog title={`${lead ? "编辑" : "新增"}线索`} description="线索保存获客来源、原始询盘和营销资格信息。" onClose={onClose} busy={busy} wide footer={<><Button variant="outline" onClick={onClose} disabled={busy}>取消</Button><Button onClick={() => void save()} disabled={busy}>{busy ? "保存中…" : "保存线索"}</Button></>}>
       <div className="space-y-5">
-        <DetailTabs value={tab} onChange={setTab} items={[["identity", `身份与公司${Object.keys(fieldErrors).some((key) => !["source", "sourceChannel", "sourceDetail", "ownerUserId", "inquiryType", "inquiryContent", "productInterest", "requirementTags", "budgetRange", "note"].includes(key)) ? " · 有错误" : ""}`], ["inquiry", `询盘与来源${Object.keys(fieldErrors).some((key) => ["inquiryType", "inquiryContent", "productInterest", "requirementTags", "budgetRange", "note"].includes(key)) ? " · 有错误" : ""}`], ["qualification", `营销资格${Object.keys(fieldErrors).some((key) => ["source", "sourceChannel", "sourceDetail", "ownerUserId"].includes(key)) ? " · 有错误" : ""}`]]}>
-        {tab === "identity" ? <div className="space-y-7"><FormSection title="身份信息"><div className="grid gap-4 sm:grid-cols-2">{fields([["fullName", "姓名"], ["email", "Email"], ["phone", "电话", "+国家或地区代码"], ["whatsapp", "WhatsApp", "+国家或地区代码"], ["wechat", "微信"], ["linkedinUrl", "LinkedIn 主页"], ["title", "职位"], ["department", "部门"]])}</div></FormSection><FormSection title="公司快照"><div className="grid gap-4 sm:grid-cols-2">{fields([["companyName", "公司"], ["companyWebsite", "公司网站"], ["companySize", "公司规模"], ["industry", "行业"], ["countryCode", "国家 / 地区代码", "两位国家或地区代码，如 AE"], ["region", "州 / 省"], ["city", "城市"]])}</div></FormSection></div>
+        <DetailTabs value={tab} onChange={setTab} items={[["identity", `身份与组织${Object.keys(fieldErrors).some((key) => !["source", "sourceChannel", "sourceDetail", "ownerUserId", "inquiryType", "inquiryContent", "productInterest", "requirementTags", "budgetRange", "note"].includes(key)) ? " · 有错误" : ""}`], ["inquiry", `询盘与来源${Object.keys(fieldErrors).some((key) => ["inquiryType", "inquiryContent", "productInterest", "requirementTags", "budgetRange", "note"].includes(key)) ? " · 有错误" : ""}`], ["qualification", `营销资格${Object.keys(fieldErrors).some((key) => ["source", "sourceChannel", "sourceDetail", "ownerUserId"].includes(key)) ? " · 有错误" : ""}`]]}>
+        {tab === "identity" ? <div className="space-y-7"><FormSection title="身份信息"><div className="grid gap-4 sm:grid-cols-2">{fields([["fullName", "姓名"], ["email", "Email"], ["phone", "电话", "+国家或地区代码"], ["whatsapp", "WhatsApp", "+国家或地区代码"], ["wechat", "微信"], ["linkedinUrl", "LinkedIn 主页"], ["title", "职位"], ["department", "部门"]])}</div></FormSection><FormSection title="组织快照"><div className="grid gap-4 sm:grid-cols-2">{fields([["companyName", "组织"], ["companyWebsite", "组织网站"], ["companySize", "组织规模"], ["industry", "行业"], ["countryCode", "国家 / 地区代码", "两位国家或地区代码，如 AE"], ["region", "州 / 省"], ["city", "城市"]])}</div></FormSection></div>
         : tab === "inquiry" ? <FormSection title="原始询盘"><div className="grid gap-4 sm:grid-cols-2">{fields([["inquiryType", "询盘类型"], ["productInterest", "产品兴趣"], ["requirementTags", "需求标签", "多个标签用逗号分隔"], ["budgetRange", "预算范围"]])}<Field label="询盘内容" error={fieldErrors.inquiryContent} wide>{(id) => <Textarea id={id} className="min-h-32" value={form.inquiryContent} aria-invalid={!!fieldErrors.inquiryContent} onChange={(event) => update("inquiryContent", event.target.value)} />}</Field><Field label="补充说明" error={fieldErrors.note} wide>{(id) => <Textarea id={id} value={form.note} aria-invalid={!!fieldErrors.note} onChange={(event) => update("note", event.target.value)} />}</Field></div></FormSection>
         : <FormSection title="来源与营销资格"><div className="grid gap-4 sm:grid-cols-2">
           <Field label="来源" required error={fieldErrors.source}>{() => <Select value={form.source} onValueChange={(value) => update("source", value)}><SelectTrigger aria-invalid={!!fieldErrors.source}><SelectValue /></SelectTrigger><SelectContent>{Object.entries(sourceLabels).map(([value, label]) => <SelectItem key={value} value={value}>{label}</SelectItem>)}</SelectContent></Select>}</Field>
@@ -193,13 +204,13 @@ type ConversionPreview = {
 
 const matchTypeLabels: Record<string, string> = {
   DOMAIN_EXACT: "网站域名完全匹配",
-  NAME_EXACT: "公司名称完全匹配",
-  NAME_SIMILAR: "公司名称相似，仅供确认",
+  NAME_EXACT: "组织名称完全匹配",
+  NAME_SIMILAR: "组织名称相似，仅供确认",
   EMAIL_EXACT: "Email 完全匹配",
   PHONE_EXACT: "手机号完全匹配",
   WHATSAPP_EXACT: "WhatsApp 完全匹配",
   WECHAT_EXACT: "微信完全匹配",
-  NAME_COMPANY_WARNING: "姓名与公司相似，仅供确认",
+  NAME_COMPANY_WARNING: "姓名与组织相似，仅供确认",
   NAME_WARNING: "姓名相似，仅供确认",
 };
 
@@ -223,12 +234,12 @@ function ConvertDialog({ lead, me, users, onClose, onSaved }: { lead: MarketingL
     setSummary((value) => value || data.suggestedOpportunity.requirementSummary);
   }, [data, lead.companyName]);
   async function convert() {
-    if (!data || !summary.trim() || !owner) { setError("请完成公司、联系人和商机确认。"); return; }
+    if (!data || !summary.trim() || !owner) { setError("请完成组织、联系人和商机确认。"); return; }
     setBusy(true); setError("");
     const organization = organizationChoice.startsWith("existing:")
       ? { mode: "existing", id: organizationChoice.slice(9) }
       : organizationChoice === "create"
-        ? { mode: "create", createData: { name: lead.companyName || `${lead.fullName} 的公司`, website: lead.companyWebsite || null, companySize: lead.companySize || null, industry: lead.industry || null, countryCode: lead.countryCode || null, region: lead.region || null, city: lead.city || null } }
+        ? { mode: "create", createData: { name: lead.companyName || `${lead.fullName} 的组织`, website: lead.companyWebsite || null, companySize: lead.companySize || null, industry: lead.industry || null, countryCode: lead.countryCode || null, region: lead.region || null, city: lead.city || null } }
         : { mode: "none" };
     const contact = contactChoice.startsWith("existing:")
       ? { mode: "existing", id: contactChoice.slice(9) }
@@ -240,7 +251,7 @@ function ConvertDialog({ lead, me, users, onClose, onSaved }: { lead: MarketingL
   }
   return <FormDialog title="线索转商机" description="匹配结果仅用于建议；必须在单一后端事务提交前明确选择，不会自动合并。" onClose={onClose} busy={busy} wide footer={<><Button variant="outline" onClick={onClose}>取消</Button><Button disabled={busy || !data} onClick={() => void convert()}>{busy ? "转换中…" : "确认转商机"}</Button></>}>
     {preview.loading ? <LoadingSkeleton detail /> : preview.error ? <ErrorState error={preview.error} retry={preview.reload} /> : data ? <div className="space-y-6">
-      <FormSection title="公司"><Field label="公司处理方式" required>{() => <Select value={organizationChoice} onValueChange={setOrganizationChoice}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{data.organizationMatches.map((match) => <SelectItem key={match.id} value={`existing:${match.id}`}>使用已有公司 · {match.shortName || match.name} · {matchTypeLabels[match.matchType] || "需要人工确认"}</SelectItem>)}<SelectItem value="create">创建新公司 · {lead.companyName || "使用线索公司快照"}</SelectItem><SelectItem value="none">暂不关联公司</SelectItem></SelectContent></Select>}</Field>{data.organizationMatches.length ? <MatchList title="系统公司匹配" rows={data.organizationMatches.map((match) => ({ id: match.id, title: match.shortName || match.name, detail: `${match.website || "无网站"} · ${matchTypeLabels[match.matchType] || "需要人工确认"}` }))} /> : <p className="text-sm text-muted-foreground">未发现精确公司匹配。</p>}</FormSection>
+      <FormSection title="组织"><Field label="组织处理方式" required>{() => <Select value={organizationChoice} onValueChange={setOrganizationChoice}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{data.organizationMatches.map((match) => <SelectItem key={match.id} value={`existing:${match.id}`}>使用已有组织 · {match.shortName || match.name} · {matchTypeLabels[match.matchType] || "需要人工确认"}</SelectItem>)}<SelectItem value="create">创建新组织 · {lead.companyName || "使用线索组织快照"}</SelectItem><SelectItem value="none">暂不关联组织</SelectItem></SelectContent></Select>}</Field>{data.organizationMatches.length ? <MatchList title="系统组织匹配" rows={data.organizationMatches.map((match) => ({ id: match.id, title: match.shortName || match.name, detail: `${match.website || "无网站"} · ${matchTypeLabels[match.matchType] || "需要人工确认"}` }))} /> : <p className="text-sm text-muted-foreground">未发现精确组织匹配。</p>}</FormSection>
       <FormSection title="联系人"><Field label="联系人处理方式" required>{() => <Select value={contactChoice} onValueChange={setContactChoice}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{data.contactMatches.map((match) => <SelectItem key={match.id} value={`existing:${match.id}`}>使用已有联系人 · {match.contactName} · {matchTypeLabels[match.matchType] || "需要人工确认"}</SelectItem>)}<SelectItem value="create">创建新联系人 · {lead.fullName}</SelectItem></SelectContent></Select>}</Field>{data.contactMatches.length ? <MatchList title="系统联系人匹配" rows={data.contactMatches.map((match) => ({ id: match.id, title: match.contactName, detail: `${match.email || match.phone || "无联系方式"} · ${matchTypeLabels[match.matchType] || "需要人工确认"}` }))} /> : <p className="text-sm text-muted-foreground">未发现精确联系人匹配。</p>}</FormSection>
       <FormSection title="商机"><div className="grid gap-4 sm:grid-cols-2"><Field label="商机名称 / 需求简述" required wide>{(id) => <Input id={id} value={summary} onChange={(event) => setSummary(event.target.value)} />}</Field><Field label="商机负责人" required>{() => <Select value={owner} onValueChange={setOwner}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{users.map((user) => <SelectItem key={user.id} value={user.id}>{user.name}</SelectItem>)}</SelectContent></Select>}</Field><Field label="商机优先级">{() => <Select value={priority} onValueChange={setPriority}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{["LOW", "MEDIUM", "HIGH", "URGENT"].map((value) => <SelectItem key={value} value={value}>{priorityLabels[value] || "未知"}</SelectItem>)}</SelectContent></Select>}</Field><Field label="初始商机阶段">{() => <Select value={stage} onValueChange={setStage}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{["NEW", "QUALIFIED", "SOLUTION", "QUOTATION"].map((value) => <SelectItem key={value} value={value}>{opportunityStageLabels[value] || "未知"}</SelectItem>)}</SelectContent></Select>}</Field><Field label="需求详情" wide>{(id) => <Textarea id={id} className="min-h-32" value={detail} onChange={(event) => setDetail(event.target.value)} />}</Field><Field label="转换备注" wide>{(id) => <Textarea id={id} value={note} onChange={(event) => setNote(event.target.value)} />}</Field></div><Alert className="mt-4"><AlertTitle>原始询盘受保护</AlertTitle><AlertDescription>需求详情以原始询盘初始化，但后续修改商机不会改写线索的原始询盘。</AlertDescription></Alert></FormSection>
       {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
@@ -278,16 +289,16 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
   ].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)) : [], [lead]);
   const refresh = () => { list.reload(); detail.reload(); window.dispatchEvent(new Event("crm:data-changed")); };
   const actionsFor = (row: MarketingLead) => [{ label: "查看详情", onClick: () => { window.location.hash = `marketing-leads/${row.id}`; } }, ...(can(me, "crm.marketing_lead.edit") && row.status !== "CONVERTED" ? [{ label: "编辑", onClick: () => { window.location.hash = `marketing-leads/${row.id}`; setFormOpen(true); } }] : []), ...(can(me, "crm.marketing_lead.delete") ? [{ label: "删除", destructive: true, onClick: () => setDeleting(row) }] : [])];
-  const columns: ColumnDef<MarketingLead>[] = [
+  const columns: CrmColumnDef<MarketingLead>[] = [
     { id: "name", header: "姓名", enableHiding: false, cell: ({ row }) => <a href={`#marketing-leads/${row.original.id}`} className="flex min-w-44 items-center gap-2 hover:underline"><UserAvatar name={row.original.fullName} showName={false} /><span className="font-medium">{row.original.fullName}</span></a> },
-    { accessorKey: "companyName", header: "公司", cell: ({ row }) => row.original.companyName || "—" },
+    { accessorKey: "companyName", header: "组织", cell: ({ row }) => row.original.companyName || "—" },
     { id: "source", header: "来源", cell: ({ row }) => <span>{sourceLabels[row.original.source] || "其他"}{row.original.sourceChannel ? ` / ${marketingSourceChannelLabel(row.original.sourceChannel)}` : ""}</span> },
     { id: "status", header: "状态", cell: ({ row }) => <StatusBadge>{statusLabels[row.original.status]}</StatusBadge> },
     { id: "fit", header: "线索匹配度", cell: ({ row }) => <span className="tabular-nums">{row.original.fitScore} · {levelLabels[row.original.fitLevel]}</span> },
     { id: "engagement", header: "互动活跃度", cell: ({ row }) => <span className="tabular-nums">{row.original.engagementScoreCached} · {levelLabels[row.original.engagementLevel]}</span> },
-    { id: "owner", header: "线索负责人", cell: ({ row }) => row.original.owner?.name || "待分配" },
-    { id: "activity", header: "最近行为", cell: ({ row }) => dateTime(row.original.lastActivityAt) },
-    { id: "createdAt", header: "创建时间", cell: ({ row }) => dateTime(row.original.createdAt) },
+    { id: "owner", header: "线索负责人", cell: ({ row }) => <OwnerCell name={row.original.owner?.name} /> },
+    { id: "activity", header: "最近行为", cell: ({ row }) => <RelativeDateCell value={row.original.lastActivityAt} emptyLabel="暂无行为" /> },
+    { id: "createdAt", header: "创建时间", cell: ({ row }) => <RelativeDateCell value={row.original.createdAt} /> },
     { id: "actions", header: "操作", enableHiding: false, cell: ({ row }) => <RowActions label={row.original.fullName} items={actionsFor(row.original)} /> },
   ];
   if (!id) {
@@ -321,11 +332,24 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
             label="线索目录"
             columns={columns}
             rows={rows}
+            views={marketingLeadStatusViews}
+            activeView={filters.status || "all"}
+            onViewChange={(status) => {
+              setFilters((current) => ({
+                ...current,
+                status: status === "all" ? "" : status,
+              }));
+              setSelectedIds([]);
+              setPage(1);
+            }}
             total={list.data?.meta.total}
             page={page}
             onPage={setPage}
             loading={list.loading}
-            selectable
+            selectable={
+              can(me, "crm.marketing_lead.assign") ||
+              can(me, "crm.marketing_lead.export")
+            }
             selectedIds={selectedIds}
             onSelectedIdsChange={setSelectedIds}
             selectionActions={
@@ -366,7 +390,7 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
                   setFilters((current) => ({ ...current, keyword: search }));
                   setPage(1);
                 }}>
-                  <SearchInput value={search} onChange={setSearch} placeholder="搜索姓名、公司、Email、电话或询盘" />
+                  <SearchInput value={search} onChange={setSearch} placeholder="搜索姓名、组织、Email、电话或询盘" />
                 </form>
                 <FilterControl label="状态" value={filters.status || "all"} options={statusLabels} onChange={(value) => {
                   setFilters((current) => ({ ...current, status: value }));
@@ -402,20 +426,22 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
             <EntityHeader
               icon={<UserAvatar name={lead.fullName} large showName={false} />}
               title={lead.fullName}
-              meta={<><span>{lead.companyName || "未填写公司"}</span><span>{sourceLabels[lead.source] || "其他"}{lead.sourceChannel ? ` / ${marketingSourceChannelLabel(lead.sourceChannel)}` : ""}</span><StatusBadge>{statusLabels[lead.status]}</StatusBadge><SystemIdField value={lead.id} label="线索 ID" /></>}
+              meta={<><span>{lead.companyName || "未填写组织"}</span><span>{sourceLabels[lead.source] || "其他"}{lead.sourceChannel ? ` / ${marketingSourceChannelLabel(lead.sourceChannel)}` : ""}</span><StatusBadge>{statusLabels[lead.status]}</StatusBadge><SystemIdField value={lead.id} label="线索 ID" /></>}
               actions={<>{can(me, "crm.marketing.activity.create") && lead.status !== "CONVERTED" && <Button variant="outline" onClick={() => setActivityOpen(true)}><MessageSquarePlus />记录行为</Button>}{can(me, "crm.marketing_lead.qualify") && legalActions.map((action) => <Button key={action} variant="outline" onClick={() => setTransition(action)}>{transitionLabels[action]}</Button>)}{can(me, "crm.marketing_lead.convert") && ["SQL", "QUALIFIED"].includes(lead.status) && <Button onClick={() => setConversionOpen(true)}><GitMerge />转为商机</Button>}{can(me, "crm.marketing_lead.edit") && lead.status !== "CONVERTED" && <Button variant="outline" onClick={() => setFormOpen(true)}><Pencil />编辑</Button>}</>}
             />
           </>
         }
+        highlights={
+          <SummaryStrip items={[
+            { label: "状态", value: statusLabels[lead.status] },
+            { label: "线索负责人", value: lead.owner?.name || "待分配" },
+            { label: "线索匹配度", value: `${lead.fitScore} · ${levelLabels[lead.fitLevel]}` },
+            { label: "互动活跃度", value: `${lead.engagementScoreCached} · ${levelLabels[lead.engagementLevel]}` },
+          ]} />
+        }
         sidebar={
           <>
-            <SummaryStrip items={[
-              { label: "状态", value: statusLabels[lead.status] },
-              { label: "线索负责人", value: lead.owner?.name || "待分配" },
-              { label: "线索匹配度", value: `${lead.fitScore} · ${levelLabels[lead.fitLevel]}` },
-              { label: "互动活跃度", value: `${lead.engagementScoreCached} · ${levelLabels[lead.engagementLevel]}` },
-            ]} />
-            <Section title="身份与公司">
+            <Section title="身份与组织">
               <EntityMeta items={[
                 { label: "姓名", value: lead.fullName },
                 { label: "职位", value: lead.title },
@@ -424,8 +450,8 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
                 { label: "WhatsApp", value: lead.whatsappNormalized || lead.whatsapp },
                 { label: "微信", value: lead.wechat },
                 { label: "LinkedIn", value: lead.linkedinUrl },
-                { label: "公司", value: lead.companyName },
-                { label: "公司网站", value: lead.companyWebsite },
+                { label: "组织", value: lead.companyName },
+                { label: "组织网站", value: lead.companyWebsite },
                 { label: "国家 / 地区", value: [lead.countryCode, lead.region, lead.city].filter(Boolean).join(" · ") },
               ]} />
             </Section>
@@ -444,7 +470,7 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
           </>
         }
       >
-        {lead.status === "CONVERTED" && <Alert><CircleGauge /><AlertTitle>已转商机</AlertTitle><AlertDescription><div className="flex flex-wrap gap-4">{lead.convertedOrganization && <a className="underline" href={`#organizations/${lead.convertedOrganization.id}`}>公司：{lead.convertedOrganization.shortName || lead.convertedOrganization.name}</a>}{lead.convertedContact && <a className="underline" href={`#contacts/${lead.convertedContact.id}`}>联系人：{lead.convertedContact.contactName}</a>}{lead.convertedOpportunity && <a className="underline" href={`#leads/${lead.convertedOpportunity.id}`}>商机：{lead.convertedOpportunity.requirementSummary}</a>}<span>{dateTime(lead.convertedAt)} · {lead.convertedBy?.name || "—"}</span></div></AlertDescription></Alert>}
+        {lead.status === "CONVERTED" && <Alert><CircleGauge /><AlertTitle>已转商机</AlertTitle><AlertDescription><div className="flex flex-wrap gap-4">{lead.convertedOrganization && <a className="underline" href={`#organizations/${lead.convertedOrganization.id}`}>组织：{lead.convertedOrganization.shortName || lead.convertedOrganization.name}</a>}{lead.convertedContact && <a className="underline" href={`#contacts/${lead.convertedContact.id}`}>联系人：{lead.convertedContact.contactName}</a>}{lead.convertedOpportunity && <a className="underline" href={`#leads/${lead.convertedOpportunity.id}`}>商机：{lead.convertedOpportunity.requirementSummary}</a>}<span>{dateTime(lead.convertedAt)} · {lead.convertedBy?.name || "—"}</span></div></AlertDescription></Alert>}
         <DetailTabs value={tab} onChange={setTab} items={[["overview", "需求信息"], ["journey", "客户旅程"], ["scoring", "评分历史"], ["audit", "操作记录"]]}>
           {tab === "overview" ? <div className="space-y-3"><Section title="原始询盘与补充说明"><EntityMeta columns={1} items={[{ label: "询盘类型", value: lead.inquiryType }, { label: "原始询盘", value: <p className="whitespace-pre-wrap">{lead.inquiryContent || "—"}</p> }, { label: "产品兴趣", value: lead.productInterest }, { label: "需求标签", value: lead.requirementTags?.join("、") }, { label: "预算范围", value: lead.budgetRange }, { label: "补充说明", value: <p className="whitespace-pre-wrap">{lead.note || "—"}</p> }, ...(lead.disqualifiedReason ? [{ label: "无效原因", value: lead.disqualifiedReason }] : [])]} /></Section><Section title="系统信息"><EntityMeta items={[{ label: "创建人", value: lead.createdBy?.name }, { label: "创建时间", value: dateTime(lead.createdAt) }, { label: "更新时间", value: dateTime(lead.updatedAt) }, { label: "线索 ID", value: <CopyValue value={lead.id} label="复制 ID" /> }]} /></Section></div>
           : tab === "journey" ? <Section title="客户旅程"><div className="space-y-0">{journey.map((item) => <div key={item.id} className="grid grid-cols-[8rem_1fr] gap-4 border-b py-3 last:border-0"><time className="text-xs text-muted-foreground">{dateTime(item.at)}</time><div><p className="text-sm font-medium">{item.title}</p><p className="mt-1 text-sm text-muted-foreground">{item.detail}</p></div></div>)}{!journey.length && <p className="text-sm text-muted-foreground">暂无行为与状态事件。</p>}</div></Section>

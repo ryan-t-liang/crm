@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus, ShieldCheck } from "lucide-react";
+import { IconPlus as Plus, IconShieldStroked as ShieldCheck } from "@douyinfe/semi-icons";
+import { Collapse } from "@douyinfe/semi-ui";
 import { crmApi, type SessionUser } from "@/lib/api";
 import {
   can,
@@ -9,9 +10,7 @@ import {
   useResource,
   type PageResult,
 } from "@/lib/crm";
-import { Button } from "@/components/v1/ui";
-import { Input } from "@/components/v1/ui";
-import { Checkbox } from "@/components/v1/ui";
+import { Button, Checkbox, DateInput, Input } from "@/components/crm/ui";
 import { DataTable } from "@/components/crm/data-table";
 import {
   PageContent,
@@ -563,7 +562,7 @@ function RoleForm({
                   {
                     contact: "联系人",
                     lead: "商机",
-                    organization: "公司",
+                    organization: "组织",
                     task: "任务",
                     contact_followup: "客户互动",
                     lead_followup: "商机跟进",
@@ -678,16 +677,13 @@ export function AuditPage() {
                 </Field>
                 <Field label="开始日期">
                   {(id) => (
-                    <Input
+                    <DateInput
                       id={id}
-                      type="date"
-                      onChange={(e) =>
+                      onValueChange={(value) =>
                         change(
                           "from",
-                          e.target.value
-                            ? new Date(
-                                `${e.target.value}T00:00:00`,
-                              ).toISOString()
+                          value
+                            ? new Date(`${value}T00:00:00`).toISOString()
                             : "",
                         )
                       }
@@ -696,16 +692,13 @@ export function AuditPage() {
                 </Field>
                 <Field label="结束日期">
                   {(id) => (
-                    <Input
+                    <DateInput
                       id={id}
-                      type="date"
-                      onChange={(e) =>
+                      onValueChange={(value) =>
                         change(
                           "to",
-                          e.target.value
-                            ? new Date(
-                                `${e.target.value}T23:59:59.999`,
-                              ).toISOString()
+                          value
+                            ? new Date(`${value}T23:59:59.999`).toISOString()
                             : "",
                         )
                       }
@@ -782,11 +775,18 @@ export function AuditPage() {
           }
         >
           <Section title="操作详情">
-            <details className="mb-4 text-xs text-muted-foreground">
-              <summary className="cursor-pointer">技术信息</summary>
-              <p className="mt-2 font-mono">{selected.action}</p>
-              <p className="mt-1 font-mono">{selected.module} · {selected.targetType || "—"}</p>
-            </details>
+            <Collapse className="crm-audit-technical-collapse mb-4">
+              <Collapse.Panel
+                className="crm-audit-technical-panel"
+                itemKey="technical-information"
+                header="技术信息"
+              >
+                <div className="crm-audit-technical-content text-xs text-muted-foreground">
+                  <p className="font-mono">{selected.action}</p>
+                  <p className="mt-1 font-mono">{selected.module} · {selected.targetType || "—"}</p>
+                </div>
+              </Collapse.Panel>
+            </Collapse>
             <pre className="whitespace-pre-wrap break-all text-xs leading-6">
               {JSON.stringify(selected.details || {}, null, 2)}
             </pre>

@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
-import { Plus } from "lucide-react";
+import { IconPlus as Plus } from "@douyinfe/semi-icons";
+import { Pagination, Tabs } from "@douyinfe/semi-ui";
 import { crmApi, type SessionUser, type CrmUser } from "@/lib/api";
 import {
   can,
@@ -13,7 +14,7 @@ import {
   type Task,
   type PageResult,
 } from "@/lib/crm";
-import { Button } from "@/components/v1/ui";
+import { Button } from "@/components/crm/ui";
 import { DataTable } from "@/components/crm/data-table";
 import {
   PageContent,
@@ -26,7 +27,6 @@ import {
   StatusBadge,
   ErrorState,
   LoadingSkeleton,
-  SummaryStrip,
   Section,
   FormDialog,
   EntityCombobox,
@@ -136,8 +136,8 @@ export function OperationsPage({
   return (
     <PageContent>
       <PageHeader
-        title="客户运营"
-        description="现在应该联系谁？从客户状态出发，执行下一步行动。"
+        title="组织运营"
+        description="现在应该联系谁？从组织状态出发，执行下一步行动。"
       />
       <DetailTabs
         value={tab}
@@ -147,9 +147,9 @@ export function OperationsPage({
         }}
         items={[
           ["priority", "重点跟进"],
-          ["nurture", "客户经营计划"],
+          ["nurture", "组织经营计划"],
           ["reactivation", "待唤醒"],
-          ["dormant", "沉睡客户"],
+          ["dormant", "沉睡组织"],
         ]}
       >
         {!!actionError && (
@@ -160,7 +160,7 @@ export function OperationsPage({
             <ErrorState error={plans.error} retry={plans.reload} />
           ) : (
             <DataTable
-              label="客户经营计划"
+              label="组织经营计划"
               rows={(plans.data?.data || []).filter(
                 (p) =>
                   !keyword ||
@@ -173,7 +173,7 @@ export function OperationsPage({
               toolbar={
                 <>
                   <SearchInput
-                    placeholder="搜索公司、原因或目标"
+                    placeholder="搜索组织、原因或目标"
                     value={keyword}
                     onChange={setKeyword}
                   />
@@ -190,7 +190,7 @@ export function OperationsPage({
               columns={[
                 {
                   id: "company",
-                  header: "公司 / 经营原因",
+                  header: "组织 / 经营原因",
                   cell: ({ row: { original: n } }) => (
                     <div className="min-w-48 max-w-80">
                       <a
@@ -245,7 +245,7 @@ export function OperationsPage({
                       label={n.organization.name}
                       items={[
                         {
-                          label: "查看公司",
+                          label: "查看组织",
                           onClick: () => {
                             window.location.hash = `organizations/${n.organizationId}`;
                           },
@@ -280,11 +280,11 @@ export function OperationsPage({
               {tab === "priority"
                 ? "高匹配且高活跃，优先推进。"
                 : tab === "reactivation"
-                  ? "高匹配的沉睡客户，适合重新建立联系。"
+                  ? "高匹配的沉睡组织，适合重新建立联系。"
                   : "基于现有互动时间与活跃商机规则动态计算。"}
             </p>
             <DataTable
-              label="客户运营队列"
+              label="组织运营队列"
               rows={organizations.data?.data || []}
               loading={organizations.loading}
               page={page}
@@ -298,10 +298,10 @@ export function OperationsPage({
                       setKeyword(v);
                       setPage(1);
                     }}
-                    placeholder="搜索公司或联系人"
+                    placeholder="搜索组织或联系人"
                   />
                   <FilterControl
-                    label="公司负责人"
+                    label="组织负责人"
                     value={owner}
                     onChange={(v) => {
                       setOwner(v);
@@ -316,7 +316,7 @@ export function OperationsPage({
               columns={[
                 {
                   id: "company",
-                  header: "公司 / 背景",
+                  header: "组织 / 背景",
                   enableHiding: false,
                   cell: ({ row: { original: o } }) => (
                     <div className="flex min-w-52 max-w-80 gap-3">
@@ -359,7 +359,7 @@ export function OperationsPage({
                 },
                 {
                   id: "owner",
-                  header: "公司负责人",
+                  header: "组织负责人",
                   cell: ({ row }) => row.original.owner?.name || "待分配",
                 },
                 {
@@ -402,7 +402,7 @@ export function OperationsPage({
                       label={o.name}
                       items={[
                         {
-                          label: "查看公司",
+                          label: "查看组织",
                           onClick: () => {
                             window.location.hash = `organizations/${o.id}`;
                           },
@@ -436,7 +436,7 @@ export function OperationsPage({
                         ...(can(me, "crm.organization.nurture.manage")
                           ? [
                               {
-                                label: "开始 / 管理客户经营计划",
+                                label: "开始 / 管理组织经营计划",
                                 onClick: () => {
                                   void openNurture(o);
                                 },
@@ -542,160 +542,217 @@ export function WorkbenchPage({
       setActionError(error instanceof Error ? error.message : "接受线索失败");
     }
   };
+  const summary = feed.data?.data.summary;
+  const metrics = [
+    { label: "新 MQL", value: summary?.newMql },
+    { label: "逾期", value: summary?.overdueTasks },
+    { label: "今日", value: summary?.todayTasks },
+    { label: "未来 7 天", value: summary?.next7DaysTasks },
+    { label: "停滞商机", value: summary?.staleOpportunities },
+    { label: "缺少下一步", value: summary?.missingNextAction },
+  ];
+  const totalTasks = result.data?.meta.total || 0;
+  const actionCount = feed.data
+    ? feed.data.data.marketingLeads.length +
+      feed.data.data.opportunities.length +
+      feed.data.data.organizations.length
+    : 0;
   return (
     <PageContent>
-      <PageHeader
-        title="我的工作台"
-        description="今天要联系谁、为什么联系、下一步做什么。"
-        actions={
-          can(me, "crm.task.create") && (
-            <Button onClick={() => setTask("pick")}>
-              <Plus />
-              创建任务
-            </Button>
-          )
-        }
-      />
-      <SummaryStrip
-        items={[
-          { label: "新 MQL 待接受", value: feed.data?.data.summary.newMql ?? "—" },
-          { label: "逾期任务", value: feed.data?.data.summary.overdueTasks ?? "—" },
-          { label: "今日任务", value: feed.data?.data.summary.todayTasks ?? "—" },
-          { label: "未来 7 天", value: feed.data?.data.summary.next7DaysTasks ?? "—" },
-          { label: "停滞商机", value: feed.data?.data.summary.staleOpportunities ?? "—" },
-          { label: "缺少下一步", value: feed.data?.data.summary.missingNextAction ?? "—" },
-        ]}
-      />
-      {actionError && (
-        <p role="alert" className="text-sm text-destructive">{actionError}</p>
-      )}
-      {feed.error ? (
-        <ErrorState error={feed.error} retry={feed.reload} />
-      ) : feed.loading ? (
-        <LoadingSkeleton />
-      ) : (
-        <div className="grid items-start gap-5 xl:grid-cols-2">
-          <Section title="新 MQL 待接受">
-            {feed.data?.data.marketingLeads.length ? (
-              <ul className="divide-y">
-                {feed.data.data.marketingLeads.map((lead) => (
-                  <li key={lead.id} className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0">
-                    <div className="min-w-0 flex-1">
-                      <a className="text-sm font-medium hover:underline" href={`#marketing-leads/${lead.id}`}>{lead.fullName}</a>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {lead.companyName || "未填写公司"} · 线索匹配度 {lead.fitScore} · 互动活跃度 {lead.engagementScoreCached}
-                      </p>
-                    </div>
-                    {can(me, "crm.marketing_lead.qualify") && <Button size="sm" onClick={() => void acceptMql(lead.id)}>接受跟进</Button>}
-                  </li>
-                ))}
-              </ul>
-            ) : <p className="text-sm text-muted-foreground">暂无待接受的 MQL。</p>}
-          </Section>
-          <Section title="商机提醒">
-            {feed.data?.data.opportunities.length ? (
-              <ul className="divide-y">
-                {feed.data.data.opportunities.map((opportunity) => (
-                  <li key={opportunity.id} className="flex flex-wrap items-center gap-3 py-3 first:pt-0 last:pb-0">
-                    <div className="min-w-0 flex-1">
-                      <a className="text-sm font-medium hover:underline" href={`#leads/${opportunity.id}`}>{opportunity.requirementSummary}</a>
-                      <p className="text-xs text-muted-foreground">{opportunity.contact.contactName} · {opportunity.reasons.includes("STALE") ? "停滞" : ""}{opportunity.reasons.length > 1 ? " / " : ""}{opportunity.reasons.includes("NO_NEXT_ACTION") ? "缺少下一步" : ""}</p>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => setFollowup({ kind: "lead", id: opportunity.id, label: opportunity.requirementSummary })}>记录跟进</Button>
-                    <Button variant="outline" size="sm" onClick={() => setTask({ leadId: opportunity.id, label: opportunity.requirementSummary })}>安排下一步</Button>
-                  </li>
-                ))}
-              </ul>
-            ) : <p className="text-sm text-muted-foreground">暂无停滞或缺少下一步行动的商机。</p>}
-          </Section>
-          {feed.data?.data.organizations.length ? (
-            <Section title="高价值待重新联系">
-              <ul className="divide-y">
-                {feed.data.data.organizations.map((organization) => (
-                  <li key={organization.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                    <a className="min-w-0 flex-1 truncate text-sm font-medium hover:underline" href={`#organizations/${organization.id}`}>{organization.shortName || organization.name}</a>
-                    <StatusBadge>匹配度 {organization.fitScore}</StatusBadge>
-                  </li>
-                ))}
-              </ul>
-            </Section>
-          ) : null}
-        </div>
-      )}
-      <div className="flex flex-wrap gap-2">
-        <FilterControl
-          label="任务状态"
-          value={status}
-          all={false}
-          options={{ OPEN: "待完成", DONE: "已完成", CANCELED: "已取消" }}
-          onChange={(v) => {
-            setStatus(v);
-            setPage(1);
-          }}
+      <div className="crm-workbench-page">
+        <PageHeader
+          title="我的工作台"
+          description="今天要联系谁、为什么联系、下一步做什么。"
+          actions={
+            can(me, "crm.task.create") && (
+              <Button onClick={() => setTask("pick")}>
+                <Plus />
+                创建任务
+              </Button>
+            )
+          }
         />
-        {(me.role.key === "SUPER_ADMIN" ||
-          can(me, "crm.dashboard.management.view")) && (
-          <FilterControl
-            label="任务负责人"
-            value={scope}
-            options={Object.fromEntries(users.map((u) => [u.id, u.name]))}
-            all={false}
-            onChange={(v) => {
-              setScope(v);
-              setPage(1);
-            }}
-          />
-        )}
-      </div>
-      <Section title="任务队列">
-        {result.error ? (
-          <ErrorState error={result.error} retry={result.reload} />
-        ) : result.loading ? (
-          <LoadingSkeleton />
-        ) : (
-          <TaskQueue
-            tasks={result.data?.data || []}
-            me={me}
-            onChanged={refresh}
-            onFollowup={(t) =>
-              setFollowup({
-                kind: t.leadId ? "lead" : "contact",
-                id: t.leadId || t.contactId,
-                organizationId: t.organizationId,
-                label:
-                  t.lead?.requirementSummary ||
-                  t.contact?.contactName ||
-                  t.organization?.name ||
-                  t.title,
-                currentTaskId: t.id,
-              })
-            }
-          />
-        )}
-        <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
-          <span>
-            共 {result.data?.meta.total || 0} 条 · 第 {page} 页
-          </span>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page === 1}
-              onClick={() => setPage((p) => p - 1)}
-            >
-              上一页
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page * 20 >= (result.data?.meta.total || 0)}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              下一页
-            </Button>
-          </div>
+
+        <dl className="crm-workbench-metric-bar" aria-label="工作台运营指标">
+          {metrics.map((metric) => (
+            <div className="crm-workbench-metric" key={metric.label}>
+              <dt>{metric.label}</dt>
+              <dd>{metric.value ?? "—"}</dd>
+            </div>
+          ))}
+        </dl>
+
+        {actionError && <p role="alert" className="crm-workbench-action-error">{actionError}</p>}
+
+        <div className="crm-workbench-layout">
+          <section className="crm-workbench-main" aria-label="任务工作区">
+            <section className="crm-workbench-task-surface" aria-labelledby="workbench-task-title">
+              <header className="crm-workbench-task-header">
+                <div className="crm-workbench-task-heading">
+                  <h2 id="workbench-task-title">任务队列</h2>
+                  <span>{totalTasks} 条任务</span>
+                </div>
+                <div className="crm-workbench-task-controls">
+                  <Tabs
+                    className="crm-workbench-status-tabs"
+                    type="button"
+                    activeKey={status}
+                    onChange={(value) => {
+                      setStatus(value);
+                      setPage(1);
+                    }}
+                    tabList={[
+                      { itemKey: "OPEN", tab: "待完成" },
+                      { itemKey: "DONE", tab: "已完成" },
+                      { itemKey: "CANCELED", tab: "已取消" },
+                    ]}
+                  />
+                  {(me.role.key === "SUPER_ADMIN" || can(me, "crm.dashboard.management.view")) && (
+                    <div className="crm-workbench-owner-filter">
+                      <FilterControl
+                        label="任务负责人"
+                        value={scope}
+                        options={Object.fromEntries(users.map((u) => [u.id, u.name]))}
+                        all={false}
+                        onChange={(value) => {
+                          setScope(value);
+                          setPage(1);
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </header>
+
+              <div className="crm-workbench-task-body">
+                {result.error ? (
+                  <ErrorState error={result.error} retry={result.reload} />
+                ) : result.loading ? (
+                  <LoadingSkeleton />
+                ) : (
+                  <TaskQueue
+                    tasks={result.data?.data || []}
+                    me={me}
+                    onChanged={refresh}
+                    onFollowup={(currentTask) =>
+                      setFollowup({
+                        kind: currentTask.leadId ? "lead" : "contact",
+                        id: currentTask.leadId || currentTask.contactId,
+                        organizationId: currentTask.organizationId,
+                        label:
+                          currentTask.lead?.requirementSummary ||
+                          currentTask.contact?.contactName ||
+                          currentTask.organization?.name ||
+                          currentTask.title,
+                        currentTaskId: currentTask.id,
+                      })
+                    }
+                  />
+                )}
+              </div>
+
+              <footer className="crm-workbench-task-footer">
+                <span>共 {totalTasks} 条 · 第 {page} 页</span>
+                <Pagination
+                  className="crm-workbench-pagination"
+                  currentPage={page}
+                  total={totalTasks}
+                  pageSize={20}
+                  showSizeChanger={false}
+                  disabled={result.loading}
+                  onPageChange={setPage}
+                />
+              </footer>
+            </section>
+          </section>
+
+          <aside className="crm-workbench-action-rail" aria-labelledby="workbench-action-title">
+            <header className="crm-workbench-action-rail-header">
+              <div>
+                <h2 id="workbench-action-title">待处理事项</h2>
+                <p>需要你判断或立即推进的记录</p>
+              </div>
+              <span>{actionCount}</span>
+            </header>
+
+            {feed.error ? (
+              <div className="crm-workbench-action-state">
+                <ErrorState error={feed.error} retry={feed.reload} />
+              </div>
+            ) : feed.loading ? (
+              <div className="crm-workbench-action-state"><LoadingSkeleton /></div>
+            ) : (
+              <div className="crm-workbench-action-groups">
+                <section className="crm-workbench-action-group" aria-labelledby="workbench-mql-title">
+                  <header className="crm-workbench-action-group-header">
+                    <h3 id="workbench-mql-title">新 MQL 待接受</h3>
+                    <span>{feed.data?.data.marketingLeads.length || 0}</span>
+                  </header>
+                  {feed.data?.data.marketingLeads.length ? (
+                    <ul className="crm-workbench-action-list">
+                      {feed.data.data.marketingLeads.map((lead) => (
+                        <li className="crm-workbench-action-item" key={lead.id}>
+                          <div className="crm-workbench-action-copy">
+                            <a href={`#marketing-leads/${lead.id}`}>{lead.fullName}</a>
+                            <p>{lead.companyName || "未填写组织"}</p>
+                            <small>匹配 {lead.fitScore} · 活跃 {lead.engagementScoreCached}</small>
+                          </div>
+                          {can(me, "crm.marketing_lead.qualify") && (
+                            <Button size="sm" onClick={() => void acceptMql(lead.id)}>接受</Button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  ) : <p className="crm-workbench-action-empty">暂无待接受的 MQL。</p>}
+                </section>
+
+                <section className="crm-workbench-action-group" aria-labelledby="workbench-opportunity-title">
+                  <header className="crm-workbench-action-group-header">
+                    <h3 id="workbench-opportunity-title">商机提醒</h3>
+                    <span>{feed.data?.data.opportunities.length || 0}</span>
+                  </header>
+                  {feed.data?.data.opportunities.length ? (
+                    <ul className="crm-workbench-action-list">
+                      {feed.data.data.opportunities.map((opportunity) => (
+                        <li className="crm-workbench-action-item crm-workbench-opportunity-item" key={opportunity.id}>
+                          <div className="crm-workbench-action-copy">
+                            <a href={`#leads/${opportunity.id}`}>{opportunity.requirementSummary}</a>
+                            <p>{opportunity.contact.contactName}</p>
+                            <small>{opportunity.reasons.includes("STALE") ? "停滞" : ""}{opportunity.reasons.length > 1 ? " · " : ""}{opportunity.reasons.includes("NO_NEXT_ACTION") ? "缺少下一步" : ""}</small>
+                          </div>
+                          <div className="crm-workbench-action-buttons">
+                            <Button variant="outline" size="sm" onClick={() => setFollowup({ kind: "lead", id: opportunity.id, label: opportunity.requirementSummary })}>跟进</Button>
+                            <Button variant="outline" size="sm" onClick={() => setTask({ leadId: opportunity.id, label: opportunity.requirementSummary })}>安排</Button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : <p className="crm-workbench-action-empty">暂无需要处理的商机。</p>}
+                </section>
+
+                <section className="crm-workbench-action-group" aria-labelledby="workbench-recontact-title">
+                  <header className="crm-workbench-action-group-header">
+                    <h3 id="workbench-recontact-title">高价值待重新联系</h3>
+                    <span>{feed.data?.data.organizations.length || 0}</span>
+                  </header>
+                  {feed.data?.data.organizations.length ? (
+                    <ul className="crm-workbench-action-list">
+                      {feed.data.data.organizations.map((organization) => (
+                        <li className="crm-workbench-action-item" key={organization.id}>
+                          <div className="crm-workbench-action-copy">
+                            <a href={`#organizations/${organization.id}`}>{organization.shortName || organization.name}</a>
+                          </div>
+                          <StatusBadge>匹配度 {organization.fitScore}</StatusBadge>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : <p className="crm-workbench-action-empty">暂无待重新联系的组织。</p>}
+                </section>
+              </div>
+            )}
+          </aside>
         </div>
-      </Section>
+      </div>
       {task === "pick" && (
         <TaskTargetPicker
           me={me}
@@ -734,7 +791,7 @@ function TaskTargetPicker({
   onSelect: (target: TaskTarget) => void;
 }) {
   const available = [
-    ["organizations", "公司", "crm.organization.view"],
+    ["organizations", "组织", "crm.organization.view"],
     ["contacts", "联系人", "crm.contact.view"],
     ["leads", "商机", "crm.lead.view"],
   ].filter(([, , permission]) => can(me, permission));
@@ -763,7 +820,7 @@ function TaskTargetPicker({
   return (
     <FormDialog
       title="选择任务关联对象"
-      description="任务需要关联公司、联系人或商机。"
+      description="任务需要关联组织、联系人或商机。"
       onClose={onClose}
       footer={
         <>

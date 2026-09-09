@@ -1,6 +1,13 @@
-import { Building2, CirclePlus, ClockAlert, Goal, PauseCircle, RefreshCcw } from "lucide-react"
+import {
+  IconAlarmStroked as ClockAlert,
+  IconApartment as Building2,
+  IconFlagStroked as Goal,
+  IconPause as PauseCircle,
+  IconPlusCircleStroked as CirclePlus,
+  IconRefresh as RefreshCcw,
+} from "@douyinfe/semi-icons"
 
-import { Card, CardContent, CardHeader } from "@/components/v1/ui"
+import { Card, CardContent, CardHeader } from "@/components/crm/ui"
 import { DASHBOARD_KPIS, type DashboardData } from "@/lib/dashboard"
 
 const icons = {

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { assetUrl, crmApi, ApiError, type SessionUser } from "@/lib/api";
 import { friendlyError } from "@/lib/crm";
-import { Button } from "@/components/v1/ui";
-import { Input } from "@/components/v1/ui";
+import { Button } from "@/components/crm/ui";
+import { Input } from "@/components/crm/ui";
 import {
   Field,
   PageContent,

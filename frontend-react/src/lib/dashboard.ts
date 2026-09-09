@@ -1,5 +1,5 @@
 export const DASHBOARD_KPIS = [
-  { key: "activeOrganizations", label: "活跃公司", description: "当前处于活跃状态" },
+  { key: "activeOrganizations", label: "活跃组织", description: "当前处于活跃状态" },
   { key: "activeLeads", label: "活跃商机", description: "正在推进的机会" },
   { key: "newLeads", label: "新增商机", description: "所选期间内创建" },
   { key: "reactivationCandidates", label: "待唤醒客户", description: "高匹配且已沉睡" },

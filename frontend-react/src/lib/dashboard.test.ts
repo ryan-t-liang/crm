@@ -5,7 +5,7 @@ import { containsFinancialKey, customDateRange, DASHBOARD_KPIS, dateRangeForDays
 describe("dashboard contract", () => {
   it("keeps the six frozen non-financial KPIs", () => {
     expect(DASHBOARD_KPIS.map((item) => item.label)).toEqual([
-      "活跃公司",
+      "活跃组织",
       "活跃商机",
       "新增商机",
       "待唤醒客户",

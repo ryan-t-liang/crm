@@ -1,16 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import {
-  ArrowLeft,
-  BriefcaseBusiness,
-  Goal,
-  MessageSquarePlus,
-  Pencil,
-  Plus,
-  Trash2,
-  UserPlus,
-} from "lucide-react";
-import type { ColumnDef } from "@tanstack/react-table";
+  IconArrowLeft as ArrowLeft,
+  IconBriefcaseStroked as BriefcaseBusiness,
+  IconCommentStroked as MessageSquarePlus,
+  IconDeleteStroked as Trash2,
+  IconEditStroked as Pencil,
+  IconFlagStroked as Goal,
+  IconPlus as Plus,
+  IconUserAdd as UserPlus,
+} from "@douyinfe/semi-icons";
+import { Pagination } from "@douyinfe/semi-ui";
 
 import { crmApi, type SessionUser, type CrmUser } from "@/lib/api";
 import {
@@ -36,7 +36,7 @@ import {
   opportunityStageLabels,
   scoreLevelLabels,
 } from "@/lib/product-language";
-import { Button, Input } from "@/components/v1/ui";
+import { Button, Input } from "@/components/crm/ui";
 import {
   PageContent,
   PageHeader,
@@ -54,12 +54,21 @@ import {
   LoadingSkeleton,
   EntityHeader,
   EntityMeta,
+  ListMetrics,
+  SummaryStrip,
+  SystemIdField,
   DetailTabs,
   Section,
   ConfirmDeleteDialog,
   type ActionItem,
 } from "@/components/crm/primitives";
-import { DataTable } from "@/components/crm/data-table";
+import { DataTable, type CrmColumnDef } from "@/components/crm/data-table";
+import {
+  NextActionCell,
+  OwnerCell,
+  RelationCountCell,
+  RelativeDateCell,
+} from "@/components/crm/cells";
 import { OrganizationForm } from "@/components/crm/organization-form";
 import { Timeline } from "@/components/crm/timeline";
 import { FollowupForm, type FollowupTarget } from "@/components/crm/followup-form";
@@ -80,11 +89,18 @@ const organizationRelationOptions = {
   VENDOR: "供应商",
 };
 
+const organizationRelationViews = [
+  { key: "all", label: "全部组织" },
+  { key: "CUSTOMER_RELATION", label: "客户" },
+  { key: "PARTNER", label: "合作伙伴" },
+  { key: "VENDOR", label: "供应商" },
+];
+
 export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [keyword, setKeyword] = useState("");
   const [page, setPage] = useState(1);
-  const [tab, setTab] = useState("marketing-leads");
+  const [tab, setTab] = useState("journey");
   const [headerActionTarget, setHeaderActionTarget] = useState<HTMLElement | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [batchOwnerUserId, setBatchOwnerUserId] = useState("");
@@ -109,7 +125,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
     return () => clearTimeout(timer);
   }, [keyword]);
   useEffect(() => {
-    setTab("marketing-leads");
+    setTab("journey");
   }, [id]);
   useEffect(() => {
     if (!id) {
@@ -142,6 +158,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
   );
   const organization = detail.data?.data;
   const targetFamily = supplier ? "suppliers" : "organizations";
+  const listRows = list.data?.data || [];
 
   function refresh() {
     list.reload();
@@ -204,7 +221,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
     ];
   }
 
-  const columns: ColumnDef<Organization>[] = [
+  const columns: CrmColumnDef<Organization>[] = [
     {
       accessorKey: "name",
       header: "组织",
@@ -254,35 +271,51 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
         </span>
       ),
     },
-    { accessorKey: "contactCount", header: "联系人" },
-    { accessorKey: "activeLeadCount", header: "活跃商机" },
+    {
+      id: "owner",
+      header: "组织负责人",
+      cell: ({ row }) => <OwnerCell name={row.original.owner?.name} />,
+    },
+    {
+      accessorKey: "contactCount",
+      header: "联系人",
+      cell: ({ row }) => (
+        <RelationCountCell
+          count={row.original.contactCount}
+          label="位联系人"
+        />
+      ),
+    },
+    {
+      accessorKey: "activeLeadCount",
+      header: "活跃商机",
+      cell: ({ row }) => (
+        <RelationCountCell
+          count={row.original.activeLeadCount}
+          label="个商机"
+        />
+      ),
+    },
     {
       id: "lastInteraction",
       header: "最近互动",
-      cell: ({ row }) => (
-        <span className="whitespace-nowrap text-xs text-muted-foreground" title={dateTime(row.original.lastInteractionAt)}>
-          {relativeDate(row.original.lastInteractionAt)}
-        </span>
-      ),
+      cell: ({ row }) => <RelativeDateCell value={row.original.lastInteractionAt} emptyLabel="暂无互动" />,
     },
     {
       id: "nextTask",
       header: "下一步行动",
       cell: ({ row }) => (
-        <div className="min-w-36 max-w-48">
-          <p className="truncate">{row.original.nextTask?.title || "—"}</p>
-          {row.original.nextActionAt && (
-            <p className="mt-0.5 text-xs text-muted-foreground">{dateTime(row.original.nextActionAt)}</p>
-          )}
-        </div>
+        <NextActionCell
+          title={row.original.nextTask?.title}
+          date={row.original.nextActionAt}
+          overdue={Boolean(row.original.nextActionAt && Date.parse(row.original.nextActionAt) < Date.now())}
+        />
       ),
     },
     {
       id: "updatedAt",
       header: "更新时间",
-      cell: ({ row }) => (
-        <span className="whitespace-nowrap text-xs text-muted-foreground">{dateTime(row.original.updatedAt)}</span>
-      ),
+      cell: ({ row }) => <RelativeDateCell value={row.original.updatedAt} />,
     },
     {
       id: "actions",
@@ -292,7 +325,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
     },
   ];
 
-  const opportunityColumns = useMemo<ColumnDef<Lead>[]>(
+  const opportunityColumns = useMemo<CrmColumnDef<Lead>[]>(
     () => [
       {
         accessorKey: "requirementSummary",
@@ -363,18 +396,39 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
               </>
             }
           />
+          <ListMetrics
+            items={supplier
+              ? [
+                  { label: "供应商总数", value: list.data?.meta.total ?? "—" },
+                  { label: "本页有联系人", value: listRows.filter((row) => row.contactCount > 0).length },
+                  { label: "本页有商机", value: listRows.filter((row) => row.activeLeadCount > 0).length },
+                  { label: "本页已分配负责人", value: listRows.filter((row) => !!row.owner).length },
+                ]
+              : [
+                  { label: "组织总数", value: list.data?.meta.total ?? "—" },
+                  { label: "本页客户", value: listRows.filter((row) => row.roleKeys.some((role) => role === "PROSPECT" || role === "CUSTOMER")).length },
+                  { label: "本页合作伙伴", value: listRows.filter((row) => row.roleKeys.includes("PARTNER")).length },
+                  { label: "本页供应商", value: listRows.filter((row) => row.roleKeys.includes("VENDOR")).length },
+                ]}
+          />
           {list.error ? (
             <ErrorState error={list.error} retry={list.reload} />
           ) : (
             <DataTable
               label={supplier ? "供应商组织" : "组织目录"}
               columns={columns}
-              rows={list.data?.data || []}
+              rows={listRows}
+              views={supplier ? undefined : organizationRelationViews}
+              activeView={filters.role || "all"}
+              onViewChange={supplier ? undefined : (view) => {
+                setFilter("role", view === "all" ? "" : view);
+                setSelectedIds([]);
+              }}
               total={list.data?.meta.total}
               page={page}
               onPage={setPage}
               loading={list.loading}
-              emptyTitle="暂无组织"
+              emptyTitle={supplier ? "暂无供应商" : "暂无组织"}
               selectable={can(me, "crm.organization.edit")}
               selectedIds={selectedIds}
               onSelectedIdsChange={setSelectedIds}
@@ -462,20 +516,23 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                 <EntityHeader
                   icon={<CompanyLogo organization={organization} large />}
                   title={organization.name}
-                  meta={null}
-                  actions={
-                    <dl className="crm-organization-header-metrics" aria-label="组织摘要">
-                      <div><dt>联系人</dt><dd>{organization.contactCount}</dd></div>
-                      <div><dt>线索</dt><dd>{organization.marketingLeadCount || 0}</dd></div>
-                      <div><dt>商机</dt><dd>{organization.leads.length}</dd></div>
-                      <div title={dateTime(organization.lastInteractionAt)}>
-                        <dt>最近互动</dt><dd>{relativeDate(organization.lastInteractionAt)}</dd>
-                      </div>
-                    </dl>
-                  }
+                  meta={<>
+                    <StatusBadge>{organizationTypeLabels[organization.organizationType] || "其他"}</StatusBadge>
+                    <span>{businessRelationText(organization.roleKeys)}</span>
+                    <span>{organization.industryCustom || organization.industry || "未填写行业"}</span>
+                    <SystemIdField value={organization.id} label="组织 ID" />
+                  </>}
                 />
               </div>
             </div>
+          }
+          highlights={
+            <SummaryStrip items={[
+              { label: "联系人", value: organization.contactCount },
+              { label: "线索", value: organization.marketingLeadCount || 0 },
+              { label: "商机", value: organization.leads.length },
+              { label: "最近互动", value: relativeDate(organization.lastInteractionAt) },
+            ]} />
           }
           sidebar={
             <>
@@ -618,7 +675,7 @@ function ContactModule({ rows, onCreate }: { rows: Contact[]; onCreate?: () => v
             </a>
           ))}
         </div>
-      ) : <p className="text-sm text-muted-foreground">暂无联系人</p>}
+      ) : <EmptyState title="暂无联系人" />}
     </Section>
   );
 }
@@ -638,7 +695,7 @@ function MarketingLeadModule({ rows, onCreate }: { rows: MarketingLead[]; onCrea
             </a>
           ))}
         </div>
-      ) : <p className="text-sm text-muted-foreground">暂无已关联线索</p>}
+      ) : <EmptyState title="暂无已关联线索" />}
     </Section>
   );
 }
@@ -671,9 +728,17 @@ function OrganizationAudit({ id }: { id: string }) {
               <span className="text-muted-foreground">{row.actorName} · {dateTime(row.createdAt)}</span>
             </div>
           )) : <EmptyState title="本页暂无相关操作记录" />}
-          <div className="mt-4 flex justify-end gap-2">
-            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(page - 1)}>上一页</Button>
-            <Button variant="outline" size="sm" disabled={page * 100 >= (result.data?.meta.total || 0)} onClick={() => setPage(page + 1)}>下一页</Button>
+          <div className="crm-organization-audit-pagination-wrap mt-4 flex justify-end">
+            <Pagination
+              className="crm-organization-audit-pagination"
+              currentPage={page}
+              total={result.data?.meta.total || 0}
+              pageSize={100}
+              size="small"
+              showSizeChanger={false}
+              disabled={result.loading}
+              onPageChange={setPage}
+            />
           </div>
         </>
       )}

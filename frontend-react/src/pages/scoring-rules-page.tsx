@@ -1,14 +1,13 @@
 import { useState } from "react";
-import type { ColumnDef } from "@tanstack/react-table";
-import { Plus } from "lucide-react";
+import { IconPlus as Plus } from "@douyinfe/semi-icons";
 
-import { DataTable } from "@/components/crm/data-table";
+import { DataTable, type CrmColumnDef } from "@/components/crm/data-table";
 import { ErrorState, Field, FormDialog, PageContent, PageHeader, RowActions, StatusBadge } from "@/components/crm/primitives";
-import { Button } from "@/components/v1/ui";
-import { Checkbox } from "@/components/v1/ui";
-import { Input } from "@/components/v1/ui";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/v1/ui";
-import { Textarea } from "@/components/v1/ui";
+import { Button } from "@/components/crm/ui";
+import { Checkbox } from "@/components/crm/ui";
+import { Input } from "@/components/crm/ui";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/crm/ui";
+import { Textarea } from "@/components/crm/ui";
 import { crmApi, type SessionUser } from "@/lib/api";
 import { can, friendlyError, useResource, type LeadScoringRule } from "@/lib/crm";
 
@@ -40,7 +39,7 @@ export function ScoringRulesPage({ me }: { me: SessionUser }) {
   const result = useResource<{ data: LeadScoringRule[] }>(`/api/v1/crm/marketing/scoring-rules?includeDisabled=${manageable}`);
   const [editing, setEditing] = useState<LeadScoringRule | true | null>(null);
   const rows = result.data?.data || [];
-  const columns: ColumnDef<LeadScoringRule>[] = [
+  const columns: CrmColumnDef<LeadScoringRule>[] = [
     { accessorKey: "name", header: "行为", cell: ({ row }) => <div><p className="font-medium">{row.original.name}</p>{manageable && <p className="text-xs text-muted-foreground">技术代码：{row.original.code}</p>}</div> },
     { accessorKey: "category", header: "管理员分类" }, { id: "scoreDimension", header: "评分维度", cell: ({ row }) => row.original.scoreDimension === "FIT" ? "线索匹配度" : "互动活跃度" },
     { id: "score", header: "分值变化", cell: ({ row }) => <span className="tabular-nums">{row.original.scoreDelta > 0 ? "+" : ""}{row.original.scoreDelta}</span> },

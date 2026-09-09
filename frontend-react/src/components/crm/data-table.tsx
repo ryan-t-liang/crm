@@ -1,29 +1,32 @@
-import { useState, type ReactNode } from "react";
-import {
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  type ColumnDef,
-  type VisibilityState,
-} from "@tanstack/react-table";
-import { ChevronLeft, ChevronRight, Columns3 } from "lucide-react";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/v1/ui";
-import { Button } from "@/components/v1/ui";
-import { Checkbox } from "@/components/v1/ui";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuCheckboxItem,
-} from "@/components/v1/ui";
-import { EmptyState, LoadingSkeleton } from "./primitives";
+import { useMemo, useState, type ReactNode } from "react";
+import { Button as SemiButton, Checkbox, Dropdown, Pagination, Table, Tabs } from "@douyinfe/semi-ui";
+import { IconColumnsStroked } from "@douyinfe/semi-icons";
+import type { ColumnProps } from "@douyinfe/semi-ui/lib/es/table";
+
+import { Button } from "@/components/crm/ui";
+import { EmptyState } from "./primitives";
+
+export type CrmColumnDef<T> = {
+  id?: string;
+  accessorKey?: string;
+  header?: ReactNode;
+  cell?: (context: { row: { original: T }; getValue: () => unknown }) => ReactNode;
+  enableHiding?: boolean;
+};
+
+export type CrmTableView = {
+  key: string;
+  label: ReactNode;
+  disabled?: boolean;
+};
+
+function readPath(record: unknown, path?: string) {
+  if (!path) return undefined;
+  return path.split(".").reduce<unknown>((value, key) => {
+    if (!value || typeof value !== "object") return undefined;
+    return (value as Record<string, unknown>)[key];
+  }, record);
+}
 
 export function DataTable<T extends { id: string }>({
   columns,
@@ -44,8 +47,11 @@ export function DataTable<T extends { id: string }>({
   tableActions,
   primaryAction,
   showColumnControl = true,
+  views,
+  activeView,
+  onViewChange,
 }: {
-  columns: ColumnDef<T>[];
+  columns: CrmColumnDef<T>[];
   rows: T[];
   toolbar?: ReactNode;
   page?: number;
@@ -63,170 +69,121 @@ export function DataTable<T extends { id: string }>({
   tableActions?: ReactNode;
   primaryAction?: ReactNode;
   showColumnControl?: boolean;
+  views?: CrmTableView[];
+  activeView?: string;
+  onViewChange?: (view: string) => void;
 }) {
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const table = useReactTable({
-    data: rows,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getRowId: (row) => row.id,
-    state: { columnVisibility },
-    onColumnVisibilityChange: setColumnVisibility,
-  });
+  const normalized = columns;
+  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
+  const columnKeys = normalized.map((column, index) => column.id || column.accessorKey || `column-${index}`);
+  const setColumnVisible = (key: string, visible: boolean) => {
+    setHiddenColumns((current) => {
+      const next = new Set(current);
+      if (visible) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+
+  const semiColumns = useMemo<ColumnProps<T>[]>(() => normalized.flatMap((column, index) => {
+    const key = columnKeys[index];
+    if (hiddenColumns.has(key)) return [];
+    const isActions = key === "actions";
+    return [{
+      key,
+      dataIndex: column.accessorKey,
+      title: column.header as ReactNode,
+      fixed: isActions ? "right" : undefined,
+      width: isActions ? 92 : undefined,
+      className: isActions ? "crm-sticky-actions" : undefined,
+      render: (_value: unknown, record: T) => column.cell
+        ? column.cell({ row: { original: record }, getValue: () => readPath(record, column.accessorKey) } as never)
+        : (readPath(record, column.accessorKey) as ReactNode),
+    }];
+  }), [columns, hiddenColumns]);
+
   const pages = Math.max(1, Math.ceil((total ?? rows.length) / pageSize));
-  const selected = new Set(selectedIds);
-  const pageIds = rows.map((row) => row.id);
-  const allPageSelected = pageIds.length > 0 && pageIds.every((id) => selected.has(id));
-  const somePageSelected = pageIds.some((id) => selected.has(id));
-  const setSelected = (ids: string[]) => onSelectedIdsChange?.([...new Set(ids)]);
+  const selection = selectable ? {
+    selectedRowKeys: selectedIds,
+    onChange: (keys?: Array<string | number>) => onSelectedIdsChange?.((keys || []).map(String)),
+    fixed: true as const,
+    width: 44,
+  } : undefined;
+
   return (
-    <div className="crm-data-table min-w-0 space-y-3">
-      {toolbar && (
-        <section className="crm-filter-panel" aria-label={`${label}查询`}>
-          <div
-            role="toolbar"
-            aria-label={`${label}查询条件`}
-            className="crm-data-toolbar"
-          >
-            <div className="crm-data-filter-fields">{toolbar}</div>
+    <div className="crm-data-table">
+      <div className="crm-data-workspace">
+        {views?.length ? (
+          <section className="crm-data-views" aria-label={`${label}视图`}>
+            <Tabs
+              type="button"
+              size="small"
+              collapsible="auto"
+              activeKey={activeView || views[0].key}
+              onChange={onViewChange}
+              tabList={views.map((view) => ({
+                itemKey: view.key,
+                tab: view.label,
+                disabled: view.disabled,
+              }))}
+            />
+          </section>
+        ) : null}
+        {toolbar && <section className="crm-filter-panel" aria-label={`${label}查询`}><div role="toolbar" aria-label={`${label}查询条件`} className="crm-data-toolbar"><div className="crm-data-filter-fields">{toolbar}</div></div></section>}
+        {selectable && selectedIds.length > 0 && (
+          <div role="toolbar" aria-label="批量操作" className="crm-bulk-toolbar">
+            <strong>已选择 {selectedIds.length} 条</strong>
+            {selectionActions}
+            <Button variant="ghost" size="sm" className="ml-auto" onClick={() => onSelectedIdsChange?.([])}>取消选择</Button>
           </div>
-        </section>
-      )}
-      {selectable && selectedIds.length > 0 && (
-        <div role="toolbar" aria-label="批量操作" className="crm-bulk-toolbar flex flex-wrap items-center gap-3 border-y px-3 py-2">
-          <span className="text-sm font-medium">已选择 {selectedIds.length} 条</span>
-          {selectionActions}
-          <Button variant="ghost" size="sm" className="ml-auto" onClick={() => setSelected([])}>取消选择</Button>
-        </div>
-      )}
-      <div className="crm-table-shell min-w-0 overflow-hidden rounded-xl border bg-card">
+        )}
+        <section className="crm-table-shell" aria-label={label}>
         <div className="crm-table-toolbar">
-          <div className="crm-table-title">
-            <strong>{label}</strong>
-            <span>{total ?? rows.length} 条结果</span>
-          </div>
+          <div className="crm-table-title"><strong>{label}</strong><span>{total ?? rows.length} 条结果</span></div>
           <div className="crm-table-toolbar-actions">
             {tableActions}
-            {showColumnControl && <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="shadow-none">
-                  <Columns3 />列
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {table
-                  .getAllLeafColumns()
-                  .filter((c) => c.getCanHide())
-                  .map((column) => (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(v) => column.toggleVisibility(v)}
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      {typeof column.columnDef.header === "string"
-                        ? column.columnDef.header
-                        : column.id}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-              </DropdownMenuContent>
-            </DropdownMenu>}
+            {showColumnControl && (
+              <Dropdown
+                trigger="click"
+                position="bottomRight"
+                render={
+                  <Dropdown.Menu className="crm-column-menu">
+                    <Dropdown.Title>显示字段</Dropdown.Title>
+                    {normalized.map((column, index) => {
+                      const key = columnKeys[index];
+                      const locked = column.enableHiding === false;
+                      return <Dropdown.Item key={key} disabled={locked} onClick={(event) => event.stopPropagation()}><Checkbox checked={!hiddenColumns.has(key)} disabled={locked} onChange={(event) => setColumnVisible(key, Boolean(event.target.checked))}>{typeof column.header === "string" ? column.header : key}</Checkbox></Dropdown.Item>;
+                    })}
+                  </Dropdown.Menu>
+                }
+              >
+                <SemiButton theme="outline" type="tertiary" size="small" icon={<IconColumnsStroked />}>列</SemiButton>
+              </Dropdown>
+            )}
             {primaryAction}
           </div>
         </div>
-        {loading ? (
-          <div className="p-4">
-            <LoadingSkeleton />
-          </div>
-        ) : (
-          <Table aria-label={label}>
-            <TableHeader className="crm-table-header">
-              <TableRow>
-                {selectable && (
-                  <TableHead className="w-10 px-3">
-                    <Checkbox
-                      aria-label="选择本页"
-                      checked={allPageSelected ? true : somePageSelected ? "indeterminate" : false}
-                      onCheckedChange={(checked) => setSelected(checked === true ? [...selectedIds, ...pageIds] : selectedIds.filter((id) => !pageIds.includes(id)))}
-                    />
-                  </TableHead>
-                )}
-                {table.getHeaderGroups()[0].headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className={`h-10 whitespace-nowrap px-4 text-xs font-medium text-muted-foreground ${header.column.id === "actions" ? "crm-sticky-actions sticky right-0 z-10" : ""}`}
-                  >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext(),
-                    )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {selectable && (
-                    <TableCell className="w-10 px-3">
-                      <Checkbox
-                        aria-label={`选择 ${row.id}`}
-                        checked={selected.has(row.id)}
-                        onCheckedChange={(checked) => setSelected(checked === true ? [...selectedIds, row.id] : selectedIds.filter((id) => id !== row.id))}
-                      />
-                    </TableCell>
-                  )}
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      className={`px-4 py-2 text-sm ${cell.column.id === "actions" ? "crm-sticky-actions sticky right-0" : ""}`}
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-        {!loading && !rows.length && (
-          <EmptyState
-            title={emptyTitle}
-            description="试试调整筛选条件，或添加一条新记录。"
-            action={emptyAction}
-          />
-        )}
+        <Table<T>
+          className="crm-semi-table"
+          rowKey="id"
+          columns={semiColumns}
+          dataSource={rows}
+          loading={Boolean(loading)}
+          pagination={false}
+          rowSelection={selection}
+          size="small"
+          bordered={false}
+          scroll={{ x: "max-content" }}
+          empty={<EmptyState title={emptyTitle} description="试试调整筛选条件，或添加一条新记录。" action={emptyAction} />}
+        />
         {onPage && (
-          <div className="crm-table-footer flex items-center justify-between border-t px-4 py-3 text-xs text-muted-foreground">
+          <div className="crm-table-footer">
             <span>共 {total ?? rows.length} 条</span>
-            <div className="flex items-center gap-3">
-              <span>
-                {page} / {pages} 页
-              </span>
-              <Button
-                variant="outline"
-                size="icon-sm"
-                aria-label="上一页"
-                disabled={page <= 1 || loading}
-                onClick={() => onPage(page - 1)}
-              >
-                <ChevronLeft />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon-sm"
-                aria-label="下一页"
-                disabled={page >= pages || loading}
-                onClick={() => onPage(page + 1)}
-              >
-                <ChevronRight />
-              </Button>
-            </div>
+            <Pagination currentPage={page} total={total ?? rows.length} pageSize={pageSize} showSizeChanger={false} onPageChange={onPage} disabled={loading} />
+            <span>{page} / {pages} 页</span>
           </div>
         )}
+        </section>
       </div>
     </div>
   );

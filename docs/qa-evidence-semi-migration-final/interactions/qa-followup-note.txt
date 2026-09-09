@@ -1,0 +1,2 @@
+Kivisense CRM Semi UI migration interaction regression attachment.
+This file is isolated QA evidence and contains no production data.

@@ -1,61 +1,35 @@
-import { useEffect, useId, useState, type ReactNode } from "react";
+import { cloneElement, isValidElement, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import {
-  Check,
-  ChevronsUpDown,
-  Inbox,
-  MoreHorizontal,
-  Search,
-  SlidersHorizontal,
-} from "lucide-react";
-import { Button } from "@/components/v1/ui";
-import { Input } from "@/components/v1/ui";
-import { Label } from "@/components/v1/ui";
-import { Badge } from "@/components/v1/ui";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/v1/ui";
-import { Alert, AlertDescription, AlertTitle } from "@/components/v1/ui";
-import { Skeleton } from "@/components/v1/ui";
+  IconFilterStroked as SlidersHorizontal,
+  IconInbox as Inbox,
+  IconMore as MoreHorizontal,
+  IconSearch as Search,
+} from "@douyinfe/semi-icons";
+import {
+  AutoComplete,
+  Descriptions,
+  Dropdown,
+  Empty,
+  Form,
+  Modal,
+  Popover as SemiPopover,
+  SideSheet,
+  Steps,
+  Tabs as SemiTabs,
+} from "@douyinfe/semi-ui";
+import { Button } from "@/components/crm/ui";
+import { Input } from "@/components/crm/ui";
+import { Badge } from "@/components/crm/ui";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/crm/ui";
+import { Alert, AlertDescription, AlertTitle } from "@/components/crm/ui";
+import { Skeleton } from "@/components/crm/ui";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from "@/components/v1/ui";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/v1/ui";
-import {
-  Command,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandItem,
-} from "@/components/v1/ui";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/v1/ui";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/v1/ui";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-} from "@/components/v1/ui";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/v1/ui";
+} from "@/components/crm/ui";
 import { appUrl } from "@/lib/api";
 import { friendlyError, type Organization } from "@/lib/crm";
 import { cn } from "@/lib/utils";
@@ -75,16 +49,22 @@ export function PageContent({
 }
 export function DetailScaffold({
   top,
+  highlights,
+  stages,
   sidebar,
   children,
 }: {
   top: ReactNode;
+  highlights?: ReactNode;
+  stages?: ReactNode;
   sidebar: ReactNode;
   children: ReactNode;
 }) {
   return (
     <div className="crm-detail-scaffold">
       <header className="crm-detail-top">{top}</header>
+      {highlights && <div className="crm-record-highlights">{highlights}</div>}
+      {stages && <div className="crm-record-stages">{stages}</div>}
       <div className="crm-detail-grid">
         <aside className="crm-detail-side">{sidebar}</aside>
         <section className="crm-detail-main">{children}</section>
@@ -105,9 +85,7 @@ export function PageHeader({
     <div className="crm-page-header flex flex-wrap items-start justify-between gap-4">
       <div className="min-w-0">
         <h1 className="crm-display-title text-2xl font-semibold tracking-tight">{title}</h1>
-        {description && (
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-        )}
+        {description ? <p className="crm-page-description">{description}</p> : null}
       </div>
       {actions && (
         <div className="flex flex-wrap items-center gap-2">{actions}</div>
@@ -125,14 +103,23 @@ export function PageToolbar({ left, right }: { left?: ReactNode; right?: ReactNo
 }
 export function CopyValue({ value, label = "复制" }: { value: string; label?: string }) {
   const [copied, setCopied] = useState(false);
-  return <button type="button" className="font-mono text-xs text-muted-foreground underline-offset-4 hover:underline" title={`${label} ${value}`} onClick={() => { void navigator.clipboard.writeText(value).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1200); }); }}>{copied ? "已复制" : value}</button>;
+  return <Button variant="link" size="sm" className="crm-copy-value" title={`${label} ${value}`} onClick={() => { void navigator.clipboard.writeText(value).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1200); }); }}>{copied ? "已复制" : value}</Button>;
 }
 
 export function focusFirstInvalidField() {
   window.setTimeout(() => {
     const field = document.querySelector<HTMLElement>('[aria-invalid="true"]');
-    field?.focus();
-    field?.scrollIntoView({ behavior: "smooth", block: "center" });
+    if (!field) return;
+    const directlyFocusable = field.matches(
+      'input, textarea, select, button, a[href], [tabindex]:not([tabindex="-1"])',
+    );
+    const focusTarget = directlyFocusable
+      ? field
+      : field.querySelector<HTMLElement>(
+          'input:not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+        ) || field;
+    focusTarget.focus();
+    focusTarget.scrollIntoView({ behavior: "smooth", block: "center" });
   }, 0);
 }
 export function SystemIdField({ value, label = "系统编号" }: { value: string; label?: string }) {
@@ -146,11 +133,7 @@ export const SectionHeader = PageHeader;
 export const CompactEmptyState = EmptyState;
 export function StagePath({ stages, current }: { stages: Array<{ key: string; label: string }>; current: string }) {
   const currentIndex = stages.findIndex((stage) => stage.key === current);
-  return <ol aria-label="阶段路径" className="crm-stage-path flex min-w-0 overflow-x-auto border bg-card">{stages.map((stage, index) => {
-    const state = index < currentIndex ? "complete" : index === currentIndex ? "current" : "future";
-    const terminal = stage.key === "WON" ? "won" : stage.key === "LOST" ? "lost" : undefined;
-    return <li key={stage.key} data-stage-state={state} data-terminal={terminal} className="crm-stage-step flex min-w-28 items-center gap-2 text-xs"><span className="crm-stage-marker flex size-5 items-center justify-center rounded-full border">{state === "complete" ? <Check className="size-3" /> : index + 1}</span><span className="font-medium">{stage.label}</span>{index < stages.length - 1 && <span className="crm-stage-connector ml-auto h-px w-5" />}</li>;
-  })}</ol>;
+  return <div aria-label="阶段路径" className="crm-stage-path"><Steps type="basic" size="small" current={Math.max(0, currentIndex)}>{stages.map((stage) => <Steps.Step key={stage.key} title={stage.label} className={stage.key === "WON" ? "crm-stage-won" : stage.key === "LOST" ? "crm-stage-lost" : undefined} />)}</Steps></div>;
 }
 export const FieldGrid = ({ children }: { children: ReactNode }) => <div className="grid gap-4 sm:grid-cols-2">{children}</div>;
 export const RecordActions = ({ children }: { children: ReactNode }) => <div className="flex flex-wrap items-center gap-2">{children}</div>;
@@ -163,16 +146,7 @@ export function EmptyState({
   description?: string;
   action?: ReactNode;
 }) {
-  return (
-    <div className="crm-empty-state flex flex-col items-center justify-center gap-2 px-6 py-12 text-center">
-      <span className="crm-empty-icon"><Inbox className="size-7" /></span>
-      <h3 className="text-sm font-medium">{title}</h3>
-      {description && (
-        <p className="max-w-sm text-sm text-muted-foreground">{description}</p>
-      )}
-      {action && <div className="mt-2">{action}</div>}
-    </div>
-  );
+  return <Empty className="crm-empty-state" image={<span className="crm-empty-icon"><Inbox className="size-7" /></span>} title={title} description={description}>{action}</Empty>;
 }
 export function ErrorState({
   error,
@@ -360,26 +334,7 @@ export function DetailTabs({
   items: [string, string][];
   children: ReactNode;
 }) {
-  return (
-    <Tabs value={value} onValueChange={onChange} className="min-w-0 gap-5">
-      <div className="crm-detail-tabs max-w-full overflow-x-auto rounded-t-xl border border-b-0 bg-card px-2">
-        <TabsList className="h-10 rounded-none bg-transparent p-0">
-          {items.map(([key, label]) => (
-            <TabsTrigger
-              key={key}
-              value={key}
-              className="crm-detail-tab h-10 border-0 px-4 text-sm shadow-none"
-            >
-              {label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </div>
-      <TabsContent value={value} className="min-w-0">
-        {children}
-      </TabsContent>
-    </Tabs>
-  );
+  return <SemiTabs className="crm-detail-tabs" type="line" activeKey={value} onChange={onChange} tabList={items.map(([itemKey, tab]) => ({ itemKey, tab }))}><SemiTabs.TabPane itemKey={value}>{children}</SemiTabs.TabPane></SemiTabs>;
 }
 export function Section({
   title,
@@ -391,7 +346,7 @@ export function Section({
   action?: ReactNode;
 }) {
   return (
-    <section className="crm-section min-w-0 overflow-hidden rounded-xl border bg-card">
+    <section className="crm-section">
       <div className="crm-section-header flex items-center justify-between gap-3 border-b px-5 py-4">
         <h2 className="text-base font-semibold">{title}</h2>
         {action}
@@ -407,16 +362,7 @@ export function EntityMeta({
   items: { label: string; value: ReactNode }[];
   columns?: 1 | 2;
 }) {
-  return (
-    <dl className={cn("grid gap-x-6 gap-y-5", columns === 1 ? "grid-cols-1" : "grid-cols-2")}>
-      {items.map((item) => (
-        <div key={item.label} className="min-w-0">
-          <dt className="text-xs text-muted-foreground">{item.label}</dt>
-          <dd className="mt-1 break-words text-sm">{item.value || "—"}</dd>
-        </div>
-      ))}
-    </dl>
-  );
+  return <Descriptions className="crm-entity-meta" column={columns} data={items.map((item) => ({ key: item.label, value: item.value ?? "—" }))} align="left" size="small" />;
 }
 export type ActionItem = {
   label: string;
@@ -434,36 +380,7 @@ export function RowActions({
   triggerLabel?: string;
 }) {
   if (!items.length) return null;
-  return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant={triggerLabel ? "outline" : "ghost"}
-          size={triggerLabel ? "sm" : "icon-sm"}
-          aria-label={`${label}的更多操作`}
-        >
-          <MoreHorizontal />
-          {triggerLabel}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {items.map((item) => (
-          <DropdownMenuItem
-            key={item.label}
-            onSelect={item.onClick}
-            className={
-              item.destructive
-                ? "text-destructive focus:text-destructive"
-                : undefined
-            }
-          >
-            {item.icon}
-            {item.label}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
+  return <Dropdown trigger="click" position="bottomRight" render={<Dropdown.Menu className="crm-row-actions-menu">{items.map((item) => <Dropdown.Item key={item.label} type={item.destructive ? "danger" : "primary"} icon={item.icon} onClick={item.onClick}>{item.label}</Dropdown.Item>)}</Dropdown.Menu>}><Button variant={triggerLabel ? "outline" : "ghost"} size={triggerLabel ? "sm" : "icon-sm"} aria-label={`${label}的更多操作`}><MoreHorizontal />{triggerLabel}</Button></Dropdown>;
 }
 export function FilterControl({
   label,
@@ -480,15 +397,16 @@ export function FilterControl({
   all?: boolean;
   className?: string;
 }) {
+  const labelId = `${useId()}-label`;
   return (
     <label className="crm-filter-control">
-      <span className="crm-filter-label">{label}</span>
+      <span className="crm-filter-label" id={labelId}>{label}</span>
       <Select
         value={value || "all"}
         onValueChange={(v) => onChange(v === "all" ? "" : v)}
       >
         <SelectTrigger
-          aria-label={label}
+          aria-labelledby={labelId}
           className={cn("h-9 min-w-32 bg-background shadow-none", className)}
         >
           <SelectValue placeholder={label} />
@@ -539,21 +457,7 @@ export function FilterPopover({
   children: ReactNode;
   active?: boolean;
 }) {
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" className="crm-filter-popover-trigger shadow-none">
-          <SlidersHorizontal />
-          更多筛选
-          {active && <span className="size-1.5 rounded-full bg-primary" />}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="start" className="w-80 space-y-4 rounded-xl">
-        <p className="text-sm font-medium">更多筛选</p>
-        {children}
-      </PopoverContent>
-    </Popover>
-  );
+  return <SemiPopover trigger="click" position="bottomLeft" content={<div className="crm-filter-popover"><p className="text-sm font-medium">更多筛选</p>{children}</div>}><Button variant="outline" className="crm-filter-popover-trigger shadow-none"><SlidersHorizontal />更多筛选{active && <span className="crm-filter-active-dot" />}</Button></SemiPopover>;
 }
 export function Field({
   label,
@@ -569,24 +473,27 @@ export function Field({
   wide?: boolean;
 }) {
   const id = useId();
+  const control = children(id);
+  const accessibleControl = isValidElement<Record<string, unknown>>(control)
+    ? cloneElement(control, {
+        id: control.props.id || id,
+        "aria-labelledby": control.props["aria-labelledby"] || `${id}-label`,
+        ...(error && !control.props["aria-describedby"]
+          ? { "aria-describedby": `${id}-error` }
+          : {}),
+        ...(error && control.props["aria-invalid"] === undefined
+          ? { "aria-invalid": true }
+          : {}),
+      })
+    : control;
   return (
-    <div className={cn("grid content-start gap-2", wide && "sm:col-span-2")}>
-      <Label htmlFor={id} className="text-sm font-medium">
-        {label}
-        {required && (
-          <span
-            aria-hidden="true"
-            className="text-destructive after:content-['*']"
-          />
-        )}
-      </Label>
-      {children(id)}
-      {error && (
-        <p role="alert" id={`${id}-error`} className="text-xs text-destructive">
-          {error}
-        </p>
-      )}
-    </div>
+    <Form.Slot
+      className={cn("crm-form-field", wide && "sm:col-span-2")}
+      label={{ text: label, required, name: id, id: `${id}-label` }}
+      error={error ? { error, errorMessageId: `${id}-error` } : undefined}
+    >
+      {accessibleControl}
+    </Form.Slot>
   );
 }
 export function EntityCombobox({
@@ -611,11 +518,15 @@ export function EntityCombobox({
   allowCustom?: boolean;
   maxLength?: number;
 }) {
+  const selectedChangeRef = useRef<string | null>(null);
   const [open, setOpen] = useState(false),
-    [query, setQuery] = useState(""),
+    [query, setQuery] = useState(selectedLabel || ""),
     [rows, setRows] = useState(options || []),
     [loading, setLoading] = useState(false),
     [failed, setFailed] = useState(false);
+  useEffect(() => {
+    if (!open) setQuery(selectedLabel || rows.find((row) => row.id === value)?.label || "");
+  }, [open, rows, selectedLabel, value]);
   useEffect(() => {
     if (!open || !load) return;
     const controller = new AbortController();
@@ -643,82 +554,84 @@ export function EntityCombobox({
       controller.abort();
     };
   }, [query, open, load]);
+  const availableRows = load ? rows : options || rows;
+  const data = availableRows.map((row) => ({
+    value: row.id,
+    label: row.label,
+    description: row.description,
+  }));
+  if (
+    allowCustom &&
+    query.trim() &&
+    !availableRows.some((row) => row.label === query.trim())
+  ) {
+    data.push({ value: query.trim(), label: query.trim(), description: undefined });
+  }
+  const selectedOptionLabel =
+    selectedLabel || availableRows.find((row) => row.id === value)?.label || "";
+  const handleQueryChange = (nextValue: string | number) => {
+    const nextQuery = String(nextValue);
+    setQuery(nextQuery);
+
+    // Semi fires onSelect first and then onChange with the selected label.
+    // Preserve that selection while still invalidating an edited old label.
+    if (selectedChangeRef.current === nextQuery) {
+      selectedChangeRef.current = null;
+      return;
+    }
+    if (value && nextQuery !== selectedOptionLabel) onChange("", "");
+  };
+  const clearSelection = () => {
+    selectedChangeRef.current = null;
+    setQuery("");
+    if (value || selectedLabel) onChange("", "");
+  };
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          aria-label={label}
-          className="h-9 w-full justify-between shadow-none"
-        >
-          <span className="truncate">
-            {selectedLabel ||
-              rows.find((r) => r.id === value)?.label ||
-              `选择${label}`}
-          </span>
-          <ChevronsUpDown className="size-4 text-muted-foreground" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="crm-entity-combobox w-[var(--radix-popover-trigger-width)] min-w-64 p-0"
-        align="start"
-      >
-        <Command shouldFilter={!load}>
-          <CommandInput
-            maxLength={maxLength}
-            placeholder={`搜索${label}…`}
-            value={query}
-            onValueChange={setQuery}
-          />
-          <CommandList aria-label={`${label}选项`}>
-            {loading ? (
-              <div className="p-4 text-sm text-muted-foreground">正在搜索…</div>
-            ) : (
-              <>
-                <CommandEmpty>
-                  {failed ? "搜索失败，请重新输入后重试" : "没有匹配结果"}
-                </CommandEmpty>
-                {(load ? rows : options || rows).map((row) => (
-                  <CommandItem
-                    key={row.id}
-                    value={`${row.label} ${row.description || ""} ${row.id}`}
-                    onSelect={() => {
-                      onChange(row.id, row.label);
-                      setOpen(false);
-                    }}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="truncate">{row.label}</div>
-                      {row.description && (
-                        <div className="truncate text-xs text-muted-foreground">
-                          {row.description}
-                        </div>
-                      )}
-                    </div>
-                    {value === row.id && <Check className="size-4" />}
-                  </CommandItem>
-                ))}
-                {allowCustom &&
-                  query.trim() &&
-                  !rows.some((r) => r.label === query.trim()) && (
-                    <CommandItem
-                      value={query}
-                      onSelect={() => {
-                        onChange(query.trim(), query.trim());
-                        setOpen(false);
-                      }}
-                    >
-                      使用“{query.trim()}”
-                    </CommandItem>
-                  )}
-              </>
-            )}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+    <AutoComplete
+      aria-label={label}
+      className="crm-entity-combobox"
+      data={data}
+      dropdownClassName="crm-entity-combobox-dropdown"
+      dropdownMatchSelectWidth
+      emptyContent={failed ? "搜索失败，请重新输入后重试" : "没有匹配结果"}
+      loading={loading}
+      maxHeight={320}
+      onChange={handleQueryChange}
+      onClear={clearSelection}
+      onDropdownVisibleChange={setOpen}
+      onSearch={setQuery}
+      onSelectWithObject
+      onSelect={(option) => {
+        if (typeof option !== "object" || !option) return;
+        const nextId = String(option.value);
+        const nextLabel = String(option.label || option.value);
+        selectedChangeRef.current = nextLabel;
+        onChange(nextId, nextLabel);
+        setQuery(nextLabel);
+        setOpen(false);
+      }}
+      placeholder={`搜索或选择${label}`}
+      renderItem={(option) => {
+        if (typeof option !== "object" || !option) return String(option);
+        const isCustom = allowCustom && option.value === query.trim() && option.label === query.trim();
+        return (
+          <div className="crm-entity-combobox-option">
+            <span className="crm-entity-combobox-label">
+              {isCustom ? `使用“${String(option.label)}”` : option.label}
+            </span>
+            {option.description ? (
+              <span className="crm-entity-combobox-description">{String(option.description)}</span>
+            ) : null}
+          </div>
+        );
+      }}
+      renderSelectedItem={(option) =>
+        typeof option === "object" && option ? String(option.label || option.value) : String(option)
+      }
+      showClear
+      value={query}
+      {...(maxLength ? { maxLength } : {})}
+    />
   );
 }
 export function FormDialog({
@@ -739,31 +652,28 @@ export function FormDialog({
   busy?: boolean;
 }) {
   return (
-    <Dialog
-      open
-      onOpenChange={(v) => {
-        if (!v && !busy) onClose();
+    <SideSheet
+      bodyStyle={{ padding: 0 }}
+      className="crm-form-sheet"
+      closeOnEsc={!busy}
+      closable={!busy}
+      footer={<div className="crm-form-footer">{footer}</div>}
+      keepDOM={false}
+      maskClosable={!busy}
+      onCancel={() => {
+        if (!busy) onClose();
       }}
-    >
-      <DialogContent
-        className={cn(
-          "crm-form-dialog flex max-h-[90dvh] flex-col gap-0 overflow-hidden p-0",
-          wide ? "sm:max-w-3xl" : "sm:max-w-xl",
-        )}
-        onInteractOutside={(e) => e.preventDefault()}
-      >
-        <DialogHeader className="border-b px-6 py-5">
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>
-            {description || "填写完成后统一保存。"}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="crm-form-body min-h-0 overflow-y-auto p-6">{children}</div>
-        <div className="crm-form-footer flex shrink-0 items-center justify-end gap-2 border-t px-6 py-4">
-          {footer}
+      title={(
+        <div className="crm-form-heading">
+          <h2>{title}</h2>
+          <p>{description || "填写完成后统一保存。"}</p>
         </div>
-      </DialogContent>
-    </Dialog>
+      )}
+      visible
+      width={wide ? 800 : 640}
+    >
+      <Form className="crm-form-body" labelPosition="top">{children}</Form>
+    </SideSheet>
   );
 }
 
@@ -783,30 +693,28 @@ export function FormDrawer({
   busy?: boolean;
 }) {
   return (
-    <Dialog
-      open
-      onOpenChange={(v) => {
-        if (!v && !busy) onClose();
+    <SideSheet
+      bodyStyle={{ padding: 0 }}
+      className="crm-form-sheet crm-form-sheet-wide"
+      closeOnEsc={!busy}
+      closable={!busy}
+      footer={<div className="crm-form-footer">{footer}</div>}
+      keepDOM={false}
+      maskClosable={!busy}
+      onCancel={() => {
+        if (!busy) onClose();
       }}
+      title={(
+        <div className="crm-form-heading">
+          <h2>{title}</h2>
+          <p>{description || "填写完成后统一保存。"}</p>
+        </div>
+      )}
+      visible
+      width={800}
     >
-      <DialogContent
-        className="crm-form-drawer flex flex-col gap-0 overflow-hidden p-0"
-        onInteractOutside={(event) => event.preventDefault()}
-      >
-        <DialogHeader className="border-b px-6 py-5">
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>
-            {description || "填写完成后统一保存。"}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="crm-form-body min-h-0 flex-1 overflow-y-auto p-6">
-          {children}
-        </div>
-        <div className="crm-form-footer flex shrink-0 items-center justify-end gap-2 border-t px-6 py-4">
-          {footer}
-        </div>
-      </DialogContent>
-    </Dialog>
+      <Form className="crm-form-body" labelPosition="top">{children}</Form>
+    </SideSheet>
   );
 }
 export function ConfirmDeleteDialog({
@@ -823,26 +731,14 @@ export function ConfirmDeleteDialog({
   const [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   return (
-    <AlertDialog
-      open
-      onOpenChange={(v) => {
-        if (!v && !busy) onClose();
-      }}
-    >
-      <AlertDialogContent className="crm-confirm-dialog">
-        <AlertDialogHeader>
-          <AlertDialogTitle>删除“{name}”？</AlertDialogTitle>
-          <AlertDialogDescription>
-            {description || "此操作将执行软删除，并保留系统历史。"}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        {error && (
-          <p role="alert" className="text-sm text-destructive">
-            {error}
-          </p>
-        )}
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={busy}>取消</AlertDialogCancel>
+    <Modal
+      centered
+      className="crm-confirm-dialog"
+      closeOnEsc={!busy}
+      closable={!busy}
+      footer={(
+        <div className="crm-confirm-actions">
+          <Button variant="outline" disabled={busy} onClick={onClose}>取消</Button>
           <Button
             variant="destructive"
             disabled={busy}
@@ -856,8 +752,17 @@ export function ConfirmDeleteDialog({
           >
             {busy ? "删除中…" : "确认删除"}
           </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+        </div>
+      )}
+      maskClosable={!busy}
+      onCancel={() => {
+        if (!busy) onClose();
+      }}
+      title={`删除“${name}”？`}
+      visible
+    >
+      <p>{description || "此操作将执行软删除，并保留系统历史。"}</p>
+      {error && <p role="alert" className="crm-confirm-error">{error}</p>}
+    </Modal>
   );
 }
