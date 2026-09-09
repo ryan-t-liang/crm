@@ -14,7 +14,7 @@ export function OwnerCell({ name }: { name?: string | null }) {
     <span className={`crm-owner-cell${unassigned ? " is-unassigned" : ""}`}>
       <Avatar
         className="crm-owner-avatar"
-        color={unassigned ? "grey" : "light-green"}
+        color="grey"
         size="extra-small"
         aria-label={displayName}
       >

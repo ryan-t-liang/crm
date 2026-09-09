@@ -10,7 +10,7 @@ const columns: ColumnProps<TeamRow>[] = [
     title: "成员",
     fixed: "left",
     width: 160,
-    render: (_value, row) => <div className="crm-team-member"><Avatar size="extra-small" color="light-green">{row.user.name.slice(0, 1)}</Avatar><span>{row.user.name}</span></div>,
+    render: (_value, row) => <div className="crm-team-member"><Avatar size="extra-small" color="grey">{row.user.name.slice(0, 1)}</Avatar><span>{row.user.name}</span></div>,
   },
   { dataIndex: "newMarketingLeads", title: "新增线索" },
   { dataIndex: "mql", title: "MQL" },

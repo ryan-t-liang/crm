@@ -1,0 +1,1187 @@
+{
+  "generatedAt": "2026-09-09T08:44:06.409Z",
+  "baseUrl": "http://127.0.0.1:3101/crm_kivisense",
+  "browser": "Google Chrome via Playwright, headless, cache disabled",
+  "authentication": "Existing storage state used without inspecting or emitting its path or cookie contents",
+  "session": {
+    "id": "cmtltl86u000qlq0ti7pj3wl0",
+    "name": "UAT 超级管理员",
+    "role": {
+      "id": "cmtltl7un000mlq0taheoue1t",
+      "key": "SUPER_ADMIN",
+      "name": "超级管理员"
+    },
+    "permissionCount": 52
+  },
+  "fixture": {
+    "organization": {
+      "id": "ad111866a94311f186fdee0ce19beaf6",
+      "name": "弥知科技 UAT 客户有限公司"
+    },
+    "contact": {
+      "id": "cmtltr0wd000qo2017ccroe9m",
+      "name": "导入联系人 uat-1788458053031"
+    },
+    "marketingLead": {
+      "id": "cmtr02c3e000rmn013a3ogqe2",
+      "name": "梁桐"
+    },
+    "opportunity": {
+      "id": "cmtltqzmn000go201i4nwffan",
+      "name": "AR application and service cooperation uat-1788458053031"
+    }
+  },
+  "build": [
+    {
+      "path": "frontend/react-build/assets/app.js",
+      "bytes": 1458958,
+      "modifiedAt": "2026-09-09T08:43:54.580Z",
+      "sha256": "2f2647fe1ab0bcdc6fe63b4c9ed46d5b210d563b46cc486b899ecf59552b30a2"
+    },
+    {
+      "path": "frontend/react-build/assets/app.css",
+      "bytes": 665635,
+      "modifiedAt": "2026-09-09T08:43:54.581Z",
+      "sha256": "4c9ce1d0cc865f1725af84db49e5993ba853d55f9ee3bf88ee9d747e4fbee85b"
+    }
+  ],
+  "verdict": "PASS",
+  "summary": {
+    "routes": 20,
+    "passed": 20,
+    "failed": 0,
+    "documentOverflow": 0,
+    "consoleErrors": 0,
+    "consoleWarnings": 0,
+    "pageErrors": 0,
+    "httpFailures": 0,
+    "requestFailures": 0
+  },
+  "consoleErrors": [],
+  "consoleWarnings": [],
+  "pageErrors": [],
+  "httpFailures": [],
+  "requestFailures": [],
+  "results": [
+    {
+      "key": "dashboard",
+      "label": "数据看板",
+      "hash": "dashboard",
+      "url": "http://127.0.0.1:3101/crm_kivisense/?visualBaseline=1#dashboard",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "01-dashboard-1440x900.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 945
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 945
+        },
+        "main": {
+          "left": 256,
+          "right": 1416,
+          "width": 1160,
+          "height": 760
+        },
+        "bodyTextLength": 625,
+        "h1": "数据看板",
+        "documentHorizontalOverflow": false,
+        "tables": []
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "workbench",
+      "label": "我的工作台",
+      "hash": "workbench",
+      "url": "http://127.0.0.1:3101/crm_kivisense/?visualBaseline=1#workbench",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "02-workbench-1440x900.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "main": {
+          "left": 232,
+          "right": 1440,
+          "width": 1208,
+          "height": 625
+        },
+        "bodyTextLength": 373,
+        "h1": "我的工作台",
+        "documentHorizontalOverflow": false,
+        "tables": []
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "organizations-list",
+      "label": "组织列表",
+      "hash": "organizations",
+      "url": "http://127.0.0.1:3101/crm_kivisense/?visualBaseline=1#organizations",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "03-organizations-list-1440x900.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "main": {
+          "left": 232,
+          "right": 1440,
+          "width": 1208,
+          "height": 675
+        },
+        "bodyTextLength": 619,
+        "h1": "组织",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 1410,
+            "scrollWidth": 1410,
+            "parentClientWidth": 1158,
+            "parentScrollWidth": 1410,
+            "parentOverflowX": "auto"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "organization-detail",
+      "label": "组织详情",
+      "hash": "organizations/ad111866a94311f186fdee0ce19beaf6",
+      "url": "http://127.0.0.1:3101/crm_kivisense/?visualBaseline=1#organizations/ad111866a94311f186fdee0ce19beaf6",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "04-organization-detail-1440x900.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 2167
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 2167
+        },
+        "main": {
+          "left": 232,
+          "right": 1440,
+          "width": 1208,
+          "height": 2113
+        },
+        "bodyTextLength": 1064,
+        "h1": "弥知科技 UAT 客户有限公司",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 234,
+            "scrollWidth": 234,
+            "parentClientWidth": 329,
+            "parentScrollWidth": 329,
+            "parentOverflowX": "visible"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "contacts-list",
+      "label": "联系人列表",
+      "hash": "contacts",
+      "url": "http://127.0.0.1:3101/crm_kivisense/?visualBaseline=1#contacts",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "05-contacts-list-1440x900.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "main": {
+          "left": 232,
+          "right": 1440,
+          "width": 1208,
+          "height": 600
+        },
+        "bodyTextLength": 589,
+        "h1": "联系人",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 1193,
+            "scrollWidth": 1193,
+            "parentClientWidth": 1158,
+            "parentScrollWidth": 1193,
+            "parentOverflowX": "auto"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "contact-detail",
+      "label": "联系人详情",
+      "hash": "contacts/cmtltr0wd000qo2017ccroe9m",
+      "url": "http://127.0.0.1:3101/crm_kivisense/?visualBaseline=1#contacts/cmtltr0wd000qo2017ccroe9m",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "06-contact-detail-1440x900.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 915
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 915
+        },
+        "main": {
+          "left": 232,
+          "right": 1440,
+          "width": 1208,
+          "height": 861
+        },
+        "bodyTextLength": 641,
+        "h1": "导入联系人 uat-1788458053031",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 329,
+            "scrollWidth": 329,
+            "parentClientWidth": 329,
+            "parentScrollWidth": 329,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 153,
+            "scrollWidth": 153,
+            "parentClientWidth": 329,
+            "parentScrollWidth": 329,
+            "parentOverflowX": "visible"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "marketing-leads-list",
+      "label": "线索列表",
+      "hash": "marketing-leads",
+      "url": "http://127.0.0.1:3101/crm_kivisense/?visualBaseline=1#marketing-leads",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "07-marketing-leads-list-1440x900.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "main": {
+          "left": 232,
+          "right": 1440,
+          "width": 1208,
+          "height": 544
+        },
+        "bodyTextLength": 407,
+        "h1": "线索",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 1158,
+            "scrollWidth": 1158,
+            "parentClientWidth": 1158,
+            "parentScrollWidth": 1158,
+            "parentOverflowX": "auto"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "marketing-lead-detail",
+      "label": "线索详情",
+      "hash": "marketing-leads/cmtr02c3e000rmn013a3ogqe2",
+      "url": "http://127.0.0.1:3101/crm_kivisense/?visualBaseline=1#marketing-leads/cmtr02c3e000rmn013a3ogqe2",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "08-marketing-lead-detail-1440x900.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 946
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 946
+        },
+        "main": {
+          "left": 232,
+          "right": 1440,
+          "width": 1208,
+          "height": 892
+        },
+        "bodyTextLength": 601,
+        "h1": "梁桐",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 108,
+            "scrollWidth": 108,
+            "parentClientWidth": 329,
+            "parentScrollWidth": 329,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 214,
+            "scrollWidth": 214,
+            "parentClientWidth": 329,
+            "parentScrollWidth": 329,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 83,
+            "scrollWidth": 83,
+            "parentClientWidth": 786,
+            "parentScrollWidth": 786,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 259,
+            "scrollWidth": 259,
+            "parentClientWidth": 786,
+            "parentScrollWidth": 786,
+            "parentOverflowX": "visible"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "opportunities-list",
+      "label": "商机列表",
+      "hash": "leads",
+      "url": "http://127.0.0.1:3101/crm_kivisense/?visualBaseline=1#leads",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "09-opportunities-list-1440x900.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 900
+        },
+        "main": {
+          "left": 232,
+          "right": 1440,
+          "width": 1208,
+          "height": 616
+        },
+        "bodyTextLength": 585,
+        "h1": "商机",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 1158,
+            "scrollWidth": 1158,
+            "parentClientWidth": 1158,
+            "parentScrollWidth": 1158,
+            "parentOverflowX": "auto"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "opportunity-detail",
+      "label": "商机详情",
+      "hash": "leads/cmtltqzmn000go201i4nwffan",
+      "url": "http://127.0.0.1:3101/crm_kivisense/?visualBaseline=1#leads/cmtltqzmn000go201i4nwffan",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "screenshot": "10-opportunity-detail-1440x900.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 2111
+        },
+        "body": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "scrollHeight": 2111
+        },
+        "main": {
+          "left": 232,
+          "right": 1440,
+          "width": 1208,
+          "height": 2057
+        },
+        "bodyTextLength": 923,
+        "h1": "AR application and service cooperation uat-1788458053031",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 304,
+            "scrollWidth": 304,
+            "parentClientWidth": 329,
+            "parentScrollWidth": 329,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 165,
+            "scrollWidth": 165,
+            "parentClientWidth": 786,
+            "parentScrollWidth": 786,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 189,
+            "scrollWidth": 189,
+            "parentClientWidth": 786,
+            "parentScrollWidth": 786,
+            "parentOverflowX": "visible"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "dashboard",
+      "label": "数据看板",
+      "hash": "dashboard",
+      "url": "http://127.0.0.1:3101/crm_kivisense/?visualBaseline=1#dashboard",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "11-dashboard-1280x800.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 945
+        },
+        "body": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 945
+        },
+        "main": {
+          "left": 228,
+          "right": 1260,
+          "width": 1032,
+          "height": 760
+        },
+        "bodyTextLength": 625,
+        "h1": "数据看板",
+        "documentHorizontalOverflow": false,
+        "tables": []
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "workbench",
+      "label": "我的工作台",
+      "hash": "workbench",
+      "url": "http://127.0.0.1:3101/crm_kivisense/?visualBaseline=1#workbench",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "12-workbench-1280x800.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 800
+        },
+        "body": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 800
+        },
+        "main": {
+          "left": 208,
+          "right": 1280,
+          "width": 1072,
+          "height": 625
+        },
+        "bodyTextLength": 373,
+        "h1": "我的工作台",
+        "documentHorizontalOverflow": false,
+        "tables": []
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "organizations-list",
+      "label": "组织列表",
+      "hash": "organizations",
+      "url": "http://127.0.0.1:3101/crm_kivisense/?visualBaseline=1#organizations",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "13-organizations-list-1280x800.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 800
+        },
+        "body": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 800
+        },
+        "main": {
+          "left": 208,
+          "right": 1280,
+          "width": 1072,
+          "height": 675
+        },
+        "bodyTextLength": 619,
+        "h1": "组织",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 1410,
+            "scrollWidth": 1410,
+            "parentClientWidth": 1030,
+            "parentScrollWidth": 1410,
+            "parentOverflowX": "auto"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "organization-detail",
+      "label": "组织详情",
+      "hash": "organizations/ad111866a94311f186fdee0ce19beaf6",
+      "url": "http://127.0.0.1:3101/crm_kivisense/?visualBaseline=1#organizations/ad111866a94311f186fdee0ce19beaf6",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "14-organization-detail-1280x800.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 2167
+        },
+        "body": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 2167
+        },
+        "main": {
+          "left": 208,
+          "right": 1280,
+          "width": 1072,
+          "height": 2113
+        },
+        "bodyTextLength": 1064,
+        "h1": "弥知科技 UAT 客户有限公司",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 234,
+            "scrollWidth": 234,
+            "parentClientWidth": 291,
+            "parentScrollWidth": 291,
+            "parentOverflowX": "visible"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "contacts-list",
+      "label": "联系人列表",
+      "hash": "contacts",
+      "url": "http://127.0.0.1:3101/crm_kivisense/?visualBaseline=1#contacts",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "15-contacts-list-1280x800.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 800
+        },
+        "body": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 800
+        },
+        "main": {
+          "left": 208,
+          "right": 1280,
+          "width": 1072,
+          "height": 600
+        },
+        "bodyTextLength": 589,
+        "h1": "联系人",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 1193,
+            "scrollWidth": 1193,
+            "parentClientWidth": 1030,
+            "parentScrollWidth": 1193,
+            "parentOverflowX": "auto"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "contact-detail",
+      "label": "联系人详情",
+      "hash": "contacts/cmtltr0wd000qo2017ccroe9m",
+      "url": "http://127.0.0.1:3101/crm_kivisense/?visualBaseline=1#contacts/cmtltr0wd000qo2017ccroe9m",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "16-contact-detail-1280x800.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 840
+        },
+        "body": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 840
+        },
+        "main": {
+          "left": 208,
+          "right": 1280,
+          "width": 1072,
+          "height": 786
+        },
+        "bodyTextLength": 641,
+        "h1": "导入联系人 uat-1788458053031",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 291,
+            "scrollWidth": 291,
+            "parentClientWidth": 291,
+            "parentScrollWidth": 291,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 153,
+            "scrollWidth": 153,
+            "parentClientWidth": 291,
+            "parentScrollWidth": 291,
+            "parentOverflowX": "visible"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "marketing-leads-list",
+      "label": "线索列表",
+      "hash": "marketing-leads",
+      "url": "http://127.0.0.1:3101/crm_kivisense/?visualBaseline=1#marketing-leads",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "17-marketing-leads-list-1280x800.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 800
+        },
+        "body": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 800
+        },
+        "main": {
+          "left": 208,
+          "right": 1280,
+          "width": 1072,
+          "height": 544
+        },
+        "bodyTextLength": 407,
+        "h1": "线索",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 1030,
+            "scrollWidth": 1030,
+            "parentClientWidth": 1030,
+            "parentScrollWidth": 1030,
+            "parentOverflowX": "auto"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "marketing-lead-detail",
+      "label": "线索详情",
+      "hash": "marketing-leads/cmtr02c3e000rmn013a3ogqe2",
+      "url": "http://127.0.0.1:3101/crm_kivisense/?visualBaseline=1#marketing-leads/cmtr02c3e000rmn013a3ogqe2",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "18-marketing-lead-detail-1280x800.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 946
+        },
+        "body": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 946
+        },
+        "main": {
+          "left": 208,
+          "right": 1280,
+          "width": 1072,
+          "height": 892
+        },
+        "bodyTextLength": 601,
+        "h1": "梁桐",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 108,
+            "scrollWidth": 108,
+            "parentClientWidth": 291,
+            "parentScrollWidth": 291,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 214,
+            "scrollWidth": 214,
+            "parentClientWidth": 291,
+            "parentScrollWidth": 291,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 83,
+            "scrollWidth": 83,
+            "parentClientWidth": 700,
+            "parentScrollWidth": 700,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 259,
+            "scrollWidth": 259,
+            "parentClientWidth": 700,
+            "parentScrollWidth": 700,
+            "parentOverflowX": "visible"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "opportunities-list",
+      "label": "商机列表",
+      "hash": "leads",
+      "url": "http://127.0.0.1:3101/crm_kivisense/?visualBaseline=1#leads",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "19-opportunities-list-1280x800.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 800
+        },
+        "body": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 800
+        },
+        "main": {
+          "left": 208,
+          "right": 1280,
+          "width": 1072,
+          "height": 616
+        },
+        "bodyTextLength": 585,
+        "h1": "商机",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 1114,
+            "scrollWidth": 1114,
+            "parentClientWidth": 1030,
+            "parentScrollWidth": 1114,
+            "parentOverflowX": "auto"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    },
+    {
+      "key": "opportunity-detail",
+      "label": "商机详情",
+      "hash": "leads/cmtltqzmn000go201i4nwffan",
+      "url": "http://127.0.0.1:3101/crm_kivisense/?visualBaseline=1#leads/cmtltqzmn000go201i4nwffan",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "screenshot": "20-opportunity-detail-1280x800.png",
+      "status": "PASS",
+      "failure": null,
+      "measurement": {
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 2111
+        },
+        "body": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "scrollHeight": 2111
+        },
+        "main": {
+          "left": 208,
+          "right": 1280,
+          "width": 1072,
+          "height": 2057
+        },
+        "bodyTextLength": 923,
+        "h1": "AR application and service cooperation uat-1788458053031",
+        "documentHorizontalOverflow": false,
+        "tables": [
+          {
+            "ariaLabel": null,
+            "clientWidth": 291,
+            "scrollWidth": 291,
+            "parentClientWidth": 291,
+            "parentScrollWidth": 291,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 165,
+            "scrollWidth": 165,
+            "parentClientWidth": 700,
+            "parentScrollWidth": 700,
+            "parentOverflowX": "visible"
+          },
+          {
+            "ariaLabel": null,
+            "clientWidth": 189,
+            "scrollWidth": 189,
+            "parentClientWidth": 700,
+            "parentScrollWidth": 700,
+            "parentOverflowX": "visible"
+          }
+        ]
+      },
+      "consoleErrors": [],
+      "consoleWarnings": [],
+      "pageErrors": [],
+      "httpFailures": [],
+      "requestFailures": []
+    }
+  ]
+}

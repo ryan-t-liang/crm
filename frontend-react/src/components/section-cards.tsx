@@ -29,7 +29,7 @@ export function SectionCards({ data }: { data: DashboardData }) {
           <Card key={item.key} className="gap-3 overflow-hidden border-border/90 py-4 shadow-none">
             <CardHeader className="flex grid-cols-none flex-row items-center justify-between gap-3 px-4">
               <span className="text-[13px] font-medium text-muted-foreground">{item.label}</span>
-              <Icon className={attention ? "size-4 text-amber-600" : "size-4 text-muted-foreground/70"} aria-hidden="true" />
+              <Icon className={attention ? "crm-metric-icon is-warning size-4" : "crm-metric-icon size-4"} aria-hidden="true" />
             </CardHeader>
             <CardContent className="px-4">
               <div className="text-[28px] font-semibold leading-none tracking-tight tabular-nums">{data.kpis[item.key]}</div>

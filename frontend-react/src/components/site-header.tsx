@@ -12,7 +12,7 @@ export function SiteHeader({ title = "数据看板", dashboard = true }: { title
         <Breadcrumb routes={["Kivisense CRM", title]} compact={false} />
       </div>
       <div className="crm-site-header-actions">
-        {dashboard && <Tag className="crm-header-status" color="green" prefixIcon={<IconTickCircle />}>非金额运营视图</Tag>}
+        {dashboard && <Tag className="crm-header-status" color="grey" prefixIcon={<IconTickCircle />}>非金额运营视图</Tag>}
         <div id="crm-site-header-context-actions" className="crm-site-header-context-actions" />
       </div>
     </header>

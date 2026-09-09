@@ -250,7 +250,7 @@ export function TaskQueue({
                   className={
                     task.status === "OPEN" &&
                     Date.parse(task.dueAt) < Date.now()
-                      ? "text-amber-700"
+                      ? "crm-task-overdue"
                       : ""
                   }
                 >

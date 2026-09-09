@@ -188,13 +188,15 @@ export function LoadingSkeleton({ detail = false }: { detail?: boolean }) {
 }
 export function StatusBadge({ children }: { children: ReactNode }) {
   const text = typeof children === "string" ? children : "";
-  const tone = /成交|完成|启用|活跃|合格|已确认|成功|可导入/.test(text)
+  const tone = /成交|完成|启用|活跃|已确认|成功|可导入|健康|已转化/.test(text)
     ? "crm-status-success"
     : /失败|丢失|无效|停用|错误|逾期|取消/.test(text)
       ? "crm-status-danger"
-      : /待|培育|处理中|注意|降温|中/.test(text)
-        ? "crm-status-warning"
-        : "crm-status-neutral";
+      : /合格|Qualified|MQL|SQL|系统信息/.test(text)
+        ? "crm-status-info"
+        : /待|培育|处理中|注意|降温|风险/.test(text)
+          ? "crm-status-warning"
+          : "crm-status-neutral";
   return (
     <Badge
       variant="secondary"

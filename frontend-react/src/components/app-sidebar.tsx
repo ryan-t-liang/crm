@@ -74,7 +74,7 @@ function UserMenu({ me, onLogout }: { me: SessionUser; onLogout: () => void }) {
       }
     >
       <Button theme="borderless" type="tertiary" className="crm-sidebar-user" aria-label="打开用户菜单">
-        <Avatar size="small" color="light-green">{initials}</Avatar>
+        <Avatar size="small" color="grey">{initials}</Avatar>
         <span className="crm-sidebar-user-copy"><strong>{me.name}</strong><small>{me.role.name}</small></span>
       </Button>
     </Dropdown>

@@ -60,10 +60,10 @@ const DATE_PRESETS: Array<{ key: Exclude<DatePreset, "custom">; label: string }>
 ]
 
 const TREND_METRICS: Array<{ key: TrendMetricKey; label: string; note: string; color: string }> = [
-  { key: "newMarketingLeads", label: "新增线索", note: "本期创建", color: "#486b82" },
-  { key: "newOpportunities", label: "新增商机", note: "本期创建", color: "#8b6d3c" },
-  { key: "activeOpportunities", label: "活跃商机", note: "当前推进", color: "#1f5c4d" },
-  { key: "wonOpportunities", label: "成交商机", note: "本期成交", color: "#12a66d" },
+  { key: "newMarketingLeads", label: "新增线索", note: "本期创建", color: "#1F6B4F" },
+  { key: "newOpportunities", label: "新增商机", note: "本期创建", color: "#5E86A8" },
+  { key: "activeOpportunities", label: "活跃商机", note: "当前推进", color: "#8073A8" },
+  { key: "wonOpportunities", label: "成交商机", note: "本期成交", color: "#2E7D5A" },
 ]
 
 const chartConfig = Object.fromEntries(TREND_METRICS.map((metric) => [metric.key, { label: metric.label, color: metric.color }])) as ChartConfig
@@ -217,11 +217,11 @@ function DashboardTrendPanel({ data }: { data: DashboardData }) {
       <div className="crm-dashboard-trend-chart">
         <ChartContainer config={chartConfig} className="h-full w-full aspect-auto">
           <LineChart accessibilityLayer data={rows} margin={{ top: 18, right: 18, bottom: 0, left: -12 }}>
-            <CartesianGrid vertical={false} stroke="#e7e6e1" strokeDasharray="0" />
+            <CartesianGrid vertical={false} stroke="#ECEEED" strokeDasharray="0" />
             <XAxis dataKey="label" axisLine={false} tickLine={false} tickMargin={12} minTickGap={24} />
             <YAxis allowDecimals={false} axisLine={false} tickLine={false} width={36} />
-            <ChartTooltip cursor={{ stroke: "#d5d5cf", strokeDasharray: "4 4" }} content={<ChartTooltipContent />} />
-            <Line type="monotone" dataKey={metricKey} name={metric.label} stroke={metric.color} strokeWidth={2.4} dot={{ r: 3, fill: metric.color, strokeWidth: 0 }} activeDot={{ r: 5, fill: metric.color, stroke: "#fff", strokeWidth: 2 }} />
+            <ChartTooltip cursor={{ stroke: "#CDD2CF", strokeDasharray: "4 4" }} content={<ChartTooltipContent />} />
+            <Line type="monotone" dataKey={metricKey} name={metric.label} stroke={metric.color} strokeWidth={2.4} dot={{ r: 3, fill: metric.color, strokeWidth: 0 }} activeDot={{ r: 5, fill: metric.color, stroke: "#FFFFFF", strokeWidth: 2 }} />
           </LineChart>
         </ChartContainer>
       </div>
