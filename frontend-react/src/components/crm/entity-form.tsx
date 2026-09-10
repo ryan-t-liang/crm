@@ -515,7 +515,7 @@ export function EntityForm({
             </div>
           </CRMFormSection>
 
-          <CRMFormSection title="关联组织" description="选择已有组织，或在确认后创建新的组织主数据。">
+          <CRMFormSection className="is-association-panel" title="关联组织" description="选择已有组织，或在确认后创建新的组织主数据。">
             {contactMode === "individual" ? (
               <p className="crm-pattern-form-note">个人联系人暂不关联组织，组织字段会保持为空。</p>
             ) : (

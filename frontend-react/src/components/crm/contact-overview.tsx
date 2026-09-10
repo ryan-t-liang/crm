@@ -1,10 +1,7 @@
 import {
   IconActivity,
-  IconApartment,
   IconArrowRight,
-  IconBriefcaseStroked,
   IconCalendarClockStroked,
-  IconUserCircleStroked,
 } from "@douyinfe/semi-icons";
 import { List } from "@douyinfe/semi-ui";
 
@@ -12,9 +9,9 @@ import type { CrmUser } from "@/lib/api";
 import type { JourneyEvent } from "@/lib/crm";
 import { productEventText } from "@/lib/product-language";
 import { Button } from "./ui";
-import { NextActionCell, OwnerCell, RelativeDateCell } from "./cells";
+import { OwnerCell, RelativeDateCell } from "./cells";
+import { CRMEmptyState, CRMRecordListItem } from "./interaction-patterns";
 import {
-  EmptyState,
   ErrorState,
   LoadingSkeleton,
   Section,
@@ -52,6 +49,7 @@ export function ContactOverview({
   canViewOpportunities,
   onOpenJourney,
   onOpenOpportunities,
+  onScheduleTask,
 }: {
   contact: ContactOverviewRecord;
   journey?: ContactOverviewJourney;
@@ -61,6 +59,7 @@ export function ContactOverview({
   canViewOpportunities: boolean;
   onOpenJourney: () => void;
   onOpenOpportunities: () => void;
+  onScheduleTask?: () => void;
 }) {
   const events = journey?.events || [];
   const nextActionEvent = events.find(
@@ -72,76 +71,47 @@ export function ContactOverview({
   const opportunityCount = contact.relatedLeadCount ?? 0;
   const activeOpportunityCount = journey?.summary.activeLeadCount;
   const wonOpportunityCount = journey?.summary.wonLeadCount;
-  const organizationName =
-    contact.organization?.shortName ||
-    contact.organization?.name ||
-    contact.companyName ||
-    "未关联组织";
   const nextFollowupAt =
     nextActionEvent?.nextFollowupAt || journey?.summary.nextFollowupAt;
 
   return (
     <div className="crm-contact-overview">
-      <section className="crm-contact-brief" aria-labelledby="contact-relationship-brief">
-        <header className="crm-contact-brief-header">
-          <div>
-            <span className="crm-overview-eyebrow">关系简报</span>
-            <h2 id="contact-relationship-brief">联系人关系与下一步</h2>
-          </div>
-          <StatusBadge>
-            {contact.contactType === "INDIVIDUAL" ? "个人联系人" : "企业联系人"}
-          </StatusBadge>
+      <section className="crm-contact-next-action" aria-labelledby="contact-next-action-title">
+        <header className="crm-contact-overview-section-header">
+          <h2 id="contact-next-action-title">下一步</h2>
+          {onScheduleTask ? (
+            <Button variant="ghost" size="sm" onClick={onScheduleTask}>
+              {nextActionEvent ? "调整任务" : "安排任务"}
+            </Button>
+          ) : null}
         </header>
-        <div className="crm-contact-brief-grid">
-          <div className="crm-contact-brief-item">
-            <div className="crm-contact-brief-label">
-              <IconApartment />
-              归属组织
+        {nextActionEvent ? (
+          <div className="crm-contact-next-action-content">
+            <span className="crm-contact-next-action-icon" aria-hidden="true"><IconCalendarClockStroked /></span>
+            <div>
+              <RelativeDateCell value={nextFollowupAt} emptyLabel="时间待确认" />
+              <strong>{nextActionEvent.nextAction || "后续行动待补充"}</strong>
+              <OwnerCell name={nextActionEvent.actor?.name || contact.owner?.name} />
             </div>
-            {contact.organizationId ? (
-              <a className="crm-contact-brief-primary" href={`#organizations/${contact.organizationId}`}>
-                {organizationName}
-              </a>
-            ) : (
-              <span className="crm-contact-brief-primary is-empty">{organizationName}</span>
-            )}
-            <span className="crm-contact-brief-secondary">
-              {[contact.title, contact.department].filter(Boolean).join(" · ") || "职位信息待补充"}
-            </span>
           </div>
-          <div className="crm-contact-brief-item">
-            <div className="crm-contact-brief-label">
-              <IconUserCircleStroked />
-              关系负责人
-            </div>
-            <OwnerCell name={contact.owner?.name} />
-          </div>
-          <div className="crm-contact-brief-item is-next-action">
-            <div className="crm-contact-brief-label">
-              <IconCalendarClockStroked />
-              下一步行动
-            </div>
-            <NextActionCell
-              title={nextActionEvent?.nextAction || "待安排后续行动"}
-              date={nextFollowupAt}
-              overdue={Boolean(
-                nextFollowupAt && Date.parse(nextFollowupAt) < Date.now(),
-              )}
-            />
-          </div>
-        </div>
+        ) : (
+          <CRMEmptyState
+            compact
+            title="暂无下一步行动"
+            action={onScheduleTask ? <Button variant="link" size="sm" onClick={onScheduleTask}>安排任务</Button> : undefined}
+          />
+        )}
       </section>
 
-      <div className="crm-contact-overview-grid">
-        <Section
-          title="最近活动"
-          action={
-            <Button variant="ghost" size="sm" onClick={onOpenJourney}>
-              完整旅程
-              <IconArrowRight />
-            </Button>
-          }
-        >
+      <Section
+        title="最近活动"
+        action={
+          <Button variant="ghost" size="sm" onClick={onOpenJourney}>
+            查看完整旅程
+            <IconArrowRight />
+          </Button>
+        }
+      >
           {journeyError ? (
             <ErrorState error={journeyError} retry={retryJourney} />
           ) : journeyLoading ? (
@@ -151,9 +121,10 @@ export function ContactOverview({
               className="crm-overview-activity-list"
               dataSource={events.slice(0, 3)}
               emptyContent={
-                <EmptyState
+                <CRMEmptyState
+                  compact
                   title="暂无客户活动"
-                  description="尚无可显示的互动记录。"
+                  description="记录一次跟进后，活动会显示在这里。"
                 />
               }
               renderItem={(event) => (
@@ -185,57 +156,36 @@ export function ContactOverview({
               )}
             />
           )}
-        </Section>
+      </Section>
 
-        <Section
-          title="商机概览"
-          action={
-            canViewOpportunities ? (
-              <Button variant="ghost" size="sm" onClick={onOpenOpportunities}>
-                查看全部
-                <IconArrowRight />
-              </Button>
-            ) : undefined
-          }
-        >
-          <div className="crm-opportunity-pulse">
-            <div className="crm-opportunity-pulse-total">
-              <span className="crm-opportunity-pulse-icon" aria-hidden="true">
-                <IconBriefcaseStroked />
-              </span>
-              <div>
-                <strong>{opportunityCount}</strong>
-                <span>关联商机</span>
-              </div>
-            </div>
-            <dl className="crm-opportunity-pulse-stats">
-              <div>
-                <dt>进行中</dt>
-                <dd>{activeOpportunityCount ?? "—"}</dd>
-              </div>
-              <div>
-                <dt>已成交</dt>
-                <dd>{wonOpportunityCount ?? "—"}</dd>
-              </div>
-            </dl>
-            <div className="crm-opportunity-pulse-latest">
-              <span>最近关联</span>
-              {canViewOpportunities && latestOpportunityEvent?.relatedLead ? (
-                <a href={`#leads/${latestOpportunityEvent.relatedLead.id}`}>
-                  {latestOpportunityEvent.relatedLead.requirementSummary}
-                </a>
-              ) : (
-                <strong>
-                  {canViewOpportunities ? "暂无关联商机" : "当前账号无查看权限"}
-                </strong>
-              )}
-              {latestOpportunityEvent && (
-                <RelativeDateCell value={latestOpportunityEvent.occurredAt} />
-              )}
-            </div>
+      <Section
+        title="关联商机"
+        action={canViewOpportunities ? (
+          <Button variant="ghost" size="sm" onClick={onOpenOpportunities}>
+            查看全部
+            <IconArrowRight />
+          </Button>
+        ) : undefined}
+      >
+        {canViewOpportunities && latestOpportunityEvent?.relatedLead ? (
+          <div className="crm-pattern-record-list">
+            <CRMRecordListItem
+              title={latestOpportunityEvent.relatedLead.requirementSummary}
+              href={`#leads/${latestOpportunityEvent.relatedLead.id}`}
+              meta={<><StatusBadge>{opportunityCount} 个关联商机</StatusBadge><span>{activeOpportunityCount ?? "—"} 个进行中 · {wonOpportunityCount ?? "—"} 个已成交</span></>}
+              detail="最近关联商机"
+              aside={<RelativeDateCell value={latestOpportunityEvent.occurredAt} />}
+            />
           </div>
-        </Section>
-      </div>
+        ) : (
+          <CRMEmptyState
+            compact
+            title={canViewOpportunities ? "暂无关联商机" : "当前账号无查看权限"}
+            description={canViewOpportunities ? "该联系人尚未进入正式商机阶段。" : undefined}
+            action={canViewOpportunities ? <Button variant="link" size="sm" onClick={onOpenOpportunities}>查看商机</Button> : undefined}
+          />
+        )}
+      </Section>
     </div>
   );
 }

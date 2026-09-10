@@ -184,7 +184,7 @@ export function AttachmentList({
           {error}
         </p>
       )}
-      <div className="crm-attachment-shell divide-y border">
+      <div className={`crm-attachment-shell divide-y${compact ? " is-compact" : " border"}`}>
         {files.map((file) => {
           const url = appUrl(`${endpoint}/attachments/${file.id}/download`);
           const Icon =
@@ -246,11 +246,6 @@ export function AttachmentList({
             compact
             title="暂无附件"
             description="上传与该联系人相关的会议纪要、图片或文档。"
-            action={editable && !showUploader ? (
-              <Button variant="outline" size="sm" onClick={() => setShowUploader(true)}>
-                <Upload />上传附件
-              </Button>
-            ) : undefined}
           />
         ) : (
           <p className="px-4 py-4 text-xs text-muted-foreground">

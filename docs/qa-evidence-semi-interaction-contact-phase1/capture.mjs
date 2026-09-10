@@ -15,7 +15,7 @@ if (!["127.0.0.1", "localhost"].includes(new URL(baseUrl).hostname)) {
 }
 await stat(storageState);
 
-const outputDir = resolve(import.meta.dirname);
+const outputDir = resolve(process.env.QA_OUTPUT_DIR || import.meta.dirname);
 await mkdir(outputDir, { recursive: true });
 const browser = await chromium.launch({ channel: "chrome", headless: true });
 const context = await browser.newContext({
@@ -129,6 +129,11 @@ await capture("contact-edit", compact, async () => {
   await page.locator("button").filter({ hasText: "编辑" }).first().click();
   await page.getByRole("heading", { name: "编辑联系人", exact: true }).waitFor();
 });
+
+await page.keyboard.press("Escape");
+const narrow = { width: 1024, height: 768 };
+await capture("contact-list", narrow, openList);
+await capture("contact-detail-overview", narrow, openDetail);
 
 const audit = {
   generatedAt: new Date().toISOString(),

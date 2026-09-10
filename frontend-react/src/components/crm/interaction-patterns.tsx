@@ -60,6 +60,25 @@ export function CRMListPage({
   );
 }
 
+export function CRMInlineStats({
+  items,
+  label = "摘要",
+}: {
+  items: Array<{ label: string; value: ReactNode }>;
+  label?: string;
+}) {
+  return (
+    <div className="crm-pattern-inline-stats" aria-label={label}>
+      {items.map((item) => (
+        <span key={item.label} className="crm-pattern-inline-stat">
+          <strong>{item.value ?? "—"}</strong>
+          <span>{item.label}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export type CRMActiveFilter = {
   key: string;
   label: string;
@@ -458,14 +477,16 @@ export function CRMFormSideSheet({
 export function CRMFormSection({
   title,
   description,
+  className,
   children,
 }: {
   title: string;
   description?: string;
+  className?: string;
   children: ReactNode;
 }) {
   return (
-    <section className="crm-pattern-form-section">
+    <section className={`crm-pattern-form-section${className ? ` ${className}` : ""}`}>
       <header>
         <h3>{title}</h3>
         {description ? <p>{description}</p> : null}
@@ -486,9 +507,20 @@ export function CRMEmptyState({
   action?: ReactNode;
   compact?: boolean;
 }) {
+  if (compact) {
+    return (
+      <div className="crm-pattern-empty is-compact">
+        <div>
+          <strong>{title}</strong>
+          {description ? <p>{description}</p> : null}
+        </div>
+        {action ? <div className="crm-pattern-empty-action">{action}</div> : null}
+      </div>
+    );
+  }
   return (
     <Empty
-      className={`crm-pattern-empty${compact ? " is-compact" : ""}`}
+      className="crm-pattern-empty"
       image={<span className="crm-pattern-empty-icon"><IconInbox /></span>}
       title={title}
       description={description}

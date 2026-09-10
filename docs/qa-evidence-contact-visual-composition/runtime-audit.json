@@ -1,0 +1,184 @@
+{
+  "generatedAt": "2026-09-10T06:21:55.067Z",
+  "baseUrl": "http://127.0.0.1:3101/crm_kivisense/",
+  "contact": {
+    "id": "cmtltr0wd000qo2017ccroe9m",
+    "name": "导入联系人 uat-1788458053031"
+  },
+  "captures": [
+    {
+      "key": "contact-list",
+      "filename": "01-contact-list-1440x900.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "clientWidth": 1440,
+      "horizontalOverflow": false,
+      "sideSheetVisible": false
+    },
+    {
+      "key": "contact-detail-overview",
+      "filename": "02-contact-detail-overview-1440x900.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "clientWidth": 1440,
+      "horizontalOverflow": false,
+      "sideSheetVisible": false
+    },
+    {
+      "key": "contact-detail-opportunities",
+      "filename": "03-contact-detail-opportunities-1440x900.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "clientWidth": 1440,
+      "horizontalOverflow": false,
+      "sideSheetVisible": false
+    },
+    {
+      "key": "contact-detail-journey",
+      "filename": "04-contact-detail-journey-1440x900.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "clientWidth": 1440,
+      "horizontalOverflow": false,
+      "sideSheetVisible": false
+    },
+    {
+      "key": "contact-detail-notes",
+      "filename": "05-contact-detail-notes-1440x900.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "clientWidth": 1440,
+      "horizontalOverflow": false,
+      "sideSheetVisible": false
+    },
+    {
+      "key": "contact-detail-audit",
+      "filename": "06-contact-detail-audit-1440x900.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "clientWidth": 1440,
+      "horizontalOverflow": false,
+      "sideSheetVisible": false
+    },
+    {
+      "key": "contact-create",
+      "filename": "07-contact-create-1440x900.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "clientWidth": 1440,
+      "horizontalOverflow": false,
+      "sideSheetVisible": true
+    },
+    {
+      "key": "contact-edit",
+      "filename": "08-contact-edit-1440x900.png",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "documentWidth": 1440,
+      "clientWidth": 1440,
+      "horizontalOverflow": false,
+      "sideSheetVisible": true
+    },
+    {
+      "key": "contact-list",
+      "filename": "09-contact-list-1280x800.png",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "clientWidth": 1280,
+      "horizontalOverflow": false,
+      "sideSheetVisible": false
+    },
+    {
+      "key": "contact-detail-overview",
+      "filename": "10-contact-detail-overview-1280x800.png",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "clientWidth": 1280,
+      "horizontalOverflow": false,
+      "sideSheetVisible": false
+    },
+    {
+      "key": "contact-create",
+      "filename": "11-contact-create-1280x800.png",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "clientWidth": 1280,
+      "horizontalOverflow": false,
+      "sideSheetVisible": true
+    },
+    {
+      "key": "contact-edit",
+      "filename": "12-contact-edit-1280x800.png",
+      "viewport": {
+        "width": 1280,
+        "height": 800
+      },
+      "documentWidth": 1280,
+      "clientWidth": 1280,
+      "horizontalOverflow": false,
+      "sideSheetVisible": true
+    },
+    {
+      "key": "contact-list",
+      "filename": "13-contact-list-1024x768.png",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "horizontalOverflow": false,
+      "sideSheetVisible": false
+    },
+    {
+      "key": "contact-detail-overview",
+      "filename": "14-contact-detail-overview-1024x768.png",
+      "viewport": {
+        "width": 1024,
+        "height": 768
+      },
+      "documentWidth": 1024,
+      "clientWidth": 1024,
+      "horizontalOverflow": false,
+      "sideSheetVisible": false
+    }
+  ],
+  "consoleErrors": [],
+  "pageErrors": [],
+  "httpFailures": [],
+  "build": {
+    "indexBytes": 645
+  }
+}
