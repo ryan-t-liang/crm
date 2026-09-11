@@ -8974,3 +8974,32 @@ a.crm-contact-brief-primary:hover {
     padding-left: 0;
   }
 }
+
+/* Keep CRM-specific compositions aligned with the published Semi theme palette.
+   The package owns --semi-brand-*; these aliases prevent legacy CRM tokens from
+   masking the active theme while preserving the product's layout contracts. */
+:root {
+  --crm-primary: rgba(var(--semi-brand-5), 1);
+  --crm-primary-hover: rgba(var(--semi-brand-6), 1);
+  --crm-primary-active: rgba(var(--semi-brand-7), 1);
+  --crm-primary-soft: rgba(var(--semi-brand-0), 1);
+  --crm-primary-softer: rgba(var(--semi-brand-0), 0.56);
+  --crm-chart-primary: var(--crm-primary);
+  --crm-tab-text-active: var(--crm-primary);
+  --crm-tab-indicator: var(--crm-primary);
+  --primary: var(--crm-primary);
+  --ring: var(--crm-primary);
+  --sidebar-primary: var(--crm-primary);
+  --sidebar-ring: var(--crm-primary);
+  --semi-color-primary: var(--crm-primary);
+  --semi-color-primary-hover: var(--crm-primary-hover);
+  --semi-color-primary-active: var(--crm-primary-active);
+  --semi-color-primary-light-default: var(--crm-primary-soft);
+  --semi-color-primary-light-hover: rgba(var(--semi-brand-1), 1);
+  --semi-color-primary-light-active: rgba(var(--semi-brand-2), 1);
+  --semi-color-focus-border: var(--crm-primary);
+  --semi-color-link: var(--crm-primary);
+  --semi-color-link-hover: var(--crm-primary-hover);
+  --semi-color-link-active: var(--crm-primary-active);
+  --semi-color-link-visited: var(--crm-primary);
+}
