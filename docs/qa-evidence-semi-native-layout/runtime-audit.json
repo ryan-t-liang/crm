@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-11T01:47:39.742Z",
+  "generatedAt": "2026-09-11T02:30:58.610Z",
   "baseUrl": "http://127.0.0.1:8766/",
   "browser": "Google Chrome via Playwright, headless",
   "fixture": {
@@ -121,10 +121,10 @@
           "width": 1136
         },
         "recordColumns": [
-          320,
-          784
+          288,
+          820
         ],
-        "recordGap": 32,
+        "recordGap": 28,
         "recordWorkspaceMinWidth": "0px",
         "breadcrumbText": "Kivisense CRM/联系人/Naderi",
         "duplicateBackNavigation": false
@@ -244,8 +244,8 @@
           "width": 992
         },
         "recordColumns": [
-          300,
-          668
+          280,
+          688
         ],
         "recordGap": 24,
         "recordWorkspaceMinWidth": "0px",
@@ -490,10 +490,10 @@
           "width": 1416
         },
         "recordColumns": [
-          320,
-          1064
+          288,
+          1100
         ],
-        "recordGap": 32,
+        "recordGap": 28,
         "recordWorkspaceMinWidth": "0px",
         "breadcrumbText": "Kivisense CRM/联系人/Naderi",
         "duplicateBackNavigation": false

@@ -38,10 +38,6 @@ const navGroups: Array<{ label: string; items: NavItem[] }> = [
     ],
   },
   {
-    label: "资源",
-    items: [{ label: "供应商", route: "suppliers", icon: <IconUserGroup />, permission: "crm.organization.view" }],
-  },
-  {
     label: "系统",
     items: [
       { label: "账户管理", route: "accounts", icon: <IconUserGroup />, permission: "account.view" },

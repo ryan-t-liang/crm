@@ -68,14 +68,16 @@ export function CRMPageContainer({
 export function CRMListLayout({
   header,
   stats,
+  className,
   children,
 }: {
   header: ReactNode;
   stats?: ReactNode;
+  className?: string;
   children: ReactNode;
 }) {
   return (
-    <div className="crm-list-layout">
+    <div className={cn("crm-list-layout", className)}>
       {header}
       {stats ? <div className="crm-list-layout-stats">{stats}</div> : null}
       <div className="crm-list-layout-workspace">{children}</div>
@@ -88,16 +90,18 @@ export function CRMRecordLayout({
   inlineMeta,
   stages,
   sidebar,
+  className,
   children,
 }: {
   header: ReactNode;
   inlineMeta?: ReactNode;
   stages?: ReactNode;
   sidebar: ReactNode;
+  className?: string;
   children: ReactNode;
 }) {
   return (
-    <div className="crm-record-layout">
+    <div className={cn("crm-record-layout", className)}>
       <header className="crm-record-layout-header">{header}</header>
       {inlineMeta ? (
         <div className="crm-record-layout-meta">{inlineMeta}</div>

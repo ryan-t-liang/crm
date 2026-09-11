@@ -142,10 +142,10 @@ for (const captureResult of captures) {
     if (!measurement.breadcrumbText.includes(contact.contactName)) assertionFailures.push(`${captureResult.filename}: record breadcrumb missing`);
     if (measurement.recordWorkspaceMinWidth !== "0px") assertionFailures.push(`${captureResult.filename}: workspace min-width is not zero`);
     if (measurement.viewport.width > 1280) {
-      if (Math.abs((measurement.recordColumns[0] || 0) - 320) > 2) assertionFailures.push(`${captureResult.filename}: record rail is not 320px`);
-      if (Math.abs((measurement.recordGap || 0) - 32) > 1) assertionFailures.push(`${captureResult.filename}: record gap is not 32px`);
+      if (Math.abs((measurement.recordColumns[0] || 0) - 288) > 2) assertionFailures.push(`${captureResult.filename}: contact rail is not 288px`);
+      if (Math.abs((measurement.recordGap || 0) - 28) > 1) assertionFailures.push(`${captureResult.filename}: record gap is not 28px`);
     } else if (measurement.viewport.width === 1280) {
-      if (Math.abs((measurement.recordColumns[0] || 0) - 300) > 2) assertionFailures.push(`${captureResult.filename}: record rail is not 300px`);
+      if (Math.abs((measurement.recordColumns[0] || 0) - 280) > 2) assertionFailures.push(`${captureResult.filename}: contact rail is not 280px`);
       if (Math.abs((measurement.recordGap || 0) - 24) > 1) assertionFailures.push(`${captureResult.filename}: record gap is not 24px`);
     } else if (measurement.viewport.width <= 1100) {
       const [sidebarWidth, workspaceWidth] = measurement.recordColumns;

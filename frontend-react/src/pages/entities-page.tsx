@@ -407,6 +407,7 @@ export function EntitiesPage({
     >
       {!id ? (
         <CRMListLayout
+          className={kind === "contact" ? "crm-list-layout--contact" : "crm-list-layout--opportunity"}
           header={
             <CRMPageHeader
               title={label}
@@ -670,6 +671,7 @@ export function EntitiesPage({
         <LoadingSkeleton detail />
       ) : (
         <CRMRecordLayout
+          className={kind === "contact" ? "crm-record-layout--contact" : "crm-record-layout--opportunity"}
           header={kind === "contact" ? (
             <CRMRecordHeader
               name={nameOf(row)}

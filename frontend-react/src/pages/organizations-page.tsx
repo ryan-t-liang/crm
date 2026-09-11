@@ -373,6 +373,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
     >
       {!id ? (
         <CRMListLayout
+          className={supplier ? "crm-list-layout--supplier" : "crm-list-layout--organization"}
           header={<CRMPageHeader
             title={supplier ? "供应商" : "组织"}
             description={supplier ? "查看组织关系为供应商的统一组织主档。" : "管理客户、合作伙伴与供应商的统一组织主档。"}
@@ -505,6 +506,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
         <ErrorState error={detail.error} retry={detail.reload} />
       ) : (
         <CRMRecordLayout
+          className={supplier ? "crm-record-layout--supplier" : "crm-record-layout--organization"}
           header={<CRMRecordHeader
             identity={<CompanyLogo organization={organization} large />}
             name={organization.name}

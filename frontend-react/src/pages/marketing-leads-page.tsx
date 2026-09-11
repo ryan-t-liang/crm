@@ -304,6 +304,7 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
     return (
       <PageContent mode="list" breadcrumbs={[{ label: "Kivisense CRM", href: "#dashboard" }, { label: "线索" }]}>
         <CRMListLayout
+          className="crm-list-layout--marketing-lead"
           header={<CRMPageHeader
           title="线索"
           description="管理获客来源、原始询盘、评分与资格确认。"
@@ -421,6 +422,7 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
   return (
     <PageContent detail breadcrumbs={[{ label: "Kivisense CRM", href: "#dashboard" }, { label: "线索", href: "#marketing-leads" }, { label: lead.fullName }]}>
       <CRMRecordLayout
+        className="crm-record-layout--marketing-lead"
         header={<CRMRecordHeader
           identity={<UserAvatar name={lead.fullName} large showName={false} />}
           name={lead.fullName}

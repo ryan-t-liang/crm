@@ -8798,3 +8798,179 @@ a.crm-contact-brief-primary:hover {
     padding-left: 0;
   }
 }
+
+/* Post-review layout corrections.
+   This block intentionally closes the cascade after the older composition rules. */
+.crm-logo-tile,
+.crm-sidebar[data-collapsed="true"] .crm-logo-tile {
+  width: 36px;
+  height: 38px;
+  flex: 0 0 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.crm-logo-tile img {
+  width: 34px;
+  height: 38px;
+  object-fit: contain;
+}
+
+.crm-brand-lockup {
+  min-height: 48px;
+  gap: 10px;
+}
+
+.crm-list-layout--contact .crm-list-layout-stats {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--crm-divider);
+  border-radius: var(--crm-radius-md);
+  background: var(--crm-surface-subtle);
+}
+
+.crm-list-layout--contact .crm-pattern-inline-stats {
+  gap: 0;
+}
+
+.crm-list-layout--contact .crm-pattern-inline-stat {
+  min-height: 20px;
+  padding: 0 14px;
+  border-right: 1px solid var(--crm-divider);
+}
+
+.crm-list-layout--contact .crm-pattern-inline-stat:first-child {
+  padding-left: 0;
+}
+
+.crm-list-layout--contact .crm-pattern-inline-stat:last-child {
+  padding-right: 0;
+  border-right: 0;
+}
+
+.crm-list-layout--contact .crm-pattern-inline-stat::after {
+  display: none;
+}
+
+.crm-record-layout-header {
+  padding-bottom: 16px;
+}
+
+.crm-record-layout-meta {
+  padding: 10px 0 14px;
+  border-bottom: 1px solid var(--crm-divider);
+}
+
+.crm-record-layout-body {
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 28px;
+  padding-top: 20px;
+}
+
+.crm-record-layout--contact .crm-record-layout-body {
+  grid-template-columns: 288px minmax(0, 1fr);
+}
+
+.crm-record-layout--marketing-lead .crm-record-layout-body {
+  grid-template-columns: 320px minmax(0, 1fr);
+}
+
+.crm-record-layout-sidebar {
+  gap: 20px;
+}
+
+.crm-record-layout-sidebar .crm-section-header {
+  padding-bottom: 10px;
+}
+
+.crm-record-layout-sidebar .crm-section-body {
+  padding-bottom: 16px;
+}
+
+.crm-record-layout-workspace > .crm-detail-tabs,
+.crm-record-layout-workspace > .crm-pattern-record-tabs {
+  overflow: hidden;
+  border: 1px solid var(--crm-divider);
+  border-radius: var(--crm-radius-md);
+  background: var(--crm-surface);
+}
+
+.crm-record-layout .crm-detail-tabs .semi-tabs-bar,
+.crm-record-layout .crm-pattern-record-tabs .semi-tabs-bar {
+  min-height: 44px;
+  margin: 0;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--crm-divider);
+  background: var(--crm-surface-subtle);
+}
+
+.crm-record-layout .crm-detail-tabs .semi-tabs-tab,
+.crm-record-layout .crm-pattern-record-tabs .semi-tabs-tab {
+  min-height: 44px;
+  font-size: 13px;
+}
+
+.crm-record-layout .crm-detail-tabs .semi-tabs-content,
+.crm-record-layout .crm-pattern-record-tabs .semi-tabs-content {
+  padding: 18px;
+}
+
+.crm-record-layout-stages {
+  padding: 12px 0 14px;
+  border-top: 0;
+  border-bottom: 1px solid var(--crm-divider);
+}
+
+.crm-record-layout-stages .crm-stage-path,
+.crm-record-layout-stages .semi-steps-basic {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none;
+}
+
+.crm-record-layout-stages .semi-steps-item-title {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.crm-contact-profile {
+  gap: 20px;
+}
+
+@media (max-width: 1280px) {
+  .crm-record-layout-body,
+  .crm-record-layout--contact .crm-record-layout-body,
+  .crm-record-layout--marketing-lead .crm-record-layout-body {
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 24px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .crm-record-layout-body,
+  .crm-record-layout--contact .crm-record-layout-body,
+  .crm-record-layout--marketing-lead .crm-record-layout-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .crm-list-layout--contact .crm-list-layout-stats {
+    width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  .crm-list-layout--contact .crm-pattern-inline-stat {
+    padding: 0 8px;
+  }
+
+  .crm-list-layout--contact .crm-pattern-inline-stat:first-child {
+    padding-left: 0;
+  }
+}
