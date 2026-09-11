@@ -120,7 +120,7 @@ export function DataTable<T extends { id: string }>({
         {views?.length ? (
           <section className="crm-data-views" aria-label={`${label}视图`}>
             <Tabs
-              type={flat ? "line" : "button"}
+              type="line"
               size="small"
               collapsible="auto"
               activeKey={activeView || views[0].key}

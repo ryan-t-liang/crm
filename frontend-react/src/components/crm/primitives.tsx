@@ -86,9 +86,9 @@ export function PageHeader({
 }
 export function PageToolbar({ left, right }: { left?: ReactNode; right?: ReactNode }) {
   return (
-    <div role="toolbar" className="crm-toolbar flex flex-wrap items-center gap-2 rounded-xl border bg-card px-3 py-3">
-      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">{left}</div>
-      <div className="flex flex-wrap items-center gap-2">{right}</div>
+    <div role="toolbar" className="crm-toolbar">
+      <div className="crm-toolbar-primary">{left}</div>
+      <div className="crm-toolbar-actions">{right}</div>
     </div>
   );
 }

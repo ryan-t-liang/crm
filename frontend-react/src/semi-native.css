@@ -1,0 +1,484 @@
+/*
+ * Semi-native CRM composition.
+ * Semi owns component visuals and states. This layer only keeps the CRM's
+ * information architecture and density. Palette tokens remain theme-owned.
+ */
+
+:where(.crm-shell) {
+  --crm-native-divider: var(--semi-color-border);
+  --crm-native-surface: var(--semi-color-bg-0);
+}
+
+/* Restore the visual contract of Semi primitives after legacy CRM CSS. */
+.crm-button.semi-button {
+  width: auto;
+  height: 32px;
+  min-height: 32px;
+  padding: 8px 12px;
+  border-radius: var(--semi-border-radius-small);
+  box-shadow: none;
+  font-size: var(--semi-font-size-regular);
+  font-weight: 400;
+}
+
+.crm-button.semi-button:hover:not(:disabled),
+.crm-button.semi-button:active:not(:disabled) {
+  box-shadow: none;
+  transform: none;
+}
+
+.crm-button.semi-button[data-size="xs"],
+.crm-button.semi-button[data-size="sm"],
+.crm-button.semi-button[data-size="icon-xs"],
+.crm-button.semi-button[data-size="icon-sm"] {
+  width: auto;
+  height: 24px;
+  min-height: 24px;
+  padding: 4px 12px;
+}
+
+.crm-button.semi-button[data-size="lg"],
+.crm-button.semi-button[data-size="icon-lg"] {
+  height: 40px;
+  min-height: 40px;
+  padding: 12px 16px;
+}
+
+.crm-button.semi-button[data-size^="icon"] {
+  width: 32px;
+  padding: 0;
+}
+
+.crm-button.semi-button[data-size="icon-xs"],
+.crm-button.semi-button[data-size="icon-sm"] {
+  width: 24px;
+}
+
+.crm-button.semi-button[data-size="icon-lg"] {
+  width: 40px;
+}
+
+.crm-input.semi-input-wrapper,
+.crm-select.semi-select,
+.crm-textarea.semi-input-textarea-wrapper,
+.crm-date-picker.semi-datepicker {
+  height: 32px;
+  min-height: unset;
+  border: 0;
+  border-radius: var(--semi-border-radius-small);
+  background: var(--semi-color-fill-0);
+  box-shadow: none;
+}
+
+.crm-input.semi-input-wrapper:hover,
+.crm-select.semi-select:hover,
+.crm-textarea.semi-input-textarea-wrapper:hover,
+.crm-date-picker.semi-datepicker:hover {
+  border: 0;
+  background: var(--semi-color-fill-1);
+  box-shadow: none;
+}
+
+.crm-input.semi-input-wrapper:focus-within,
+.crm-select.semi-select:focus-within,
+.crm-textarea.semi-input-textarea-wrapper:focus-within,
+.crm-date-picker.semi-datepicker:focus-within {
+  border: 0;
+  background: var(--semi-color-fill-0);
+  box-shadow: inset 0 0 0 1px var(--semi-color-focus-border);
+}
+
+.crm-badge.semi-tag,
+.crm-status-badge.semi-tag,
+.crm-pattern-filter-tag.semi-tag {
+  min-height: unset;
+  border-radius: var(--semi-border-radius-small);
+  font-size: var(--semi-font-size-small);
+  font-weight: 400;
+}
+
+.semi-dropdown-menu,
+.semi-popover-content,
+.semi-modal-content,
+.semi-sidesheet-inner {
+  border-radius: var(--semi-border-radius-medium);
+  box-shadow: var(--semi-shadow-elevated);
+}
+
+/* App frame and page hierarchy. */
+.crm-site-header {
+  border-bottom: 1px solid var(--semi-color-border);
+  background: var(--semi-color-bg-0);
+}
+
+.crm-app-content.semi-layout-content,
+.crm-page-container,
+.crm-page-container.crm-page {
+  background: var(--semi-color-bg-1);
+}
+
+.crm-pattern-page-header .semi-typography-h2,
+.crm-pattern-record-header .semi-typography-h2 {
+  color: var(--semi-color-text-0);
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.crm-pattern-page-header .semi-typography-tertiary,
+.crm-pattern-record-identity .semi-typography-secondary {
+  color: var(--semi-color-text-2);
+}
+
+/* List pages: one Semi surface, line tabs, native filters and table. */
+.crm-list-layout {
+  gap: 16px;
+}
+
+.crm-list-layout-stats,
+.crm-list-layout--contact .crm-list-layout-stats {
+  width: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.crm-pattern-inline-stats,
+.crm-list-layout--contact .crm-pattern-inline-stats {
+  gap: 8px;
+}
+
+.crm-pattern-inline-stat,
+.crm-list-layout--contact .crm-pattern-inline-stat {
+  min-height: 24px;
+  padding: 0 12px 0 0;
+  border: 0;
+  color: var(--semi-color-text-2);
+}
+
+.crm-pattern-inline-stat:not(:last-child)::after,
+.crm-list-layout--contact .crm-pattern-inline-stat:not(:last-child)::after {
+  display: inline;
+  margin-left: 12px;
+  color: var(--semi-color-text-3);
+  content: "·";
+}
+
+.crm-pattern-inline-stat > strong {
+  color: var(--semi-color-text-0);
+  font-weight: 600;
+}
+
+.crm-data-workspace,
+.crm-data-table.is-flat .crm-data-workspace {
+  overflow: hidden;
+  border: 1px solid var(--semi-color-border);
+  border-radius: var(--semi-border-radius-medium);
+  background: var(--semi-color-bg-0);
+}
+
+.crm-data-views,
+.crm-data-table.is-flat .crm-data-views {
+  padding: 0 16px;
+  border: 0;
+  border-bottom: 1px solid var(--semi-color-border);
+  background: var(--semi-color-bg-0);
+}
+
+.crm-data-views .semi-tabs-bar,
+.crm-data-table.is-flat .crm-data-views .semi-tabs-bar {
+  margin: 0;
+}
+
+.crm-data-views .semi-tabs-tab,
+.crm-data-views .semi-tabs-tab-button,
+.crm-detail-tabs .semi-tabs-tab,
+.crm-pattern-record-tabs .semi-tabs-tab {
+  min-height: 44px;
+  padding: 0 4px;
+  color: var(--semi-color-text-2);
+  font-size: var(--semi-font-size-regular);
+  font-weight: 400;
+}
+
+.crm-data-views .semi-tabs-tab + .semi-tabs-tab,
+.crm-data-views .semi-tabs-tab-button + .semi-tabs-tab-button,
+.crm-detail-tabs .semi-tabs-tab + .semi-tabs-tab,
+.crm-pattern-record-tabs .semi-tabs-tab + .semi-tabs-tab {
+  margin-left: 24px;
+}
+
+.crm-data-views .semi-tabs-tab-active,
+.crm-data-views .semi-tabs-tab-button.semi-tabs-tab-active,
+.crm-detail-tabs .semi-tabs-tab-active,
+.crm-pattern-record-tabs .semi-tabs-tab-active {
+  border-bottom-color: unset !important;
+  color: var(--semi-color-primary);
+  font-weight: 600;
+}
+
+.crm-filter-panel,
+.crm-data-table.is-flat .crm-filter-panel {
+  padding: 12px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--semi-color-border);
+  background: var(--semi-color-bg-0);
+}
+
+.crm-data-toolbar,
+.crm-data-table.is-flat .crm-data-toolbar {
+  min-height: 32px;
+  padding: 0;
+}
+
+.crm-toolbar {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 16px;
+  border: 1px solid var(--semi-color-border);
+  border-radius: var(--semi-border-radius-medium);
+  background: var(--semi-color-bg-0);
+}
+
+.crm-toolbar-primary,
+.crm-toolbar-actions {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.crm-toolbar-primary {
+  flex: 1 1 auto;
+}
+
+.crm-table-shell,
+.crm-data-table.is-flat .crm-table-shell {
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: var(--semi-color-bg-0);
+}
+
+.crm-table-toolbar,
+.crm-data-table.is-flat .crm-table-toolbar {
+  min-height: 48px;
+  padding: 8px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--semi-color-border);
+  background: var(--semi-color-bg-0);
+}
+
+.crm-table-title > span {
+  color: var(--semi-color-text-2);
+}
+
+.crm-semi-table .semi-table-thead > .semi-table-row > .semi-table-row-head {
+  height: 40px;
+  border-color: var(--semi-color-border);
+  background: var(--semi-color-fill-0);
+  color: var(--semi-color-text-2);
+  font-weight: 600;
+}
+
+.crm-semi-table .semi-table-row-cell,
+.crm-data-table.is-flat .crm-semi-table .semi-table-row-cell {
+  height: auto;
+  min-height: 48px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border-color: var(--semi-color-border);
+  background: var(--semi-color-bg-0);
+}
+
+.crm-semi-table .semi-table-tbody > .semi-table-row:hover > .semi-table-row-cell {
+  background: var(--semi-color-fill-0);
+}
+
+.crm-semi-table .semi-table-tbody > .semi-table-row.semi-table-row-selected > .semi-table-row-cell {
+  background: var(--semi-color-primary-light-default);
+}
+
+.crm-table-footer,
+.crm-data-table.is-flat .crm-table-footer {
+  padding: 10px 16px;
+  border-top: 1px solid var(--semi-color-border);
+  background: var(--semi-color-bg-0);
+  color: var(--semi-color-text-2);
+}
+
+/* Detail pages: consistent Semi Steps, section and Tabs surfaces. */
+.crm-record-layout-header {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--semi-color-border);
+}
+
+.crm-record-layout-meta {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--semi-color-border);
+}
+
+.crm-record-layout-stages {
+  padding: 16px;
+  border: 1px solid var(--semi-color-border);
+  border-radius: var(--semi-border-radius-medium);
+  background: var(--semi-color-bg-0);
+}
+
+.crm-record-layout-stages .crm-stage-path,
+.crm-record-layout-stages .semi-steps-basic {
+  background: transparent !important;
+}
+
+.crm-record-layout-body,
+.crm-record-layout--contact .crm-record-layout-body,
+.crm-record-layout--marketing-lead .crm-record-layout-body {
+  grid-template-columns: 304px minmax(0, 1fr);
+  gap: 24px;
+  padding-top: 20px;
+}
+
+.crm-record-layout-sidebar {
+  gap: 12px;
+}
+
+.crm-record-layout-sidebar .crm-section,
+.crm-contact-profile .crm-pattern-descriptions,
+.crm-contact-profile .crm-pattern-association {
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid var(--semi-color-border);
+  border-radius: var(--semi-border-radius-medium);
+  background: var(--semi-color-bg-0);
+}
+
+.crm-record-layout-sidebar .crm-section-header,
+.crm-contact-profile .crm-pattern-descriptions > h2,
+.crm-contact-profile .crm-pattern-association > h2 {
+  min-height: 44px;
+  margin: 0;
+  padding: 12px 16px;
+  border: 0;
+  border-bottom: 1px solid var(--semi-color-border);
+  background: var(--semi-color-fill-0);
+  color: var(--semi-color-text-0);
+  font-size: var(--semi-font-size-regular);
+  font-weight: 600;
+}
+
+.crm-record-layout-sidebar .crm-section-body,
+.crm-contact-profile .crm-pattern-descriptions .semi-descriptions,
+.crm-contact-profile .crm-pattern-association-body {
+  padding: 16px;
+}
+
+.crm-record-layout-workspace > .crm-detail-tabs,
+.crm-record-layout-workspace > .crm-pattern-record-tabs {
+  overflow: hidden;
+  border: 1px solid var(--semi-color-border);
+  border-radius: var(--semi-border-radius-medium);
+  background: var(--semi-color-bg-0);
+}
+
+.crm-record-layout .crm-detail-tabs .semi-tabs-bar,
+.crm-record-layout .crm-pattern-record-tabs .semi-tabs-bar {
+  min-height: 44px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--semi-color-border);
+  background: var(--semi-color-bg-0);
+}
+
+.crm-record-layout .crm-detail-tabs .semi-tabs-content,
+.crm-record-layout .crm-pattern-record-tabs .semi-tabs-content {
+  padding: 20px;
+}
+
+.crm-section {
+  border: 1px solid var(--semi-color-border);
+  border-radius: var(--semi-border-radius-medium);
+  background: var(--semi-color-bg-0);
+  box-shadow: none;
+}
+
+.crm-section-header {
+  min-height: 44px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--semi-color-border);
+  background: var(--semi-color-fill-0);
+}
+
+.crm-section-body {
+  padding: 16px;
+}
+
+/* Form and overlay composition follows Semi SideSheet/Modal/Form. */
+.crm-form-sheet .semi-sidesheet-header,
+.crm-pattern-form-sheet .semi-sidesheet-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--semi-color-border);
+  background: var(--semi-color-bg-0);
+  color: var(--semi-color-text-0);
+}
+
+.crm-form-sheet .semi-sidesheet-content,
+.crm-form-sheet .semi-sidesheet-body,
+.crm-form-body.semi-form,
+.crm-pattern-form-sheet .semi-sidesheet-body {
+  background: var(--semi-color-bg-0);
+}
+
+.crm-form-sheet .semi-sidesheet-footer,
+.crm-pattern-form-sheet .semi-sidesheet-footer {
+  padding: 12px 24px;
+  border-top: 1px solid var(--semi-color-border);
+  background: var(--semi-color-bg-0);
+}
+
+.crm-form-heading h2,
+.crm-pattern-form-heading h2 {
+  color: var(--semi-color-text-0);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.crm-form-heading p,
+.crm-pattern-form-heading p,
+.crm-pattern-form-note {
+  color: var(--semi-color-text-2);
+}
+
+.crm-form-field.semi-form-field .semi-form-field-label-text {
+  color: var(--semi-color-text-1);
+  font-weight: 600;
+}
+
+.crm-confirm-dialog .semi-modal-content {
+  background: var(--semi-color-bg-0);
+}
+
+.crm-empty-state.semi-empty,
+.crm-pattern-empty.semi-empty {
+  background: transparent;
+}
+
+@media (max-width: 1100px) {
+  .crm-record-layout-body,
+  .crm-record-layout--contact .crm-record-layout-body,
+  .crm-record-layout--marketing-lead .crm-record-layout-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 720px) {
+  .crm-data-views,
+  .crm-filter-panel,
+  .crm-table-toolbar,
+  .crm-table-footer {
+    padding-inline: 12px;
+  }
+}
