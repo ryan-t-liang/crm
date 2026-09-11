@@ -33,18 +33,25 @@ import {
 import { appUrl } from "@/lib/api";
 import { friendlyError, type Organization } from "@/lib/crm";
 import { cn } from "@/lib/utils";
+import { CRMPageContainer, CRMRecordLayout } from "@/components/crm/layout";
+import type { CrmBreadcrumb } from "@/components/crm/shell";
+import { CRMPageHeader } from "@/components/crm/interaction-patterns";
 
 export function PageContent({
   children,
   detail = false,
+  mode,
+  breadcrumbs,
 }: {
   children: ReactNode;
   detail?: boolean;
+  mode?: "standard" | "list" | "record";
+  breadcrumbs?: CrmBreadcrumb[];
 }) {
   return (
-    <main className={cn("crm-page flex min-w-0 flex-1 flex-col gap-5 p-4 md:p-6", detail && "crm-detail-page")}>
+    <CRMPageContainer mode={mode || (detail ? "record" : "standard")} breadcrumbs={breadcrumbs} className={cn("crm-page", detail && "crm-detail-page")}>
       {children}
-    </main>
+    </CRMPageContainer>
   );
 }
 export function DetailScaffold({
@@ -61,15 +68,9 @@ export function DetailScaffold({
   children: ReactNode;
 }) {
   return (
-    <div className="crm-detail-scaffold">
-      <header className="crm-detail-top">{top}</header>
-      {highlights && <div className="crm-record-highlights">{highlights}</div>}
-      {stages && <div className="crm-record-stages">{stages}</div>}
-      <div className="crm-detail-grid">
-        <aside className="crm-detail-side">{sidebar}</aside>
-        <section className="crm-detail-main">{children}</section>
-      </div>
-    </div>
+    <CRMRecordLayout header={top} inlineMeta={highlights} stages={stages} sidebar={sidebar}>
+      {children}
+    </CRMRecordLayout>
   );
 }
 export function PageHeader({
@@ -81,17 +82,7 @@ export function PageHeader({
   description?: string;
   actions?: ReactNode;
 }) {
-  return (
-    <div className="crm-page-header flex flex-wrap items-start justify-between gap-4">
-      <div className="min-w-0">
-        <h1 className="crm-display-title text-2xl font-semibold tracking-tight">{title}</h1>
-        {description ? <p className="crm-page-description">{description}</p> : null}
-      </div>
-      {actions && (
-        <div className="flex flex-wrap items-center gap-2">{actions}</div>
-      )}
-    </div>
-  );
+  return <CRMPageHeader title={title} description={description} actions={actions} />;
 }
 export function PageToolbar({ left, right }: { left?: ReactNode; right?: ReactNode }) {
   return (
@@ -364,7 +355,9 @@ export function EntityMeta({
   items: { label: string; value: ReactNode }[];
   columns?: 1 | 2;
 }) {
-  return <Descriptions className="crm-entity-meta" column={columns} data={items.map((item) => ({ key: item.label, value: item.value ?? "—" }))} align="left" size="small" />;
+  const visibleItems = items.filter((item) => item.value !== undefined && item.value !== null && item.value !== "");
+  if (!visibleItems.length) return <div className="crm-entity-meta-empty">暂无信息</div>;
+  return <Descriptions className="crm-entity-meta" column={columns} data={visibleItems.map((item) => ({ key: item.label, value: item.value }))} align="left" size="small" />;
 }
 export type ActionItem = {
   label: string;

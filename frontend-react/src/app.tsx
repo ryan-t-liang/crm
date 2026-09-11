@@ -4,7 +4,8 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { Skeleton } from "@/components/crm/ui";
 import { TooltipProvider } from "@/components/crm/ui";
-import { CrmShellMain, CrmShellProvider } from "@/components/crm/shell";
+import { CrmShellProvider } from "@/components/crm/shell";
+import { CRMAppShell } from "@/components/crm/layout";
 import { DashboardPage } from "@/pages/dashboard-page";
 import { OrganizationsPage } from "@/pages/organizations-page";
 import { EntitiesPage } from "@/pages/entities-page";
@@ -248,47 +249,43 @@ export function App() {
               `crm.${["organizations", "operations", "suppliers", "vendors"].includes(family) ? "organization" : family === "workbench" ? "task" : entityKind}.view`,
             );
 
+  const pageTitle =
+    titles[family] ||
+    (family === "operations"
+      ? "组织运营"
+      : family === "workbench"
+        ? "工作台"
+        : ["suppliers", "vendors"].includes(family)
+          ? "供应商"
+          : family === "dashboard"
+            ? "数据看板"
+            : family === "organizations"
+              ? "组织"
+              : family === "contacts"
+                ? "联系人"
+                : family === "marketing-leads"
+                  ? "线索"
+                  : "商机");
+  const baseBreadcrumbs = [
+    { label: "Kivisense CRM", href: "#dashboard" },
+    { label: pageTitle, href: entityId ? `#${family}` : undefined },
+    ...(entityId ? [{ label: "详情" }] : []),
+  ];
+
   return (
     <TooltipProvider delayDuration={250}>
       <CrmShellProvider defaultCollapsed={window.innerWidth < 1180}>
-        <AppSidebar
-          me={me}
-          counts={counts}
-          route={family}
-          onLogout={() => {
-            void logout();
-          }}
-        />
-        <CrmShellMain className="min-w-0 overflow-hidden bg-background">
-          <SiteHeader
-            title={
-              titles[family] ||
-              (family === "operations"
-                ? "组织运营"
-                : family === "workbench"
-                  ? "工作台"
-                  : ["suppliers", "vendors"].includes(family)
-                    ? "供应商"
-                    : family === "dashboard"
-                      ? "数据看板"
-                      : family === "organizations"
-                        ? entityId
-                          ? "组织 / 组织详情"
-                          : "组织"
-                        : family === "contacts"
-                          ? entityId
-                            ? "联系人详情"
-                            : "联系人"
-                          : family === "marketing-leads"
-                            ? entityId
-                              ? "线索 / 线索详情"
-                              : "线索"
-                            : entityId
-                              ? "商机 / 商机详情"
-                              : "商机")
-            }
-            dashboard={family === "dashboard"}
-          />
+        <CRMAppShell
+          sidebar={<AppSidebar
+            me={me}
+            counts={counts}
+            route={family}
+            onLogout={() => {
+              void logout();
+            }}
+          />}
+          header={<SiteHeader breadcrumbs={baseBreadcrumbs} dashboard={family === "dashboard"} />}
+        >
           {!migratedRoutes.has(family) ? (
             <PageContent>
               <p>页面不存在。</p>
@@ -342,7 +339,7 @@ export function App() {
               id={entityId}
             />
           )}
-        </CrmShellMain>
+        </CRMAppShell>
       </CrmShellProvider>
     </TooltipProvider>
   );

@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 import {
-  IconArrowLeft as ArrowLeft,
   IconBriefcaseStroked as BriefcaseBusiness,
   IconCommentStroked as MessageSquarePlus,
   IconDeleteStroked as Trash2,
@@ -39,8 +37,6 @@ import {
 import { Button, Input } from "@/components/crm/ui";
 import {
   PageContent,
-  PageHeader,
-  DetailScaffold,
   CompanyLogo,
   UserAvatar,
   StatusBadge,
@@ -52,7 +48,6 @@ import {
   EmptyState,
   ErrorState,
   LoadingSkeleton,
-  EntityHeader,
   EntityMeta,
   ListMetrics,
   SummaryStrip,
@@ -62,6 +57,8 @@ import {
   ConfirmDeleteDialog,
   type ActionItem,
 } from "@/components/crm/primitives";
+import { CRMPageHeader, CRMRecordHeader } from "@/components/crm/interaction-patterns";
+import { CRMListLayout, CRMRecordLayout } from "@/components/crm/layout";
 import { DataTable, type CrmColumnDef } from "@/components/crm/data-table";
 import {
   NextActionCell,
@@ -101,7 +98,6 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
   const [keyword, setKeyword] = useState("");
   const [page, setPage] = useState(1);
   const [tab, setTab] = useState("journey");
-  const [headerActionTarget, setHeaderActionTarget] = useState<HTMLElement | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [batchOwnerUserId, setBatchOwnerUserId] = useState("");
   const [batchBusy, setBatchBusy] = useState(false);
@@ -127,15 +123,6 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
   useEffect(() => {
     setTab("journey");
   }, [id]);
-  useEffect(() => {
-    if (!id) {
-      setHeaderActionTarget(null);
-      return;
-    }
-    setHeaderActionTarget(document.getElementById("crm-site-header-context-actions"));
-    return () => setHeaderActionTarget(null);
-  }, [id]);
-
   const setFilter = (key: string, value: string) => {
     setFilters((current) => ({ ...current, [key]: value }));
     setPage(1);
@@ -375,10 +362,18 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
     : [];
 
   return (
-    <PageContent detail={!!id}>
+    <PageContent
+      detail={!!id}
+      mode={id ? "record" : "list"}
+      breadcrumbs={[
+        { label: "Kivisense CRM", href: "#dashboard" },
+        { label: supplier ? "供应商" : "组织", href: id ? `#${targetFamily}` : undefined },
+        ...(id ? [{ label: organization?.name || "详情" }] : []),
+      ]}
+    >
       {!id ? (
-        <>
-          <PageHeader
+        <CRMListLayout
+          header={<CRMPageHeader
             title={supplier ? "供应商" : "组织"}
             description={supplier ? "查看组织关系为供应商的统一组织主档。" : "管理客户、合作伙伴与供应商的统一组织主档。"}
             actions={
@@ -395,8 +390,8 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                 )}
               </>
             }
-          />
-          <ListMetrics
+          />}
+          stats={<ListMetrics
             items={supplier
               ? [
                   { label: "供应商总数", value: list.data?.meta.total ?? "—" },
@@ -410,7 +405,8 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                   { label: "本页合作伙伴", value: listRows.filter((row) => row.roleKeys.includes("PARTNER")).length },
                   { label: "本页供应商", value: listRows.filter((row) => row.roleKeys.includes("VENDOR")).length },
                 ]}
-          />
+          />}
+        >
           {list.error ? (
             <ErrorState error={list.error} retry={list.reload} />
           ) : (
@@ -502,31 +498,21 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
             />
           )}
           {batchError && <p role="alert" className="text-sm text-destructive">{batchError}</p>}
-        </>
+        </CRMListLayout>
       ) : detail.loading ? (
         <LoadingSkeleton detail />
       ) : detail.error || !organization ? (
         <ErrorState error={detail.error} retry={detail.reload} />
       ) : (
-        <DetailScaffold
-          top={
-            <div className="crm-organization-detail-top">
-              <div className="crm-organization-detail-heading">
-                <a className="crm-detail-back-button" href={`#${targetFamily}`} aria-label="返回组织列表"><ArrowLeft /></a>
-                <EntityHeader
-                  icon={<CompanyLogo organization={organization} large />}
-                  title={organization.name}
-                  meta={<>
-                    <StatusBadge>{organizationTypeLabels[organization.organizationType] || "其他"}</StatusBadge>
-                    <span>{businessRelationText(organization.roleKeys)}</span>
-                    <span>{organization.industryCustom || organization.industry || "未填写行业"}</span>
-                    <SystemIdField value={organization.id} label="组织 ID" />
-                  </>}
-                />
-              </div>
-            </div>
-          }
-          highlights={
+        <CRMRecordLayout
+          header={<CRMRecordHeader
+            identity={<CompanyLogo organization={organization} large />}
+            name={organization.name}
+            subtitle={<>{businessRelationText(organization.roleKeys)} · {organization.industryCustom || organization.industry || "未填写行业"}</>}
+            tags={<><StatusBadge>{organizationTypeLabels[organization.organizationType] || "其他"}</StatusBadge><SystemIdField value={organization.id} label="组织 ID" /></>}
+            actions={<RowActions label={organization.name} triggerLabel="操作" items={detailActions} />}
+          />}
+          inlineMeta={
             <SummaryStrip items={[
               { label: "联系人", value: organization.contactCount },
               { label: "线索", value: organization.marketingLeadCount || 0 },
@@ -596,15 +582,8 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
             )}
             {tab === "audit" && <OrganizationAudit id={organization.id} />}
           </DetailTabs>
-        </DetailScaffold>
+        </CRMRecordLayout>
       )}
-
-      {organization && headerActionTarget
-        ? createPortal(
-            <RowActions label={organization.name} triggerLabel="操作" items={detailActions} />,
-            headerActionTarget,
-          )
-        : null}
 
       {edit && (
         <OrganizationForm

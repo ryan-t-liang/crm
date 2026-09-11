@@ -1,0 +1,511 @@
+{
+  "generatedAt": "2026-09-11T01:47:39.742Z",
+  "baseUrl": "http://127.0.0.1:8766/",
+  "browser": "Google Chrome via Playwright, headless",
+  "fixture": {
+    "id": "contact-naderi",
+    "name": "Naderi"
+  },
+  "captures": [
+    {
+      "kind": "contact-list",
+      "hash": "contacts",
+      "filename": "01-contact-list-1440x900.png",
+      "measurement": {
+        "pageKind": "contact-list",
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "horizontalOverflow": false
+        },
+        "semiShell": {
+          "layout": true,
+          "sider": true,
+          "header": true,
+          "content": true,
+          "nav": true,
+          "breadcrumb": true
+        },
+        "shell": {
+          "left": 0,
+          "right": 1440,
+          "width": 1440
+        },
+        "sider": {
+          "left": 0,
+          "right": 240,
+          "width": 240
+        },
+        "topHeader": {
+          "left": 240,
+          "right": 1440,
+          "width": 1200
+        },
+        "pageContainer": {
+          "left": 240,
+          "right": 1440,
+          "width": 1200
+        },
+        "pagePaddingLeft": 32,
+        "listLayout": {
+          "left": 272,
+          "right": 1408,
+          "width": 1136
+        },
+        "recordLayout": null,
+        "recordBody": null,
+        "recordColumns": [],
+        "recordGap": null,
+        "recordWorkspaceMinWidth": null,
+        "breadcrumbText": "Kivisense CRM/联系人",
+        "duplicateBackNavigation": false
+      }
+    },
+    {
+      "kind": "contact-detail-overview",
+      "hash": "contacts/contact-naderi",
+      "filename": "02-contact-detail-overview-1440x900.png",
+      "measurement": {
+        "pageKind": "contact-detail-overview",
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 1440,
+          "scrollWidth": 1440,
+          "horizontalOverflow": false
+        },
+        "semiShell": {
+          "layout": true,
+          "sider": true,
+          "header": true,
+          "content": true,
+          "nav": true,
+          "breadcrumb": true
+        },
+        "shell": {
+          "left": 0,
+          "right": 1440,
+          "width": 1440
+        },
+        "sider": {
+          "left": 0,
+          "right": 240,
+          "width": 240
+        },
+        "topHeader": {
+          "left": 240,
+          "right": 1440,
+          "width": 1200
+        },
+        "pageContainer": {
+          "left": 240,
+          "right": 1440,
+          "width": 1200
+        },
+        "pagePaddingLeft": 32,
+        "listLayout": null,
+        "recordLayout": {
+          "left": 272,
+          "right": 1408,
+          "width": 1136
+        },
+        "recordBody": {
+          "left": 272,
+          "right": 1408,
+          "width": 1136
+        },
+        "recordColumns": [
+          320,
+          784
+        ],
+        "recordGap": 32,
+        "recordWorkspaceMinWidth": "0px",
+        "breadcrumbText": "Kivisense CRM/联系人/Naderi",
+        "duplicateBackNavigation": false
+      }
+    },
+    {
+      "kind": "contact-list",
+      "hash": "contacts",
+      "filename": "03-contact-list-1280x800.png",
+      "measurement": {
+        "pageKind": "contact-list",
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "horizontalOverflow": false
+        },
+        "semiShell": {
+          "layout": true,
+          "sider": true,
+          "header": true,
+          "content": true,
+          "nav": true,
+          "breadcrumb": true
+        },
+        "shell": {
+          "left": 0,
+          "right": 1280,
+          "width": 1280
+        },
+        "sider": {
+          "left": 0,
+          "right": 240,
+          "width": 240
+        },
+        "topHeader": {
+          "left": 240,
+          "right": 1280,
+          "width": 1040
+        },
+        "pageContainer": {
+          "left": 240,
+          "right": 1280,
+          "width": 1040
+        },
+        "pagePaddingLeft": 24,
+        "listLayout": {
+          "left": 264,
+          "right": 1256,
+          "width": 992
+        },
+        "recordLayout": null,
+        "recordBody": null,
+        "recordColumns": [],
+        "recordGap": null,
+        "recordWorkspaceMinWidth": null,
+        "breadcrumbText": "Kivisense CRM/联系人",
+        "duplicateBackNavigation": false
+      }
+    },
+    {
+      "kind": "contact-detail-overview",
+      "hash": "contacts/contact-naderi",
+      "filename": "04-contact-detail-overview-1280x800.png",
+      "measurement": {
+        "pageKind": "contact-detail-overview",
+        "viewport": {
+          "width": 1280,
+          "height": 800
+        },
+        "document": {
+          "clientWidth": 1280,
+          "scrollWidth": 1280,
+          "horizontalOverflow": false
+        },
+        "semiShell": {
+          "layout": true,
+          "sider": true,
+          "header": true,
+          "content": true,
+          "nav": true,
+          "breadcrumb": true
+        },
+        "shell": {
+          "left": 0,
+          "right": 1280,
+          "width": 1280
+        },
+        "sider": {
+          "left": 0,
+          "right": 240,
+          "width": 240
+        },
+        "topHeader": {
+          "left": 240,
+          "right": 1280,
+          "width": 1040
+        },
+        "pageContainer": {
+          "left": 240,
+          "right": 1280,
+          "width": 1040
+        },
+        "pagePaddingLeft": 24,
+        "listLayout": null,
+        "recordLayout": {
+          "left": 264,
+          "right": 1256,
+          "width": 992
+        },
+        "recordBody": {
+          "left": 264,
+          "right": 1256,
+          "width": 992
+        },
+        "recordColumns": [
+          300,
+          668
+        ],
+        "recordGap": 24,
+        "recordWorkspaceMinWidth": "0px",
+        "breadcrumbText": "Kivisense CRM/联系人/Naderi",
+        "duplicateBackNavigation": false
+      }
+    },
+    {
+      "kind": "contact-list",
+      "hash": "contacts",
+      "filename": "05-contact-list-1024x768.png",
+      "measurement": {
+        "pageKind": "contact-list",
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "horizontalOverflow": false
+        },
+        "semiShell": {
+          "layout": true,
+          "sider": true,
+          "header": true,
+          "content": true,
+          "nav": true,
+          "breadcrumb": true
+        },
+        "shell": {
+          "left": 0,
+          "right": 1024,
+          "width": 1024
+        },
+        "sider": {
+          "left": 0,
+          "right": 240,
+          "width": 240
+        },
+        "topHeader": {
+          "left": 240,
+          "right": 1024,
+          "width": 784
+        },
+        "pageContainer": {
+          "left": 240,
+          "right": 1024,
+          "width": 784
+        },
+        "pagePaddingLeft": 20,
+        "listLayout": {
+          "left": 260,
+          "right": 1004,
+          "width": 744
+        },
+        "recordLayout": null,
+        "recordBody": null,
+        "recordColumns": [],
+        "recordGap": null,
+        "recordWorkspaceMinWidth": null,
+        "breadcrumbText": "Kivisense CRM/联系人",
+        "duplicateBackNavigation": false
+      }
+    },
+    {
+      "kind": "contact-detail-overview",
+      "hash": "contacts/contact-naderi",
+      "filename": "06-contact-detail-overview-1024x768.png",
+      "measurement": {
+        "pageKind": "contact-detail-overview",
+        "viewport": {
+          "width": 1024,
+          "height": 768
+        },
+        "document": {
+          "clientWidth": 1024,
+          "scrollWidth": 1024,
+          "horizontalOverflow": false
+        },
+        "semiShell": {
+          "layout": true,
+          "sider": true,
+          "header": true,
+          "content": true,
+          "nav": true,
+          "breadcrumb": true
+        },
+        "shell": {
+          "left": 0,
+          "right": 1024,
+          "width": 1024
+        },
+        "sider": {
+          "left": 0,
+          "right": 240,
+          "width": 240
+        },
+        "topHeader": {
+          "left": 240,
+          "right": 1024,
+          "width": 784
+        },
+        "pageContainer": {
+          "left": 240,
+          "right": 1024,
+          "width": 784
+        },
+        "pagePaddingLeft": 20,
+        "listLayout": null,
+        "recordLayout": {
+          "left": 260,
+          "right": 1004,
+          "width": 744
+        },
+        "recordBody": {
+          "left": 260,
+          "right": 1004,
+          "width": 744
+        },
+        "recordColumns": [
+          744,
+          744
+        ],
+        "recordGap": 24,
+        "recordWorkspaceMinWidth": "0px",
+        "breadcrumbText": "Kivisense CRM/联系人/Naderi",
+        "duplicateBackNavigation": false
+      }
+    },
+    {
+      "kind": "contact-list",
+      "hash": "contacts",
+      "filename": "07-contact-list-2048x900.png",
+      "measurement": {
+        "pageKind": "contact-list",
+        "viewport": {
+          "width": 2048,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 2048,
+          "scrollWidth": 2048,
+          "horizontalOverflow": false
+        },
+        "semiShell": {
+          "layout": true,
+          "sider": true,
+          "header": true,
+          "content": true,
+          "nav": true,
+          "breadcrumb": true
+        },
+        "shell": {
+          "left": 0,
+          "right": 2048,
+          "width": 2048
+        },
+        "sider": {
+          "left": 0,
+          "right": 240,
+          "width": 240
+        },
+        "topHeader": {
+          "left": 240,
+          "right": 2048,
+          "width": 1808
+        },
+        "pageContainer": {
+          "left": 240,
+          "right": 2048,
+          "width": 1808
+        },
+        "pagePaddingLeft": 32,
+        "listLayout": {
+          "left": 272,
+          "right": 2016,
+          "width": 1744
+        },
+        "recordLayout": null,
+        "recordBody": null,
+        "recordColumns": [],
+        "recordGap": null,
+        "recordWorkspaceMinWidth": null,
+        "breadcrumbText": "Kivisense CRM/联系人",
+        "duplicateBackNavigation": false
+      }
+    },
+    {
+      "kind": "contact-detail-overview",
+      "hash": "contacts/contact-naderi",
+      "filename": "08-contact-detail-overview-2048x900.png",
+      "measurement": {
+        "pageKind": "contact-detail-overview",
+        "viewport": {
+          "width": 2048,
+          "height": 900
+        },
+        "document": {
+          "clientWidth": 2048,
+          "scrollWidth": 2048,
+          "horizontalOverflow": false
+        },
+        "semiShell": {
+          "layout": true,
+          "sider": true,
+          "header": true,
+          "content": true,
+          "nav": true,
+          "breadcrumb": true
+        },
+        "shell": {
+          "left": 0,
+          "right": 2048,
+          "width": 2048
+        },
+        "sider": {
+          "left": 0,
+          "right": 240,
+          "width": 240
+        },
+        "topHeader": {
+          "left": 240,
+          "right": 2048,
+          "width": 1808
+        },
+        "pageContainer": {
+          "left": 404,
+          "right": 1884,
+          "width": 1480
+        },
+        "pagePaddingLeft": 32,
+        "listLayout": null,
+        "recordLayout": {
+          "left": 436,
+          "right": 1852,
+          "width": 1416
+        },
+        "recordBody": {
+          "left": 436,
+          "right": 1852,
+          "width": 1416
+        },
+        "recordColumns": [
+          320,
+          1064
+        ],
+        "recordGap": 32,
+        "recordWorkspaceMinWidth": "0px",
+        "breadcrumbText": "Kivisense CRM/联系人/Naderi",
+        "duplicateBackNavigation": false
+      }
+    }
+  ],
+  "diagnostics": {
+    "consoleErrors": [],
+    "pageErrors": [],
+    "unexpectedHttpFailures": [],
+    "expectedFixtureFailures": [],
+    "assertionFailures": []
+  },
+  "verdict": "PASS"
+}

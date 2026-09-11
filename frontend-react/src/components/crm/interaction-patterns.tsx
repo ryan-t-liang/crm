@@ -21,6 +21,7 @@ import {
 } from "@douyinfe/semi-icons";
 
 import { Button } from "./ui";
+import { CRMListLayout } from "./layout";
 
 export function CRMPageHeader({
   title,
@@ -52,11 +53,9 @@ export function CRMListPage({
   children: ReactNode;
 }) {
   return (
-    <div className="crm-pattern-list-page">
-      {header}
-      {metrics}
-      <div className="crm-pattern-list-workspace">{children}</div>
-    </div>
+    <CRMListLayout header={header} stats={metrics}>
+      {children}
+    </CRMListLayout>
   );
 }
 
@@ -236,13 +235,15 @@ export function CRMSystemInfoPopover({
 export function CRMRecordHeader({
   backHref,
   backLabel,
+  identity,
   name,
   subtitle,
   tags,
   actions,
 }: {
-  backHref: string;
-  backLabel: string;
+  backHref?: string;
+  backLabel?: string;
+  identity?: ReactNode;
   name: string;
   subtitle?: ReactNode;
   tags?: ReactNode;
@@ -250,9 +251,9 @@ export function CRMRecordHeader({
 }) {
   return (
     <div className="crm-pattern-record-header">
-      <a className="crm-pattern-record-back" href={backHref}>{backLabel}</a>
+      {backHref && backLabel ? <a className="crm-pattern-record-back" href={backHref}>{backLabel}</a> : null}
       <div className="crm-pattern-record-identity">
-        <Avatar size="large" color="grey" aria-label={name}>{name.trim().slice(0, 1) || "—"}</Avatar>
+        {identity || <Avatar size="large" color="grey" aria-label={name}>{name.trim().slice(0, 1) || "—"}</Avatar>}
         <div>
           <Typography.Title heading={2}>{name}</Typography.Title>
           {subtitle ? <Typography.Text type="secondary">{subtitle}</Typography.Text> : null}

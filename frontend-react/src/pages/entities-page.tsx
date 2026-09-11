@@ -1,6 +1,5 @@
 import { useCallback, useState } from "react";
 import {
-  IconArrowLeft as ArrowLeft,
   IconBriefcaseStroked as BriefcaseBusiness,
   IconCommentStroked as MessageSquare,
   IconEditStroked as Pencil,
@@ -56,18 +55,15 @@ import {
   CRMEntityCell,
   CRMFilterBar,
   CRMInlineStats,
-  CRMListPage,
   CRMPageHeader,
   CRMRecordHeader,
   CRMRecordListItem,
   CRMRecordTabs,
   CRMSystemInfoPopover,
 } from "@/components/crm/interaction-patterns";
+import { CRMListLayout, CRMRecordLayout } from "@/components/crm/layout";
 import {
   PageContent,
-  PageHeader,
-  DetailScaffold,
-  EntityHeader,
   EntityMeta,
   ListMetrics,
   SummaryStrip,
@@ -400,33 +396,30 @@ export function EntitiesPage({
     },
   ];
   return (
-    <PageContent detail={!!id}>
+    <PageContent
+      detail={!!id}
+      mode={id ? "record" : "list"}
+      breadcrumbs={[
+        { label: "Kivisense CRM", href: "#dashboard" },
+        { label, href: id ? `#${family}` : undefined },
+        ...(id ? [{ label: row ? nameOf(row) : "详情" }] : []),
+      ]}
+    >
       {!id ? (
-        <CRMListPage
-          header={kind === "contact" ? (
+        <CRMListLayout
+          header={
             <CRMPageHeader
-              title="联系人"
-              description="管理客户、合作伙伴及其他业务联系人的信息与关系。"
+              title={label}
+              description={kind === "contact" ? "管理客户、合作伙伴及其他业务联系人的信息与关系。" : "管理商机信息与下一步行动。"}
               actions={(
                 <>
                   <ImportExport kind={family} me={me} onChanged={refresh} selectedIds={selectedIds} filters={filters} />
-                  {canCreate ? <Button onClick={() => setForm({ kind })}><Plus />新增联系人</Button> : null}
+                  {canCreate ? <Button onClick={() => setForm({ kind })}><Plus />新增{label}</Button> : null}
                 </>
               )}
             />
-          ) : (
-            <PageHeader
-              title="商机"
-              description="管理商机信息与下一步行动"
-              actions={(
-                <>
-                  <ImportExport kind={family} me={me} onChanged={refresh} selectedIds={selectedIds} filters={filters} />
-                  {canCreate ? <Button onClick={() => setForm({ kind })}><Plus />新增商机</Button> : null}
-                </>
-              )}
-            />
-          )}
-          metrics={kind === "contact" ? (
+          }
+          stats={kind === "contact" ? (
             <CRMInlineStats
               label="联系人列表统计"
               items={[
@@ -670,17 +663,15 @@ export function EntitiesPage({
               {batchError}
             </p>
           )}
-        </CRMListPage>
+        </CRMListLayout>
       ) : detail.error ? (
         <ErrorState error={detail.error} retry={detail.reload} />
       ) : !row ? (
         <LoadingSkeleton detail />
       ) : (
-        <DetailScaffold
-          top={kind === "contact" ? (
+        <CRMRecordLayout
+          header={kind === "contact" ? (
             <CRMRecordHeader
-              backHref="#contacts"
-              backLabel="返回联系人"
               name={nameOf(row)}
               subtitle={(
                 <span className="crm-contact-header-subtitle">
@@ -716,33 +707,19 @@ export function EntitiesPage({
               )}
             />
           ) : (
-            <>
-              <a className="crm-detail-back-button" href={`#${family}`} aria-label={`返回${label}列表`}>
-                <ArrowLeft />
-              </a>
-              <EntityHeader
-                icon={<div className="crm-detail-symbol"><BriefcaseBusiness /></div>}
-                title={nameOf(row)}
-                meta={
-                  <>
-                    <StatusBadge>{leadStatuses[row.status || ""]}</StatusBadge>
-                    <SystemIdField value={row.id} label="商机 ID" />
-                    <StatusBadge>{priorities[row.priority || ""]}</StatusBadge>
-                    <span>销售：{row.salesOwner?.name || "待分配"}</span>
-                    <a className="hover:underline" href={`#contacts/${row.contactId}`}>{row.contact?.contactName}</a>
-                  </>
-                }
-                actions={
-                  <>
-                    {can(me, `crm.${kind}.edit`) && <Button variant="outline" onClick={() => setForm({ kind, record: row })}><Pencil />编辑</Button>}
-                    {canFollow && <Button variant="outline" onClick={() => follow(row)}><MessageSquare />记录跟进</Button>}
-                    {can(me, `crm.${kind}.delete`) && <RowActions label={nameOf(row)} items={[{ label: "删除", destructive: true, onClick: () => setDeleting(row) }]} />}
-                  </>
-                }
-              />
-            </>
+            <CRMRecordHeader
+              identity={<div className="crm-detail-symbol"><BriefcaseBusiness /></div>}
+              name={nameOf(row)}
+              subtitle={<><span>销售：{row.salesOwner?.name || "待分配"}</span><a className="hover:underline" href={`#contacts/${row.contactId}`}>{row.contact?.contactName}</a></>}
+              tags={<><StatusBadge>{leadStatuses[row.status || ""]}</StatusBadge><StatusBadge>{priorities[row.priority || ""]}</StatusBadge><SystemIdField value={row.id} label="商机 ID" /></>}
+              actions={<>
+                {can(me, `crm.${kind}.edit`) && <Button variant="outline" onClick={() => setForm({ kind, record: row })}><Pencil />编辑</Button>}
+                {canFollow && <Button variant="outline" onClick={() => follow(row)}><MessageSquare />记录跟进</Button>}
+                {can(me, `crm.${kind}.delete`) && <RowActions label={nameOf(row)} items={[{ label: "删除", destructive: true, onClick: () => setDeleting(row) }]} />}
+              </>}
+            />
           )}
-          highlights={kind === "contact" ? (
+          inlineMeta={kind === "contact" ? (
             <CRMInlineStats
               label="联系人关系摘要"
               items={[
@@ -906,7 +883,7 @@ export function EntitiesPage({
               )}
           </DetailTabs>
           }
-        </DetailScaffold>
+        </CRMRecordLayout>
       )}
       {form && (
         <EntityForm

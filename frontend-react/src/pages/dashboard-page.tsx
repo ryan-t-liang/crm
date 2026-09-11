@@ -23,6 +23,7 @@ import {
   Skeleton,
   type ChartConfig,
 } from "@/components/crm/ui"
+import { CRMPageContainer } from "@/components/crm/layout"
 import { getData, type CrmUser, type SessionUser } from "@/lib/api"
 import { opportunityStageLabels } from "@/lib/product-language"
 import { containsFinancialKey, customDateRange, localDateValue, type DashboardData, type TeamData, type TeamRow } from "@/lib/dashboard"
@@ -121,8 +122,7 @@ export function DashboardPage({ me }: { me: SessionUser; users: CrmUser[] }) {
   useEffect(() => { void load() }, [load])
 
   return (
-    <div className="flex flex-1 flex-col">
-      <div className="crm-page dashboard-page crm-dashboard-page @container/main flex flex-1 flex-col">
+      <CRMPageContainer mode="standard" breadcrumbs={[{ label: "Kivisense CRM", href: "#dashboard" }, { label: "数据看板" }]} className="crm-page dashboard-page crm-dashboard-page @container/main flex flex-1 flex-col">
         <header className="crm-page-header crm-dashboard-page-header">
           <div>
             <h1 className="crm-display-title text-2xl font-semibold tracking-tight">数据看板</h1>
@@ -182,8 +182,7 @@ export function DashboardPage({ me }: { me: SessionUser; users: CrmUser[] }) {
             </section>
           </main>
         ) : null}
-      </div>
-    </div>
+      </CRMPageContainer>
   )
 }
 

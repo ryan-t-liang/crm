@@ -1,10 +1,17 @@
-import { createContext, useContext, useState, type HTMLAttributes } from "react";
+import { createContext, useCallback, useContext, useState, type HTMLAttributes } from "react";
 
 import { cn } from "@/lib/utils";
 
 type ShellContextValue = {
   collapsed: boolean;
   toggle: () => void;
+  pageBreadcrumbs: CrmBreadcrumb[] | null;
+  setPageBreadcrumbs: (breadcrumbs: CrmBreadcrumb[] | null) => void;
+};
+
+export type CrmBreadcrumb = {
+  label: string;
+  href?: string;
 };
 
 const ShellContext = createContext<ShellContextValue | null>(null);
@@ -19,7 +26,11 @@ export function CrmShellProvider({ defaultCollapsed = false, className, children
     window.localStorage.setItem("kivisense.crm.sidebar.collapsed", String(next));
     return next;
   });
-  return <ShellContext.Provider value={{ collapsed, toggle }}><div className={cn("crm-shell", className)} data-collapsed={collapsed} {...props}>{children}</div></ShellContext.Provider>;
+  const [pageBreadcrumbs, setPageBreadcrumbsState] = useState<CrmBreadcrumb[] | null>(null);
+  const setPageBreadcrumbs = useCallback((breadcrumbs: CrmBreadcrumb[] | null) => {
+    setPageBreadcrumbsState(breadcrumbs);
+  }, []);
+  return <ShellContext.Provider value={{ collapsed, toggle, pageBreadcrumbs, setPageBreadcrumbs }}><div className={cn("crm-shell-provider", className)} {...props}>{children}</div></ShellContext.Provider>;
 }
 
 export function useCrmShell() {
@@ -28,6 +39,6 @@ export function useCrmShell() {
   return value;
 }
 
-export function CrmShellMain({ className, ...props }: HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("crm-shell-main", className)} {...props} />;
+export function useOptionalCrmShell() {
+  return useContext(ShellContext);
 }

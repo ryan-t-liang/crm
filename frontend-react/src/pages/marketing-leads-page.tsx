@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  IconArrowLeft as ArrowLeft,
   IconBranch as GitMerge,
   IconCommentStroked as MessageSquarePlus,
   IconEditStroked as Pencil,
@@ -16,8 +15,6 @@ import {
   ConfirmDeleteDialog,
   CopyValue,
   DetailTabs,
-  DetailScaffold,
-  EntityHeader,
   EntityMeta,
   ErrorState,
   Field,
@@ -26,7 +23,6 @@ import {
   LoadingSkeleton,
   ListMetrics,
   PageContent,
-  PageHeader,
   RowActions,
   SearchInput,
   Section,
@@ -36,6 +32,8 @@ import {
   UserAvatar,
   FilterControl,
 } from "@/components/crm/primitives";
+import { CRMActivityTimeline, CRMPageHeader, CRMRecordHeader } from "@/components/crm/interaction-patterns";
+import { CRMListLayout, CRMRecordLayout } from "@/components/crm/layout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/crm/ui";
 import { Button } from "@/components/crm/ui";
 import { Input } from "@/components/crm/ui";
@@ -304,8 +302,9 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
   if (!id) {
     const rows = list.data?.data || [];
     return (
-      <PageContent>
-        <PageHeader
+      <PageContent mode="list" breadcrumbs={[{ label: "Kivisense CRM", href: "#dashboard" }, { label: "线索" }]}>
+        <CRMListLayout
+          header={<CRMPageHeader
           title="线索"
           description="管理获客来源、原始询盘、评分与资格确认。"
           actions={
@@ -316,15 +315,16 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
               )}
             </>
           }
-        />
-        <ListMetrics
+        />}
+          stats={<ListMetrics
           items={[
             { label: "线索总数", value: list.data?.meta.total ?? "—" },
             { label: "本页待分配", value: rows.filter((item) => !item.ownerUserId).length },
             { label: "本页重点线索", value: rows.filter((item) => ["MQL", "SQL"].includes(item.status)).length },
             { label: "本页已转化", value: rows.filter((item) => item.status === "CONVERTED").length },
           ]}
-        />
+        />}
+        >
         {list.error ? (
           <ErrorState error={list.error} retry={list.reload} />
         ) : (
@@ -408,30 +408,27 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
             }
           />
         )}
+        </CRMListLayout>
         {formOpen && <MarketingLeadForm users={users} onClose={() => setFormOpen(false)} onSaved={() => { setFormOpen(false); refresh(); }} />}
         {deleting && <ConfirmDeleteDialog name={deleting.fullName} description="线索将被软删除，评分、行为和审计历史会保留。" onClose={() => setDeleting(null)} onConfirm={async () => { await crmApi(`/api/v1/crm/marketing-leads/${deleting.id}`, { method: "DELETE" }); refresh(); }} />}
       </PageContent>
     );
   }
-  if (detail.loading || !lead) return <PageContent detail>{detail.error ? <ErrorState error={detail.error} retry={detail.reload} /> : <LoadingSkeleton detail />}</PageContent>;
+  if (detail.loading || !lead) return <PageContent detail breadcrumbs={[{ label: "Kivisense CRM", href: "#dashboard" }, { label: "线索", href: "#marketing-leads" }, { label: "详情" }]}>{detail.error ? <ErrorState error={detail.error} retry={detail.reload} /> : <LoadingSkeleton detail />}</PageContent>;
   const legalActions = lead.status === "MQL" ? ["ACCEPT_SQL", "RECYCLE"] : lead.status === "SQL" ? ["RECYCLE"] : [];
   if (!["CONVERTED", "DISQUALIFIED"].includes(lead.status)) legalActions.push("DISQUALIFY");
   const transitionLabels: Record<string, string> = { ACCEPT_SQL: "接受跟进", RECYCLE: "退回培育", DISQUALIFY: "判定无效" };
   return (
-    <PageContent detail>
-      <DetailScaffold
-        top={
-          <>
-            <a className="crm-detail-back-button" href="#marketing-leads" aria-label="返回线索列表"><ArrowLeft /></a>
-            <EntityHeader
-              icon={<UserAvatar name={lead.fullName} large showName={false} />}
-              title={lead.fullName}
-              meta={<><span>{lead.companyName || "未填写组织"}</span><span>{sourceLabels[lead.source] || "其他"}{lead.sourceChannel ? ` / ${marketingSourceChannelLabel(lead.sourceChannel)}` : ""}</span><StatusBadge>{statusLabels[lead.status]}</StatusBadge><SystemIdField value={lead.id} label="线索 ID" /></>}
-              actions={<>{can(me, "crm.marketing.activity.create") && lead.status !== "CONVERTED" && <Button variant="outline" onClick={() => setActivityOpen(true)}><MessageSquarePlus />记录行为</Button>}{can(me, "crm.marketing_lead.qualify") && legalActions.map((action) => <Button key={action} variant="outline" onClick={() => setTransition(action)}>{transitionLabels[action]}</Button>)}{can(me, "crm.marketing_lead.convert") && ["SQL", "QUALIFIED"].includes(lead.status) && <Button onClick={() => setConversionOpen(true)}><GitMerge />转为商机</Button>}{can(me, "crm.marketing_lead.edit") && lead.status !== "CONVERTED" && <Button variant="outline" onClick={() => setFormOpen(true)}><Pencil />编辑</Button>}</>}
-            />
-          </>
-        }
-        highlights={
+    <PageContent detail breadcrumbs={[{ label: "Kivisense CRM", href: "#dashboard" }, { label: "线索", href: "#marketing-leads" }, { label: lead.fullName }]}>
+      <CRMRecordLayout
+        header={<CRMRecordHeader
+          identity={<UserAvatar name={lead.fullName} large showName={false} />}
+          name={lead.fullName}
+          subtitle={<>{lead.companyName || "未填写组织"} · {sourceLabels[lead.source] || "其他"}{lead.sourceChannel ? ` / ${marketingSourceChannelLabel(lead.sourceChannel)}` : ""}</>}
+          tags={<><StatusBadge>{statusLabels[lead.status]}</StatusBadge><SystemIdField value={lead.id} label="线索 ID" /></>}
+          actions={<>{can(me, "crm.marketing.activity.create") && lead.status !== "CONVERTED" && <Button variant="outline" onClick={() => setActivityOpen(true)}><MessageSquarePlus />记录行为</Button>}{can(me, "crm.marketing_lead.qualify") && legalActions.map((action) => <Button key={action} variant="outline" onClick={() => setTransition(action)}>{transitionLabels[action]}</Button>)}{can(me, "crm.marketing_lead.convert") && ["SQL", "QUALIFIED"].includes(lead.status) && <Button onClick={() => setConversionOpen(true)}><GitMerge />转为商机</Button>}{can(me, "crm.marketing_lead.edit") && lead.status !== "CONVERTED" && <Button variant="outline" onClick={() => setFormOpen(true)}><Pencil />编辑</Button>}</>}
+        />}
+        inlineMeta={
           <SummaryStrip items={[
             { label: "状态", value: statusLabels[lead.status] },
             { label: "线索负责人", value: lead.owner?.name || "待分配" },
@@ -473,11 +470,11 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
         {lead.status === "CONVERTED" && <Alert><CircleGauge /><AlertTitle>已转商机</AlertTitle><AlertDescription><div className="flex flex-wrap gap-4">{lead.convertedOrganization && <a className="underline" href={`#organizations/${lead.convertedOrganization.id}`}>组织：{lead.convertedOrganization.shortName || lead.convertedOrganization.name}</a>}{lead.convertedContact && <a className="underline" href={`#contacts/${lead.convertedContact.id}`}>联系人：{lead.convertedContact.contactName}</a>}{lead.convertedOpportunity && <a className="underline" href={`#leads/${lead.convertedOpportunity.id}`}>商机：{lead.convertedOpportunity.requirementSummary}</a>}<span>{dateTime(lead.convertedAt)} · {lead.convertedBy?.name || "—"}</span></div></AlertDescription></Alert>}
         <DetailTabs value={tab} onChange={setTab} items={[["overview", "需求信息"], ["journey", "客户旅程"], ["scoring", "评分历史"], ["audit", "操作记录"]]}>
           {tab === "overview" ? <div className="space-y-3"><Section title="原始询盘与补充说明"><EntityMeta columns={1} items={[{ label: "询盘类型", value: lead.inquiryType }, { label: "原始询盘", value: <p className="whitespace-pre-wrap">{lead.inquiryContent || "—"}</p> }, { label: "产品兴趣", value: lead.productInterest }, { label: "需求标签", value: lead.requirementTags?.join("、") }, { label: "预算范围", value: lead.budgetRange }, { label: "补充说明", value: <p className="whitespace-pre-wrap">{lead.note || "—"}</p> }, ...(lead.disqualifiedReason ? [{ label: "无效原因", value: lead.disqualifiedReason }] : [])]} /></Section><Section title="系统信息"><EntityMeta items={[{ label: "创建人", value: lead.createdBy?.name }, { label: "创建时间", value: dateTime(lead.createdAt) }, { label: "更新时间", value: dateTime(lead.updatedAt) }, { label: "线索 ID", value: <CopyValue value={lead.id} label="复制 ID" /> }]} /></Section></div>
-          : tab === "journey" ? <Section title="客户旅程"><div className="space-y-0">{journey.map((item) => <div key={item.id} className="grid grid-cols-[8rem_1fr] gap-4 border-b py-3 last:border-0"><time className="text-xs text-muted-foreground">{dateTime(item.at)}</time><div><p className="text-sm font-medium">{item.title}</p><p className="mt-1 text-sm text-muted-foreground">{item.detail}</p></div></div>)}{!journey.length && <p className="text-sm text-muted-foreground">暂无行为与状态事件。</p>}</div></Section>
+          : tab === "journey" ? <Section title="客户旅程"><CRMActivityTimeline items={journey.map((item) => ({ id: item.id, time: dateTime(item.at), title: item.title, detail: item.detail }))} /></Section>
           : tab === "scoring" ? <Section title="评分历史"><SummaryStrip items={[{ label: "线索匹配度", value: `${lead.fitScore} · ${levelLabels[lead.fitLevel]}` }, { label: "互动活跃度", value: `${lead.engagementScoreCached} · ${levelLabels[lead.engagementLevel]}` }, { label: "线索热度", value: levelLabels[lead.leadLevel] }, { label: "计算时间", value: dateTime(lead.engagementScoreCalculatedAt) }]} /><div className="mt-5 space-y-3">{lead.scoreHistory?.map((item) => <div key={item.id} className="flex items-start justify-between gap-4 border-b pb-3"><div><p className="text-sm font-medium">{item.dimension === "FIT" ? "线索匹配度" : "互动活跃度"} · {item.reason || "评分变更"}</p><p className="text-xs text-muted-foreground">{item.changedBy?.name || "系统"} · {dateTime(item.createdAt)}</p></div><span className="tabular-nums">{item.previousScore} {item.scoreDelta >= 0 ? "+" : ""}{item.scoreDelta} = {item.newScore}</span></div>)}</div></Section>
           : <EntityAudit id={lead.id} />}
         </DetailTabs>
-      </DetailScaffold>
+      </CRMRecordLayout>
       {formOpen && <MarketingLeadForm lead={lead} users={users} onClose={() => setFormOpen(false)} onSaved={() => { setFormOpen(false); refresh(); }} />}
       {activityOpen && <ActivityDialog lead={lead} onClose={() => setActivityOpen(false)} onSaved={() => { setActivityOpen(false); refresh(); }} />}
       {transition && <TransitionDialog lead={lead} action={transition} onClose={() => setTransition(null)} onSaved={() => { setTransition(null); refresh(); }} />}

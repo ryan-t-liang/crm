@@ -91,7 +91,7 @@ export function AppSidebar({ me, counts, onLogout, route = "dashboard" }: { me: 
     }))
     .filter((group) => group.items.length > 0);
   return (
-    <aside className="crm-sidebar" data-collapsed={collapsed} aria-label="主导航">
+    <div className="crm-sidebar" data-collapsed={collapsed}>
       <Navigation className="crm-navigation" mode="vertical" isCollapsed={collapsed} selectedKeys={[route]} header={
         <a className="crm-brand-lockup" href="#dashboard" aria-label="返回数据看板">
           <span className="crm-logo-tile"><img src={assetUrl("/assets/kivisense-logo.svg")} alt="Kivisense 标志" /></span>
@@ -108,6 +108,6 @@ export function AppSidebar({ me, counts, onLogout, route = "dashboard" }: { me: 
           }),
         ])}
       </Navigation>
-    </aside>
+    </div>
   );
 }

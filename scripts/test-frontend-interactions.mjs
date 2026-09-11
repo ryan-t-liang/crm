@@ -11,9 +11,10 @@ import { preflightMessage, preflightStatusLabel } from "../frontend/js/crm-jobs.
 const [appSource, markup, styles, contactSource, leadSource, jobSource, followupSource, fixtureSource, operationsSource] = await Promise.all([
   "app.js", "../legacy/index.html", "../styles/production.css", "contacts.js", "leads.js", "crm-jobs.js", "followups.js", "../../scripts/frontend-browser-fixture.mjs", "customer-operations.js",
 ].map((file) => readFile(new URL(`../frontend/js/${file}`, import.meta.url), "utf8")));
-const [rootMarkup, reactAppSource, reactSidebarSource, reactDashboardSource, reactDataTableSource, reactPrimitivesSource, reactUiSource, reactOrganizationsSource, reactMarketingLeadsSource, reactPackage] = await Promise.all([
+const [rootMarkup, reactAppSource, reactLayoutSource, reactSidebarSource, reactDashboardSource, reactDataTableSource, reactPrimitivesSource, reactUiSource, reactOrganizationsSource, reactMarketingLeadsSource, reactPackage] = await Promise.all([
   "../frontend/index.html",
   "../frontend-react/src/app.tsx",
+  "../frontend-react/src/components/crm/layout.tsx",
   "../frontend-react/src/components/app-sidebar.tsx",
   "../frontend-react/src/pages/dashboard-page.tsx",
   "../frontend-react/src/components/crm/data-table.tsx",
@@ -31,7 +32,11 @@ assert.match(markup, /assets\/kivisense-logo\.svg/);
 assert.match(rootMarkup, /react-build\/assets\/app\.js/, "主入口必须加载 React 构建产物");
 assert.match(rootMarkup, /react-build\/assets\/app\.css/, "主入口必须加载 Tailwind 构建样式");
 assert.match(reactAppSource, /CrmShellProvider/, "React App Shell 必须使用 CRM Shell Provider");
-assert.match(reactAppSource, /CrmShellMain/, "React App Shell 必须使用 CRM Shell Main");
+assert.match(reactAppSource, /CRMAppShell/, "React App Shell 必须使用统一 CRMAppShell");
+assert.match(reactLayoutSource, /<Layout[^>]*hasSider>/, "CRMAppShell 必须使用 Semi Layout");
+assert.match(reactLayoutSource, /<Layout\.Sider/, "CRMAppShell 必须使用 Semi Layout.Sider");
+assert.match(reactLayoutSource, /<Layout\.Header/, "CRMAppShell 必须使用 Semi Layout.Header");
+assert.match(reactLayoutSource, /<Layout\.Content/, "CRMAppShell 必须使用 Semi Layout.Content");
 assert.match(reactSidebarSource, /from "@douyinfe\/semi-ui"/, "导航必须使用 Semi Design 组件");
 assert.match(reactSidebarSource, /from "@douyinfe\/semi-icons"/, "导航必须使用 Semi Design 图标");
 assert.match(reactDataTableSource, /import \{[^}]*\bTable\b[^}]*\} from "@douyinfe\/semi-ui"/s, "CRM DataTable 必须使用 Semi Table");
