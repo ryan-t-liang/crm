@@ -7,6 +7,7 @@ import {
 } from "@douyinfe/semi-icons";
 import {
   AutoComplete,
+  Card as SemiCard,
   Descriptions,
   Dropdown,
   Empty,
@@ -16,6 +17,7 @@ import {
   SideSheet,
   Steps,
   Tabs as SemiTabs,
+  Typography,
 } from "@douyinfe/semi-ui";
 import { Button } from "@/components/crm/ui";
 import { Input } from "@/components/crm/ui";
@@ -302,18 +304,20 @@ export function SummaryStrip({
 export function ListMetrics({
   items,
 }: {
-  items: { label: string; value: ReactNode; note?: ReactNode }[];
+  items: { label: string; value: string | number; note?: ReactNode }[];
 }) {
   return (
-    <div className="crm-list-metrics" aria-label="列表指标">
-      {items.map((item) => (
-        <article className="crm-list-metric" key={item.label}>
-          <div className="crm-list-metric-label">{item.label}</div>
-          <div className="crm-list-metric-value">{item.value ?? "—"}</div>
-          {item.note && <div className="crm-list-metric-note">{item.note}</div>}
-        </article>
-      ))}
-    </div>
+    <SemiCard className="crm-list-metrics" bodyStyle={{ padding: 0 }} aria-label="列表指标">
+      <div className="crm-list-metrics-grid">
+        {items.map((item) => (
+          <div className="crm-list-metric" key={item.label}>
+            <Typography.Text type="tertiary">{item.label}</Typography.Text>
+            <Typography.Title heading={4}>{item.value ?? "—"}</Typography.Title>
+            {item.note ? <Typography.Text type="secondary">{item.note}</Typography.Text> : null}
+          </div>
+        ))}
+      </div>
+    </SemiCard>
   );
 }
 export function DetailTabs({

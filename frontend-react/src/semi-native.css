@@ -169,6 +169,37 @@
   font-weight: 600;
 }
 
+.crm-list-metrics.semi-card {
+  overflow: hidden;
+  border-color: var(--semi-color-border);
+  border-radius: var(--semi-border-radius-medium);
+  background: var(--semi-color-bg-0);
+  box-shadow: none;
+}
+
+.crm-list-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.crm-list-metric {
+  min-width: 0;
+  padding: 14px 16px;
+  border-right: 1px solid var(--semi-color-border);
+  background: transparent;
+}
+
+.crm-list-metric:last-child {
+  border-right: 0;
+}
+
+.crm-list-metric .semi-typography-h4 {
+  margin: 4px 0 0;
+  color: var(--semi-color-text-0);
+  font-size: 22px;
+  font-weight: 600;
+}
+
 .crm-data-workspace,
 .crm-data-table.is-flat .crm-data-workspace {
   overflow: hidden;
@@ -475,6 +506,18 @@
 }
 
 @media (max-width: 720px) {
+  .crm-list-metrics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .crm-list-metric:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .crm-list-metric:nth-child(n + 3) {
+    border-top: 1px solid var(--semi-color-border);
+  }
+
   .crm-data-views,
   .crm-filter-panel,
   .crm-table-toolbar,
