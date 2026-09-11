@@ -8978,7 +8978,7 @@ a.crm-contact-brief-primary:hover {
 /* Keep CRM-specific compositions aligned with the published Semi theme palette.
    The package owns --semi-brand-*; these aliases prevent legacy CRM tokens from
    masking the active theme while preserving the product's layout contracts. */
-:root {
+body {
   --crm-primary: rgba(var(--semi-brand-5), 1);
   --crm-primary-hover: rgba(var(--semi-brand-6), 1);
   --crm-primary-active: rgba(var(--semi-brand-7), 1);
