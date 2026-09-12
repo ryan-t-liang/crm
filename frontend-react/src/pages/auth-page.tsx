@@ -87,7 +87,7 @@ export function LoginPage({ onSignedIn }: { onSignedIn: () => void }) {
               {error}
             </p>
           )}
-          <Button type="submit" className="w-full" disabled={busy}>
+          <Button type="submit" block disabled={busy}>
             {busy ? "登录中…" : "登录"}
           </Button>
         </form>

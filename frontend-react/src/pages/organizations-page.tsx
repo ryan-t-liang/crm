@@ -93,10 +93,11 @@ const organizationRelationViews = [
 ];
 
 export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
+  const defaultDetailTab = "marketing-leads";
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [keyword, setKeyword] = useState("");
   const [page, setPage] = useState(1);
-  const [tab, setTab] = useState("journey");
+  const [tab, setTab] = useState(defaultDetailTab);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [batchOwnerUserId, setBatchOwnerUserId] = useState("");
   const [batchBusy, setBatchBusy] = useState(false);
@@ -120,8 +121,8 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
     return () => clearTimeout(timer);
   }, [keyword]);
   useEffect(() => {
-    setTab("journey");
-  }, [id]);
+    setTab(defaultDetailTab);
+  }, [id, defaultDetailTab]);
   const setFilter = (key: string, value: string) => {
     setFilters((current) => ({ ...current, [key]: value }));
     setPage(1);
@@ -519,7 +520,6 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
             identity={<CompanyLogo organization={organization} large />}
             name={organization.name}
             subtitle={<>{businessRelationText(organization.roleKeys)} · {organization.industryCustom || organization.industry || "未填写行业"}</>}
-            tags={<StatusBadge>{organizationTypeLabels[organization.organizationType] || "其他"}</StatusBadge>}
             actions={<RowActions label={organization.name} items={detailActions} />}
           />}
           inlineMeta={

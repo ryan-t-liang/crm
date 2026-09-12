@@ -4,9 +4,9 @@ import {
   IconRefresh as RefreshCw,
 } from "@douyinfe/semi-icons"
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
-import { DatePicker } from "@douyinfe/semi-ui"
+import { DatePicker, Radio, RadioGroup } from "@douyinfe/semi-ui"
 
-import { DashboardFunnel25D, type DashboardStage } from "@/components/dashboard-composition"
+import { DashboardStageFlow, type DashboardStage } from "@/components/dashboard-composition"
 import {
   Alert,
   AlertDescription,
@@ -159,7 +159,10 @@ export function DashboardPage({ me }: { me: SessionUser; users: CrmUser[] }) {
                   </header>
                   <div className="crm-dashboard-funnel-body">
                     {funnel ? (
-                      <DashboardFunnel25D stages={marketingStages(funnel)} label="营销与转化漏斗" summary={<>线索总数 <strong>{funnel.stages[0]?.count ?? 0}</strong></>} footnote={<>总转化率 {conversionValue(funnel.kpis.leadToOpportunityRate)}；阶段间转化率仅在样本量足够时展示</>} />
+                      <>
+                        <div className="dashboard-funnel-summary">线索总数 <strong>{funnel.stages[0]?.count ?? 0}</strong></div>
+                        <DashboardStageFlow compact stages={marketingStages(funnel)} label="营销与转化漏斗" footnote={<>总转化率 {conversionValue(funnel.kpis.leadToOpportunityRate)}；阶段间转化率仅在样本量足够时展示</>} />
+                      </>
                     ) : <p className="crm-dashboard-analysis-unavailable">当前账户没有营销分析权限。</p>}
                   </div>
                 </article>
@@ -171,7 +174,8 @@ export function DashboardPage({ me }: { me: SessionUser; users: CrmUser[] }) {
                     <h3 id="dashboard-opportunity-funnel-title">商机推进</h3>
                   </header>
                   <div className="crm-dashboard-funnel-body">
-                    <DashboardFunnel25D stages={opportunityStages(data)} label="商机推进漏斗" summary={<>商机总数 <strong>{OPPORTUNITY_STAGE_ORDER.reduce((sum, status) => sum + stageCount(data, status), 0)}</strong></>} footnote={`当前阶段存量；本期丢失 ${stageCount(data, "LOST")} 个`} />
+                    <div className="dashboard-funnel-summary">商机总数 <strong>{OPPORTUNITY_STAGE_ORDER.reduce((sum, status) => sum + stageCount(data, status), 0)}</strong></div>
+                    <DashboardStageFlow compact stages={opportunityStages(data)} label="商机推进漏斗" footnote={`当前阶段存量；本期丢失 ${stageCount(data, "LOST")} 个`} />
                   </div>
                 </article>
               </div>
@@ -200,15 +204,22 @@ function DashboardTrendPanel({ data }: { data: DashboardData }) {
           <p>关键指标随所选周期的变化</p>
         </div>
       </header>
-      <div className="crm-dashboard-metric-selector" aria-label="核心业务指标">
+      <RadioGroup
+        className="crm-dashboard-metric-selector"
+        type="button"
+        buttonSize="small"
+        value={metricKey}
+        aria-label="核心业务指标"
+        onChange={(event) => setMetricKey(event.target.value as TrendMetricKey)}
+      >
         {TREND_METRICS.map((item) => (
-          <Button variant="ghost" key={item.key} className={`crm-dashboard-metric-option${item.key === metricKey ? " is-active" : ""}`} aria-pressed={item.key === metricKey} onClick={() => setMetricKey(item.key)}>
+          <Radio key={item.key} value={item.key} className={`crm-dashboard-metric-option${item.key === metricKey ? " is-active" : ""}`}>
             <span>{item.label}</span>
             <strong>{metrics[item.key]}</strong>
             <small>{item.note}</small>
-          </Button>
+          </Radio>
         ))}
-      </div>
+      </RadioGroup>
       <div className="crm-dashboard-trend-chart">
         <ChartContainer config={chartConfig} className="h-full w-full aspect-auto">
           <LineChart accessibilityLayer data={rows} margin={{ top: 18, right: 18, bottom: 0, left: -12 }}>
@@ -232,10 +243,17 @@ function TeamPerformancePanel({ rows, management }: { rows: TeamRow[]; managemen
     <aside className="crm-dashboard-team" aria-labelledby="dashboard-team-title">
       <header className="crm-dashboard-team-header">
         <div><h2 id="dashboard-team-title">团队表现</h2><p>按本期提交数量查看成员产出</p></div>
-        <div className="crm-dashboard-team-switch" aria-label="团队表现指标">
-          <Button variant="ghost" className={`crm-dashboard-team-switch-option${metric === "leads" ? " is-active" : ""}`} onClick={() => setMetric("leads")}>线索</Button>
-          <Button variant="ghost" className={`crm-dashboard-team-switch-option${metric === "opportunities" ? " is-active" : ""}`} onClick={() => setMetric("opportunities")}>商机</Button>
-        </div>
+        <RadioGroup
+          className="crm-dashboard-team-switch"
+          type="button"
+          buttonSize="small"
+          value={metric}
+          aria-label="团队表现指标"
+          onChange={(event) => setMetric(event.target.value as TeamMetric)}
+        >
+          <Radio value="leads" className={`crm-dashboard-team-switch-option${metric === "leads" ? " is-active" : ""}`}>线索</Radio>
+          <Radio value="opportunities" className={`crm-dashboard-team-switch-option${metric === "opportunities" ? " is-active" : ""}`}>商机</Radio>
+        </RadioGroup>
       </header>
       <div className="crm-dashboard-team-columns" aria-hidden="true"><span>团队成员</span><span>提交数量</span></div>
       <ol className="crm-dashboard-team-ranking">

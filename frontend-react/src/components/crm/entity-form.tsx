@@ -23,6 +23,7 @@ import {
   Field,
   FilterControl,
   focusFirstInvalidField,
+  FormTabLabel,
   FormDialog,
 } from "./primitives";
 import { AttachmentList, attachmentAccept } from "./attachment-list";
@@ -196,8 +197,17 @@ export function EntityForm({
     },
     [kind, organization?.id],
   );
-  const update = (key: string, value: string | string[]) =>
+  const clearFieldError = (key: string) => {
+    setFieldErrors((current) => {
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+  };
+  const update = (key: string, value: string | string[]) => {
     setValues((v) => ({ ...v, [key]: value }));
+    clearFieldError(key);
+  };
   const endpoint = `/api/v1/crm/${kind === "contact" ? "contacts" : "leads"}`;
   async function save() {
     const errors: Record<string, string> = {};
@@ -497,6 +507,7 @@ export function EntityForm({
                           ? "linked"
                           : contactMode;
                       setContactMode(nextMode);
+                      clearFieldError("organizationId");
                       if (nextMode !== "linked") {
                         setRelationId("");
                         setRelationLabel("");
@@ -530,6 +541,7 @@ export function EntityForm({
                         setContactMode(nextMode);
                         setRelationId("");
                         setRelationLabel("");
+                        clearFieldError("organizationId");
                       }}
                     >
                       <Radio value="linked">关联已有组织</Radio>
@@ -548,6 +560,7 @@ export function EntityForm({
                         onChange={(nextId, nextLabel) => {
                           setRelationId(nextId);
                           setRelationLabel(nextLabel);
+                          clearFieldError("organizationId");
                         }}
                         load={loadRelation}
                       />
@@ -601,11 +614,19 @@ export function EntityForm({
       }
     >
       <DetailTabs
+        className="crm-form-tabs"
         value={tab}
         onChange={setTab}
         items={tabs.map(([key, label]) => [
           key,
-          `${label}${definitions.some((d) => d.tab === key && fieldErrors[d.key]) || (key === "basic" && (fieldErrors.contactId || fieldErrors.organizationId)) ? " · 有错误" : ""}`,
+          <FormTabLabel
+            key={key}
+            label={label}
+            error={Boolean(
+              definitions.some((d) => d.tab === key && fieldErrors[d.key])
+              || (key === "basic" && (fieldErrors.contactId || fieldErrors.organizationId)),
+            )}
+          />,
         ])}
       >
         <div className="grid gap-6 sm:grid-cols-2">
@@ -628,6 +649,7 @@ export function EntityForm({
                       onChange={(id, label) => {
                         setRelationId(id);
                         setRelationLabel(label);
+                        clearFieldError("contactId");
                       }}
                       load={loadRelation}
                     />

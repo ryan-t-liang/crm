@@ -12,6 +12,7 @@ import {
   EntityCombobox,
   Field,
   FilterControl,
+  FormTabLabel,
   focusFirstInvalidField,
 } from "./primitives";
 import { organizationTypeLabels } from "@/lib/product-language";
@@ -111,7 +112,11 @@ export function OrganizationForm({
   }, []);
   const set = (key: string, value: string) => {
     setValues((v) => ({ ...v, [key]: value }));
-    setFieldErrors((current) => ({ ...current, [key]: "" }));
+    setFieldErrors((current) => {
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
     setDuplicate(false);
   };
   const scoreAllowed = !organization || can(me, "crm.organization.score.edit");
@@ -246,9 +251,9 @@ export function OrganizationForm({
         value={tab}
         onChange={setTab}
         items={[
-          ["info", `组织资料${Object.keys(fieldErrors).some((key) => !["ownerUserId", "lifecycleStage", "fitScore", "fitReason", "note"].includes(key)) ? " · 有错误" : ""}`],
-          ["crm", `客户关系${Object.keys(fieldErrors).some((key) => ["ownerUserId", "lifecycleStage", "fitScore", "fitReason"].includes(key)) ? " · 有错误" : ""}`],
-          ["notes", `备注与文件${fieldErrors.note ? " · 有错误" : ""}`],
+          ["info", <FormTabLabel key="info" label="组织资料" error={Object.entries(fieldErrors).some(([key, message]) => Boolean(message) && !["ownerUserId", "lifecycleStage", "fitScore", "fitReason", "note"].includes(key))} />],
+          ["crm", <FormTabLabel key="crm" label="客户关系" error={Object.entries(fieldErrors).some(([key, message]) => Boolean(message) && ["ownerUserId", "lifecycleStage", "fitScore", "fitReason"].includes(key))} />],
+          ["notes", <FormTabLabel key="notes" label="备注与文件" error={Boolean(fieldErrors.note)} />],
         ]}
       >
         <div className="crm-organization-form-grid">
@@ -391,7 +396,11 @@ export function OrganizationForm({
                     >
                       <Checkbox
                         checked={key === "CUSTOMER_RELATION" ? roles.some((role) => role === "PROSPECT" || role === "CUSTOMER") : roles.includes(key)}
-                        onCheckedChange={(checked) => { setFieldErrors((current) => ({ ...current, roles: "" })); setRoles((current) => {
+                        onCheckedChange={(checked) => { setFieldErrors((current) => {
+                          const next = { ...current };
+                          delete next.roles;
+                          return next;
+                        }); setRoles((current) => {
                           if (key === "CUSTOMER_RELATION") {
                             const withoutCustomer = current.filter((role) => role !== "PROSPECT" && role !== "CUSTOMER");
                             return checked ? [...withoutCustomer, values.lifecycleStage === "CUSTOMER" ? "CUSTOMER" : "PROSPECT"] : withoutCustomer;

@@ -11,7 +11,6 @@
 
 /* Restore the visual contract of Semi primitives after legacy CRM CSS. */
 .crm-button.semi-button {
-  width: auto;
   height: 32px;
   min-height: 32px;
   padding: 8px 12px;
@@ -31,7 +30,6 @@
 .crm-button.semi-button[data-size="sm"],
 .crm-button.semi-button[data-size="icon-xs"],
 .crm-button.semi-button[data-size="icon-sm"] {
-  width: auto;
   height: 24px;
   min-height: 24px;
   padding: 4px 12px;
@@ -99,10 +97,16 @@
 
 .semi-dropdown-menu,
 .semi-popover-content,
-.semi-modal-content,
-.semi-sidesheet-inner {
+.semi-modal-content {
   border-radius: var(--semi-border-radius-medium);
   box-shadow: var(--semi-shadow-elevated);
+}
+
+.crm-form-sheet .semi-sidesheet-inner,
+.crm-form-sheet .semi-sidesheet-inner-wrap,
+.crm-pattern-form-sheet .semi-sidesheet-inner,
+.crm-pattern-form-sheet .semi-sidesheet-inner-wrap {
+  border-radius: 0;
 }
 
 /* App frame and page hierarchy. */
@@ -604,16 +608,25 @@
   display: inline-flex;
   min-width: 0;
   max-width: 100%;
-  align-items: center;
+  align-items: flex-start;
   gap: 4px;
 }
 
 .crm-copy-value code {
-  overflow: hidden;
+  min-width: 0;
+  max-width: 100%;
+  overflow: visible;
   color: var(--semi-color-text-2);
   font-size: var(--semi-font-size-small);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: break-all;
+}
+
+.crm-copy-value .semi-typography-action-copy {
+  flex: 0 0 auto;
+  margin-top: 2px;
 }
 
 .crm-empty-state.semi-empty,
@@ -709,6 +722,11 @@
   background: transparent;
 }
 
+.crm-form-tab-error {
+  display: inline-flex;
+  padding-right: 4px;
+}
+
 .crm-form-tabs.semi-tabs .semi-tabs-tab {
   min-height: 40px;
   padding: 0 4px;
@@ -780,6 +798,13 @@
   padding-inline: 10px;
 }
 
+.crm-navigation .semi-navigation-item .semi-icon,
+.crm-navigation .semi-navigation-item .semi-navigation-item-icon {
+  width: 18px;
+  height: 18px;
+  font-size: 18px;
+}
+
 .crm-brand-lockup {
   width: 100%;
   min-width: 0;
@@ -814,9 +839,45 @@
   overflow: hidden;
 }
 
-.crm-sidebar-user-copy {
+.crm-sidebar-user.semi-button .semi-button-content {
+  display: flex;
+  width: 100%;
   min-width: 0;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
   overflow: hidden;
+  text-align: left;
+}
+
+.crm-sidebar-user .semi-avatar {
+  flex: 0 0 auto;
+}
+
+.crm-sidebar-user-copy {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  overflow: hidden;
+}
+
+.crm-sidebar-user-copy strong,
+.crm-sidebar-user-copy small {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.crm-shell[data-collapsed="true"] .crm-sidebar-user.semi-button .semi-button-content {
+  width: auto;
+  justify-content: center;
 }
 
 .crm-record-layout--organization .crm-pattern-record-identity > .crm-company-logo {
@@ -825,8 +886,149 @@
   flex: 0 0 48px;
 }
 
-.dashboard-date-picker {
-  width: min(320px, 100%);
+.dashboard-date-picker.semi-datepicker {
+  width: 392px;
+  min-width: 392px;
+  max-width: 100%;
+}
+
+/* Dashboard keeps Recharts for charts; Semi owns every interactive control. */
+.crm-dashboard-trend,
+.crm-dashboard-team,
+.crm-dashboard-analysis {
+  border-color: var(--semi-color-border);
+  border-radius: var(--semi-border-radius-medium);
+  background: var(--semi-color-bg-0);
+  box-shadow: none;
+}
+
+.crm-dashboard-trend-header,
+.crm-dashboard-team-header,
+.crm-dashboard-analysis-header {
+  border-color: var(--semi-color-border);
+  background: var(--semi-color-fill-0);
+}
+
+.crm-dashboard-trend-header p,
+.crm-dashboard-team-header p,
+.crm-dashboard-analysis-header p,
+.crm-dashboard-team-columns,
+.crm-dashboard-team-member small,
+.crm-dashboard-trend-caption,
+.crm-dashboard-analysis .dashboard-stage-node span,
+.crm-dashboard-analysis .dashboard-stage-connector span,
+.crm-dashboard-analysis .dashboard-stage-footnote,
+.crm-dashboard-analysis .dashboard-funnel-summary {
+  font-size: var(--semi-font-size-small);
+}
+
+.crm-dashboard-metric-selector.semi-radioGroup {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 0;
+  border-bottom: 1px solid var(--semi-color-border);
+  border-radius: 0;
+  background: var(--semi-color-fill-0);
+}
+
+.crm-dashboard-metric-selector .semi-radio-buttonRadioGroup {
+  min-width: 0;
+  min-height: 68px;
+  padding: 0;
+  border-radius: var(--semi-border-radius-small);
+}
+
+.crm-dashboard-metric-selector .semi-radio-addon-buttonRadio {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  align-content: center;
+  justify-items: start;
+  gap: 2px;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.crm-dashboard-metric-option span,
+.crm-dashboard-metric-option small {
+  font-size: var(--semi-font-size-small);
+}
+
+.crm-dashboard-metric-option strong {
+  font-size: 20px;
+}
+
+.crm-dashboard-team-switch.semi-radioGroup {
+  padding: 2px;
+  border: 0;
+  border-radius: var(--semi-border-radius-small);
+  background: var(--semi-color-fill-0);
+}
+
+.crm-dashboard-team-switch .semi-radio-buttonRadioGroup {
+  min-width: 48px;
+}
+
+.crm-dashboard-team-switch .semi-radio-addon-buttonRadio {
+  justify-content: center;
+  font-size: var(--semi-font-size-small);
+}
+
+.crm-dashboard-analysis .dashboard-stage-flow {
+  padding: 12px 4px;
+}
+
+.crm-dashboard-analysis .dashboard-stage-node strong {
+  font-size: 20px;
+}
+
+/* Login is a single Semi form surface, without browser-autofill color leakage. */
+.crm-auth-page {
+  background: var(--semi-color-bg-1);
+}
+
+.crm-auth-card {
+  max-width: 400px;
+  border-color: var(--semi-color-border);
+  border-radius: var(--semi-border-radius-medium);
+  background: var(--semi-color-bg-0);
+  box-shadow: 0 8px 24px rgba(29, 36, 33, 0.06);
+}
+
+.crm-auth-logo {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  place-items: center;
+}
+
+.crm-auth-logo img {
+  width: 34px;
+  height: 38px;
+  object-fit: contain;
+}
+
+.crm-auth-card .crm-button.semi-button.semi-button-block {
+  width: 100%;
+}
+
+.crm-auth-card .semi-input:-webkit-autofill,
+.crm-auth-card .semi-input:-webkit-autofill:hover,
+.crm-auth-card .semi-input:-webkit-autofill:focus,
+.crm-auth-card .semi-input:-webkit-autofill:active {
+  caret-color: var(--semi-color-text-0);
+  -webkit-box-shadow: 0 0 0 1000px var(--semi-color-bg-0) inset;
+  -webkit-text-fill-color: var(--semi-color-text-0);
+  transition: background-color 9999s ease-out 0s;
 }
 
 @media (max-width: 1100px) {
@@ -867,6 +1069,19 @@
     width: 100%;
     max-width: none;
     flex-basis: 100%;
+  }
+
+  .crm-pattern-page-actions {
+    width: 100%;
+  }
+
+  .dashboard-date-picker.semi-datepicker {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .crm-dashboard-metric-selector.semi-radioGroup {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .crm-organization-form-grid,

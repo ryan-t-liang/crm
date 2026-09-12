@@ -1,14 +1,15 @@
 import { Avatar, Button, Dropdown, Nav as Navigation, Typography } from "@douyinfe/semi-ui";
 import {
   IconBriefcaseStroked,
+  IconChecklistStroked,
+  IconClockStroked,
   IconExit,
-  IconHistogram,
-  IconHomeStroked,
-  IconKanban,
-  IconKeyStroked,
-  IconSettingStroked,
+  IconFlagStroked,
+  IconIdCardStroked,
+  IconLineChartStroked,
+  IconPieChartStroked,
   IconShieldStroked,
-  IconUserGroup,
+  IconTestScoreStroked,
   IconUserListStroked,
 } from "@douyinfe/semi-icons";
 import type { ReactNode } from "react";
@@ -24,8 +25,8 @@ const navGroups: Array<{ label: string; items: NavItem[] }> = [
   {
     label: "概览",
     items: [
-      { label: "数据看板", route: "dashboard", icon: <IconHomeStroked />, anyPermissions: ["crm.dashboard.self.view", "crm.dashboard.management.view"] },
-      { label: "我的工作台", route: "workbench", icon: <IconKanban />, permission: "crm.task.view" },
+      { label: "数据看板", route: "dashboard", icon: <IconPieChartStroked />, anyPermissions: ["crm.dashboard.self.view", "crm.dashboard.management.view"] },
+      { label: "我的工作台", route: "workbench", icon: <IconChecklistStroked />, permission: "crm.task.view" },
     ],
   },
   {
@@ -33,17 +34,17 @@ const navGroups: Array<{ label: string; items: NavItem[] }> = [
     items: [
       { label: "组织", route: "organizations", icon: <IconBriefcaseStroked />, permission: "crm.organization.view", countKey: "organizations" },
       { label: "联系人", route: "contacts", icon: <IconUserListStroked />, permission: "crm.contact.view", countKey: "contacts" },
-      { label: "线索", route: "marketing-leads", icon: <IconHistogram />, permission: "crm.marketing_lead.view", countKey: "marketingLeads" },
-      { label: "商机", route: "leads", icon: <IconKanban />, permission: "crm.lead.view", countKey: "leads" },
+      { label: "线索", route: "marketing-leads", icon: <IconFlagStroked />, permission: "crm.marketing_lead.view", countKey: "marketingLeads" },
+      { label: "商机", route: "leads", icon: <IconLineChartStroked />, permission: "crm.lead.view", countKey: "leads" },
     ],
   },
   {
     label: "系统",
     items: [
-      { label: "账户管理", route: "accounts", icon: <IconUserGroup />, permission: "account.view" },
+      { label: "账户管理", route: "accounts", icon: <IconIdCardStroked />, permission: "account.view" },
       { label: "角色与权限", route: "roles", icon: <IconShieldStroked />, permission: "roles.view" },
-      { label: "评分规则", route: "scoring-rules", icon: <IconSettingStroked />, permission: "crm.marketing.score_rule.view" },
-      { label: "审计日志", route: "audit", icon: <IconKeyStroked />, permission: "audit.view" },
+      { label: "评分规则", route: "scoring-rules", icon: <IconTestScoreStroked />, permission: "crm.marketing.score_rule.view" },
+      { label: "审计日志", route: "audit", icon: <IconClockStroked />, permission: "audit.view" },
     ],
   },
 ];

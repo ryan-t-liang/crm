@@ -6,6 +6,7 @@ import {
 } from "@douyinfe/semi-icons";
 import {
   AutoComplete,
+  Badge as SemiBadge,
   Card as SemiCard,
   Descriptions,
   Empty,
@@ -105,6 +106,21 @@ export function CopyValue({ value, label = "复制" }: { value: string; label?: 
     >
       {value}
     </Typography.Text>
+  );
+}
+
+export function FormTabLabel({
+  label,
+  error = false,
+}: {
+  label: string;
+  error?: boolean;
+}) {
+  if (!error) return <span>{label}</span>;
+  return (
+    <SemiBadge dot type="danger" className="crm-form-tab-error">
+      <span aria-label={`${label}，存在需要检查的字段`}>{label}</span>
+    </SemiBadge>
   );
 }
 
@@ -343,7 +359,7 @@ export function DetailTabs({
 }: {
   value: string;
   onChange: (v: string) => void;
-  items: [string, string][];
+  items: [string, ReactNode][];
   children: ReactNode;
   className?: string;
 }) {

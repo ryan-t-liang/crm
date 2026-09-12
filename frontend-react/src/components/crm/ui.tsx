@@ -23,6 +23,7 @@ type AnyProps = Record<string, any>;
 type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
   size?: "default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg";
+  block?: boolean;
 };
 type InputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "prefix"> & {
   prefix?: React.ReactNode;
@@ -47,7 +48,7 @@ function toSemiButton(variant: ButtonProps["variant"]) {
 }
 
 export const Button = React.forwardRef<React.ComponentRef<typeof SemiButton>, ButtonProps>(
-  ({ className, variant = "default", size = "default", type, children, ...props }, _ref) => {
+  ({ className, variant = "default", size = "default", type, block, children, ...props }, _ref) => {
     const semi = toSemiButton(variant);
     const iconOnly = size.startsWith("icon");
     const childNodes = React.Children.toArray(children);
@@ -68,6 +69,7 @@ export const Button = React.forwardRef<React.ComponentRef<typeof SemiButton>, Bu
         type={semi.type}
         theme={semi.theme}
         size={semiSize}
+        block={block}
         aria-label={props["aria-label"]}
         icon={icon}
       >

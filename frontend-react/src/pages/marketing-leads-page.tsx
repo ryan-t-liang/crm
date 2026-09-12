@@ -19,6 +19,7 @@ import {
   ErrorState,
   Field,
   focusFirstInvalidField,
+  FormTabLabel,
   FormDialog,
   LoadingSkeleton,
   ListMetrics,
@@ -106,7 +107,14 @@ export function MarketingLeadForm({ lead, initialValues, users, onClose, onSaved
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [tab, setTab] = useState("identity");
-  const update = (key: keyof LeadFormState, value: string) => setForm((current) => ({ ...current, [key]: value }));
+  const update = (key: keyof LeadFormState, value: string) => {
+    setForm((current) => ({ ...current, [key]: value }));
+    setFieldErrors((current) => {
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+  };
   const fields = (keys: Array<[keyof LeadFormState, string, string?]>) => keys.map(([key, label, placeholder]) => (
     <Field key={key} label={label} required={key === "fullName"} error={fieldErrors[key]}>
       {(id) => <Input id={id} value={form[key]} placeholder={placeholder} aria-invalid={!!fieldErrors[key]} onChange={(event) => update(key, event.target.value)} />}
@@ -154,7 +162,16 @@ export function MarketingLeadForm({ lead, initialValues, users, onClose, onSaved
   return (
     <FormDialog title={`${lead ? "编辑" : "新增"}线索`} description="线索保存获客来源、原始询盘和营销资格信息。" onClose={onClose} busy={busy} wide footer={<><Button variant="outline" onClick={onClose} disabled={busy}>取消</Button><Button onClick={() => void save()} disabled={busy}>{busy ? "保存中…" : "保存线索"}</Button></>}>
       <div className="space-y-5">
-        <DetailTabs value={tab} onChange={setTab} items={[["identity", `身份与组织${Object.keys(fieldErrors).some((key) => !["source", "sourceChannel", "sourceDetail", "ownerUserId", "inquiryType", "inquiryContent", "productInterest", "requirementTags", "budgetRange", "note"].includes(key)) ? " · 有错误" : ""}`], ["inquiry", `询盘与来源${Object.keys(fieldErrors).some((key) => ["inquiryType", "inquiryContent", "productInterest", "requirementTags", "budgetRange", "note"].includes(key)) ? " · 有错误" : ""}`], ["qualification", `营销资格${Object.keys(fieldErrors).some((key) => ["source", "sourceChannel", "sourceDetail", "ownerUserId"].includes(key)) ? " · 有错误" : ""}`]]}>
+        <DetailTabs
+          className="crm-form-tabs"
+          value={tab}
+          onChange={setTab}
+          items={[
+            ["identity", <FormTabLabel key="identity" label="身份与组织" error={Object.entries(fieldErrors).some(([key, message]) => Boolean(message) && !["source", "sourceChannel", "sourceDetail", "ownerUserId", "inquiryType", "inquiryContent", "productInterest", "requirementTags", "budgetRange", "note"].includes(key))} />],
+            ["inquiry", <FormTabLabel key="inquiry" label="询盘与来源" error={Object.entries(fieldErrors).some(([key, message]) => Boolean(message) && ["inquiryType", "inquiryContent", "productInterest", "requirementTags", "budgetRange", "note"].includes(key))} />],
+            ["qualification", <FormTabLabel key="qualification" label="营销资格" error={Object.entries(fieldErrors).some(([key, message]) => Boolean(message) && ["source", "sourceChannel", "sourceDetail", "ownerUserId"].includes(key))} />],
+          ]}
+        >
         {tab === "identity" ? <div className="space-y-7"><FormSection title="身份信息"><div className="grid gap-4 sm:grid-cols-2">{fields([["fullName", "姓名"], ["email", "Email"], ["phone", "电话", "+国家或地区代码"], ["whatsapp", "WhatsApp", "+国家或地区代码"], ["wechat", "微信"], ["linkedinUrl", "LinkedIn 主页"], ["title", "职位"], ["department", "部门"]])}</div></FormSection><FormSection title="组织快照"><div className="grid gap-4 sm:grid-cols-2">{fields([["companyName", "组织"], ["companyWebsite", "组织网站"], ["companySize", "组织规模"], ["industry", "行业"], ["countryCode", "国家 / 地区代码", "两位国家或地区代码，如 AE"], ["region", "州 / 省"], ["city", "城市"]])}</div></FormSection></div>
         : tab === "inquiry" ? <FormSection title="原始询盘"><div className="grid gap-4 sm:grid-cols-2">{fields([["inquiryType", "询盘类型"], ["productInterest", "产品兴趣"], ["requirementTags", "需求标签", "多个标签用逗号分隔"], ["budgetRange", "预算范围"]])}<Field label="询盘内容" error={fieldErrors.inquiryContent} wide>{(id) => <Textarea id={id} className="min-h-32" value={form.inquiryContent} aria-invalid={!!fieldErrors.inquiryContent} onChange={(event) => update("inquiryContent", event.target.value)} />}</Field><Field label="补充说明" error={fieldErrors.note} wide>{(id) => <Textarea id={id} value={form.note} aria-invalid={!!fieldErrors.note} onChange={(event) => update("note", event.target.value)} />}</Field></div></FormSection>
         : <FormSection title="来源与营销资格"><div className="grid gap-4 sm:grid-cols-2">
