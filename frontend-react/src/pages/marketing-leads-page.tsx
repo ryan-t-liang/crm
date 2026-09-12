@@ -27,7 +27,6 @@ import {
   SearchInput,
   Section,
   StatusBadge,
-  SystemIdField,
   RecordHighlights,
   UserAvatar,
   FilterControl,
@@ -288,16 +287,16 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
   const refresh = () => { list.reload(); detail.reload(); window.dispatchEvent(new Event("crm:data-changed")); };
   const actionsFor = (row: MarketingLead) => [{ label: "查看详情", onClick: () => { window.location.hash = `marketing-leads/${row.id}`; } }, ...(can(me, "crm.marketing_lead.edit") && row.status !== "CONVERTED" ? [{ label: "编辑", onClick: () => { window.location.hash = `marketing-leads/${row.id}`; setFormOpen(true); } }] : []), ...(can(me, "crm.marketing_lead.delete") ? [{ label: "删除", destructive: true, onClick: () => setDeleting(row) }] : [])];
   const columns: CrmColumnDef<MarketingLead>[] = [
-    { id: "name", header: "姓名", enableHiding: false, cell: ({ row }) => <a href={`#marketing-leads/${row.original.id}`} className="flex min-w-44 items-center gap-2 hover:underline"><UserAvatar name={row.original.fullName} showName={false} /><span className="font-medium">{row.original.fullName}</span></a> },
-    { accessorKey: "companyName", header: "组织", cell: ({ row }) => row.original.companyName || "—" },
-    { id: "source", header: "来源", cell: ({ row }) => <span>{sourceLabels[row.original.source] || "其他"}{row.original.sourceChannel ? ` / ${marketingSourceChannelLabel(row.original.sourceChannel)}` : ""}</span> },
-    { id: "status", header: "状态", cell: ({ row }) => <StatusBadge>{statusLabels[row.original.status]}</StatusBadge> },
-    { id: "fit", header: "线索匹配度", cell: ({ row }) => <span className="tabular-nums">{row.original.fitScore} · {levelLabels[row.original.fitLevel]}</span> },
-    { id: "engagement", header: "互动活跃度", cell: ({ row }) => <span className="tabular-nums">{row.original.engagementScoreCached} · {levelLabels[row.original.engagementLevel]}</span> },
-    { id: "owner", header: "线索负责人", cell: ({ row }) => <OwnerCell name={row.original.owner?.name} /> },
-    { id: "activity", header: "最近行为", cell: ({ row }) => <RelativeDateCell value={row.original.lastActivityAt} emptyLabel="暂无行为" /> },
-    { id: "createdAt", header: "创建时间", cell: ({ row }) => <RelativeDateCell value={row.original.createdAt} /> },
-    { id: "actions", header: "操作", enableHiding: false, cell: ({ row }) => <RowActions label={row.original.fullName} items={actionsFor(row.original)} /> },
+    { id: "name", header: "姓名", enableHiding: false, width: 224, cell: ({ row }) => <a href={`#marketing-leads/${row.original.id}`} className="flex min-w-44 items-center gap-2 hover:underline"><UserAvatar name={row.original.fullName} showName={false} /><span className="font-medium">{row.original.fullName}</span></a> },
+    { accessorKey: "companyName", header: "组织", width: 176, ellipsis: true, cell: ({ row }) => row.original.companyName || "—" },
+    { id: "source", header: "来源", width: 152, ellipsis: true, cell: ({ row }) => <span>{sourceLabels[row.original.source] || "其他"}{row.original.sourceChannel ? ` / ${marketingSourceChannelLabel(row.original.sourceChannel)}` : ""}</span> },
+    { id: "status", header: "状态", width: 104, cell: ({ row }) => <StatusBadge>{statusLabels[row.original.status]}</StatusBadge> },
+    { id: "fit", header: "线索匹配度", width: 136, cell: ({ row }) => <span className="tabular-nums">{row.original.fitScore} · {levelLabels[row.original.fitLevel]}</span> },
+    { id: "engagement", header: "互动活跃度", width: 136, cell: ({ row }) => <span className="tabular-nums">{row.original.engagementScoreCached} · {levelLabels[row.original.engagementLevel]}</span> },
+    { id: "owner", header: "线索负责人", width: 152, cell: ({ row }) => <OwnerCell name={row.original.owner?.name} /> },
+    { id: "activity", header: "最近行为", width: 120, cell: ({ row }) => <RelativeDateCell value={row.original.lastActivityAt} emptyLabel="暂无行为" /> },
+    { id: "createdAt", header: "创建时间", width: 120, cell: ({ row }) => <RelativeDateCell value={row.original.createdAt} /> },
+    { id: "actions", header: "操作", enableHiding: false, width: 64, cell: ({ row }) => <RowActions label={row.original.fullName} items={actionsFor(row.original)} /> },
   ];
   if (!id) {
     const rows = list.data?.data || [];
@@ -427,7 +426,7 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
           identity={<UserAvatar name={lead.fullName} large showName={false} />}
           name={lead.fullName}
           subtitle={<>{lead.companyName || "未填写组织"} · {sourceLabels[lead.source] || "其他"}{lead.sourceChannel ? ` / ${marketingSourceChannelLabel(lead.sourceChannel)}` : ""}</>}
-          tags={<><StatusBadge>{statusLabels[lead.status]}</StatusBadge><SystemIdField value={lead.id} label="线索 ID" /></>}
+          tags={<StatusBadge>{statusLabels[lead.status]}</StatusBadge>}
           actions={<>{can(me, "crm.marketing.activity.create") && lead.status !== "CONVERTED" && <Button variant="outline" onClick={() => setActivityOpen(true)}><MessageSquarePlus />记录行为</Button>}{can(me, "crm.marketing_lead.qualify") && legalActions.map((action) => <Button key={action} variant="outline" onClick={() => setTransition(action)}>{transitionLabels[action]}</Button>)}{can(me, "crm.marketing_lead.convert") && ["SQL", "QUALIFIED"].includes(lead.status) && <Button onClick={() => setConversionOpen(true)}><GitMerge />转为商机</Button>}{can(me, "crm.marketing_lead.edit") && lead.status !== "CONVERTED" && <Button variant="outline" onClick={() => setFormOpen(true)}><Pencil />编辑</Button>}</>}
         />}
         inlineMeta={

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   IconDownloadStroked as Download,
+  IconHistory as History,
   IconRefresh as RotateCw,
   IconUpload as Upload,
 } from "@douyinfe/semi-icons";
@@ -230,7 +231,7 @@ function JobDialog({
           : "上传 XLSX，先预检，确认后写入。"
       }
       onClose={onClose}
-      width={mode === "import" && !!job ? 800 : 684}
+      width={mode === "import" && !!job ? 800 : 448}
       busy={busy}
       footer={
         <Space align="center" spacing={8} style={{ width: "100%", justifyContent: "flex-end" }}>
@@ -267,12 +268,13 @@ function JobDialog({
         {!busy && mode === "import" && !job && !history && (
           <Space vertical align="start" spacing={16} style={{ width: "100%" }}>
             <Space align="center" spacing={8} wrap>
-              <Typography.Text
-                icon={<Download />}
-                link={{ href: appUrl(`/api/v1/crm/templates/${kind}`), download: true }}
+              <Button
+                variant="outline"
+                onClick={() => { window.location.href = appUrl(`/api/v1/crm/templates/${kind}`); }}
               >
+                <Download />
                 下载标准模板
-              </Typography.Text>
+              </Button>
               <FilePicker
                 aria-label="XLSX 文件"
                 accept=".xlsx"
@@ -296,11 +298,12 @@ function JobDialog({
               确认重新上传相同文件
             </Checkbox>
             <Button
-              variant="ghost"
+              variant="outline"
               onClick={() => {
                 void run("history");
               }}
             >
+              <History />
               导入记录
             </Button>
           </Space>
@@ -321,7 +324,7 @@ function JobDialog({
                 预计记录数：{estimatedCount == null ? "计算中…" : `${estimatedCount} 条`}；文件格式：XLSX；生成后 24 小时内可下载。
               </Typography.Text>
             </Space>
-            <Button variant="ghost" onClick={() => { void run("history"); }}>导出记录</Button>
+            <Button variant="outline" onClick={() => { void run("history"); }}><History />导出记录</Button>
           </Space>
         )}
         {job?.preflight && !result && (
@@ -380,7 +383,7 @@ function JobDialog({
             </Button>
             {history.map((item) => (
               <Space key={item.id} className="border-b py-2" vertical align="start" spacing={4} style={{ width: "100%" }}>
-                <Typography.Text>{item.fileName || item.jobNo || item.id} · {dataObjectLabels[item.objectType || ""] || "其他对象"} · {dataJobStatusLabels[item.status || ""] || "未知状态"}</Typography.Text>
+                <Typography.Text className="crm-data-job-history-title">{item.fileName || item.jobNo || item.id} · {dataObjectLabels[item.objectType || ""] || "其他对象"} · {dataJobStatusLabels[item.status || ""] || "未知状态"}</Typography.Text>
                 <Typography.Text type="tertiary" size="small">
                   {dateTime(item.createdAt)} · {item.operatorName || "—"} · {mode === "export" ? `${exportScopeLabels[item.scope || ""] || "未知范围"} · ${item.rowCount || 0} 条 · ${item.format || "XLSX"}` : `成功 ${item.successCount} · 失败 ${item.failedCount}`}
                 </Typography.Text>

@@ -80,7 +80,7 @@ import {
   LoadingSkeleton,
   StatusBadge,
   StagePath,
-  SystemIdField,
+  CopyValue,
 } from "@/components/crm/primitives";
 
 type RecordRow = EntityRecord & Partial<Contact & Lead>;
@@ -256,6 +256,7 @@ export function EntitiesPage({
       id: "name",
       header: label,
       enableHiding: false,
+      width: 260,
       cell: ({ row: { original: r } }) => kind === "contact" ? (
         <CRMEntityCell
           name={nameOf(r)}
@@ -274,6 +275,8 @@ export function EntitiesPage({
     {
       id: "company",
       header: "组织",
+      width: 176,
+      ellipsis: true,
       cell: ({ row: { original: r } }) => {
         const c = kind === "contact" ? r : r.contact;
         return c?.organizationId ? (
@@ -295,6 +298,7 @@ export function EntitiesPage({
           {
             id: "contactType",
             header: "联系人类型",
+            width: 120,
             cell: ({
               row: { original: r },
             }: {
@@ -308,6 +312,7 @@ export function EntitiesPage({
           {
             accessorKey: "phone",
             header: "手机",
+            width: 152,
             cell: ({
               row: { original: r },
             }: {
@@ -321,6 +326,7 @@ export function EntitiesPage({
           {
             id: "priority",
             header: "商机优先级",
+            width: 112,
             cell: ({
               row: { original: r },
             }: {
@@ -335,6 +341,7 @@ export function EntitiesPage({
           {
             id: "stage",
             header: "商机阶段",
+            width: 112,
             cell: ({
               row: { original: r },
             }: {
@@ -349,6 +356,7 @@ export function EntitiesPage({
       ? [{
           accessorKey: "relatedLeadCount",
           header: "商机数",
+          width: 112,
           cell: ({ row: { original: r } }: { row: { original: RecordRow } }) => (
             <RelationCountCell
               count={r.relatedLeadCount}
@@ -361,6 +369,7 @@ export function EntitiesPage({
     {
       id: "owner",
       header: kind === "contact" ? "联系人负责人" : "商机负责人",
+      width: 160,
       cell: ({ row: { original: r } }) => (
         <OwnerCell name={(kind === "contact" ? r.owner : r.salesOwner)?.name} />
       ),
@@ -368,6 +377,7 @@ export function EntitiesPage({
     {
       id: "next",
       header: kind === "contact" ? "最近互动" : "下一步行动",
+      width: kind === "contact" ? 120 : 208,
       cell: ({ row: { original: r } }) => kind === "contact" ? (
         <RelativeDateCell value={r.lastFollowupAt} emptyLabel="暂无互动" />
       ) : (
@@ -381,12 +391,14 @@ export function EntitiesPage({
     {
       id: "updated",
       header: "更新时间",
+      width: 120,
       cell: ({ row: { original: r } }) => <RelativeDateCell value={r.updatedAt} />,
     },
     {
       id: "actions",
       header: "操作",
       enableHiding: false,
+      width: 64,
       cell: ({ row: { original: r } }) => (
         kind === "contact"
           ? <CRMActionMenu label={nameOf(r)} items={actions(r)} />
@@ -711,7 +723,7 @@ export function EntitiesPage({
               identity={<div className="crm-detail-symbol"><BriefcaseBusiness /></div>}
               name={nameOf(row)}
               subtitle={<><span>销售：{row.salesOwner?.name || "待分配"}</span><a className="hover:underline" href={`#contacts/${row.contactId}`}>{row.contact?.contactName}</a></>}
-              tags={<><StatusBadge>{leadStatuses[row.status || ""]}</StatusBadge><StatusBadge>{priorities[row.priority || ""]}</StatusBadge><SystemIdField value={row.id} label="商机 ID" /></>}
+              tags={<><StatusBadge>{leadStatuses[row.status || ""]}</StatusBadge><StatusBadge>{priorities[row.priority || ""]}</StatusBadge></>}
               actions={<>
                 {can(me, `crm.${kind}.edit`) && <Button variant="outline" onClick={() => setForm({ kind, record: row })}><Pencil />编辑</Button>}
                 {canFollow && <Button variant="outline" onClick={() => follow(row)}><MessageSquare />记录跟进</Button>}
@@ -796,6 +808,13 @@ export function EntitiesPage({
                       { label: "优先级", value: priorities[row.priority || ""] },
                       { label: "商机负责人", value: row.salesOwner?.name || "待分配" },
                       { label: "关联联系人", value: row.contact?.contactName },
+                    ]} />
+                  </Section>
+                  <Section title="系统信息">
+                    <EntityMeta columns={1} items={[
+                      { label: "商机 ID", value: <CopyValue value={row.id} label="复制商机 ID" /> },
+                      { label: "创建时间", value: row.createdAt ? dateTime(String(row.createdAt)) : "—" },
+                      { label: "更新时间", value: dateTime(row.updatedAt) },
                     ]} />
                   </Section>
                   {row.sourceMarketingLead && (

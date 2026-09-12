@@ -24,6 +24,12 @@ type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
   size?: "default" | "xs" | "sm" | "lg" | "icon" | "icon-xs" | "icon-sm" | "icon-lg";
 };
+type InputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "prefix"> & {
+  prefix?: React.ReactNode;
+  suffix?: React.ReactNode;
+  showClear?: boolean;
+  onValueChange?: (value: string) => void;
+};
 type CheckboxValue = boolean | "indeterminate";
 type CheckboxProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, "checked"> & {
   checked?: CheckboxValue;
@@ -44,7 +50,12 @@ export const Button = React.forwardRef<React.ComponentRef<typeof SemiButton>, Bu
   ({ className, variant = "default", size = "default", type, children, ...props }, _ref) => {
     const semi = toSemiButton(variant);
     const iconOnly = size.startsWith("icon");
-    const icon = React.Children.toArray(children)[0];
+    const childNodes = React.Children.toArray(children);
+    const firstChild = childNodes[0];
+    const leadingSemiIcon = React.isValidElement(firstChild)
+      && (firstChild.type as { elementType?: string }).elementType === "Icon";
+    const icon = iconOnly || leadingSemiIcon ? firstChild : undefined;
+    const content = iconOnly ? null : leadingSemiIcon ? childNodes.slice(1) : children;
     const semiSize = size === "lg" ? "large" : size === "default" ? "default" : "small";
     return (
       <SemiButton
@@ -58,23 +69,26 @@ export const Button = React.forwardRef<React.ComponentRef<typeof SemiButton>, Bu
         theme={semi.theme}
         size={semiSize}
         aria-label={props["aria-label"]}
-        icon={iconOnly ? icon : undefined}
+        icon={icon}
       >
-        {iconOnly ? null : children}
+        {content}
       </SemiButton>
     );
   },
 );
 Button.displayName = "CrmButton";
 
-export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
-  ({ className, onChange, ...props }, ref) => (
+export const Input = React.forwardRef<HTMLInputElement, InputProps>(
+  ({ className, onChange, onValueChange, ...props }, ref) => (
     <SemiInput
       {...(props as AnyProps)}
       ref={ref}
       className={cn("crm-input", className)}
       validateStatus={props["aria-invalid"] ? "error" : undefined}
-      onChange={(_value, event) => onChange?.(event)}
+      onChange={(value, event) => {
+        onValueChange?.(value);
+        onChange?.(event);
+      }}
     />
   ),
 );
@@ -289,7 +303,7 @@ export function FilePicker({
       uploadTrigger="custom"
       onFileChange={(selected) => onFilesChange(selected)}
     >
-      <Button id={id} variant="outline" size="sm" disabled={disabled}>
+      <Button id={id} variant="outline" disabled={disabled}>
         <UploadIcon />
         {label || (files.length ? `已选择 ${files.length} 个文件` : multiple ? "选择文件" : "选择文件")}
       </Button>

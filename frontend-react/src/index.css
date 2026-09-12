@@ -185,10 +185,10 @@
     font: inherit;
   }
 
-  button:focus-visible,
+  button:not(.semi-button):focus-visible,
   a:focus-visible,
-  input:focus-visible,
-  [role="button"]:focus-visible {
+  input:not(.semi-input):focus-visible,
+  [role="button"]:not(.semi-button):focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
@@ -1508,15 +1508,6 @@
 .crm-textarea {
   min-height: 96px;
   padding-top: 10px;
-}
-
-.crm-input:focus-visible,
-.crm-select:focus-visible,
-.crm-textarea:focus-visible,
-.crm-button:focus-visible {
-  border-color: var(--crm-ink);
-  box-shadow: 0 0 0 3px rgba(20, 20, 20, 0.08);
-  outline: 0;
 }
 
 .crm-input:disabled,
@@ -6612,35 +6603,6 @@ body,
   background: var(--crm-accent);
 }
 
-.crm-form-sheet .semi-sidesheet-content {
-  background: var(--crm-surface-warm);
-}
-
-.crm-form-sheet .semi-sidesheet-header {
-  border-bottom: 1px solid #101713;
-  background: var(--crm-sidebar-bg);
-}
-
-.crm-form-sheet .semi-sidesheet-header,
-.crm-form-sheet .semi-sidesheet-header .semi-sidesheet-title,
-.crm-form-sheet .semi-sidesheet-header .semi-icon,
-.crm-form-sheet .crm-form-heading h2 {
-  color: #fff;
-}
-
-.crm-form-sheet .crm-form-heading p {
-  color: #aebbb3;
-}
-
-.crm-form-body.semi-form {
-  background: #f4f2ed;
-}
-
-.crm-form-footer {
-  border-top: 1px solid var(--crm-border);
-  background: #fff;
-}
-
 .crm-dashboard-trend,
 .crm-dashboard-team,
 .crm-dashboard-analysis,
@@ -7666,16 +7628,6 @@ a.crm-contact-brief-primary:hover {
 
 .crm-contact-brief-label .semi-icon {
   color: var(--crm-text-tertiary);
-}
-
-.crm-form-sheet .semi-sidesheet-content,
-.crm-form-body.semi-form {
-  background: var(--crm-surface-subtle);
-}
-
-.crm-form-sheet .semi-sidesheet-header {
-  border-bottom-color: var(--crm-sidebar-border);
-  background: var(--crm-sidebar-bg);
 }
 
 .semi-page-item.semi-page-item-active,

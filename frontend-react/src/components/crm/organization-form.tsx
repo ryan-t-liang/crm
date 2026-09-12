@@ -13,9 +13,9 @@ import {
   Field,
   FilterControl,
   focusFirstInvalidField,
-  FormDrawer,
 } from "./primitives";
 import { organizationTypeLabels } from "@/lib/product-language";
+import { CRMFormSideSheet } from "./interaction-patterns";
 
 type ReferenceNode = {
   code: string;
@@ -213,9 +213,12 @@ export function OrganizationForm({
     );
   }
   return (
-    <FormDrawer
-      title={organization ? "编辑组织" : "新建组织"}
+    <CRMFormSideSheet
+      mode={organization ? "edit" : "create"}
+      entityLabel="组织"
+      title={organization ? "编辑组织" : "新增组织"}
       description="组织资料、组织关系与协作信息。"
+      width={720}
       busy={busy}
       onClose={onClose}
       footer={
@@ -239,6 +242,7 @@ export function OrganizationForm({
       }
     >
       <DetailTabs
+        className="crm-form-tabs"
         value={tab}
         onChange={setTab}
         items={[
@@ -247,7 +251,7 @@ export function OrganizationForm({
           ["notes", `备注与文件${fieldErrors.note ? " · 有错误" : ""}`],
         ]}
       >
-        <div className="grid gap-6 sm:grid-cols-2">
+        <div className="crm-organization-form-grid">
           {tab === "info" && (
             <>
               {text("name", "组织", "text", 240, true)}
@@ -266,7 +270,7 @@ export function OrganizationForm({
               {text("website", "网站", "url", 500)}
               <Field label="行业" wide>
                 {() => (
-                  <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="crm-organization-industry-grid">
                     <FilterControl
                       label="选择行业大类"
                       value={industryCategory || "unassigned"}
@@ -495,6 +499,6 @@ export function OrganizationForm({
           {error}
         </p>
       )}
-    </FormDrawer>
+    </CRMFormSideSheet>
   );
 }

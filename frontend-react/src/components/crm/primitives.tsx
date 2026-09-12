@@ -2,14 +2,12 @@ import { cloneElement, isValidElement, useEffect, useId, useRef, useState, type 
 import {
   IconFilterStroked as SlidersHorizontal,
   IconInbox as Inbox,
-  IconMore as MoreHorizontal,
   IconSearch as Search,
 } from "@douyinfe/semi-icons";
 import {
   AutoComplete,
   Card as SemiCard,
   Descriptions,
-  Dropdown,
   Empty,
   Form,
   Modal,
@@ -37,7 +35,7 @@ import { friendlyError, type Organization } from "@/lib/crm";
 import { cn } from "@/lib/utils";
 import { CRMPageContainer, CRMRecordLayout } from "@/components/crm/layout";
 import type { CrmBreadcrumb } from "@/components/crm/shell";
-import { CRMPageHeader } from "@/components/crm/interaction-patterns";
+import { CRMActionMenu, CRMPageHeader } from "@/components/crm/interaction-patterns";
 
 export function PageContent({
   children,
@@ -95,8 +93,19 @@ export function PageToolbar({ left, right }: { left?: ReactNode; right?: ReactNo
   );
 }
 export function CopyValue({ value, label = "复制" }: { value: string; label?: string }) {
-  const [copied, setCopied] = useState(false);
-  return <Button variant="link" size="sm" className="crm-copy-value" title={`${label} ${value}`} onClick={() => { void navigator.clipboard.writeText(value).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1200); }); }}>{copied ? "已复制" : value}</Button>;
+  return (
+    <Typography.Text
+      className="crm-copy-value"
+      code
+      copyable={{
+        content: value,
+        copyTip: label,
+        successTip: "已复制",
+      }}
+    >
+      {value}
+    </Typography.Text>
+  );
 }
 
 export function focusFirstInvalidField() {
@@ -137,7 +146,7 @@ export function EmptyState({
   description?: string;
   action?: ReactNode;
 }) {
-  return <Empty className="crm-empty-state" image={<span className="crm-empty-icon"><Inbox className="size-7" /></span>} title={title} description={description}>{action}</Empty>;
+  return <Empty className="crm-empty-state" imageStyle={{ width: 40, height: 40 }} image={<span className="crm-empty-icon"><Inbox /></span>} title={title} description={description}>{action}</Empty>;
 }
 export function ErrorState({
   error,
@@ -330,13 +339,15 @@ export function DetailTabs({
   onChange,
   items,
   children,
+  className,
 }: {
   value: string;
   onChange: (v: string) => void;
   items: [string, string][];
   children: ReactNode;
+  className?: string;
 }) {
-  return <SemiTabs className="crm-detail-tabs" type="line" activeKey={value} onChange={onChange} tabList={items.map(([itemKey, tab]) => ({ itemKey, tab }))}><SemiTabs.TabPane itemKey={value}>{children}</SemiTabs.TabPane></SemiTabs>;
+  return <SemiTabs className={cn("crm-detail-tabs", className)} type="line" collapsible="auto" activeKey={value} onChange={onChange} tabList={items.map(([itemKey, tab]) => ({ itemKey, tab }))}><SemiTabs.TabPane itemKey={value}>{children}</SemiTabs.TabPane></SemiTabs>;
 }
 export function Section({
   title,
@@ -384,7 +395,7 @@ export function RowActions({
   triggerLabel?: string;
 }) {
   if (!items.length) return null;
-  return <Dropdown trigger="click" position="bottomRight" render={<Dropdown.Menu className="crm-row-actions-menu">{items.map((item) => <Dropdown.Item key={item.label} type={item.destructive ? "danger" : "primary"} icon={item.icon} onClick={item.onClick}>{item.label}</Dropdown.Item>)}</Dropdown.Menu>}><Button variant={triggerLabel ? "outline" : "ghost"} size={triggerLabel ? "sm" : "icon-sm"} aria-label={`${label}的更多操作`}><MoreHorizontal />{triggerLabel}</Button></Dropdown>;
+  return <CRMActionMenu label={label} items={items} triggerLabel={triggerLabel} />;
 }
 export function FilterControl({
   label,
@@ -441,16 +452,15 @@ export function SearchInput({
   return (
     <label className="crm-search-control">
       <span className="crm-filter-label">查询内容</span>
-      <span className="crm-search-field">
-        <Search className="pointer-events-none size-4 text-muted-foreground" />
-        <Input
-          aria-label={label}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className="h-9 shadow-none"
-        />
-      </span>
+      <Input
+        aria-label={label}
+        value={value}
+        onValueChange={onChange}
+        placeholder={placeholder}
+        prefix={<Search />}
+        showClear
+        className="crm-search-input"
+      />
     </label>
   );
 }
@@ -461,7 +471,22 @@ export function FilterPopover({
   children: ReactNode;
   active?: boolean;
 }) {
-  return <SemiPopover trigger="click" position="bottomLeft" content={<div className="crm-filter-popover"><p className="text-sm font-medium">更多筛选</p>{children}</div>}><Button variant="outline" className="crm-filter-popover-trigger shadow-none"><SlidersHorizontal />更多筛选{active && <span className="crm-filter-active-dot" />}</Button></SemiPopover>;
+  return (
+    <SemiPopover
+      trigger="click"
+      position="bottomLeft"
+      content={(
+        <div className="crm-filter-popover">
+          <Typography.Text strong>更多筛选</Typography.Text>
+          <div className="crm-filter-popover-fields">{children}</div>
+        </div>
+      )}
+    >
+      <Button variant="outline" className="crm-filter-popover-trigger shadow-none">
+        <SlidersHorizontal />更多筛选{active && <span className="crm-filter-active-dot" />}
+      </Button>
+    </SemiPopover>
+  );
 }
 export function Field({
   label,
@@ -681,46 +706,6 @@ export function FormDialog({
   );
 }
 
-export function FormDrawer({
-  title,
-  description,
-  children,
-  footer,
-  onClose,
-  busy = false,
-}: {
-  title: string;
-  description?: string;
-  children: ReactNode;
-  footer: ReactNode;
-  onClose: () => void;
-  busy?: boolean;
-}) {
-  return (
-    <SideSheet
-      bodyStyle={{ padding: 0 }}
-      className="crm-form-sheet crm-form-sheet-wide"
-      closeOnEsc={!busy}
-      closable={!busy}
-      footer={<div className="crm-form-footer">{footer}</div>}
-      keepDOM={false}
-      maskClosable={!busy}
-      onCancel={() => {
-        if (!busy) onClose();
-      }}
-      title={(
-        <div className="crm-form-heading">
-          <h2>{title}</h2>
-          <p>{description || "填写完成后统一保存。"}</p>
-        </div>
-      )}
-      visible
-      width={800}
-    >
-      <Form className="crm-form-body" labelPosition="top">{children}</Form>
-    </SideSheet>
-  );
-}
 export function ConfirmDeleteDialog({
   name,
   onConfirm,

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { Fragment, type ReactNode } from "react";
 import {
   Avatar,
   Descriptions,
@@ -10,12 +10,10 @@ import {
   Tabs,
   Tag,
   Timeline as SemiTimeline,
-  Tooltip,
   Typography,
 } from "@douyinfe/semi-ui";
 import {
   IconActivity,
-  IconCopy,
   IconInbox,
   IconMore,
 } from "@douyinfe/semi-icons";
@@ -145,23 +143,23 @@ export function CRMActionMenu({
       render={(
         <Dropdown.Menu className="crm-pattern-action-menu">
           {items.map((item) => (
-            <span key={item.label}>
+            <Fragment key={item.label}>
               {item.dividerBefore ? <Dropdown.Divider /> : null}
               <Dropdown.Item
-                type={item.destructive ? "danger" : "primary"}
+                type={item.destructive ? "danger" : "tertiary"}
                 icon={item.icon}
                 onClick={item.onClick}
               >
                 {item.label}
               </Dropdown.Item>
-            </span>
+            </Fragment>
           ))}
         </Dropdown.Menu>
       )}
     >
       <Button
         variant={triggerLabel ? "outline" : "ghost"}
-        size={triggerLabel ? "sm" : "icon-sm"}
+        size={triggerLabel ? "sm" : "icon"}
         aria-label={`${label}的更多操作`}
       >
         <IconMore />
@@ -186,9 +184,18 @@ export function CRMSystemInfoPopover({
   updatedBy?: string;
   footer?: ReactNode;
 }) {
-  const copyId = () => void navigator.clipboard.writeText(id);
   const rows = [
-    { key: "联系人 ID", value: <span className="crm-pattern-system-id"><code>{id}</code><Tooltip content="复制 ID"><Button variant="ghost" size="icon-sm" aria-label="复制联系人 ID" onClick={copyId}><IconCopy /></Button></Tooltip></span> },
+    {
+      key: "联系人 ID",
+      value: (
+        <Typography.Text
+          code
+          copyable={{ content: id, copyTip: "复制 ID", successTip: "已复制" }}
+        >
+          {id}
+        </Typography.Text>
+      ),
+    },
     ...(createdAt ? [{ key: "创建时间", value: createdAt }] : []),
     ...(updatedAt ? [{ key: "更新时间", value: updatedAt }] : []),
     ...(createdBy ? [{ key: "创建人", value: createdBy }] : []),
@@ -513,6 +520,7 @@ export function CRMEmptyState({
   return (
     <Empty
       className="crm-pattern-empty"
+      imageStyle={{ width: 40, height: 40 }}
       image={<span className="crm-pattern-empty-icon"><IconInbox /></span>}
       title={title}
       description={description}

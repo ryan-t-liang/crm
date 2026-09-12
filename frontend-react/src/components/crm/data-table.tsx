@@ -1,5 +1,5 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { Button as SemiButton, Checkbox, Dropdown, Pagination, Table, Tabs } from "@douyinfe/semi-ui";
+import { Button as SemiButton, Dropdown, Pagination, Table, Tabs } from "@douyinfe/semi-ui";
 import { IconColumnsStroked } from "@douyinfe/semi-icons";
 import type { ColumnProps } from "@douyinfe/semi-ui/lib/es/table";
 
@@ -12,6 +12,8 @@ export type CrmColumnDef<T> = {
   header?: ReactNode;
   cell?: (context: { row: { original: T }; getValue: () => unknown }) => ReactNode;
   enableHiding?: boolean;
+  width?: number;
+  ellipsis?: boolean;
 };
 
 export type CrmTableView = {
@@ -98,13 +100,21 @@ export function DataTable<T extends { id: string }>({
       dataIndex: column.accessorKey,
       title: column.header as ReactNode,
       fixed: isActions ? "right" : undefined,
-      width: isActions ? 92 : undefined,
+      width: isActions ? (column.width || 64) : column.width,
+      ellipsis: column.ellipsis,
       className: isActions ? "crm-sticky-actions" : undefined,
       render: (_value: unknown, record: T) => column.cell
         ? column.cell({ row: { original: record }, getValue: () => readPath(record, column.accessorKey) } as never)
         : (readPath(record, column.accessorKey) as ReactNode),
     }];
   }), [columns, hiddenColumns]);
+  const tableScrollX = useMemo(
+    () => Math.max(
+      960,
+      semiColumns.reduce((sum, column) => sum + (typeof column.width === "number" ? column.width : 144), selectable ? 44 : 0),
+    ),
+    [semiColumns, selectable],
+  );
 
   const pages = Math.max(1, Math.ceil((total ?? rows.length) / pageSize));
   const selection = selectable ? {
@@ -150,13 +160,24 @@ export function DataTable<T extends { id: string }>({
               <Dropdown
                 trigger="click"
                 position="bottomRight"
+                showTick
                 render={
                   <Dropdown.Menu className="crm-column-menu">
                     <Dropdown.Title>显示字段</Dropdown.Title>
                     {normalized.map((column, index) => {
                       const key = columnKeys[index];
                       const locked = column.enableHiding === false;
-                      return <Dropdown.Item key={key} disabled={locked} onClick={(event) => event.stopPropagation()}><Checkbox checked={!hiddenColumns.has(key)} disabled={locked} onChange={(event) => setColumnVisible(key, Boolean(event.target.checked))}>{typeof column.header === "string" ? column.header : key}</Checkbox></Dropdown.Item>;
+                      const visible = !hiddenColumns.has(key);
+                      return (
+                        <Dropdown.Item
+                          key={key}
+                          active={visible}
+                          disabled={locked}
+                          onClick={() => setColumnVisible(key, !visible)}
+                        >
+                          {typeof column.header === "string" ? column.header : key}
+                        </Dropdown.Item>
+                      );
                     })}
                   </Dropdown.Menu>
                 }
@@ -177,7 +198,7 @@ export function DataTable<T extends { id: string }>({
           rowSelection={selection}
           size="small"
           bordered={false}
-          scroll={{ x: "max-content" }}
+          scroll={{ x: tableScrollX }}
           empty={<EmptyState title={emptyTitle} description={emptyDescription || "试试调整筛选条件，或添加一条新记录。"} action={emptyAction} />}
         />
         {onPage && (

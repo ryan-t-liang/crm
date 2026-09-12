@@ -44,14 +44,13 @@ import {
   SearchInput,
   FilterControl,
   FilterPopover,
-  Field,
   EmptyState,
   ErrorState,
   LoadingSkeleton,
   EntityMeta,
   ListMetrics,
   RecordHighlights,
-  SystemIdField,
+  CopyValue,
   DetailTabs,
   Section,
   ConfirmDeleteDialog,
@@ -213,6 +212,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
       accessorKey: "name",
       header: "组织",
       enableHiding: false,
+      width: 300,
       cell: ({ row }) => (
         <a href={`#${targetFamily}/${row.original.id}`} className="flex min-w-48 items-center gap-3">
           <CompanyLogo organization={row.original} />
@@ -230,6 +230,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
     {
       id: "roles",
       header: "组织关系",
+      width: 112,
       cell: ({ row }) => (
         <span className="whitespace-nowrap text-xs text-muted-foreground">
           {businessRelationText(row.original.roleKeys)}
@@ -239,16 +240,20 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
     {
       accessorKey: "organizationType",
       header: "组织类型",
+      width: 104,
       cell: ({ row }) => organizationTypeLabels[row.original.organizationType] || "其他",
     },
     {
       accessorKey: "industry",
       header: "行业",
+      width: 152,
+      ellipsis: true,
       cell: ({ row }) => row.original.industryCustom || row.original.industry || "—",
     },
     {
       accessorKey: "engagementScore",
       header: "互动活跃度",
+      width: 112,
       cell: ({ row }) => (
         <span className="inline-flex items-center gap-2">
           <span className="font-medium tabular-nums">{row.original.engagementScore}</span>
@@ -261,11 +266,13 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
     {
       id: "owner",
       header: "组织负责人",
+      width: 148,
       cell: ({ row }) => <OwnerCell name={row.original.owner?.name} />,
     },
     {
       accessorKey: "contactCount",
       header: "联系人",
+      width: 104,
       cell: ({ row }) => (
         <RelationCountCell
           count={row.original.contactCount}
@@ -276,6 +283,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
     {
       accessorKey: "activeLeadCount",
       header: "活跃商机",
+      width: 104,
       cell: ({ row }) => (
         <RelationCountCell
           count={row.original.activeLeadCount}
@@ -286,11 +294,13 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
     {
       id: "lastInteraction",
       header: "最近互动",
+      width: 112,
       cell: ({ row }) => <RelativeDateCell value={row.original.lastInteractionAt} emptyLabel="暂无互动" />,
     },
     {
       id: "nextTask",
       header: "下一步行动",
+      width: 168,
       cell: ({ row }) => (
         <NextActionCell
           title={row.original.nextTask?.title}
@@ -302,12 +312,14 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
     {
       id: "updatedAt",
       header: "更新时间",
+      width: 112,
       cell: ({ row }) => <RelativeDateCell value={row.original.updatedAt} />,
     },
     {
       id: "actions",
       header: "操作",
       enableHiding: false,
+      width: 64,
       cell: ({ row }) => <RowActions label={row.original.name} items={listActions(row.original)} />,
     },
   ];
@@ -463,31 +475,27 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                     />
                   )}
                   <FilterPopover active={!!(filters.organizationType || filters.engagementState || filters.industry)}>
-                    <Field label="组织类型">
-                      {() => (
-                        <FilterControl
-                          label="组织类型"
-                          value={filters.organizationType || ""}
-                          onChange={(value) => setFilter("organizationType", value)}
-                          options={organizationTypeLabels}
-                        />
-                      )}
-                    </Field>
-                    <Field label="互动状态">
-                      {() => (
-                        <FilterControl
-                          label="互动状态"
-                          value={filters.engagementState || ""}
-                          onChange={(value) => setFilter("engagementState", value)}
-                          options={engagementLabels}
-                        />
-                      )}
-                    </Field>
-                    <Field label="行业">
-                      {(fieldId) => (
-                        <Input id={fieldId} value={filters.industry || ""} onChange={(event) => setFilter("industry", event.target.value)} />
-                      )}
-                    </Field>
+                    <FilterControl
+                      label="组织类型"
+                      value={filters.organizationType || ""}
+                      onChange={(value) => setFilter("organizationType", value)}
+                      options={organizationTypeLabels}
+                    />
+                    <FilterControl
+                      label="互动状态"
+                      value={filters.engagementState || ""}
+                      onChange={(value) => setFilter("engagementState", value)}
+                      options={engagementLabels}
+                    />
+                    <label className="crm-filter-control">
+                      <span className="crm-filter-label">行业</span>
+                      <Input
+                        aria-label="行业"
+                        value={filters.industry || ""}
+                        onChange={(event) => setFilter("industry", event.target.value)}
+                        placeholder="输入行业"
+                      />
+                    </label>
                   </FilterPopover>
                   {Object.values(filters).some(Boolean) && (
                     <Button variant="ghost" onClick={() => { setFilters({}); setKeyword(""); setPage(1); }}>
@@ -511,8 +519,8 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
             identity={<CompanyLogo organization={organization} large />}
             name={organization.name}
             subtitle={<>{businessRelationText(organization.roleKeys)} · {organization.industryCustom || organization.industry || "未填写行业"}</>}
-            tags={<><StatusBadge>{organizationTypeLabels[organization.organizationType] || "其他"}</StatusBadge><SystemIdField value={organization.id} label="组织 ID" /></>}
-            actions={<RowActions label={organization.name} triggerLabel="操作" items={detailActions} />}
+            tags={<StatusBadge>{organizationTypeLabels[organization.organizationType] || "其他"}</StatusBadge>}
+            actions={<RowActions label={organization.name} items={detailActions} />}
           />}
           inlineMeta={
             <RecordHighlights items={[
@@ -534,6 +542,16 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                     { label: "地址", value: [organization.country, organization.region, organization.city, organization.district, organization.street].filter(Boolean).join(" · ") },
                     { label: "网站", value: organization.website },
                     { label: "负责人", value: organization.owner?.name },
+                  ]}
+                />
+              </Section>
+              <Section title="系统信息">
+                <EntityMeta
+                  columns={1}
+                  items={[
+                    { label: "组织 ID", value: <CopyValue value={organization.id} label="复制组织 ID" /> },
+                    { label: "创建时间", value: dateTime(organization.createdAt) },
+                    { label: "更新时间", value: dateTime(organization.updatedAt) },
                   ]}
                 />
               </Section>
