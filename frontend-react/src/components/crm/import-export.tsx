@@ -4,12 +4,13 @@ import {
   IconRefresh as RotateCw,
   IconUpload as Upload,
 } from "@douyinfe/semi-icons";
-import { Table as SemiTable } from "@douyinfe/semi-ui";
+import { Space, Table as SemiTable, Typography } from "@douyinfe/semi-ui";
 import { appUrl, crmApi, type SessionUser } from "@/lib/api";
 import { can, dateTime, friendlyError } from "@/lib/crm";
 import { Button, Checkbox, FilePicker } from "@/components/crm/ui";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/crm/ui";
-import { FormDialog, SummaryStrip, LoadingSkeleton } from "./primitives";
+import { RecordHighlights, LoadingSkeleton } from "./primitives";
+import { CRMFormSideSheet } from "./interaction-patterns";
 import { dataJobStatusLabels, dataObjectLabels, exportScopeLabels } from "@/lib/product-language";
 
 type ImportRow = {
@@ -219,7 +220,9 @@ function JobDialog({
     }
   }
   return (
-    <FormDialog
+    <CRMFormSideSheet
+      mode="create"
+      entityLabel={mode === "import" ? "导入任务" : "导出任务"}
       title={mode === "import" ? "批量导入" : "导出数据"}
       description={
         mode === "export"
@@ -227,10 +230,10 @@ function JobDialog({
           : "上传 XLSX，先预检，确认后写入。"
       }
       onClose={onClose}
-      wide={mode === "import" && !!job}
+      width={mode === "import" && !!job ? 800 : 684}
       busy={busy}
       footer={
-        <>
+        <Space align="center" spacing={8} style={{ width: "100%", justifyContent: "flex-end" }}>
           <Button variant="outline" disabled={busy} onClick={onClose}>
             {result ? "完成" : "取消"}
           </Button>
@@ -256,43 +259,42 @@ function JobDialog({
                     : "开始预检"}
             </Button>
           )}
-        </>
+        </Space>
       }
     >
-      <div className="crm-data-job space-y-4">
+      <Space className="crm-data-job" vertical align="start" spacing={16} style={{ width: "100%" }}>
         {busy && <LoadingSkeleton />}
         {!busy && mode === "import" && !job && !history && (
-          <>
-            <a
-              className="inline-block text-sm underline"
-              href={appUrl(`/api/v1/crm/templates/${kind}`)}
-              download
-            >
-              下载标准模板
-            </a>
-            <FilePicker
-              aria-label="XLSX 文件"
-              accept=".xlsx"
-              files={file ? [file] : []}
-              onFilesChange={(selected) => setFile(selected[0] || null)}
-              label={file ? file.name : "选择 XLSX 文件"}
-            />
-            {kind === "contacts" && (
-              <label className="flex items-center gap-2 text-sm">
-                <Checkbox
-                  checked={createMissing}
-                  onCheckedChange={(v) => setCreateMissing(v === true)}
-                />
-                创建未匹配的组织（默认关闭）
-              </label>
-            )}
-            <label className="flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={allowDuplicate}
-                onCheckedChange={(v) => setAllowDuplicate(v === true)}
+          <Space vertical align="start" spacing={16} style={{ width: "100%" }}>
+            <Space align="center" spacing={8} wrap>
+              <Typography.Text
+                icon={<Download />}
+                link={{ href: appUrl(`/api/v1/crm/templates/${kind}`), download: true }}
+              >
+                下载标准模板
+              </Typography.Text>
+              <FilePicker
+                aria-label="XLSX 文件"
+                accept=".xlsx"
+                files={file ? [file] : []}
+                onFilesChange={(selected) => setFile(selected[0] || null)}
+                label={file ? file.name : "选择 XLSX 文件"}
               />
+            </Space>
+            {kind === "contacts" && (
+              <Checkbox
+                checked={createMissing}
+                onCheckedChange={(v) => setCreateMissing(v === true)}
+              >
+                创建未匹配的组织（默认关闭）
+              </Checkbox>
+            )}
+            <Checkbox
+              checked={allowDuplicate}
+              onCheckedChange={(v) => setAllowDuplicate(v === true)}
+            >
               确认重新上传相同文件
-            </label>
+            </Checkbox>
             <Button
               variant="ghost"
               onClick={() => {
@@ -301,12 +303,12 @@ function JobDialog({
             >
               导入记录
             </Button>
-          </>
+          </Space>
         )}
         {!busy && mode === "export" && !result && !history && (
-          <>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">导出范围</label>
+          <Space vertical align="start" spacing={16} style={{ width: "100%" }}>
+            <Space vertical align="start" spacing={8} style={{ width: "100%" }}>
+              <Typography.Text strong>导出范围</Typography.Text>
               <Select value={exportScope} onValueChange={(value) => setExportScope(value as typeof exportScope)}>
                 <SelectTrigger aria-label="导出范围"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -315,14 +317,16 @@ function JobDialog({
                   <SelectItem value="ALL_CURRENT_PERMISSION">当前权限内全部</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">预计记录数：{estimatedCount == null ? "计算中…" : `${estimatedCount} 条`}；文件格式：XLSX；生成后 24 小时内可下载。</p>
-            </div>
+              <Typography.Text type="tertiary" size="small">
+                预计记录数：{estimatedCount == null ? "计算中…" : `${estimatedCount} 条`}；文件格式：XLSX；生成后 24 小时内可下载。
+              </Typography.Text>
+            </Space>
             <Button variant="ghost" onClick={() => { void run("history"); }}>导出记录</Button>
-          </>
+          </Space>
         )}
         {job?.preflight && !result && (
-          <>
-            <SummaryStrip
+          <Space vertical align="start" spacing={16} style={{ width: "100%" }}>
+            <RecordHighlights
               items={[
                 { label: "总行数", value: job.preflight.totalRows },
                 { label: "可导入", value: job.preflight.importableRows },
@@ -343,54 +347,67 @@ function JobDialog({
                 { title: "说明", render: (_value: unknown, row: ImportRow) => [...(row.errors || []), ...(row.warnings || [])].map((item) => item.message).join("；") || "可导入" },
               ]}
             />
-          </>
+          </Space>
         )}
         {result && (
-          <>
-            <p className="text-sm">
+          <Space vertical align="start" spacing={12} style={{ width: "100%" }}>
+            <Typography.Text>
               {mode === "export"
                 ? `已生成 ${result.rowCount} 条记录。`
                 : `成功 ${result.imported} 条，失败 ${result.failed} 条，需注意 ${result.warnings} 条。`}
-            </p>
-            {result.downloadUrl && (
-              <Button onClick={() => { window.location.href = appUrl(result.downloadUrl || ""); }}>
-                下载 XLSX
-              </Button>
-            )}
-            {job?.failureFilePath && (
-              <Button
-                variant="link"
-                onClick={() => { window.location.href = appUrl(`/api/v1/crm/imports/${job.id}/failures`); }}
-              >
-                下载失败明细
-              </Button>
-            )}
-          </>
+            </Typography.Text>
+            <Space align="center" spacing={8} wrap>
+              {result.downloadUrl && (
+                <Button onClick={() => { window.location.href = appUrl(result.downloadUrl || ""); }}>
+                  下载 XLSX
+                </Button>
+              )}
+              {job?.failureFilePath && (
+                <Button
+                  variant="link"
+                  onClick={() => { window.location.href = appUrl(`/api/v1/crm/imports/${job.id}/failures`); }}
+                >
+                  下载失败明细
+                </Button>
+              )}
+            </Space>
+          </Space>
         )}
         {history && (
-          <>
+          <Space vertical align="start" spacing={8} style={{ width: "100%" }}>
             <Button variant="ghost" onClick={() => setHistory(null)}>
               返回
             </Button>
             {history.map((item) => (
-              <div key={item.id} className="border-b py-2 text-sm">
-                <p>{item.fileName || item.jobNo || item.id} · {dataObjectLabels[item.objectType || ""] || "其他对象"} · {dataJobStatusLabels[item.status || ""] || "未知状态"}</p>
-                <p className="text-xs text-muted-foreground">
+              <Space key={item.id} className="border-b py-2" vertical align="start" spacing={4} style={{ width: "100%" }}>
+                <Typography.Text>{item.fileName || item.jobNo || item.id} · {dataObjectLabels[item.objectType || ""] || "其他对象"} · {dataJobStatusLabels[item.status || ""] || "未知状态"}</Typography.Text>
+                <Typography.Text type="tertiary" size="small">
                   {dateTime(item.createdAt)} · {item.operatorName || "—"} · {mode === "export" ? `${exportScopeLabels[item.scope || ""] || "未知范围"} · ${item.rowCount || 0} 条 · ${item.format || "XLSX"}` : `成功 ${item.successCount} · 失败 ${item.failedCount}`}
-                </p>
-                {mode === "export" && item.status === "COMPLETED" && <a className="mr-3 text-xs underline" href={appUrl(`/api/v1/crm/exports/${item.id}/download`)} download>下载</a>}
-                {mode === "export" && <Button variant="ghost" size="sm" onClick={async () => { setBusy(true); try { await crmApi(`/api/v1/crm/exports/${item.id}/regenerate`, { method: "POST", body: "{}" }); setHistory(null); await run("history"); } finally { setBusy(false); } }}><RotateCw />重新生成</Button>}
-              </div>
+                </Typography.Text>
+                {mode === "export" && (
+                  <Space align="center" spacing={8} wrap>
+                    {item.status === "COMPLETED" && (
+                      <Typography.Text
+                        link={{ href: appUrl(`/api/v1/crm/exports/${item.id}/download`), download: true }}
+                        size="small"
+                      >
+                        下载
+                      </Typography.Text>
+                    )}
+                    <Button variant="ghost" size="sm" onClick={async () => { setBusy(true); try { await crmApi(`/api/v1/crm/exports/${item.id}/regenerate`, { method: "POST", body: "{}" }); setHistory(null); await run("history"); } finally { setBusy(false); } }}><RotateCw />重新生成</Button>
+                  </Space>
+                )}
+              </Space>
             ))}
-            {!history.length && <p>{mode === "export" ? "暂无导出记录" : "暂无导入记录"}</p>}
-          </>
+            {!history.length && <Typography.Text type="tertiary">{mode === "export" ? "暂无导出记录" : "暂无导入记录"}</Typography.Text>}
+          </Space>
         )}
         {error && (
-          <p role="alert" className="text-sm text-destructive">
+          <Typography.Text role="alert" type="danger">
             {error}
-          </p>
+          </Typography.Text>
         )}
-      </div>
-    </FormDialog>
+      </Space>
+    </CRMFormSideSheet>
   );
 }

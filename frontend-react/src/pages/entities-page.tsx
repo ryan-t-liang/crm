@@ -54,7 +54,6 @@ import {
   CRMEmptyState,
   CRMEntityCell,
   CRMFilterBar,
-  CRMInlineStats,
   CRMPageHeader,
   CRMRecordHeader,
   CRMRecordListItem,
@@ -66,7 +65,7 @@ import {
   PageContent,
   EntityMeta,
   ListMetrics,
-  SummaryStrip,
+  RecordHighlights,
   UserAvatar,
   DetailTabs,
   Section,
@@ -421,20 +420,19 @@ export function EntitiesPage({
             />
           }
           stats={kind === "contact" ? (
-            <CRMInlineStats
-              label="联系人列表统计"
+            <ListMetrics
               items={[
-                { label: "位联系人", value: list.data?.meta.total ?? "—" },
+                { label: "联系人总数", value: list.data?.meta.total ?? "—" },
                 {
-                  label: "位本页企业联系人",
+                  label: "本页企业联系人",
                   value: (list.data?.data || []).filter((item) => item.contactType === "BUSINESS").length,
                 },
                 {
-                  label: "位本页有商机",
+                  label: "本页有关联商机",
                   value: (list.data?.data || []).filter((item) => Number(item.relatedLeadCount || 0) > 0).length,
                 },
                 {
-                  label: "位本页待跟进",
+                  label: "本页待跟进",
                   value: (list.data?.data || []).filter((item) => !!item.nextFollowupAt).length,
                 },
               ]}
@@ -722,7 +720,7 @@ export function EntitiesPage({
             />
           )}
           inlineMeta={kind === "contact" ? (
-            <CRMInlineStats
+            <RecordHighlights
               label="联系人关系摘要"
               items={[
                 { label: "关联商机", value: row.relatedLeadCount ?? 0 },
@@ -732,7 +730,7 @@ export function EntitiesPage({
               ]}
             />
           ) : (
-            <SummaryStrip
+            <RecordHighlights
               items={[
                 { label: "最新进展", value: String(row.latestProgress || "暂无进展") },
                 { label: "下一步行动", value: row.nextAction || "待安排" },

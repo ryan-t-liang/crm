@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   IconAlertCircle as AlertCircle,
-  IconCalendarStroked as CalendarDays,
-  IconChevronDown as ChevronDown,
   IconRefresh as RefreshCw,
-  IconTick as Check,
 } from "@douyinfe/semi-icons"
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
-import { DatePicker, Popover as SemiPopover } from "@douyinfe/semi-ui"
+import { DatePicker } from "@douyinfe/semi-ui"
 
 import { DashboardFunnel25D, type DashboardStage } from "@/components/dashboard-composition"
 import {
@@ -24,6 +21,7 @@ import {
   type ChartConfig,
 } from "@/components/crm/ui"
 import { CRMPageContainer } from "@/components/crm/layout"
+import { CRMPageHeader } from "@/components/crm/interaction-patterns"
 import { getData, type CrmUser, type SessionUser } from "@/lib/api"
 import { opportunityStageLabels } from "@/lib/product-language"
 import { containsFinancialKey, customDateRange, localDateValue, type DashboardData, type TeamData, type TeamRow } from "@/lib/dashboard"
@@ -123,13 +121,11 @@ export function DashboardPage({ me }: { me: SessionUser; users: CrmUser[] }) {
 
   return (
       <CRMPageContainer mode="standard" breadcrumbs={[{ label: "Kivisense CRM", href: "#dashboard" }, { label: "数据看板" }]} className="crm-page dashboard-page crm-dashboard-page @container/main flex flex-1 flex-col">
-        <header className="crm-page-header crm-dashboard-page-header">
-          <div>
-            <h1 className="crm-display-title text-2xl font-semibold tracking-tight">数据看板</h1>
-            <p className="mt-1 text-sm text-muted-foreground">管理概览</p>
-          </div>
-          <DashboardDateRangePicker value={appliedRange} onApply={setAppliedRange} />
-        </header>
+        <CRMPageHeader
+          title="数据看板"
+          description="管理概览"
+          actions={<DashboardDateRangePicker value={appliedRange} onApply={setAppliedRange} />}
+        />
 
         {loading && !data ? <DashboardSkeleton /> : null}
         {error ? (
@@ -259,62 +255,33 @@ function TeamPerformancePanel({ rows, management }: { rows: TeamRow[]; managemen
 }
 
 function DashboardDateRangePicker({ value, onApply }: { value: AppliedRange; onApply: (value: AppliedRange) => void }) {
-  const [open, setOpen] = useState(false)
-  const [draft, setDraft] = useState<AppliedRange>(value)
-  const [dateError, setDateError] = useState("")
-  const resetDraft = () => { setDraft(value); setDateError("") }
-  const selectPreset = (preset: Exclude<DatePreset, "custom">) => setDraft({ ...rangeForPreset(preset, new Date()), preset })
-  const apply = () => {
-    if (!customDateRange(draft.from, draft.to)) {
-      setDateError("结束日期不能早于开始日期。")
-      return
-    }
-    onApply(draft)
-    setOpen(false)
-    setDateError("")
-  }
-  const cancel = () => { resetDraft(); setOpen(false) }
+  const presets = useMemo(() => DATE_PRESETS.map((preset) => ({
+    text: preset.label,
+    start: () => dateFromLocalValue(rangeForPreset(preset.key, new Date()).from),
+    end: () => dateFromLocalValue(rangeForPreset(preset.key, new Date()).to),
+  })), [])
+
   return (
-    <SemiPopover
-      trigger="click"
-      visible={open}
-      onVisibleChange={(next) => { setOpen(next); if (next) resetDraft() }}
+    <DatePicker
+      type="dateRange"
+      value={[dateFromLocalValue(value.from), dateFromLocalValue(value.to)]}
+      format="yyyy-MM-dd"
+      rangeSeparator="—"
+      placeholder={["开始日期", "结束日期"]}
+      presets={presets}
+      presetPosition="left"
       position="bottomRight"
-      content={(
-        <div className="dashboard-date-popover">
-          <div className="dashboard-date-layout">
-            <nav className="dashboard-date-presets" aria-label="常用统计周期">
-              <strong>统计周期</strong>
-              {DATE_PRESETS.map((preset) => (
-                <Button variant="ghost" key={preset.key} className={draft.preset === preset.key ? "is-active" : ""} onClick={() => selectPreset(preset.key)}>
-                  <span>{preset.label}</span>{draft.preset === preset.key ? <Check /> : null}
-                </Button>
-              ))}
-            </nav>
-            <section className="dashboard-date-custom">
-              <header><strong>自定义日期</strong><span>选择开始与结束日期</span></header>
-              <div className="dashboard-date-fields">
-                <label><span>开始日期</span><DatePicker type="date" value={draft.from || undefined} format="yyyy-MM-dd" onChange={(_date, dateString) => setDraft({ ...draft, from: String(dateString || ""), preset: "custom" })} /></label>
-                <i>—</i>
-                <label><span>结束日期</span><DatePicker type="date" value={draft.to || undefined} format="yyyy-MM-dd" onChange={(_date, dateString) => setDraft({ ...draft, to: String(dateString || ""), preset: "custom" })} /></label>
-              </div>
-              <div className="dashboard-date-preview">
-                <CalendarDays />
-                <span><small>当前选择</small><strong>{formatDateRange(draft)}</strong></span>
-              </div>
-              {dateError ? <p className="dashboard-date-error">{dateError}</p> : null}
-            </section>
-          </div>
-          <footer className="dashboard-date-actions"><Button variant="ghost" onClick={cancel}>取消</Button><Button onClick={apply}>应用</Button></footer>
-        </div>
-      )}
-    >
-        <Button variant="outline" className="dashboard-date-trigger">
-          <CalendarDays />
-          <span><small>{presetLabel(value.preset)}</small><strong>{formatDateRange(value)}</strong></span>
-          <ChevronDown />
-        </Button>
-    </SemiPopover>
+      showClear={false}
+      insetLabel={presetLabel(value.preset)}
+      className="dashboard-date-picker"
+      onChange={(date) => {
+        if (!Array.isArray(date) || date.length !== 2 || date.some((item) => !(item instanceof Date))) return
+        const from = localDateValue(date[0] as Date)
+        const to = localDateValue(date[1] as Date)
+        if (!customDateRange(from, to)) return
+        onApply({ from, to, preset: presetForRange(from, to, new Date()) })
+      }}
+    />
   )
 }
 
@@ -377,14 +344,6 @@ function presetLabel(preset: DatePreset) {
   return DATE_PRESETS.find((item) => item.key === preset)?.label ?? "统计周期"
 }
 
-function formatDateRange(range: Pick<AppliedRange, "from" | "to">) {
-  const format = (value: string) => {
-    const [year, month, day] = value.split("-")
-    return `${year}年${Number(month)}月${Number(day)}日`
-  }
-  return `${format(range.from)} – ${format(range.to)}`
-}
-
 function rangeForPreset(preset: Exclude<DatePreset, "custom">, now: Date) {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const fromDaysAgo = (days: number) => new Date(today.getTime() - (days - 1) * DAY)
@@ -400,4 +359,16 @@ function rangeForPreset(preset: Exclude<DatePreset, "custom">, now: Date) {
   } else if (preset === "quarter") from = new Date(today.getFullYear(), Math.floor(today.getMonth() / 3) * 3, 1)
   else if (preset === "year") from = new Date(today.getFullYear(), 0, 1)
   return { from: localDateValue(from), to: localDateValue(to) }
+}
+
+function dateFromLocalValue(value: string) {
+  const [year, month, day] = value.split("-").map(Number)
+  return new Date(year, month - 1, day)
+}
+
+function presetForRange(from: string, to: string, now: Date): DatePreset {
+  return DATE_PRESETS.find((preset) => {
+    const range = rangeForPreset(preset.key, now)
+    return range.from === from && range.to === to
+  })?.key ?? "custom"
 }

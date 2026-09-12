@@ -136,40 +136,15 @@
 
 .crm-list-layout-stats,
 .crm-list-layout--contact .crm-list-layout-stats {
-  width: auto;
+  width: 100%;
   padding: 0;
   border: 0;
   border-radius: 0;
   background: transparent;
 }
 
-.crm-pattern-inline-stats,
-.crm-list-layout--contact .crm-pattern-inline-stats {
-  gap: 8px;
-}
-
-.crm-pattern-inline-stat,
-.crm-list-layout--contact .crm-pattern-inline-stat {
-  min-height: 24px;
-  padding: 0 12px 0 0;
-  border: 0;
-  color: var(--semi-color-text-2);
-}
-
-.crm-pattern-inline-stat:not(:last-child)::after,
-.crm-list-layout--contact .crm-pattern-inline-stat:not(:last-child)::after {
-  display: inline;
-  margin-left: 12px;
-  color: var(--semi-color-text-3);
-  content: "·";
-}
-
-.crm-pattern-inline-stat > strong {
-  color: var(--semi-color-text-0);
-  font-weight: 600;
-}
-
-.crm-list-metrics.semi-card {
+.crm-metric-surface.semi-card {
+  width: 100%;
   overflow: hidden;
   border-color: var(--semi-color-border);
   border-radius: var(--semi-border-radius-medium);
@@ -177,27 +152,57 @@
   box-shadow: none;
 }
 
-.crm-list-metrics-grid {
+.crm-metric-surface-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--crm-metric-columns), minmax(0, 1fr));
 }
 
-.crm-list-metric {
+.crm-metric-surface-item {
+  display: grid;
   min-width: 0;
+  align-content: start;
+  gap: 3px;
   padding: 14px 16px;
   border-right: 1px solid var(--semi-color-border);
   background: transparent;
 }
 
-.crm-list-metric:last-child {
+.crm-metric-surface-item:last-child {
   border-right: 0;
 }
 
-.crm-list-metric .semi-typography-h4 {
-  margin: 4px 0 0;
+.crm-metric-surface-label,
+.crm-metric-surface-value,
+.crm-metric-surface-note {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.crm-metric-surface-value {
+  margin: 0;
   color: var(--semi-color-text-0);
+  font-variant-numeric: tabular-nums;
+}
+
+.crm-metric-surface[data-variant="metric"] .crm-metric-surface-value {
   font-size: 22px;
   font-weight: 600;
+  line-height: 28px;
+}
+
+.crm-metric-surface[data-variant="summary"] .crm-metric-surface-item {
+  padding-block: 12px;
+}
+
+.crm-metric-surface[data-variant="summary"] .crm-metric-surface-value {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.crm-record-layout-meta:has(.crm-metric-surface) {
+  padding: 12px 0 0;
+  border-bottom: 0;
 }
 
 .crm-data-workspace,
@@ -497,6 +502,10 @@
   background: transparent;
 }
 
+.dashboard-date-picker {
+  width: min(320px, 100%);
+}
+
 @media (max-width: 1100px) {
   .crm-record-layout-body,
   .crm-record-layout--contact .crm-record-layout-body,
@@ -506,15 +515,15 @@
 }
 
 @media (max-width: 720px) {
-  .crm-list-metrics-grid {
+  .crm-metric-surface-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .crm-list-metric:nth-child(2n) {
+  .crm-metric-surface-item:nth-child(2n) {
     border-right: 0;
   }
 
-  .crm-list-metric:nth-child(n + 3) {
+  .crm-metric-surface-item:nth-child(n + 3) {
     border-top: 1px solid var(--semi-color-border);
   }
 
@@ -523,5 +532,20 @@
   .crm-table-toolbar,
   .crm-table-footer {
     padding-inline: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .crm-metric-surface-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .crm-metric-surface-item,
+  .crm-metric-surface-item:nth-child(2n) {
+    border-right: 0;
+  }
+
+  .crm-metric-surface-item:nth-child(n + 2) {
+    border-top: 1px solid var(--semi-color-border);
   }
 }

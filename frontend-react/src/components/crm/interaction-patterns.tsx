@@ -59,25 +59,6 @@ export function CRMListPage({
   );
 }
 
-export function CRMInlineStats({
-  items,
-  label = "摘要",
-}: {
-  items: Array<{ label: string; value: ReactNode }>;
-  label?: string;
-}) {
-  return (
-    <div className="crm-pattern-inline-stats" aria-label={label}>
-      {items.map((item) => (
-        <span key={item.label} className="crm-pattern-inline-stat">
-          <strong>{item.value ?? "—"}</strong>
-          <span>{item.label}</span>
-        </span>
-      ))}
-    </div>
-  );
-}
-
 export type CRMActiveFilter = {
   key: string;
   label: string;
@@ -439,6 +420,9 @@ export function CRMRecordListItem({
 export function CRMFormSideSheet({
   mode,
   entityLabel,
+  title,
+  description,
+  width = 684,
   children,
   footer,
   busy,
@@ -446,16 +430,23 @@ export function CRMFormSideSheet({
 }: {
   mode: "create" | "edit";
   entityLabel: string;
+  title?: string;
+  description?: string;
+  width?: number;
   children: ReactNode;
   footer: ReactNode;
   busy?: boolean;
   onClose: () => void;
 }) {
   const creating = mode === "create";
+  const resolvedTitle = title || `${creating ? "新增" : "编辑"}${entityLabel}`;
+  const resolvedDescription = description || (creating
+    ? `填写${entityLabel}的基本身份与业务关系。`
+    : `修改${entityLabel}资料与关联关系。`);
   return (
     <SideSheet
       visible
-      width={684}
+      width={width}
       className="crm-pattern-form-sheet"
       closeOnEsc={!busy}
       closable={!busy}
@@ -464,8 +455,8 @@ export function CRMFormSideSheet({
       onCancel={() => { if (!busy) onClose(); }}
       title={(
         <div className="crm-pattern-form-heading">
-          <h2>{creating ? "新增" : "编辑"}{entityLabel}</h2>
-          <p>{creating ? `填写${entityLabel}的基本身份与业务关系。` : `修改${entityLabel}资料与关联关系。`}</p>
+          <h2>{resolvedTitle}</h2>
+          <p>{resolvedDescription}</p>
         </div>
       )}
       footer={<div className="crm-pattern-form-footer">{footer}</div>}

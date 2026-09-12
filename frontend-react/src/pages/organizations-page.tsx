@@ -50,7 +50,7 @@ import {
   LoadingSkeleton,
   EntityMeta,
   ListMetrics,
-  SummaryStrip,
+  RecordHighlights,
   SystemIdField,
   DetailTabs,
   Section,
@@ -515,7 +515,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
             actions={<RowActions label={organization.name} triggerLabel="操作" items={detailActions} />}
           />}
           inlineMeta={
-            <SummaryStrip items={[
+            <RecordHighlights items={[
               { label: "联系人", value: organization.contactCount },
               { label: "线索", value: organization.marketingLeadCount || 0 },
               { label: "商机", value: organization.leads.length },

@@ -1,4 +1,4 @@
-import { cloneElement, isValidElement, useEffect, useId, useRef, useState, type ReactNode } from "react";
+import { cloneElement, isValidElement, useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
   IconFilterStroked as SlidersHorizontal,
   IconInbox as Inbox,
@@ -119,8 +119,6 @@ export function SystemIdField({ value, label = "系统编号" }: { value: string
   return <span className="inline-flex items-center gap-2"><span>{label}</span><CopyValue value={value} label="复制 ID" /></span>;
 }
 export const RecordHeader = EntityHeader;
-export const RecordHighlights = SummaryStrip;
-export const MetricStrip = SummaryStrip;
 export const DetailSection = Section;
 export const SectionHeader = PageHeader;
 export const CompactEmptyState = EmptyState;
@@ -275,45 +273,52 @@ export function EntityHeader({
     </div>
   );
 }
-export function SummaryStrip({
+export function RecordHighlights({
   items,
+  label = "记录摘要",
 }: {
   items: { label: string; value: ReactNode; detail?: ReactNode }[];
+  label?: string;
 }) {
-  return (
-    <div className="crm-summary-strip grid gap-0 overflow-hidden border bg-card">
-      {items.map((item) => (
-        <div key={item.label} className="crm-summary-item min-w-0 px-5 py-4">
-          <div className="text-xs text-muted-foreground">{item.label}</div>
-          <div
-            className="mt-1 line-clamp-2 break-words text-sm font-medium"
-            title={typeof item.value === "string" ? item.value : undefined}
-          >
-            {item.value ?? "—"}
-          </div>
-          {item.detail && (
-            <div className="mt-1 truncate text-xs text-muted-foreground">
-              {item.detail}
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  );
+  return <CRMMetricSurface items={items} label={label} variant="summary" />;
 }
 export function ListMetrics({
   items,
 }: {
   items: { label: string; value: string | number; note?: ReactNode }[];
 }) {
+  return <CRMMetricSurface items={items} label="列表指标" variant="metric" />;
+}
+
+function CRMMetricSurface({
+  items,
+  label,
+  variant,
+}: {
+  items: Array<{ label: string; value: ReactNode; note?: ReactNode; detail?: ReactNode }>;
+  label: string;
+  variant: "metric" | "summary";
+}) {
+  const style = { "--crm-metric-columns": Math.min(Math.max(items.length, 1), 4) } as CSSProperties;
   return (
-    <SemiCard className="crm-list-metrics" bodyStyle={{ padding: 0 }} aria-label="列表指标">
-      <div className="crm-list-metrics-grid">
+    <SemiCard
+      className="crm-metric-surface"
+      bodyStyle={{ padding: 0 }}
+      aria-label={label}
+      data-variant={variant}
+    >
+      <div className="crm-metric-surface-grid" style={style}>
         {items.map((item) => (
-          <div className="crm-list-metric" key={item.label}>
-            <Typography.Text type="tertiary">{item.label}</Typography.Text>
-            <Typography.Title heading={4}>{item.value ?? "—"}</Typography.Title>
-            {item.note ? <Typography.Text type="secondary">{item.note}</Typography.Text> : null}
+          <div className="crm-metric-surface-item" key={item.label}>
+            <Typography.Text className="crm-metric-surface-label" type="tertiary">{item.label}</Typography.Text>
+            {variant === "metric" ? (
+              <Typography.Title className="crm-metric-surface-value" heading={4}>{item.value ?? "—"}</Typography.Title>
+            ) : (
+              <Typography.Text className="crm-metric-surface-value" strong>{item.value ?? "—"}</Typography.Text>
+            )}
+            {item.note || item.detail ? (
+              <Typography.Text className="crm-metric-surface-note" type="secondary">{item.note || item.detail}</Typography.Text>
+            ) : null}
           </div>
         ))}
       </div>
