@@ -518,6 +518,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
             identity={<CompanyLogo organization={organization} large />}
             name={organization.name}
             subtitle={<>{businessRelationText(organization.roleKeys)} · {organization.industryCustom || organization.industry || "未填写行业"} · 负责人：{organization.owner?.name || "待分配"}</>}
+            tags={<StatusBadge>{organizationTypeLabels[organization.organizationType] || "其他"}</StatusBadge>}
             actions={<RowActions label={organization.name} items={detailActions} />}
           />}
           inlineMeta={
