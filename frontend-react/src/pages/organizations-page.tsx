@@ -8,8 +8,6 @@ import {
   IconPlus as Plus,
   IconUserAdd as UserPlus,
 } from "@douyinfe/semi-icons";
-import { Pagination } from "@douyinfe/semi-ui";
-
 import { crmApi, type SessionUser, type CrmUser } from "@/lib/api";
 import {
   can,
@@ -28,7 +26,6 @@ import {
   type PageResult,
 } from "@/lib/crm";
 import {
-  auditActionLabel,
   marketingLeadStatusLabels,
   organizationTypeLabels,
   opportunityStageLabels,
@@ -67,6 +64,7 @@ import {
 } from "@/components/crm/cells";
 import { OrganizationForm } from "@/components/crm/organization-form";
 import { Timeline } from "@/components/crm/timeline";
+import { CRMAuditTrail, type AuditRow } from "@/components/crm/entity-audit";
 import { FollowupForm, type FollowupTarget } from "@/components/crm/followup-form";
 import { ImportExport } from "@/components/crm/import-export";
 import { EntityForm } from "@/components/crm/entity-form";
@@ -519,21 +517,22 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
           header={<CRMRecordHeader
             identity={<CompanyLogo organization={organization} large />}
             name={organization.name}
-            subtitle={<>{businessRelationText(organization.roleKeys)} · {organization.industryCustom || organization.industry || "未填写行业"}</>}
+            subtitle={<>{businessRelationText(organization.roleKeys)} · {organization.industryCustom || organization.industry || "未填写行业"} · 负责人：{organization.owner?.name || "待分配"}</>}
             actions={<RowActions label={organization.name} items={detailActions} />}
           />}
           inlineMeta={
             <RecordHighlights items={[
               { label: "联系人", value: organization.contactCount },
-              { label: "线索", value: organization.marketingLeadCount || 0 },
-              { label: "商机", value: organization.leads.length },
+              { label: "活跃商机", value: organization.activeLeadCount },
               { label: "最近互动", value: relativeDate(organization.lastInteractionAt) },
+              { label: "下一步行动", value: organization.nextTask?.title || "待安排", detail: relativeDate(organization.nextActionAt) },
             ]} />
           }
           sidebar={
             <>
               <Section title="组织信息">
                 <EntityMeta
+                  columns={1}
                   items={[
                     { label: "组织", value: organization.name },
                     { label: "组织类型", value: organizationTypeLabels[organization.organizationType] || "其他" },
@@ -545,6 +544,7 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                   ]}
                 />
               </Section>
+              <ContactModule rows={organization.contacts} onCreate={can(me, "crm.contact.create") ? () => setEntityCreate("contact") : undefined} />
               <Section title="系统信息">
                 <EntityMeta
                   columns={1}
@@ -555,7 +555,6 @@ export function OrganizationsPage({ me, users, id, supplier = false }: Props) {
                   ]}
                 />
               </Section>
-              <ContactModule rows={organization.contacts} onCreate={can(me, "crm.contact.create") ? () => setEntityCreate("contact") : undefined} />
             </>
           }
         >
@@ -699,48 +698,30 @@ function MarketingLeadModule({ rows, onCreate }: { rows: MarketingLead[]; onCrea
   );
 }
 
-type AuditRow = {
-  id: string;
-  action: string;
-  actorName: string;
-  createdAt: string;
-  targetId?: string;
+type OrganizationAuditRow = AuditRow & {
   details?: { organizationId?: string };
 };
 
 function OrganizationAudit({ id }: { id: string }) {
   const [page, setPage] = useState(1);
-  const result = useResource<PageResult<AuditRow>>(
+  const pageSize = 100;
+  const result = useResource<PageResult<OrganizationAuditRow>>(
     `/api/v1/audit-logs?module=crm&targetId=${encodeURIComponent(id)}&pageSize=100&page=${page}`,
   );
   const rows = result.data?.data.filter((row) => row.targetId === id || row.details?.organizationId === id) || [];
+  if (result.error) {
+    return <ErrorState error={result.error} retry={result.reload} />;
+  }
   return (
-    <Section title="操作记录">
-      {result.error ? (
-        <ErrorState error={result.error} retry={result.reload} />
-      ) : (
-        <>
-          <p className="mb-3 text-xs text-muted-foreground">本组织的系统操作历史，业务互动请查看旅程。</p>
-          {result.loading ? <LoadingSkeleton /> : rows.length ? rows.map((row) => (
-            <div className="flex flex-wrap justify-between gap-3 border-b py-3 text-sm" key={row.id}>
-              <span>{auditActionLabel(row.action)}</span>
-              <span className="text-muted-foreground">{row.actorName} · {dateTime(row.createdAt)}</span>
-            </div>
-          )) : <EmptyState title="本页暂无相关操作记录" />}
-          <div className="crm-organization-audit-pagination-wrap mt-4 flex justify-end">
-            <Pagination
-              className="crm-organization-audit-pagination"
-              currentPage={page}
-              total={result.data?.meta.total || 0}
-              pageSize={100}
-              size="small"
-              showSizeChanger={false}
-              disabled={result.loading}
-              onPageChange={setPage}
-            />
-          </div>
-        </>
-      )}
-    </Section>
+    <CRMAuditTrail
+      rows={rows}
+      loading={result.loading}
+      page={page}
+      total={result.data?.meta.total || 0}
+      pageSize={pageSize}
+      onPage={setPage}
+      description="本组织及其关联业务的系统操作历史；业务互动请查看旅程。"
+      emptyTitle="本页暂无相关操作记录"
+    />
   );
 }

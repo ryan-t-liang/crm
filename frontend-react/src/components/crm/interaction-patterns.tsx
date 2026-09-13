@@ -243,9 +243,13 @@ export function CRMRecordHeader({
       <div className="crm-pattern-record-identity">
         {identity || <Avatar size="large" color="grey" aria-label={name}>{name.trim().slice(0, 1) || "—"}</Avatar>}
         <div>
-          <Typography.Title heading={2}>{name}</Typography.Title>
-          {subtitle ? <Typography.Text type="secondary">{subtitle}</Typography.Text> : null}
-          {tags ? <div className="crm-pattern-record-tags">{tags}</div> : null}
+          <Typography.Title heading={2} title={name}>{name}</Typography.Title>
+          {subtitle || tags ? (
+            <div className="crm-pattern-record-context">
+              {subtitle ? <Typography.Text type="secondary">{subtitle}</Typography.Text> : null}
+              {tags ? <div className="crm-pattern-record-tags">{tags}</div> : null}
+            </div>
+          ) : null}
         </div>
       </div>
       {actions ? <div className="crm-pattern-record-actions">{actions}</div> : null}
@@ -351,6 +355,7 @@ export function CRMRecordTabs({
     <Tabs
       className="crm-pattern-record-tabs"
       type="line"
+      collapsible="auto"
       activeKey={value}
       onChange={onChange}
       tabList={items.map(([itemKey, tab]) => ({ itemKey, tab }))}
@@ -363,38 +368,68 @@ export function CRMRecordTabs({
 export function CRMActivityTimeline({
   items,
   emptyAction,
+  emptyTitle = "暂无活动记录",
+  emptyDescription = "后续业务动作会在这里形成连续记录。",
+  ariaLabel = "业务活动时间线",
 }: {
   items: Array<{
     id: string;
     time: ReactNode;
     title: ReactNode;
+    actorName?: string | null;
+    actorVerb?: string;
     content?: ReactNode;
     meta?: ReactNode;
     detail?: ReactNode;
   }>;
   emptyAction?: ReactNode;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  ariaLabel?: string;
 }) {
   if (!items.length) {
     return (
       <CRMEmptyState
-        title="暂无活动记录"
-        description="记录电话、会议或邮件互动后，客户旅程会显示在这里。"
+        title={emptyTitle}
+        description={emptyDescription}
         action={emptyAction}
       />
     );
   }
   return (
-    <SemiTimeline className="crm-pattern-timeline">
-      {items.map((item) => (
-        <SemiTimeline.Item key={item.id} dot={<IconActivity />} time={item.time}>
-          <article className="crm-pattern-timeline-item">
-            <strong>{item.title}</strong>
-            {item.meta ? <div className="crm-pattern-timeline-meta">{item.meta}</div> : null}
-            {item.content ? <div className="crm-pattern-timeline-content">{item.content}</div> : null}
-            {item.detail ? <div className="crm-pattern-timeline-detail">{item.detail}</div> : null}
-          </article>
-        </SemiTimeline.Item>
-      ))}
+    <SemiTimeline className="crm-pattern-timeline" aria-label={ariaLabel}>
+      {items.map((item) => {
+        const actorName = item.actorName?.trim() || "系统";
+        return (
+          <SemiTimeline.Item
+            key={item.id}
+            dot={<span className="crm-pattern-timeline-dot" aria-hidden="true"><IconActivity /></span>}
+          >
+            <article className="crm-pattern-timeline-item">
+              <header className="crm-pattern-timeline-header">
+                <div className="crm-pattern-timeline-actor">
+                  <Avatar
+                    size="extra-small"
+                    color={actorName === "系统" ? "grey" : "light-green"}
+                    alt={actorName}
+                  >
+                    {actorName.slice(0, 1)}
+                  </Avatar>
+                  <div className="crm-pattern-timeline-actor-copy">
+                    <strong>{actorName}</strong>
+                    <span>{item.actorVerb || "记录了业务动态"}</span>
+                  </div>
+                </div>
+                <div className="crm-pattern-timeline-time">{item.time}</div>
+              </header>
+              <div className="crm-pattern-timeline-action">{item.title}</div>
+              {item.meta ? <div className="crm-pattern-timeline-meta">{item.meta}</div> : null}
+              {item.content ? <div className="crm-pattern-timeline-content">{item.content}</div> : null}
+              {item.detail ? <div className="crm-pattern-timeline-detail">{item.detail}</div> : null}
+            </article>
+          </SemiTimeline.Item>
+        );
+      })}
     </SemiTimeline>
   );
 }

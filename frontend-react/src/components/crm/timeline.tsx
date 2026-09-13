@@ -19,13 +19,13 @@ export function Timeline({
         id: event.id,
         time: <time dateTime={event.occurredAt}>{dateTime(event.occurredAt)}</time>,
         title: productEventText(event.title),
-        meta: (
+        actorName: event.actor?.name,
+        meta: event.relatedContactId || event.relatedLeadId ? (
           <>
-            {event.actor?.name ? <span>{event.actor.name}</span> : null}
             {event.relatedContactId ? <a href={`#contacts/${event.relatedContactId}`}>关联联系人</a> : null}
             {event.relatedLeadId ? <a href={`#leads/${event.relatedLeadId}`}>关联商机</a> : null}
           </>
-        ),
+        ) : undefined,
         content: <p>{productEventText(event.summary)}</p>,
         detail: (
           <>

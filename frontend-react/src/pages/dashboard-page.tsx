@@ -6,7 +6,7 @@ import {
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts"
 import { DatePicker, Radio, RadioGroup } from "@douyinfe/semi-ui"
 
-import { DashboardStageFlow, type DashboardStage } from "@/components/dashboard-composition"
+import { DashboardFunnel25D, type DashboardStage } from "@/components/dashboard-composition"
 import {
   Alert,
   AlertDescription,
@@ -159,10 +159,12 @@ export function DashboardPage({ me }: { me: SessionUser; users: CrmUser[] }) {
                   </header>
                   <div className="crm-dashboard-funnel-body">
                     {funnel ? (
-                      <>
-                        <div className="dashboard-funnel-summary">线索总数 <strong>{funnel.stages[0]?.count ?? 0}</strong></div>
-                        <DashboardStageFlow compact stages={marketingStages(funnel)} label="营销与转化漏斗" footnote={<>总转化率 {conversionValue(funnel.kpis.leadToOpportunityRate)}；阶段间转化率仅在样本量足够时展示</>} />
-                      </>
+                      <DashboardFunnel25D
+                        stages={marketingStages(funnel)}
+                        label="营销与转化漏斗"
+                        summary={<>线索总数 <strong>{funnel.stages[0]?.count ?? 0}</strong></>}
+                        footnote={<>总转化率 {conversionValue(funnel.kpis.leadToOpportunityRate)}；阶段间转化率仅在样本量足够时展示</>}
+                      />
                     ) : <p className="crm-dashboard-analysis-unavailable">当前账户没有营销分析权限。</p>}
                   </div>
                 </article>
@@ -174,8 +176,12 @@ export function DashboardPage({ me }: { me: SessionUser; users: CrmUser[] }) {
                     <h3 id="dashboard-opportunity-funnel-title">商机推进</h3>
                   </header>
                   <div className="crm-dashboard-funnel-body">
-                    <div className="dashboard-funnel-summary">商机总数 <strong>{OPPORTUNITY_STAGE_ORDER.reduce((sum, status) => sum + stageCount(data, status), 0)}</strong></div>
-                    <DashboardStageFlow compact stages={opportunityStages(data)} label="商机推进漏斗" footnote={`当前阶段存量；本期丢失 ${stageCount(data, "LOST")} 个`} />
+                    <DashboardFunnel25D
+                      stages={opportunityStages(data)}
+                      label="商机推进漏斗"
+                      summary={<>商机总数 <strong>{OPPORTUNITY_STAGE_ORDER.reduce((sum, status) => sum + stageCount(data, status), 0)}</strong></>}
+                      footnote={`当前阶段存量；本期丢失 ${stageCount(data, "LOST")} 个`}
+                    />
                   </div>
                 </article>
               </div>

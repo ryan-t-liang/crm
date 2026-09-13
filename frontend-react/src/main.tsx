@@ -6,6 +6,7 @@ import "@semi-bot/semi-theme-kivicrm/semi.min.css"
 import { App } from "@/app"
 import "@/index.css"
 import "@/semi-native.css"
+import "@/components/crm/activity-stream.css"
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

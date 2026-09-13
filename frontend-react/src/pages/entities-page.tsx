@@ -54,6 +54,7 @@ import {
   CRMEmptyState,
   CRMEntityCell,
   CRMFilterBar,
+  CRMActivityTimeline,
   CRMPageHeader,
   CRMRecordHeader,
   CRMRecordListItem,
@@ -689,7 +690,7 @@ export function EntitiesPage({
                 <span className="crm-contact-header-subtitle">
                   <span>
                     {row.organizationId ? <a href={`#organizations/${row.organizationId}`}>{row.organization?.shortName || row.organization?.name || row.companyName}</a> : "未关联组织"}
-                    {" · "}{row.title || "职位待补充"}
+                    {" · "}{row.title || "职位待补充"}{" · 负责人："}{row.owner?.name || "待分配"}
                   </span>
                   {row.email ? <a href={`mailto:${row.email}`}>{row.email}</a> : null}
                 </span>
@@ -738,7 +739,7 @@ export function EntitiesPage({
                 { label: "关联商机", value: row.relatedLeadCount ?? 0 },
                 { label: "进行中商机", value: journey.data?.data.summary.activeLeadCount ?? 0 },
                 { label: "最近互动", value: dateTime(journey.data?.data.summary.recentInteractionAt) },
-                { label: "附件", value: row.attachments?.length ?? 0 },
+                { label: "下次跟进", value: dateTime(row.nextFollowupAt) },
               ]}
             />
           ) : (
@@ -803,23 +804,16 @@ export function EntitiesPage({
             <>
               <>
                   <Section title="商机信息">
-                    <EntityMeta items={[
+                    <EntityMeta columns={1} items={[
                       { label: "商机阶段", value: leadStatuses[row.status || ""] },
                       { label: "优先级", value: priorities[row.priority || ""] },
                       { label: "商机负责人", value: row.salesOwner?.name || "待分配" },
                       { label: "关联联系人", value: row.contact?.contactName },
                     ]} />
                   </Section>
-                  <Section title="系统信息">
-                    <EntityMeta columns={1} items={[
-                      { label: "商机 ID", value: <CopyValue value={row.id} label="复制商机 ID" /> },
-                      { label: "创建时间", value: row.createdAt ? dateTime(String(row.createdAt)) : "—" },
-                      { label: "更新时间", value: dateTime(row.updatedAt) },
-                    ]} />
-                  </Section>
                   {row.sourceMarketingLead && (
                     <Section title="来源线索" action={<Button variant="outline" size="sm" onClick={() => { window.location.hash = `marketing-leads/${row.sourceMarketingLead?.id}`; }}>查看原始线索</Button>}>
-                      <EntityMeta items={[
+                      <EntityMeta columns={1} items={[
                         { label: "来源线索", value: `${row.sourceMarketingLead.fullName}${row.sourceMarketingLead.companyName ? ` · ${row.sourceMarketingLead.companyName}` : ""}` },
                         { label: "获客来源", value: [marketingSourceLabel(row.sourceMarketingLead.source), marketingSourceChannelLabel(row.sourceMarketingLead.sourceChannel), row.sourceMarketingLead.sourceDetail].filter(Boolean).join(" / ") },
                         { label: "原始询盘", value: row.sourceMarketingLead.inquiryContent?.slice(0, 280) || "—" },
@@ -827,6 +821,13 @@ export function EntitiesPage({
                       ]} />
                     </Section>
                   )}
+                  <Section title="系统信息">
+                    <EntityMeta columns={1} items={[
+                      { label: "商机 ID", value: <CopyValue value={row.id} label="复制商机 ID" /> },
+                      { label: "创建时间", value: row.createdAt ? dateTime(String(row.createdAt)) : "—" },
+                      { label: "更新时间", value: dateTime(row.updatedAt) },
+                    ]} />
+                  </Section>
                 </>
             </>
           )}
@@ -1008,8 +1009,17 @@ type Followup = {
   nextAction?: string;
   nextFollowupAt?: string;
   owner?: CrmUser;
+  createdBy?: CrmUser;
   important: boolean;
   attachments: Attachment[];
+};
+const followupTypeLabels: Record<string, string> = {
+  GENERAL: "一般",
+  MEETING: "会议",
+  CALL: "电话",
+  EMAIL: "邮件",
+  WECHAT: "微信",
+  OTHER: "其他",
 };
 function LeadFollowups({ id, me }: { id: string; me: SessionUser }) {
   const [page, setPage] = useState(1),
@@ -1031,59 +1041,44 @@ function LeadFollowups({ id, me }: { id: string; me: SessionUser }) {
       {result.loading ? (
         <LoadingSkeleton />
       ) : (
-        <div className="divide-y">
-          {!result.data?.data.length && (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              暂无跟进记录
-            </p>
-          )}
-          {result.data?.data.map((f) => (
-            <article key={f.id} className="space-y-4 py-5 first:pt-0">
-              <div className="flex flex-wrap justify-between gap-3 text-sm">
-                <span>
-                  {f.owner?.name || "团队互动"}
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    ·{" "}
-                    {(
-                      {
-                        GENERAL: "一般",
-                        MEETING: "会议",
-                        CALL: "电话",
-                        EMAIL: "邮件",
-                        WECHAT: "微信",
-                        OTHER: "其他",
-                      } as Record<string, string>
-                    )[f.type] || f.type}
-                  </span>
-                  {f.important && <span className="ml-2 text-xs">· 重要</span>}
-                </span>
-                <time className="text-xs text-muted-foreground">
-                  {dateTime(f.occurredAt)}
-                </time>
-              </div>
-              <p className="whitespace-pre-wrap break-words text-sm leading-6">
-                {f.content}
-              </p>
-              {(f.progress || f.nextAction || f.nextFollowupAt) && (
-                <EntityMeta
-                  items={[
-                    { label: "进展", value: f.progress },
-                    { label: "下一步行动", value: f.nextAction },
-                    { label: "下次跟进", value: dateTime(f.nextFollowupAt) },
-                  ]}
+        <CRMActivityTimeline
+          ariaLabel="商机跟进记录时间线"
+          emptyTitle="暂无跟进记录"
+          emptyDescription="记录电话、会议、邮件或其他商机互动后，会显示在这里。"
+          items={(result.data?.data || []).map((f) => ({
+            id: f.id,
+            actorName: f.createdBy?.name || f.owner?.name,
+            actorVerb: "记录了跟进",
+            time: <time dateTime={f.occurredAt}>{dateTime(f.occurredAt)}</time>,
+            title: `${followupTypeLabels[f.type] || f.type}跟进`,
+            meta: (
+              <>
+                {f.owner?.name ? <span>负责人：{f.owner.name}</span> : null}
+                {f.important ? <span>重点跟进</span> : null}
+              </>
+            ),
+            content: <p className="whitespace-pre-wrap break-words">{f.content}</p>,
+            detail: (
+              <>
+                {(f.progress || f.nextAction || f.nextFollowupAt) ? (
+                  <dl className="crm-pattern-timeline-fields">
+                    {f.progress ? <div><dt>进展</dt><dd>{f.progress}</dd></div> : null}
+                    {f.nextAction ? <div><dt>下一步行动</dt><dd>{f.nextAction}</dd></div> : null}
+                    {f.nextFollowupAt ? <div><dt>下次跟进</dt><dd>{dateTime(f.nextFollowupAt)}</dd></div> : null}
+                  </dl>
+                ) : null}
+                <AttachmentList
+                  files={f.attachments || []}
+                  endpoint={`/api/v1/crm/leads/${id}/followups/${f.id}`}
+                  fieldKey="followupAttachments"
+                  title="本次跟进附件"
+                  editable={can(me, "crm.lead_followup.create")}
+                  onChanged={result.reload}
                 />
-              )}
-              <AttachmentList
-                files={f.attachments || []}
-                endpoint={`/api/v1/crm/leads/${id}/followups/${f.id}`}
-                fieldKey="followupAttachments"
-                title="本次跟进附件"
-                editable={can(me, "crm.lead_followup.create")}
-                onChanged={result.reload}
-              />
-            </article>
-          ))}
-        </div>
+              </>
+            ),
+          }))}
+        />
       )}
       <div className="crm-followup-pagination-wrap mt-4 flex justify-end">
         <Pagination

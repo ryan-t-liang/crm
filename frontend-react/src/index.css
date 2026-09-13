@@ -2005,15 +2005,6 @@
   font-size: 12px;
 }
 
-.crm-table-shell .crm-sticky-actions {
-  background: #fff;
-  box-shadow: -8px 0 12px -14px rgba(20, 20, 20, 0.65);
-}
-
-.crm-table-shell thead .crm-sticky-actions {
-  background: var(--crm-surface-warm);
-}
-
 .crm-bulk-toolbar {
   min-height: 48px;
   border-color: var(--crm-line);

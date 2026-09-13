@@ -99,10 +99,9 @@ export function DataTable<T extends { id: string }>({
       key,
       dataIndex: column.accessorKey,
       title: column.header as ReactNode,
-      fixed: isActions ? "right" : undefined,
       width: isActions ? (column.width || 64) : column.width,
       ellipsis: column.ellipsis,
-      className: isActions ? "crm-sticky-actions" : undefined,
+      className: isActions ? "crm-actions-column" : undefined,
       render: (_value: unknown, record: T) => column.cell
         ? column.cell({ row: { original: record }, getValue: () => readPath(record, column.accessorKey) } as never)
         : (readPath(record, column.accessorKey) as ReactNode),

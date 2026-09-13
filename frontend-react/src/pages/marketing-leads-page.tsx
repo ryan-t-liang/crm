@@ -66,6 +66,12 @@ const statusLabels = marketingLeadStatusLabels as Record<MarketingLeadStatus, st
 const sourceLabels = marketingSourceLabels;
 const levelLabels = scoreLevelLabels;
 const sourceChannelLabels = marketingSourceChannelLabels;
+const activityScoreText = (item: NonNullable<MarketingLead["activities"]>[number]) => {
+  if (item.fitDeltaSnapshot) {
+    return `线索匹配度 ${item.fitDeltaSnapshot > 0 ? "+" : ""}${item.fitDeltaSnapshot}`;
+  }
+  return `互动活跃度 ${item.engagementDeltaSnapshot >= 0 ? "+" : ""}${item.engagementDeltaSnapshot}`;
+};
 const marketingLeadStatusViews = [
   { key: "all", label: "全部线索" },
   ...Object.entries(statusLabels).map(([key, label]) => ({ key, label })),
@@ -204,8 +210,8 @@ function ActivityDialog({ lead, onClose, onSaved }: { lead: MarketingLead; onClo
     try { await crmApi(`/api/v1/crm/marketing-leads/${lead.id}/activities`, { method: "POST", body: JSON.stringify({ ruleCode, source: "CRM", note: nullable(note) }) }); onSaved(); }
     catch (caught) { setError(friendlyError(caught)); } finally { setBusy(false); }
   }
-  return <FormDialog title="记录行为" description={`${lead.fullName} · 由评分规则自动计算分值，销售不能手工输入加减分。`} onClose={onClose} busy={busy} footer={<><Button variant="outline" onClick={onClose}>取消</Button><Button disabled={!ruleCode || busy} onClick={() => void save()}>{busy ? "记录中…" : "记录行为"}</Button></>}>
-    <div className="space-y-4"><Field label="行为" required>{() => <Select value={ruleCode} onValueChange={setRuleCode}><SelectTrigger><SelectValue placeholder="选择行为" /></SelectTrigger><SelectContent>{rules.map((rule) => <SelectItem key={rule.id} value={rule.code}>{rule.name}</SelectItem>)}</SelectContent></Select>}</Field><Field label="补充说明">{(id) => <Textarea id={id} value={note} onChange={(event) => setNote(event.target.value)} />}</Field>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}</div>
+  return <FormDialog title="记录跟进" description={`${lead.fullName} · 选择本次跟进动作，系统会根据评分规则自动计算影响。`} onClose={onClose} busy={busy} footer={<><Button variant="outline" onClick={onClose}>取消</Button><Button disabled={!ruleCode || busy} onClick={() => void save()}>{busy ? "记录中…" : "记录跟进"}</Button></>}>
+    <div className="space-y-4"><Field label="跟进动作" required>{() => <Select value={ruleCode} onValueChange={setRuleCode}><SelectTrigger><SelectValue placeholder="选择跟进动作" /></SelectTrigger><SelectContent>{rules.map((rule) => <SelectItem key={rule.id} value={rule.code}>{rule.name}</SelectItem>)}</SelectContent></Select>}</Field><Field label="跟进说明">{(id) => <Textarea id={id} value={note} onChange={(event) => setNote(event.target.value)} />}</Field>{error && <p role="alert" className="text-sm text-destructive">{error}</p>}</div>
   </FormDialog>;
 }
 
@@ -294,12 +300,10 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
   const lead = detail.data?.data;
   const journey = useMemo(() => lead ? [
     ...(lead.activities || []).map((item) => {
-      const scoreText = item.fitDeltaSnapshot
-        ? `线索匹配度 ${item.fitDeltaSnapshot > 0 ? "+" : ""}${item.fitDeltaSnapshot}`
-        : `互动活跃度 ${item.engagementDeltaSnapshot >= 0 ? "+" : ""}${item.engagementDeltaSnapshot}`;
-      return { id: item.id, at: item.occurredAt, title: item.scoringRule?.name || "其他行为", detail: `${marketingActivitySourceLabel(item.source)} · ${scoreText}${item.note ? ` · ${item.note}` : ""}` };
+      const scoreText = activityScoreText(item);
+      return { id: item.id, at: item.occurredAt, title: item.scoringRule?.name || "其他行为", actorName: item.actor?.name, detail: `${marketingActivitySourceLabel(item.source)} · ${scoreText}${item.note ? ` · ${item.note}` : ""}` };
     }),
-    ...(lead.statusHistory || []).map((item) => ({ id: item.id, at: item.changedAt, title: `${item.fromStatus ? statusLabels[item.fromStatus] : "创建"} → ${statusLabels[item.toStatus]}`, detail: item.reason || "状态变更" })),
+    ...(lead.statusHistory || []).map((item) => ({ id: item.id, at: item.changedAt, title: `${item.fromStatus ? statusLabels[item.fromStatus] : "创建"} → ${statusLabels[item.toStatus]}`, actorName: item.changedBy?.name, detail: item.reason || "状态变更" })),
   ].sort((a, b) => Date.parse(b.at) - Date.parse(a.at)) : [], [lead]);
   const refresh = () => { list.reload(); detail.reload(); window.dispatchEvent(new Event("crm:data-changed")); };
   const actionsFor = (row: MarketingLead) => [{ label: "查看详情", onClick: () => { window.location.hash = `marketing-leads/${row.id}`; } }, ...(can(me, "crm.marketing_lead.edit") && row.status !== "CONVERTED" ? [{ label: "编辑", onClick: () => { window.location.hash = `marketing-leads/${row.id}`; setFormOpen(true); } }] : []), ...(can(me, "crm.marketing_lead.delete") ? [{ label: "删除", destructive: true, onClick: () => setDeleting(row) }] : [])];
@@ -444,11 +448,11 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
           name={lead.fullName}
           subtitle={<>{lead.companyName || "未填写组织"} · {sourceLabels[lead.source] || "其他"}{lead.sourceChannel ? ` / ${marketingSourceChannelLabel(lead.sourceChannel)}` : ""}</>}
           tags={<StatusBadge>{statusLabels[lead.status]}</StatusBadge>}
-          actions={<>{can(me, "crm.marketing.activity.create") && lead.status !== "CONVERTED" && <Button variant="outline" onClick={() => setActivityOpen(true)}><MessageSquarePlus />记录行为</Button>}{can(me, "crm.marketing_lead.qualify") && legalActions.map((action) => <Button key={action} variant="outline" onClick={() => setTransition(action)}>{transitionLabels[action]}</Button>)}{can(me, "crm.marketing_lead.convert") && ["SQL", "QUALIFIED"].includes(lead.status) && <Button onClick={() => setConversionOpen(true)}><GitMerge />转为商机</Button>}{can(me, "crm.marketing_lead.edit") && lead.status !== "CONVERTED" && <Button variant="outline" onClick={() => setFormOpen(true)}><Pencil />编辑</Button>}</>}
+          actions={<>{can(me, "crm.marketing.activity.create") && lead.status !== "CONVERTED" && <Button variant="outline" onClick={() => setActivityOpen(true)}><MessageSquarePlus />记录跟进</Button>}{can(me, "crm.marketing_lead.qualify") && legalActions.map((action) => <Button key={action} variant="outline" onClick={() => setTransition(action)}>{transitionLabels[action]}</Button>)}{can(me, "crm.marketing_lead.convert") && ["SQL", "QUALIFIED"].includes(lead.status) && <Button onClick={() => setConversionOpen(true)}><GitMerge />转为商机</Button>}{can(me, "crm.marketing_lead.edit") && lead.status !== "CONVERTED" && <Button variant="outline" onClick={() => setFormOpen(true)}><Pencil />编辑</Button>}</>}
         />}
         inlineMeta={
           <RecordHighlights items={[
-            { label: "状态", value: statusLabels[lead.status] },
+            { label: "最近行为", value: dateTime(lead.lastActivityAt) },
             { label: "线索负责人", value: lead.owner?.name || "待分配" },
             { label: "线索匹配度", value: `${lead.fitScore} · ${levelLabels[lead.fitLevel]}` },
             { label: "互动活跃度", value: `${lead.engagementScoreCached} · ${levelLabels[lead.engagementLevel]}` },
@@ -457,7 +461,7 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
         sidebar={
           <>
             <Section title="身份与组织">
-              <EntityMeta items={[
+              <EntityMeta columns={1} items={[
                 { label: "姓名", value: lead.fullName },
                 { label: "职位", value: lead.title },
                 { label: "Email", value: lead.email },
@@ -471,7 +475,7 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
               ]} />
             </Section>
             <Section title="获客与生命周期">
-              <EntityMeta items={[
+              <EntityMeta columns={1} items={[
                 { label: "来源", value: sourceLabels[lead.source] || "其他" },
                 { label: "来源渠道", value: marketingSourceChannelLabel(lead.sourceChannel) },
                 { label: "来源详情", value: lead.sourceDetail },
@@ -486,10 +490,10 @@ export function MarketingLeadsPage({ id, me, users }: { id?: string; me: Session
         }
       >
         {lead.status === "CONVERTED" && <Alert><CircleGauge /><AlertTitle>已转商机</AlertTitle><AlertDescription><div className="flex flex-wrap gap-4">{lead.convertedOrganization && <a className="underline" href={`#organizations/${lead.convertedOrganization.id}`}>组织：{lead.convertedOrganization.shortName || lead.convertedOrganization.name}</a>}{lead.convertedContact && <a className="underline" href={`#contacts/${lead.convertedContact.id}`}>联系人：{lead.convertedContact.contactName}</a>}{lead.convertedOpportunity && <a className="underline" href={`#leads/${lead.convertedOpportunity.id}`}>商机：{lead.convertedOpportunity.requirementSummary}</a>}<span>{dateTime(lead.convertedAt)} · {lead.convertedBy?.name || "—"}</span></div></AlertDescription></Alert>}
-        <DetailTabs value={tab} onChange={setTab} items={[["overview", "需求信息"], ["journey", "客户旅程"], ["scoring", "评分历史"], ["audit", "操作记录"]]}>
+        <DetailTabs value={tab} onChange={setTab} items={[["overview", "需求信息"], ["journey", "线索旅程"], ["followups", "跟进记录"], ["audit", "操作记录"]]}>
           {tab === "overview" ? <div className="space-y-3"><Section title="原始询盘与补充说明"><EntityMeta columns={1} items={[{ label: "询盘类型", value: lead.inquiryType }, { label: "原始询盘", value: <p className="whitespace-pre-wrap">{lead.inquiryContent || "—"}</p> }, { label: "产品兴趣", value: lead.productInterest }, { label: "需求标签", value: lead.requirementTags?.join("、") }, { label: "预算范围", value: lead.budgetRange }, { label: "补充说明", value: <p className="whitespace-pre-wrap">{lead.note || "—"}</p> }, ...(lead.disqualifiedReason ? [{ label: "无效原因", value: lead.disqualifiedReason }] : [])]} /></Section><Section title="系统信息"><EntityMeta items={[{ label: "创建人", value: lead.createdBy?.name }, { label: "创建时间", value: dateTime(lead.createdAt) }, { label: "更新时间", value: dateTime(lead.updatedAt) }, { label: "线索 ID", value: <CopyValue value={lead.id} label="复制 ID" /> }]} /></Section></div>
-          : tab === "journey" ? <Section title="客户旅程"><CRMActivityTimeline items={journey.map((item) => ({ id: item.id, time: dateTime(item.at), title: item.title, detail: item.detail }))} /></Section>
-          : tab === "scoring" ? <Section title="评分历史"><RecordHighlights items={[{ label: "线索匹配度", value: `${lead.fitScore} · ${levelLabels[lead.fitLevel]}` }, { label: "互动活跃度", value: `${lead.engagementScoreCached} · ${levelLabels[lead.engagementLevel]}` }, { label: "线索热度", value: levelLabels[lead.leadLevel] }, { label: "计算时间", value: dateTime(lead.engagementScoreCalculatedAt) }]} /><div className="mt-5 space-y-3">{lead.scoreHistory?.map((item) => <div key={item.id} className="flex items-start justify-between gap-4 border-b pb-3"><div><p className="text-sm font-medium">{item.dimension === "FIT" ? "线索匹配度" : "互动活跃度"} · {item.reason || "评分变更"}</p><p className="text-xs text-muted-foreground">{item.changedBy?.name || "系统"} · {dateTime(item.createdAt)}</p></div><span className="tabular-nums">{item.previousScore} {item.scoreDelta >= 0 ? "+" : ""}{item.scoreDelta} = {item.newScore}</span></div>)}</div></Section>
+          : tab === "journey" ? <Section title="线索旅程"><CRMActivityTimeline ariaLabel="线索旅程时间线" emptyTitle="暂无线索旅程" emptyDescription="跟进、评分影响与阶段变化会汇总在线索旅程中。" items={journey.map((item) => ({ id: item.id, time: <time dateTime={item.at}>{dateTime(item.at)}</time>, title: item.title, actorName: item.actorName, detail: item.detail }))} /></Section>
+          : tab === "followups" ? <Section title="跟进记录"><CRMActivityTimeline ariaLabel="线索跟进记录时间线" emptyTitle="暂无跟进记录" emptyDescription="记录电话、会议、邮件或其他线索互动后，会显示在这里。" items={(lead.activities || []).map((item) => ({ id: item.id, time: <time dateTime={item.occurredAt}>{dateTime(item.occurredAt)}</time>, title: item.scoringRule?.name || "线索互动", actorName: item.actor?.name, actorVerb: "记录了跟进", meta: <><span>{marketingActivitySourceLabel(item.source)}</span><span>{activityScoreText(item)}</span></>, content: item.note ? <p>{item.note}</p> : undefined }))} /></Section>
           : <EntityAudit id={lead.id} />}
         </DetailTabs>
       </CRMRecordLayout>
