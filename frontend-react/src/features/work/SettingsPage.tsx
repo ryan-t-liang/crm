@@ -1,0 +1,9 @@
+import { useState } from "react";
+import { Banner, Button, Empty, Modal, Skeleton } from "@douyinfe/semi-ui";
+import { PageHeader, SideSection } from "@/components/CrmUi";
+import { useCrm } from "@/stores/crm-store";
+
+export function SettingsPage() {
+  const { currentUser, state, reset } = useCrm(); const [lab, setLab] = useState<"normal" | "loading" | "empty" | "error">("normal");
+  return <div className="page"><PageHeader title="Prototype Settings" description="管理 Demo 状态、LocalStorage 与交互状态预览。" /><div className="settings-grid"><SideSection title="Demo Data"><p>当前数据保存在浏览器 LocalStorage。重置会恢复统一 Mock Dataset。</p><Button type="danger" onClick={() => Modal.confirm({ title: "Reset Demo Data?", content: "当前浏览器中的所有原型操作将被清除。", onOk: reset })}>Reset Demo Data</Button></SideSection><SideSection title="Current Demo User"><p><strong>{currentUser.name}</strong></p><p>{currentUser.title}</p><p>{state.distributors.find((item) => item.id === currentUser.distributorId)?.name}</p></SideSection><SideSection title="Interaction State Lab"><div className="button-row"><Button onClick={() => setLab("loading")}>Loading</Button><Button onClick={() => setLab("empty")}>Empty</Button><Button onClick={() => setLab("error")}>Error Mock</Button><Button onClick={() => setLab("normal")}>Normal</Button></div><div className="state-preview">{lab === "loading" ? <Skeleton placeholder={<><Skeleton.Title /><Skeleton.Paragraph rows={3} /></>} loading active /> : lab === "empty" ? <Empty title="暂无数据" description="通过明确的下一步操作避免空白页面。" /> : lab === "error" ? <Banner type="danger" title="无法加载 Demo 数据" description="这是可恢复的前端错误状态，不会发起失败请求。" closeIcon={null} /> : <Banner type="success" title="Prototype ready" description="Normal、selected、hover、editing、disabled、confirmation 与 success 状态由各业务模块覆盖。" closeIcon={null} />}</div></SideSection></div></div>;
+}

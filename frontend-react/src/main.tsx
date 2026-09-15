@@ -1,15 +1,9 @@
-import '@douyinfe/semi-ui/react19-adapter';
-import { StrictMode } from "react"
-import { createRoot } from "react-dom/client"
+import "@douyinfe/semi-ui/react19-adapter";
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "@semi-bot/semi-theme-kivicrm/semi.min.css";
+import { App } from "@/app/App";
+import { CrmProvider } from "@/stores/crm-store";
+import "@/index.css";
 
-import "@semi-bot/semi-theme-kivicrm/semi.min.css"
-import { App } from "@/app"
-import "@/index.css"
-import "@/semi-native.css"
-import "@/components/crm/activity-stream.css"
-
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+createRoot(document.getElementById("root")!).render(<StrictMode><CrmProvider><App /></CrmProvider></StrictMode>);

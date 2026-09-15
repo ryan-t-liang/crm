@@ -1,0 +1,44 @@
+:root {
+  font-family: Inter, Geist, "PingFang SC", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #171917;
+  background: #f4f5f2;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --crm-brand: #087a4b;
+  --crm-brand-hover: #06673f;
+  --crm-brand-soft: #e7f6ed;
+  --crm-canvas: #f4f5f2;
+  --crm-surface: #ffffff;
+  --crm-subtle: #f8f9f7;
+  --crm-hover: #f0f2ee;
+  --crm-selected: #e7f1eb;
+  --crm-text: #171917;
+  --crm-text-2: #5e635e;
+  --crm-text-3: #8a908a;
+  --crm-border: #dfe2dc;
+  --crm-border-strong: #cbd0c9;
+  --crm-danger: #a94343;
+  --crm-warning: #97661c;
+  --crm-info: #315f8c;
+  --crm-radius: 6px;
+  --crm-shadow: 0 10px 28px rgba(20, 28, 22, .06);
+  --semi-color-primary: var(--crm-brand);
+  --semi-color-primary-hover: var(--crm-brand-hover);
+  --semi-color-primary-light-default: var(--crm-brand-soft);
+  --semi-color-border: var(--crm-border);
+  --semi-color-text-0: var(--crm-text);
+  --semi-color-text-1: var(--crm-text-2);
+  --semi-color-text-2: var(--crm-text-3);
+  --semi-border-radius-small: 4px;
+  --semi-border-radius-medium: 6px;
+  --semi-border-radius-large: 8px;
+}
+
+* { box-sizing: border-box; }
+html, body, #root { min-width: 320px; min-height: 100%; margin: 0; }
+body { min-height: 100vh; overflow-x: hidden; background: var(--crm-canvas); color: var(--crm-text); }
+button, input, textarea, select { font: inherit; }
+a { color: inherit; text-decoration: none; }
+a:hover { color: var(--crm-brand); }
+:focus-visible { outline: 2px solid rgba(8,122,75,.5); outline-offset: 2px; }

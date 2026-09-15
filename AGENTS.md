@@ -1,21 +1,11 @@
-# Kivisense CRM repository instructions
+# Kivisense CRM prototype instructions
 
-## Required reading
+This repository is a frontend-only, high-fidelity CRM product prototype. It must not add a backend, database, server authentication, mail server, queue, migration, or deployment architecture.
 
-- Before changing CRM domain behavior, data models, migrations, RBAC, analytics, import/export, API contracts, or frontend information architecture, read and follow [`docs/kivisense-crm-maintainer.md`](docs/kivisense-crm-maintainer.md).
-- Before any CRM frontend, UI, or UX change, read and follow [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md).
-- Before a large-scale UI rebuild or frontend architecture migration, also read and follow [`docs/CODEX_UI_REBUILD_PROMPT.md`](docs/CODEX_UI_REBUILD_PROMPT.md).
+Before frontend UI or UX changes, read `docs/DESIGN_SYSTEM.md` and `docs/PROTOTYPE_ARCHITECTURE.md`.
 
-## Sources of truth and priority
+Semi Design, Semi Icons, the Kivisense Semi theme, React, and Recharts are the approved foundation. Do not introduce a competing component library. Product data belongs in `frontend-react/src/mock/`; user changes belong in the frontend store and LocalStorage.
 
-1. CRM business and domain rules: [`docs/kivisense-crm-maintainer.md`](docs/kivisense-crm-maintainer.md).
-2. The approved frontend component foundation and current migration scope: [`docs/CODEX_UI_REBUILD_PROMPT.md`](docs/CODEX_UI_REBUILD_PROMPT.md).
-3. Visual design, tokens, layout, interaction, and UI/UX rules: [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md).
+The canonical sales flow is `Lead → Qualified → Convert to Deal → Won/Lost`. Do not create an Opportunity module and do not add price, value, revenue, discount, quotation amount, or transaction amount fields.
 
-Semi Design is the only base component library for formal CRM pages. Semi Icons is the only icon family, and `frontend-react/src/components/crm/` is the shared CRM component layer. Formal CRM pages must not use `frontend-react/src/components/v1/ui`, Lucide, TanStack Table, shadcn, or Radix UI.
-
-For current visible product language, `Organization` is labeled `组织`. This supersedes the older `Company / 公司` UI label only; Organization remains the same unified company, customer, prospect, vendor, and partner master, and no domain relationship or API contract changes.
-
-The rebuild prompt may direct implementation work, but it must not weaken the maintainer guide's domain boundaries, data-preservation rules, security constraints, lifecycle rules, canonical information architecture, or verification gates. The maintainer guide's historical statement that V1-native components are the UI source of truth is superseded only for frontend component and visual implementation by the current Semi foundation. The design system and rebuild prompt supersede older V1 visual and component guidance, but they do not supersede business rules.
-
-These instructions are mandatory for every file in this repository. More specific `AGENTS.md` files may add constraints but must not weaken these sources of truth.
+Before creating a custom UI component, check whether Semi Design provides an appropriate component. Prefer Semi tokens and theming, keep interaction patterns consistent, and use custom CSS only for product-specific composition.

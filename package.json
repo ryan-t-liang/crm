@@ -1,25 +1,15 @@
 {
   "name": "kivisense-crm",
   "version": "2.0.0",
-  "releaseName": "Kivisense_CRM_v2",
   "private": true,
   "type": "module",
-  "workspaces": ["backend", "frontend-react"],
-  "overrides": { "exceljs": { "uuid": "11.1.1" } },
+  "workspaces": ["frontend-react"],
   "engines": { "node": ">=22" },
   "scripts": {
-    "dev": "npm --workspace frontend-react run build && npm --workspace backend run dev",
-    "dev:ui": "npm --workspace frontend-react run dev",
-    "build": "npm --workspace frontend-react run build && npm --workspace backend run build",
-    "start": "npm --workspace backend run start",
-    "test": "npm --workspace frontend-react run test && npm --workspace backend run test",
-    "test:integration": "npm --workspace backend run test:integration",
-    "test:field-dictionary": "node scripts/test-field-dictionary.mjs",
-    "test:frontend": "node --check frontend/js/app.js && node --check frontend/js/api.js && node --check frontend/js/contacts.js && node --check frontend/js/leads.js && node --check frontend/js/followups.js && node --check frontend/js/crm-jobs.js && node --check frontend/js/customer-operations.js && node --check frontend/js/field-definitions.js && node --check scripts/frontend-browser-fixture.mjs && node scripts/test-frontend-interactions.mjs && npm --workspace frontend-react run test",
-    "lint": "npm --workspace frontend-react run lint && npm --workspace backend run lint",
-    "prisma:generate": "npm --workspace backend run prisma:generate",
-    "prisma:validate": "node scripts/with-env.mjs npm --workspace backend run prisma:validate",
-    "prisma:migrate:deploy": "node scripts/with-env.mjs npm --workspace backend run prisma:migrate:deploy",
-    "prisma:seed": "node scripts/with-env.mjs npm --workspace backend run prisma:seed"
+    "dev": "npm --workspace frontend-react run dev",
+    "build": "npm --workspace frontend-react run build",
+    "test": "npm --workspace frontend-react run test",
+    "lint": "npm --workspace frontend-react run lint",
+    "qa:browser": "node qa/prototype-browser-qa.mjs"
   }
 }
