@@ -6,6 +6,7 @@
 | --- | --- | --- | --- |
 | PROTO-001 | P2 | Browser Object URLs are session-scoped. Attachment metadata persists in LocalStorage, but a preview URL may expire after a full browser restart. | Upload, download, delete, and same-session preview work; this is an intentional frontend-only boundary. |
 | PROTO-002 | P3 | Email formatting uses a lightweight rich-text toolbar that inserts bold, italic, list, and link markup rather than a full WYSIWYG document model. | The compose/thread flow is complete, but advanced formatting and rendered markup are outside the current prototype. |
+| PROTO-003 | P1 | `docs/reference/sowind-schema.sql` is absent from the current repository, all Git refs, and the supplied attachment directory. | Complete column/type/nullability/index/constraint compatibility for `customer`, `user`, `user_profile`, and `user_purchase_intent` is UNKNOWN. The implementation is limited to fields and semantics explicitly stated in the requirement; `docs/SOWIND_MEMBER_FIELD_MAPPING.md` records the provisional mapping and required follow-up. |
 
 ## Resolved during this pass
 
@@ -16,3 +17,4 @@
 | PROTO-R03 | P2 | Dashboard chart captures could occur during Recharts animation at the smallest viewport. | Evidence capture waits for chart animation; 1024, 1440, 1600, and 1920 screenshots show final chart state. |
 | PROTO-R04 | P2 | Contact/Organization attachments, note editing, Product editing, call contact/time, and task-completion Activity were incomplete. | Added the missing interactions and reran the full browser suite to PASS. |
 | PROTO-R05 | P2 | Opening the email composer could trigger a hidden `ResizeObserver` loop warning from its autosizing text area. | Replaced autosizing with a stable eight-row editor, added capture for handled window errors, and reran the full suite with no console, window, request, or server errors. |
+| PROTO-R06 | P2 | The first member-reset confirmation used an imperative modal and could race React 19 root teardown, emitting a console error. | Replaced it with a controlled Modal in the Settings tree; member reset, Sales persistence, and the full browser suite now pass with 0 console errors. |

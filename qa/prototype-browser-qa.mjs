@@ -47,11 +47,60 @@ try {
   await page.reload({ waitUntil: "networkidle" });
   await page.getByRole("heading", { name: "数据概览", exact: true }).waitFor();
   assert.equal(await page.getByText("All Distributors", { exact: true }).count(), 1);
+  const userMenuLayout = await page.evaluate(() => {
+    const topbar = document.querySelector(".topbar")?.getBoundingClientRect();
+    const menu = document.querySelector(".user-menu")?.getBoundingClientRect();
+    const avatar = document.querySelector(".user-menu .semi-avatar")?.getBoundingClientRect();
+    const copy = document.querySelector(".user-menu-copy")?.getBoundingClientRect();
+    return topbar && menu && avatar && copy ? { topbar: { top: topbar.top, bottom: topbar.bottom }, menu: { top: menu.top, bottom: menu.bottom }, avatarCenter: avatar.top + avatar.height / 2, copyCenter: copy.top + copy.height / 2 } : null;
+  });
+  assert.ok(userMenuLayout);
+  assert.ok(userMenuLayout.menu.top >= userMenuLayout.topbar.top && userMenuLayout.menu.bottom <= userMenuLayout.topbar.bottom, "Demo User menu must stay inside the topbar");
+  assert.ok(Math.abs(userMenuLayout.avatarCenter - userMenuLayout.copyCenter) <= 2, "Demo User avatar and copy must align on one row");
+  pass("Topbar Demo User menu stays aligned");
   await shot("dashboard-hq-1440x900"); pass("HQ dashboard and distributor filter");
 
-  const routeChecks = [["leads", "Leads"], ["deals", "Deals"], ["contacts", "Contacts"], ["organizations", "Organizations"], ["products", "Products"], ["tasks", "Tasks"], ["distributors", "Distributors"], ["users", "Users"], ["settings", "Prototype Settings"]];
+  const routeChecks = [["leads", "Leads"], ["deals", "Deals"], ["contacts", "Contacts"], ["organizations", "Organizations"], ["member-customers", "集团客户"], ["brand-members", "品牌会员"], ["purchase-intents", "品牌购买意向"], ["products", "Products"], ["tasks", "Tasks"], ["distributors", "Distributors"], ["users", "Users"], ["settings", "Prototype Settings"]];
   for (const [hash, heading] of routeChecks) { await route(hash, heading); await shot(`${hash}-1440x900`); }
   pass("All primary routes render at 1440x900", `${routeChecks.length + 1} routes`);
+
+  await page.waitForFunction(() => Boolean(localStorage.getItem("kivisense-crm-prototype-v1") && localStorage.getItem("kivisense-member-operations-v1")));
+  const salesBeforeMemberOperations = await page.evaluate(() => localStorage.getItem("kivisense-crm-prototype-v1"));
+  await route("member-customers", "集团客户");
+  await page.getByRole("link", { name: "customer-1001", exact: true }).click();
+  await page.getByRole("heading", { name: "customer-1001", exact: true }).waitFor();
+  await page.getByRole("tab", { name: "品牌用户", exact: true }).click();
+  assert.equal(await page.locator(".member-profile-card").count(), 2);
+  await page.locator(".member-profile-card").filter({ hasText: "user-gp-1001-a" }).click();
+  await page.getByRole("heading", { name: "gp · user-gp-1001-a", exact: true }).waitFor();
+  await page.getByRole("tab", { name: "品牌用户资料", exact: true }).click();
+  const intentSnapshotBeforeProfileEdit = await page.evaluate(() => JSON.parse(localStorage.getItem("kivisense-member-operations-v1") || "{}").purchaseIntents?.find((item) => item.id === "intent-gp-linked"));
+  await selectSemi(page.locator(".data-panel .page-actions .semi-select"), "0 · 否");
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem("kivisense-member-operations-v1") || "{}").userProfiles?.find((item) => item.id === "profile-gp-1001-a")?.has_watch === 0);
+  assert.deepEqual(await page.evaluate(() => JSON.parse(localStorage.getItem("kivisense-member-operations-v1") || "{}").purchaseIntents?.find((item) => item.id === "intent-gp-linked")), intentSnapshotBeforeProfileEdit);
+  await page.getByRole("tab", { name: "购买意向", exact: true }).click();
+  await page.getByRole("link", { name: /王婧怡（Demo）/ }).click();
+  await page.getByRole("heading", { name: "王婧怡（Demo）", exact: true }).waitFor();
+  await selectSemi(page.locator(".detail-actions .semi-select"), "2 · 否");
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem("kivisense-member-operations-v1") || "{}").purchaseIntents?.find((item) => item.id === "intent-gp-linked")?.has_watch === 2);
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("kivisense-member-operations-v1") || "{}").userProfiles?.find((item) => item.id === "profile-gp-1001-a")?.has_watch), 0);
+  assert.equal(await page.evaluate(() => localStorage.getItem("kivisense-crm-prototype-v1")), salesBeforeMemberOperations);
+  pass("customer → user + user_profile → user_purchase_intent path and isolated persistence"); await shot("member-purchase-intent-detail");
+
+  await route("settings", "Prototype Settings");
+  await page.getByRole("button", { name: "Reset Member Demo Data", exact: true }).click();
+  await page.getByRole("button", { name: "confirm", exact: true }).click();
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem("kivisense-member-operations-v1") || "{}").purchaseIntents?.find((item) => item.id === "intent-gp-linked")?.has_watch === 1);
+  assert.equal(await page.evaluate(() => localStorage.getItem("kivisense-crm-prototype-v1")), salesBeforeMemberOperations);
+  pass("Member reset preserves Sales LocalStorage");
+
+  await route("purchase-intents", "品牌购买意向");
+  assert.ok(await page.getByText("未关联（NULL）", { exact: true }).count() > 0);
+  await selectSemi(page.locator(".page-actions .semi-select"), "Ulysse Nardin");
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem("kivisense-member-operations-v1") || "{}").brandScope === "un");
+  assert.equal(await page.locator(".data-surface .semi-tag").filter({ hasText: /^gp$/ }).count(), 0);
+  await selectSemi(page.locator(".page-actions .semi-select"), "全部品牌");
+  pass("Brand scope and unlinked Purchase Intent behavior"); await shot("purchase-intents-brand-scope");
 
   await route("leads", "Leads");
   await page.getByRole("button", { name: /Create Lead/ }).click();
@@ -126,6 +175,10 @@ try {
   await selectSemi(userSelect, "Jason · Distributor Manager");
   await page.waitForFunction(() => JSON.parse(localStorage.getItem("kivisense-crm-prototype-v1") || "{}").currentUserId === "user-jason");
   await route("products/product-kivicube", "Kivicube"); assert.equal(await page.getByRole("button", { name: "Edit Product", exact: true }).count(), 0); assert.equal(await page.getByLabel("New Add-on", { exact: true }).count(), 0); pass("Distributor Product catalog is read-only");
+  await page.goto(`${base}/#member-customers`, { waitUntil: "networkidle" });
+  await page.getByText("当前 Demo User 无权访问 HQ 工作区", { exact: true }).waitFor();
+  assert.equal(await page.getByRole("button", { name: /集团客户/ }).count(), 0);
+  pass("Distributor role cannot enter member operations workspace");
   await route("dashboard", "数据概览");
   assert.equal(await page.getByText("All Distributors", { exact: true }).count(), 0);
   assert.equal(await page.getByRole("button", { name: /分销商/ }).count(), 0);
@@ -136,7 +189,8 @@ try {
   await selectSemi(page.locator(".demo-user-select"), "Ryan · Kivisense Super Admin");
   await page.waitForFunction(() => JSON.parse(localStorage.getItem("kivisense-crm-prototype-v1") || "{}").currentUserId === "user-ryan");
   for (const [width, height] of [[1600, 900], [1920, 1080], [1024, 768]]) { await page.setViewportSize({ width, height }); for (const [hash, heading] of [["dashboard", "数据概览"], ["leads", "Leads"], ["deals", "Deals"]]) { await route(hash, heading); await shot(`${hash}-${width}x${height}`); } }
-  pass("Responsive desktop layouts", "1600x900, 1920x1080, 1024x768");
+  for (const [hash, heading] of [["member-customers", "集团客户"], ["brand-members", "品牌会员"], ["purchase-intents", "品牌购买意向"]]) { await route(hash, heading); await shot(`${hash}-1024x768`); }
+  pass("Responsive desktop layouts", "Sales at 1600x900, 1920x1080, 1024x768; member workspace at 1440x900 and 1024x768");
   assert.deepEqual(consoleErrors, []); assert.deepEqual(failedResponses, []); pass("Console errors and failed requests", "0 / 0");
 } catch (error) {
   results.push({ name: "Browser QA", status: "FAIL", detail: error instanceof Error ? error.stack : String(error) });

@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import "@semi-bot/semi-theme-kivicrm/semi.min.css";
 import { App } from "@/app/App";
 import { CrmProvider } from "@/stores/crm-store";
+import { MemberOperationsProvider } from "@/stores/member-operations-store";
 import "@/index.css";
 
-createRoot(document.getElementById("root")!).render(<StrictMode><CrmProvider><App /></CrmProvider></StrictMode>);
+createRoot(document.getElementById("root")!).render(<StrictMode><CrmProvider><MemberOperationsProvider><App /></MemberOperationsProvider></CrmProvider></StrictMode>);

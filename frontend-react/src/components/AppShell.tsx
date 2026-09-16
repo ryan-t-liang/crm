@@ -5,12 +5,14 @@ import {
   IconLayers, IconMenu, IconSetting, IconUserGroup, IconUserList,
 } from "@douyinfe/semi-icons";
 import { useCrm } from "@/stores/crm-store";
+import { useMemberOperations } from "@/stores/member-operations-store";
 import { initials, navigate } from "@/utils/format";
 
 type NavItem = { label: string; route: string; icon: ReactNode; count?: number; hqOnly?: boolean };
 
 export function AppShell({ route, children }: { route: string; children: ReactNode }) {
   const { state, currentUser, isHq, setCurrentUser, scoped, reset } = useCrm();
+  const { state: memberState, resetMemberData } = useMemberOperations();
   const [collapsed, setCollapsed] = useState(false);
   const groups: Array<{ label: string; items: NavItem[] }> = [
     { label: "OVERVIEW", items: [{ label: "数据概览", route: "dashboard", icon: <IconHome /> }] },
@@ -19,6 +21,11 @@ export function AppShell({ route, children }: { route: string; children: ReactNo
       { label: "Deals", route: "deals", icon: <IconBriefcase />, count: scoped(state.deals).length },
       { label: "联系人", route: "contacts", icon: <IconUserGroup />, count: scoped(state.contacts).length },
       { label: "组织", route: "organizations", icon: <IconApartment />, count: scoped(state.organizations).length },
+    ] },
+    { label: "MEMBER & BRAND", items: [
+      { label: "集团客户", route: "member-customers", icon: <IconUserGroup />, count: memberState.customers.length, hqOnly: true },
+      { label: "品牌会员", route: "brand-members", icon: <IconUserList />, count: memberState.brandUsers.length, hqOnly: true },
+      { label: "购买意向", route: "purchase-intents", icon: <IconLayers />, count: memberState.purchaseIntents.length, hqOnly: true },
     ] },
     { label: "CATALOG", items: [{ label: "产品", route: "products", icon: <IconGridView />, count: state.products.filter((item) => item.status === "ACTIVE").length }] },
     { label: "WORK", items: [{ label: "任务", route: "tasks", icon: <IconCheckList />, count: scoped(state.tasks).filter((item) => item.status === "OPEN").length }] },
@@ -29,6 +36,7 @@ export function AppShell({ route, children }: { route: string; children: ReactNo
   ];
   const roleLabel = currentUser.role === "HQ_ADMIN" ? "Kivisense Super Admin" : currentUser.role === "DISTRIBUTOR_MANAGER" ? "Distributor Manager" : "Distributor Sales";
   const activeTop = route.split("/")[0];
+  const isMemberWorkspace = ["member-customers", "brand-members", "purchase-intents"].includes(activeTop);
 
   return (
     <div className={`app-shell ${collapsed ? "is-collapsed" : ""}`}>
@@ -61,7 +69,7 @@ export function AppShell({ route, children }: { route: string; children: ReactNo
             <span className="breadcrumb">Kivisense CRM <b>/</b> {groups.flatMap((group) => group.items).find((item) => item.route === activeTop)?.label || "详情"}</span>
           </div>
           <div className="topbar-actions">
-            {isHq && <span className="scope-pill">HQ · 全局视图</span>}
+            {isHq && <span className="scope-pill">{isMemberWorkspace ? `会员运营 · ${memberState.brandScope === "ALL" ? "全品牌" : memberState.brandScope}` : "HQ · 全局视图"}</span>}
             <Select
               className="demo-user-select"
               value={currentUser.id}
@@ -71,9 +79,9 @@ export function AppShell({ route, children }: { route: string; children: ReactNo
             />
             <Dropdown
               trigger="click"
-              render={<Dropdown.Menu><Dropdown.Item onClick={() => navigate("settings")}>Prototype 设置</Dropdown.Item><Dropdown.Item onClick={reset}>Reset Demo Data</Dropdown.Item></Dropdown.Menu>}
+              render={<Dropdown.Menu><Dropdown.Item onClick={() => navigate("settings")}>Prototype 设置</Dropdown.Item><Dropdown.Item onClick={reset}>Reset Sales Demo Data</Dropdown.Item>{isHq && <Dropdown.Item onClick={resetMemberData}>Reset Member Demo Data</Dropdown.Item>}</Dropdown.Menu>}
             >
-              <Button theme="borderless" className="user-menu"><Avatar size="small" color={currentUser.avatarColor as "green"}>{initials(currentUser.name)}</Avatar><span><Typography.Text strong>{currentUser.name}</Typography.Text><small>{roleLabel}</small></span><IconChevronDown /></Button>
+              <Button theme="borderless" className="user-menu"><Avatar size="small" color={currentUser.avatarColor as "green"}>{initials(currentUser.name)}</Avatar><span className="user-menu-copy"><Typography.Text strong>{currentUser.name}</Typography.Text><small>{roleLabel}</small></span><IconChevronDown /></Button>
             </Dropdown>
           </div>
         </header>

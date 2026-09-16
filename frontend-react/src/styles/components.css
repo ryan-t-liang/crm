@@ -123,6 +123,16 @@
 .settings-grid > :last-child { grid-column: 1 / -1; }
 .state-preview { margin-top: 12px; padding: 12px; border: 1px dashed var(--crm-border-strong); border-radius: 5px; }
 
+.member-workspace .page-actions > .semi-select, .member-workspace .table-toolbar > .semi-select { min-width: 150px; }
+.member-profile-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; }
+.member-profile-card { min-width: 0; display: grid; gap: 5px; padding: 12px; border: 1px solid var(--crm-border); border-radius: 5px; background: var(--crm-surface); }
+.member-profile-card:hover { border-color: var(--crm-border-strong); background: var(--crm-hover); }
+.member-profile-card > header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.member-profile-card > strong { margin-top: 3px; font-size: 12.5px; }
+.member-profile-card > span { color: var(--crm-text-2); font-size: 11px; font-variant-numeric: tabular-nums; }
+.member-profile-card > small { overflow: hidden; color: var(--crm-text-3); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.member-workspace .metric-strip > div:nth-child(4) { border-right: 0; }
+
 @media (max-width: 1220px) {
   .dashboard-kpis { grid-template-columns: repeat(4,minmax(0,1fr)); }
   .dashboard-kpis > div:nth-child(4) { border-right: 0; }
@@ -137,6 +147,7 @@
   .dashboard-grid { grid-template-columns: 1fr; }
   .chart-panel.is-wide { grid-column: span 1; }
   .capability-grid { grid-template-columns: 1fr; }
+  .member-profile-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 680px) {
   .page-header { flex-direction: column; }

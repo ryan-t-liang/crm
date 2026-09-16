@@ -29,8 +29,9 @@
 .scope-pill { padding: 4px 8px; border: 1px solid #cfe4d8; border-radius: 999px; color: var(--crm-brand); background: var(--crm-brand-soft); font-size: 10px; font-weight: 650; }
 .demo-user-select { width: 210px; }
 .user-menu { height: 42px !important; padding-inline: 5px 7px !important; }
-.user-menu > span { min-width: 0; display: grid; margin-inline: 3px; text-align: left; }
-.user-menu > span small { overflow: hidden; max-width: 130px; color: var(--crm-text-3); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.user-menu .semi-button-content { min-width: 0; display: flex; align-items: center; gap: 6px; }
+.user-menu-copy { min-width: 0; display: grid; text-align: left; }
+.user-menu-copy small { overflow: hidden; max-width: 130px; color: var(--crm-text-3); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
 .page-scroll { min-width: 0; }
 .page, .detail-page { width: 100%; min-width: 0; padding: 18px 24px 32px; }
 
@@ -44,7 +45,7 @@
 }
 @media (max-width: 760px) {
   .demo-user-select { width: 150px; }
-  .user-menu > span, .breadcrumb { display: none; }
+  .user-menu-copy, .breadcrumb { display: none; }
   .topbar { padding-inline: 8px; }
   .page, .detail-page { padding: 14px 10px 24px; }
 }
