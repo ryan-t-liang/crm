@@ -196,14 +196,14 @@ describe("V2.1 code lifecycle", () => {
     const f = fixture(); f.complete(); f.draw("assign", 0.65);
     const prize = f.state.activities[0].pool[3], code = prize.codes.find((code) => code.assignedAwardId)!;
     f.state.activities[0].status = "DRAFT"; f.state.activities[0].publishedAt = undefined;
-    for (const codes of [[code.code], prize.codes.map((row) => row.code)]) expect(f.run({ type: "DELETE_CODES", activityId: f.activity.id, poolItemId: prize.id, codes }).error).toContain("ASSIGNED");
+    for (const codes of [[code.code], prize.codes.map((row) => row.code)]) expect(f.run({ type: "DELETE_CODES", activityId: f.activity.id, poolItemId: prize.id, codes }).error).toContain("已分配");
     expect(f.state.activities[0].pool[3].codes).toEqual(prize.codes); expect(f.state.awards).toHaveLength(1);
   });
   it("assigned codes cannot be erased or unassigned via generic save commands", () => {
     const f = fixture(); f.complete(); f.draw("assign", 0.65); f.state.activities[0].publishedAt = undefined; f.state.activities[0].status = "DRAFT";
     const original = structuredClone(f.state.activities[0]), prize = original.pool[3], edit = { ...prize, codes: prize.codes.filter((code) => !code.assignedAwardId) };
-    expect(f.run({ type: "SAVE_ACTIVITY_PRIZE", activityId: f.activity.id, prize: edit }).error).toContain("ASSIGNED");
-    expect(f.run({ type: "SAVE_ACTIVITY", activity: { ...original, pool: original.pool.map((row) => row.id === prize.id ? edit : row) } }).error).toContain("ASSIGNED");
+    expect(f.run({ type: "SAVE_ACTIVITY_PRIZE", activityId: f.activity.id, prize: edit }).error).toContain("已分配");
+    expect(f.run({ type: "SAVE_ACTIVITY", activity: { ...original, pool: original.pool.map((row) => row.id === prize.id ? edit : row) } }).error).toContain("已分配");
     expect(f.state.activities[0]).toEqual(original);
   });
   it("published can append and delete only surplus AVAILABLE codes above remaining quota", () => {

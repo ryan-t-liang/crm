@@ -66,6 +66,8 @@ describe("Marketing configuration and compatibility", () => {
     expect(f.run({ type: "ADD_QUOTA", activityId: f.activity.id, poolItemId: f.activity.pool[0].id, count: 1 }).ok).toBe(true);
     expect(f.state.audits.at(-1)?.detail).toContain("追加配额");
     expect(f.run({ type: "ADD_QUOTA", activityId: f.activity.id, poolItemId: f.activity.pool[0].id, count: -1 }).ok).toBe(false);
+    expect(f.run({ type: "ADD_QUOTA", activityId: f.activity.id, poolItemId: f.activity.pool[1].id, count: 100 }).ok).toBe(false);
+    expect(f.run({ type: "ADD_PRIZE_SLOT", activityId: f.activity.id, poolItemId: f.activity.pool[1].id, slot: { ...f.activity.pool[1].slots[0], id: "extra-100", capacity: 100 } }).ok).toBe(true);
     expect(f.run({ type: "ADD_QUOTA", activityId: f.activity.id, poolItemId: f.activity.pool[1].id, count: 100 }).ok).toBe(true);
     expect(f.run({ type: "DELETE_ACTIVITY", activityId: f.activity.id }).ok).toBe(false);
   });
@@ -260,7 +262,7 @@ describe("Marketing atomic draws, inventory and fulfillment", () => {
   it("activity metrics use same source, unique people versus attempts, canceled history not active", () => {
     const f = fixture({ winLimit: 2 }); f.complete(); f.draw("none", { random: () => 0.95 }); f.draw("win");
     const counts = Object.fromEntries(activityMetrics(f.state, f.state.activities[0], now).map((metric) => [metric.label, metric.rows.length]));
-    expect(counts).toEqual({ 当前有效预约人数: 1, 到场人数: 1, 完成人数: 1, 抽奖人数: 1, 抽奖次数: 2, 中奖人数: 1, 中奖份数: 1, "已领取 / 已发放份数": 0 });
+    expect(counts).toEqual({ 当前有效预约人数: 1, 到场人数: 1, 完成人数: 1, 抽奖人数: 1, 抽奖次数: 2, 中奖人数: 1, 中奖份数: 1, "已履约份数": 0 });
     const g = fixture(); g.register(); g.run({ type: "CANCEL_BOOKING", bookingId: g.state.bookings[0].id }); expect(activityMetrics(g.state, g.activity, now)[0].rows).toHaveLength(0); expect(g.state.bookings).toHaveLength(1);
   });
   it("read-only/brand-scoped/distributor actions deny writes and never mutate sales or member records", () => {

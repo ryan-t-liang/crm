@@ -1,4 +1,121 @@
-# 营销活动 V2.1 验收记录
+# 营销活动最终验收记录
+
+# Final Acceptance
+
+结论：**PASSED（纯前端产品原型范围）**。2026-09-17，当前分支 `codex/kivisense-product-prototype`。未发现已知P0；本轮发现的P1均局部修复并重测，没有未处理P1。完成附件第三十四节33项边界及第三十六节A–D页面链路。本轮结束营销功能迭代，等待CRM统一UI / IA评审，不自行合并main或部署。
+
+## 当前Commit与证据基线
+
+- 验收开始时当前 / 远端Commit：`47bea37d3647e5990613e15e8049c0ccfaff9a89`；最终验收源码为该Commit加本轮局部修正。本节与修正一同提交，最终交付Commit及正常推送后远端一致性见Git日志和交付回复，不能将开始Commit误称已包含本轮修正。
+- 两次fetch后无分歧；main保持 `cc8e492f4a2409c55f10b3a16199eedeb652ce32`。
+- 页面验证使用最新构建的 `http://127.0.0.1:4174`，独立Chrome BrowserContext、Los Angeles系统时区、Shanghai业务时间及虚构数据；A/B全部业务从创建起通过页面控件执行，无业务状态注入，C/D使用明确演示种子。
+- 最终构建SHA256：app.js `98c546d7de730b5ca12342911b1de00635c9437250fb8a7de5f6afc319c324e4`；app.css `0e5229cd681823d6ae6cc0e02cc4cf7e9bcb98020c97610a2ec6a4827d771c59`。
+- Sowind SQL SHA256仍为 `757ef1d2b038cfc982e9a23a646fa36d274f8f89c1715a6a39152e1ddd3701a9`。销售 / 会员Store、类型、数据、关联和路由、三视图Dashboard、SQL与依赖均未修改；无后端 / 数据库 / 金额 / Opportunity扩展。
+
+按 automated-test-engineer 先复现、再局部修复、保留失败记录并分开核对规则、页面及持久结果。应用内浏览器另只读复核用户原有本地活动、中奖页与最终构建错误日志为0，不重置或写入该浏览器用户数据。
+
+## 实际修改
+
+| 文件 | 局部变化 |
+| --- | --- |
+| frontend-react/src/features/marketing/marketing-model.ts | 副本清空全部时间 / 所有码；安全追加配额；全业务集合删除保护；业务记录存在即锁实质规则；集中履约状态 / 统计判定 |
+| MarketingAdmin.tsx（同目录） | 删除草稿二次确认与同规则显隐；业务已有时锁配置；明确说明更新仅影响未来中奖；配额列中文口径 |
+| MarketingEditor.tsx（同目录） | 有历史即锁规则；已分配码错误中文，不改变字段调用契约 |
+| MarketingData.tsx（同目录） | 实体 / 虚拟状态区分；权益详情使用快照，无外部兑换 / viewed伪造 |
+| MarketingPages.tsx（同目录） | 预览、Staff识别复用状态；会员只读营销Tab履约计数包含已发放虚拟奖；不改会员资料 / Store |
+| MarketingCodes.tsx（同目录） | 未分配 / 已分配 / 清空按钮中文化，内部分配结构不变 |
+| marketing-final.test.ts（同目录，新） | 33个规则回归用例；含数量100 / 占用30 / 安全追加150、孤立历史、全命令跨品牌、技术草稿规则锁 |
+| marketing-model.test.ts / marketing-v21.test.ts（同目录） | 保留原96项；按本轮合同补足容量后验证合法追加，新增失败拒绝断言；只更新中文指标 / 错误名称 |
+| qa/marketing-final-browser-qa.mjs（新） | A–D完整真实页面操作、持久状态断言、33张步骤截图及只读明细 / 空状态 / 删除确认 / 三尺寸检查 |
+| qa/marketing-v2-browser-qa.mjs | 原场景保留；增加先拒绝无容量追加、再补场次成功；同时核对两条拒绝 / 成功审计 |
+| qa/marketing-v21-browser-qa.mjs | 先断言副本日期空，再通过UI重填日期，继续原100/20检查；中文代码状态定位 |
+| package.json | 仅增加qa:marketing:final脚本，无依赖变化 |
+| docs/MARKETING_ACTIVITY_MODULE.md / MARKETING_ACTIVITY_ACCEPTANCE.md / UI_ITERATION_ISSUES.md | 当前规则、最终验收 / 限制及问题复测记录；保留所有历史记录 |
+
+## 五个重点边界、时间与不可逆性
+
+1. **Copy Activity**：保留基本 / 预约 / 抽奖 / 奖品 / 场次结构，所有相关ID新建；六个活动窗口、奖品领奖窗口、场次五个日期字段清空。所有未分配和已分配代码均不复制。六个业务集合 / 历史库存占用不复制，原活动完全不变；新副本留单独复制操作审计。
+2. **Prize修改**：发布或任一业务历史存在后实质配置锁定，包含概率；不新增规则版本引擎。配额只能专用正整数追加，完整发放前提有效、未过期、代码 / 有效总容量 / 扣承诺后容量充足。数量100、占用30不可降到20；足额容量下可增到150。名称 / 图片 / 说明等仅影响未来中奖，旧Award全部快照不变。
+3. **Physical / Virtual Fulfillment**：直接实体待领取→已领取；预约实体待预约→已预约 / 待领取→已领取；过期不返池。兑换码已分配、凭证权益已生成、领取链接已生成均为本地平台发放，不是现场已核销 / 外部已兑换。统一“已履约份数”：实体fulfilledAt，虚拟issuedAt且对应内容快照齐全；未知类型 / 缺内容不伪装已履约。
+4. **Draft Delete / Cancel**：无业务且从未发布的DRAFT经二次确认可删配置 / 未分配码 / 未使用场次，操作Audit保留且不误当业务。Participation / Booking / Chance / Draw / Award / Redemption任何一处有历史或存在已分配码就不可硬删，即使技术状态为草稿。取消只停止新参与、取消未到场活动预约；Award / Redemption / 既有奖品预约保留。
+5. **Staff Permission**：view、manage、redeem独立，preview仅演示用户动作；view-only无写 / 无Audit，manager不自动核销，staff-only不改配置，品牌检查覆盖所有19类命令与凭证 / 活动 / 预约 / 奖品 / 代码引用。组合权限以规则夹具验证；真实页面使用现有HQ / 分销商，不伪造已存在独立Staff账号。
+6. **时间状态**：预约期、活动期、抽奖期、领奖期独立；活动 / 抽奖已结束不阻断有效旧权益领取；抽奖截止停止新抽。保留现有V2暂停策略：停止所有新预约（含领奖预约 / 改约），但已有有效领奖预约可履约，不删除权益。取消后已有权益按自身窗口保留。
+7. **不可逆性**：operationId重试及刷新复用中奖 / NONE；不重新开奖或扣次；Award快照保留；assignedAwardId / assignedAt / 内容在刷新与配置调整后不变，分配码不返AVAILABLE；成功核销重试不二领 / 不重复事实。LocalStorage旧V1先原文备份，V2用户修改不重写，损坏 / 未知数据明确阻断，不清用户存储。
+
+## 附件33项检查映射
+
+U=marketing-final.test.ts / 原marketing-model.test.ts / marketing-v21.test.ts规则断言；F=本轮Final页面脚本；V2 / V21=本轮重跑原页面套件。所有行PASS仅限所列层级，不代表生产权限 / 事务 / 并发。
+
+| # | 验收边界 | 实际验证 |
+| --- | --- | --- |
+| 1 | 副本无Participation | U、F-C原集合逐项不变 |
+| 2 | 副本无Booking | U、F-C |
+| 3 | 副本无Draw | U、F-C |
+| 4 | 副本无Award | U、F-C |
+| 5 | 副本无Redemption | U、F-C |
+| 6 | 副本无任意兑换码 | U、F-C、V21 |
+| 7 | 不继承过期活动日期 | U、F-C、编辑页空日期 |
+| 8 | 场次无过去完整日期 | U、F-C所有场次日期为空；V21建议场次为未来 |
+| 9 | 已中30不降到20 | U精确100 / 30夹具；原发布后数量锁 |
+| 10 | 安全增加配额 | U100→150；V2页面先拒绝容量不足、补容量后成功 |
+| 11 | 不改类型破坏权益 | U逐字段实质修改拒绝 |
+| 12 | Award Snapshot不跟配置变 | U说明允许更新但旧快照深度相等；V2旧权益页面 |
+| 13 | Draw后概率符合原规则 | U概率锁定，包括技术草稿；不归一化耗尽概率 |
+| 14 | Code正确状态 | U、F-B兑换码已分配、V21管理已分配时间 / 用户 |
+| 15 | 虚拟奖不要求实体核销 | U三种方式拒绝CLAIM、F-B无需PRIZE_CLAIM即计已履约、V2 |
+| 16 | 虚拟发放计已履约 | U三种虚拟内容、F-B数字1及同源Award ID |
+| 17 | 已分配码永不重分配 | U删 / 批量 / 通用保存 / 重导 / 重试保护；V2 / V21 |
+| 18 | 未使用Draft删除 | U配置Audit不误阻断；F-C先取消确认保留、再确认删除及未使用码移除 |
+| 19 | 有业务不可硬删 | U六集合逐个孤立事实保护；原已发布保护 |
+| 20 | Cancel保留Award | U历史深度相等、V2取消后合法旧领奖 |
+| 21 | Cancel保留核销 | U事实深度相等；V2历史事实列表 |
+| 22 | View不能Manage | V21 U十九写组合均拒绝无Audit |
+| 23 | Manage不自动核销 | V21 U manager-only拒绝VERIFY / walk-in |
+| 24 | Redeem不能改配置 | V21 U staff-only完成链路并拒绝规则写 |
+| 25 | 跨品牌核销拒绝 | U全命令外品牌能力组合及凭证识别拒绝 |
+| 26 | URL不能绕权限 | V2现有分销商活动 / 预览 / 新旧Staff凭证URL均拒绝 |
+| 27 | 活动结束仍可合法领取 | U独立时钟、F-D结束活动与抽奖后的有效既有奖品预约核销 |
+| 28 | Pause保留权益 | U深度相等；V2原暂停策略与既有预约核销 |
+| 29 | 抽奖截止拒绝新抽 | 原U截止边界拒绝、不新增draw |
+| 30 | Draw刷新不重开奖 | 原U中奖 / NONE重试；F-B刷新重试仍仅一Draw |
+| 31 | Award刷新不消失 | U解码不变、F-B深度相等、V2 |
+| 32 | Assigned Code刷新不换 | U、F-B同码 / 同关联 / 同分配时间、V21 |
+| 33 | Redemption重复不二领 | U状态全等；F-D重复后Award / Redemption全等，V2体验亦同 |
+
+## 质量门禁与页面证据
+
+| 检查 | 实际结果 |
+| --- | --- |
+| typecheck | tsc -b frontend-react/tsconfig.json --pretty false，exit0 |
+| 当前lint | npm run lint（项目现有脚本为tsc -b），exit0；不声称有额外ESLint检查 |
+| 全部test | 6文件170项全部通过；营销56+40+33=129，Dashboard24，Sales6，Member11；无skip / only / 删测试 |
+| build | npm run build，exit0，3473模块；既有lottie eval及大chunk警告保留，非本轮新增架构问题 |
+| Final Browser | A/B/C/D + 隔离 / 布局共5组，33步骤截图，运行 / Console错误0，失败请求0 |
+| Marketing V2 / V2.1 Browser | 18组 /26截图及7组 /16截图，全PASS，运行 / Console错误0、失败请求0 |
+| CRM核心回归Browser | 27组 /31截图全PASS：Lead、Qualified→Deal、阶段Won / Lost、真实看板持久阶段、跟进 / 任务 / 附件、组织 / 联系人 / Product / 分销商及角色；集团→会员→购买意向及存储隔离 |
+| Dashboard Browser | 11组 /13截图全PASS：三个视图、独立日期 / 品牌 / 分销商筛选、同源明细、空状态、缺时间旧数据 / HQ组合、角色范围 |
+
+最终五套本地证据（机器结果results.json + 步骤截图 / 索引，不纳入Git；GitHub不会包含artifacts目录）：
+
+- [Final A–D /33步骤](../artifacts/prototype-qa/2026-09-17T09-12-59.811Z-marketing-final/evidence.md)
+- [Marketing V2结果](../artifacts/prototype-qa/2026-09-17T09-12-57.370Z-marketing-v2/results.json)
+- [Marketing V2.1结果](../artifacts/prototype-qa/2026-09-17T09-12-58.531Z-marketing-v21/results.json)
+- [CRM /会员 /购买意向结果](../artifacts/prototype-qa/2026-09-17T09-13-01.097Z-sales-regression/results.json)
+- [三视图概览结果](../artifacts/prototype-qa/2026-09-17T09-13-02.369Z-dashboard-v1/results.json)
+
+1440×900、1280×800、1024×768验证document无横向溢出、宽表内部滚动；V2 / V21额外375 /430预览 /Staff页面。人工复核核心指标、虚拟权益、删除确认、1024宽表及独立核销截图，不声称全部截图逐像素审核。新脚本采用真实当前视口截图，避免fullPage对已滚动固定AppShell的拼接位置误解成产品问题。
+
+先新增28项复现时13项失败，修复后通过，再补5项精确边界共33项。原V2脚本初次因新增拒绝 / 成功两条ADD_QUOTA审计而strict匹配失败，保留 [原FAIL](../artifacts/prototype-qa/2026-09-17T09-06-09.133Z-marketing-v2/results.json)，随后核对两条动作与结果，不掩盖错误。旧成功追加100却不补容量的预期与新合同冲突，场景保留并增加拒绝 / 补容量 / 成功断言；没有修改断言规避库存业务错误。
+
+## 已知限制 / 未执行
+
+LocalStorage仍是前端持久化、Math.random不是生产安全随机、无后端并发库存 / 码锁、无多设备一致性保证。Voucher / Link仅本地内容生成，无第三方真实发放 / 使用 / 查看事实；真实Staff账号及门店 / 地点RBAC未最终定义。Safari / Firefox、真机、摄像头 / 微信、真实客户数据、多用户并发及生产服务器安全未验，不能记为PASS。原Dashboard缺真实成交时间 / 历史状态 / 活跃定义等指标仍不实现，不拼假漏斗、金额或ROI。这些为生产阶段 / 统一产品评审事项，不扩展本轮原型架构。
+
+## Git与收口
+
+保护原未跟踪artifacts，不覆盖其他工作；仅明确暂存本轮16个源码 /测试 /脚本 /文档文件，正常Commit与Push当前分支，再核对远端SHA。main不合并 /不修改，不强推、不部署、不发Release、不删分支；营销功能停止迭代，进入统一CRM UI /IA评审等待。
+
+# 以下为V2.1历史验收（不代表本轮基线）
 
 日期：2026-09-17。本轮基于当前分支 `codex/kivisense-product-prototype` 的 Marketing V2，开始时本地 / 远端 HEAD 均为 `df24a0f12f3e4ae4fc9718caf236230aaa6b8e5a`。fetch 后分支无分歧；`origin/main` 基线为 `cc8e492f4a2409c55f10b3a16199eedeb652ce32`。原未跟踪 `artifacts/` 保留、不纳入提交。依用户要求验证后只正常提交 / 推送当前分支，最终SHA与远端一致性以交付回复和Git日志为准，不改 main、不部署、不强推。
 

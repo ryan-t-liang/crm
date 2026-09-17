@@ -6,7 +6,7 @@ import { useMemberOperations, brandLabels } from "@/stores/member-operations-sto
 import { useCrm } from "@/stores/crm-store";
 import type { MarketingActivity, MarketingAward, MarketingBooking, MarketingParticipation, MarketingRedemption } from "@/types/marketing";
 import { parseCreatedAt, shanghaiDate } from "@/features/dashboard/dashboard-model";
-import { bookingLabels, bookingStatus, chances, claimLabels, needsReservation, participationIssue, prizeTypeLabels, redemptionLabels, slotFor } from "./marketing-model";
+import { awardFulfillmentLabel, bookingLabels, bookingStatus, chances, claimLabels, needsReservation, participationIssue, prizeTypeLabels, redemptionLabels, slotFor } from "./marketing-model";
 import { displayDate, memberName, Panel, SelectField, TextField } from "./MarketingUi";
 
 const participantLabels = { REGISTERED: "已报名 / 未开始", BOOKED: "已预约", CHECKED_IN: "已签到 / 参与中", COMPLETED: "已完成", CANCELED: "已取消", NO_SHOW: "已爽约", INVALID: "预约失效 / 场次待核对" };
@@ -66,8 +66,9 @@ export function DrawData({ activity }: { activity: MarketingActivity }) {
   ]} />;
 }
 export function VirtualAwardContent({ award }: { award: MarketingAward }) {
+  const { state } = useMarketing();
   return <><Banner type="info" description="原型发放方式：仅展示保存的虚拟权益快照，未调用外部兑换或发券服务，也未记录未经发生的已查看事件。" closeIcon={null} />
-    <DataList rows={[["内容状态", award.issuedAt ? "已保存并分配（本地演示）" : "内容待核对"], ["分配时间", displayDate(award.issuedAt)], ["有效期", `${displayDate(award.claimStart)} 至 ${displayDate(award.claimEnd)}`], ["使用说明", award.instructions]]} />
+    <DataList rows={[["内容状态", awardFulfillmentLabel(state, award, Date.now())], ["分配时间", displayDate(award.issuedAt)], ["有效期", `${displayDate(award.claimStart)} 至 ${displayDate(award.claimEnd)}`], ["使用说明", award.instructions]]} />
     {award.method === "REDEMPTION_CODE" && <p>兑换码：<code className="marketing-virtual-code">{award.virtualContent?.code || "未分配，待核对"}</code></p>}
     {award.method === "VIRTUAL_VOUCHER" && <DataList rows={[["凭证名称", award.virtualContent?.name || "未提供"], ["凭证描述", award.virtualContent?.description || "未提供"]]} />}
     {award.method === "LINK" && (award.virtualContent?.link && /^https?:\/\//i.test(award.virtualContent.link) ? <a target="_blank" rel="noopener noreferrer" href={award.virtualContent.link}>查看领取链接（外部服务未集成）</a> : <p>领取链接未提供或无效，待核对</p>)}
@@ -81,7 +82,7 @@ export function AwardData({ activity }: { activity: MarketingActivity }) {
     { title: "用户", width: 170, render: (_: unknown, row: MarketingAward) => state.participations.find((participant) => participant.id === row.participationId)?.identities.map((ref) => memberName(members, ref.userId)).join(" / ") || "身份待核对" },
     { title: "奖品 / 类型", width: 240, render: (_: unknown, row: MarketingAward) => `${row.prizeName} · ${prizeTypeLabels[row.prizeType]}` },
     { title: "中奖时间", width: 180, render: (_: unknown, row: MarketingAward) => displayDate(row.wonAt) },
-    { title: "当前权益状态", width: 140, render: (_: unknown, row: MarketingAward) => row.fulfilledAt ? "已领取" : row.issuedAt ? `已发放${Date.now() >= parseCreatedAt(row.claimEnd) ? "（已过有效期）" : ""}` : Date.now() >= parseCreatedAt(row.claimEnd) ? "已过期（占用不返池）" : "待履约" },
+    { title: "当前权益状态", width: 140, render: (_: unknown, row: MarketingAward) => awardFulfillmentLabel(state, row, Date.now()) },
     { title: "需要预约 / 状态", width: 180, render: (_: unknown, row: MarketingAward) => needsReservation(row) ? `是 · ${currentBooking(row) ? bookingLabels[bookingStatus(currentBooking(row)!, slotFor(state, currentBooking(row)!), Date.now())] : "未预约"}` : "否" },
     { title: "领取 / 发放时间", width: 180, render: (_: unknown, row: MarketingAward) => displayDate(row.fulfilledAt ?? row.issuedAt) },
     { title: "虚拟内容状态", width: 170, render: (_: unknown, row: MarketingAward) => row.prizeType !== "VIRTUAL" ? "不适用" : row.virtualContent?.code ? "已分配（详情可见）" : row.issuedAt ? "已保存（详情可见）" : "待核对" },

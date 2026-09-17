@@ -15,17 +15,17 @@ export function CodeManager({ prize, published, remainingQuota, canManage, onDel
   const available = prize.codes.filter((code) => !code.assignedAwardId);
   const remove = (codes: string[]) => Modal.confirm({
     title: codes.length === 1 ? "删除未分配兑换码？" : "清空未分配兑换码？",
-    content: `仅删除 ${codes.length} 个AVAILABLE兑换码；已分配代码与历史权益不会删除。${published ? `当前剩余奖品配额为 ${remainingQuota}，不足时会阻止删除。` : "草稿可重新导入。"}`,
+    content: `仅删除 ${codes.length} 个未分配兑换码；已分配代码与历史权益不会删除。${published ? `当前剩余奖品配额为 ${remainingQuota}，不足时会阻止删除。` : "草稿可重新导入。"}`,
     onOk: () => { const result = onDelete(codes); setMessage(result.ok ? "" : result.error || "删除未完成，请核对兑换码与奖品配额。"); },
   });
   return <SideSheet visible closeOnEsc title={`兑换码管理 · ${prize.name}`} width={Math.min(780, window.innerWidth - 20)} onCancel={onClose}>
-    <p>AVAILABLE = 未分配 · ASSIGNED = 已分配，永久不可删除 / 再分配。完整兑换码仅在必要管理页面展示。</p>
-    {published && <p>已发布活动：删除后有效AVAILABLE须覆盖剩余奖品配额 {remainingQuota}；可通过“导入兑换码”追加。</p>}
+    <p>未分配兑换码可按规则删除；已分配兑换码永久不可删除或再次分配。完整兑换码仅在必要管理页面展示。</p>
+    {published && <p>已发布活动：删除后有效未分配兑换码须覆盖剩余奖品配额 {remainingQuota}；可通过“导入兑换码”追加。</p>}
     {message && <Banner type="warning" title={message} closeIcon={null} />}
-    <Button type="danger" size="small" disabled={!canManage || !available.length} onClick={() => remove(available.map((row) => row.code))}>清空AVAILABLE兑换码</Button>
+    <Button type="danger" size="small" disabled={!canManage || !available.length} onClick={() => remove(available.map((row) => row.code))}>清空未分配兑换码</Button>
     {prize.codes.length ? <Table rowKey="code" dataSource={prize.codes} pagination={{ pageSize: 10 }} scroll={{ x: 720 }} columns={[
       { title: "兑换码", width: 220, render: (_: unknown, row: MarketingCode) => <code className="marketing-code-cell">{row.code}</code> },
-      { title: "状态", width: 130, render: (_: unknown, row: MarketingCode) => row.assignedAwardId ? "ASSIGNED · 已分配" : "AVAILABLE · 未分配" },
+      { title: "状态", width: 130, render: (_: unknown, row: MarketingCode) => row.assignedAwardId ? "已分配" : "未分配" },
       { title: "分配时间（UTC+08）", width: 160, render: (_: unknown, row: MarketingCode) => displayDate(row.assignedAt) },
       { title: "关联用户", width: 130, render: (_: unknown, row: MarketingCode) => {
         if (!row.assignedAwardId) return "—";

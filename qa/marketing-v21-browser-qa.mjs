@@ -38,6 +38,33 @@ async function setMemberFixture(value) { await page.evaluate(([key, value]) => l
 async function importCodes(text) {
   await page.getByLabel("兑换码文本", { exact: true }).fill(text); await page.getByRole("button", { name: "确认导入兑换码", exact: true }).click();
 }
+async function reenterCopiedDates(source) {
+  // Final Acceptance intentionally clears copied dates. Explicitly reconfigure through UI
+  // before testing the existing 100/20 capacity checklist; never bypass the publish gate.
+  const value = (date) => new Date(Date.parse(date) + 8 * 3_600_000).toISOString().slice(0, 16);
+  const fill = async (scope, pairs) => { for (const [label, date] of pairs) await scope.getByLabel(label, { exact: true }).fill(value(date)); };
+  const fillSlots = async (scope, slots) => {
+    for (const [index, slot] of slots.entries()) {
+      const detail = scope.locator("details").nth(index);
+      if (await detail.getAttribute("open") === null) await detail.locator("summary").click();
+      await fill(detail, [["场次开始", slot.startAt], ["场次结束", slot.endAt], ["场次预约截止", slot.bookingClosesAt], ["允许签到开始", slot.checkinStart], ["允许签到结束（含配置宽限）", slot.checkinEnd]]);
+    }
+  };
+  await page.getByRole("button", { name: "编辑活动", exact: true }).click();
+  const editor = page.locator(".semi-sidesheet:visible");
+  await fill(editor, [["活动开始", source.startAt], ["活动结束", source.endAt]]);
+  await step("预约设置"); await fill(editor, [["预约开放", source.bookingStart], ["预约截止", source.bookingEnd]]); await fillSlots(editor, source.slots);
+  await step("抽奖设置"); await fill(editor, [["抽奖开始", source.lotteryStart], ["抽奖截止", source.lotteryEnd]]);
+  await step("奖品设置");
+  for (const prize of source.pool) {
+    await editor.locator(".semi-table-row").filter({ hasText: prize.name }).getByRole("button", { name: "配置奖品", exact: true }).click();
+    const dialog = page.locator(".semi-modal:visible");
+    await fill(dialog, [["奖品有效开始", prize.claimStart], ["奖品有效截止", prize.claimEnd]]);
+    if (prize.slots.length) await fillSlots(dialog, prize.slots);
+    await confirm();
+  }
+  await editor.getByRole("button", { name: "保存草稿", exact: true }).click(); await editor.waitFor({ state: "hidden" });
+}
 try {
   await route("marketing", "营销活动"); await page.waitForFunction((keys) => keys.every((key) => localStorage.getItem(key)), keys);
   const originals = await raw(), [sales, members, seeded] = await read();
@@ -71,6 +98,9 @@ try {
   await page.getByRole("button", { name: "复制活动", exact: true }).click();
   state = (await read())[2]; const copy = state.activities.find((activity) => activity.name === `${source.name} · 副本`);
   await page.getByRole("heading", { name: copy.name, exact: true }).waitFor();
+  assert.deepEqual([copy.startAt, copy.endAt, copy.bookingStart, copy.bookingEnd, copy.lotteryStart, copy.lotteryEnd], Array(6).fill(""));
+  assert.ok(copy.pool.every((prize) => prize.claimStart === "" && prize.claimEnd === "" && prize.codes.length === 0));
+  await reenterCopiedDates(source);
   await route(`marketing/activity/${copy.id}/lottery`, copy.name);
   const pickup = copy.pool.find((prize) => prize.method === "PICKUP");
   const pickupRow = page.locator(".semi-table-row").filter({ hasText: pickup.name }); await pickupRow.getByRole("button", { name: "编辑奖品", exact: true }).click();
@@ -98,7 +128,7 @@ try {
   await codesSheet.getByText("V21-CODE001", { exact: true }).waitFor();
   await codesSheet.locator(".semi-table-row").filter({ hasText: "V21-CODE001" }).getByRole("button", { name: "删除", exact: true }).click(); await confirm();
   assert.equal((await read())[2].activities.find((activity) => activity.id === copy.id).pool.find((prize) => prize.id === codePrize.id).codes.length, 2);
-  await codesSheet.getByRole("button", { name: "清空AVAILABLE兑换码", exact: true }).click(); await confirm(); await codesSheet.getByText("暂无兑换码", { exact: true }).waitFor();
+  await codesSheet.getByRole("button", { name: "清空未分配兑换码", exact: true }).click(); await confirm(); await codesSheet.getByText("暂无兑换码", { exact: true }).waitFor();
   await shot("07-draft-clear-available"); await page.keyboard.press("Escape"); await codesSheet.waitFor({ state: "hidden" });
   await codeRow.getByRole("button", { name: "导入兑换码", exact: true }).click(); await importCodes("V21-CODE001\nV21-CODE002");
   await page.getByText("成功导入：2，重复：0，非法：0，忽略空值：0", { exact: true }).waitFor();
@@ -112,7 +142,7 @@ try {
   const publishedSheet = page.locator(".semi-sidesheet:visible");
   const assignedRow = publishedSheet.locator(".semi-table-row").filter({ has: page.getByText(assigned.code, { exact: true }) });
   assert.equal(await assignedRow.getByRole("button", { name: "删除", exact: true }).isEnabled(), false);
-  await assignedRow.getByText("ASSIGNED · 已分配", { exact: true }).waitFor();
+  await assignedRow.getByText("已分配", { exact: true }).waitFor();
   const assignedAward = seeded.awards.find((award) => award.id === assigned.assignedAwardId), assignedParticipant = seeded.participations.find((participant) => participant.id === assignedAward.participationId);
   const assignedTime = new Date(Date.parse(assigned.assignedAt) + 8 * 3_600_000).toISOString().slice(0, 16).replace("T", " ");
   await assignedRow.getByText(assignedTime, { exact: true }).waitFor();

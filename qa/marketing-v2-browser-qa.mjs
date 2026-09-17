@@ -181,10 +181,18 @@ try {
 
   await route(`marketing/activity/${sourceActivity.id}/lottery`, sourceActivity.name);
   const pickupRow = page.locator(".semi-table-row").filter({ hasText: sourceActivity.pool[1].name }); await pickupRow.getByRole("button", { name: "增加配额", exact: true }).click();
-  await page.getByLabel("追加配额", { exact: true }).fill("50"); await confirm();
+  await page.getByLabel("追加配额", { exact: true }).fill("50");
+  await page.locator(".semi-modal:visible").getByRole("button", { name: "confirm", exact: true }).click();
+  await page.locator(".semi-modal:visible").getByText("追加后履约容量不足，请先追加合法履约时段再增加配额", { exact: true }).waitFor();
+  assert.equal((await read())[2].activities.find((row) => row.id === sourceActivity.id).pool[1].quota, 10);
+  await shot("09a-quota-addition-capacity-rejected");
+  await page.locator(".semi-modal:visible").getByRole("button", { name: "cancel", exact: true }).click();
+  await pickupRow.getByRole("button", { name: "追加履约时段", exact: true }).click();
+  await page.getByLabel("场次地点", { exact: true }).fill("演示工作室"); await page.getByLabel("场次容量", { exact: true }).fill("50"); await confirm();
+  await pickupRow.getByRole("button", { name: "增加配额", exact: true }).click(); await page.getByLabel("追加配额", { exact: true }).fill("50"); await confirm();
   state = (await read())[2]; assert.equal(state.activities.find((row) => row.id === sourceActivity.id).pool[1].quota, 60);
-  assert.ok((await pickupRow.innerText()).includes("60 / 0 / 0 / 60")); assert.ok((await pickupRow.innerText()).includes("20 · 未预约0"));
-  await shot("09-quota-larger-than-fulfillment-capacity"); pass("Reservation prize winnable capacity displays min(stock, fulfillment promises), not stock alone");
+  assert.ok((await pickupRow.innerText()).includes("60 / 0 / 0 / 60")); assert.ok((await pickupRow.innerText()).includes("60 · 未预约0"));
+  await shot("09-safe-quota-after-added-fulfillment-capacity"); pass("Unsafe reservation quota addition denied; explicit extra fulfillment capacity then allows backed quota; runtime stock/capacity remains constrained");
 
   await route(`marketing/preview/${sourceActivity.id}/${user.id}`, "用户流程预览"); await page.getByRole("button", { name: "预约参加", exact: true }).click();
   state = (await read())[2]; const experienceParticipant = state.participations.find((row) => row.activityId === sourceActivity.id && row.identities.some((ref) => ref.userId === user.id));
@@ -211,11 +219,14 @@ try {
   assert.ok(!(await page.locator(".semi-tabs-content").innerText()).includes("ADD_QUOTA"));
   state = (await read())[2]; assert.deepEqual(state.redemptions.filter((row) => row.activityId === sourceActivity.id).map((row) => row.type), ["CHECKIN", "COMPLETE", "EXPERIENCE_CLAIM"]);
   await shot("12-readonly-redemptions-not-audit");
-  await route(`marketing/activity/${sourceActivity.id}/basic`, sourceActivity.name); await page.getByText("配置与操作审计（不是核销数据）", { exact: true }).click(); await page.getByText("ADD_QUOTA", { exact: true }).waitFor();
+  await route(`marketing/activity/${sourceActivity.id}/basic`, sourceActivity.name); await page.getByText("配置与操作审计（不是核销数据）", { exact: true }).click();
+  assert.equal(await page.getByText("ADD_QUOTA", { exact: true }).count(), 2);
+  const quotaAudits = (await read())[2].audits.filter((row) => row.activityId === sourceActivity.id && row.action === "ADD_QUOTA");
+  assert.deepEqual(quotaAudits.map((row) => row.result), ["REJECTED", "SUCCESS"]);
   await shot("13-separate-config-audit"); pass("Activity redemption rows contain actual business facts only; config audit retained separately");
 
   await route(`marketing/activity/${activity.id}/overview`, activity.name); state = (await read())[2];
-  const expected = { "当前有效预约人数": [], "到场人数": [participant.id], "完成人数": [participant.id], "抽奖人数": [participant.id], "抽奖次数": [draw.id], "中奖人数": [participant.id], "中奖份数": [award.id], "已领取 / 已发放份数": [award.id] };
+  const expected = { "当前有效预约人数": [], "到场人数": [participant.id], "完成人数": [participant.id], "抽奖人数": [participant.id], "抽奖次数": [draw.id], "中奖人数": [participant.id], "中奖份数": [award.id], "已履约份数": [award.id] };
   for (const [label, ids] of Object.entries(expected)) {
     const button = page.locator(".marketing-metrics > button").filter({ has: page.locator("span", { hasText: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`) }) });
     assert.equal(await button.locator("strong").textContent(), String(ids.length)); await button.click();

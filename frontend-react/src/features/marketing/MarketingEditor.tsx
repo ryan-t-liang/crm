@@ -6,7 +6,7 @@ import { useMarketing } from "@/stores/marketing-store";
 import { createActivityPrize, createMarketingSlot } from "@/mock/marketing-demo-data";
 import type { ActivityPrize, MarketingActivity, MarketingSlot } from "@/types/marketing";
 import { navigate } from "@/utils/format";
-import { claimLabels, codeInventory, draftActivityErrors, marketingPermissions, needsReservation, prizeErrors, prizeTypeLabels, publishChecks, validateActivity, type MarketingPublishCheck } from "./marketing-model";
+import { claimLabels, codeInventory, draftActivityErrors, hasActivityBusinessData, marketingPermissions, needsReservation, prizeErrors, prizeTypeLabels, publishChecks, validateActivity, type MarketingPublishCheck } from "./marketing-model";
 import { inspectMarketingCodes, parseMarketingCodeRows, type MarketingCodeImportReport } from "./marketing-code-import";
 import { CodeManager } from "./MarketingCodes";
 import { DemoNote, ImageField, NumberField, options, Panel, SelectField, SlotFields, TextField, TimeField, useAction } from "./MarketingUi";
@@ -68,7 +68,7 @@ export function PrizeFields({ prize, onChange }: { prize: ActivityPrize; onChang
       <p>配置数量 {prize.quota} · 已导入 {inventory.imported} · 已分配 {inventory.assigned} · 剩余 {inventory.remaining}</p>
       <Button size="small" onClick={() => setViewCodes(true)}>查看兑换码</Button>
       <CodeImporter onImport={(rows) => { const existing = state.activities.flatMap((activity) => activity.pool.flatMap((item) => item.codes.map((row) => row.code))).concat(prize.codes.map((row) => row.code)); const { codes, report } = inspectMarketingCodes(rows, existing); if (codes.length) update("codes", [...prize.codes, ...codes.map((code) => ({ code }))]); return report; }} />
-      {viewCodes && <CodeManager prize={prize} published={false} remainingQuota={prize.quota} canManage onClose={() => setViewCodes(false)} onDelete={(codes) => { if (prize.codes.some((code) => codes.includes(code.code) && code.assignedAwardId)) return { ok: false, error: "ASSIGNED兑换码永久不能删除或重新分配。" }; update("codes", prize.codes.filter((code) => !codes.includes(code.code))); return { ok: true }; }} />}
+      {viewCodes && <CodeManager prize={prize} published={false} remainingQuota={prize.quota} canManage onClose={() => setViewCodes(false)} onDelete={(codes) => { if (prize.codes.some((code) => codes.includes(code.code) && code.assignedAwardId)) return { ok: false, error: "已分配兑换码永久不能删除或重新分配。" }; update("codes", prize.codes.filter((code) => !codes.includes(code.code))); return { ok: true }; }} />}
     </>}
     {prize.prizeType === "VIRTUAL" && prize.method === "VIRTUAL_VOUCHER" && <div className="marketing-form-grid"><TextField label="虚拟凭证名称" value={prize.voucherName} onChange={(value) => update("voucherName", value)} /><TextField label="虚拟凭证描述" value={prize.voucherDescription} onChange={(value) => update("voucherDescription", value)} /></div>}
     {prize.prizeType === "VIRTUAL" && prize.method === "LINK" && <TextField label="领取链接" value={prize.link} onChange={(value) => update("link", value)} />}
@@ -99,7 +99,7 @@ export function PrizeConfiguration({ activity, onChange }: { activity: Marketing
 export function ActivityEditor({ initial, onClose, initialStep = 0 }: { initial: MarketingActivity; onClose: () => void; initialStep?: number }) {
   const { state } = useMarketing(), { currentUser } = useCrm(), access = marketingPermissions(currentUser), { run, feedback } = useAction();
   const [form, setForm] = useState(initial), [step, setStep] = useState(initialStep), [error, setError] = useState("");
-  const locked = Boolean(initial.publishedAt);
+  const locked = Boolean(initial.publishedAt || hasActivityBusinessData(state, initial.id));
   const update = <K extends keyof MarketingActivity>(key: K, value: MarketingActivity[K]) => setForm((old) => ({ ...old, [key]: value }));
   const checks = publishChecks(form, state, access.brands), errors = validateActivity(form, state, access.brands), draftErrors = draftActivityErrors(form);
   const save = (publish: boolean) => {
