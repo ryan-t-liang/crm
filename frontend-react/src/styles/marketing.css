@@ -36,6 +36,13 @@
 .marketing-detail code, .marketing-redemption-surface code { overflow-wrap: anywhere; }
 .marketing-editor > .semi-steps { margin: 12px 0 18px; }
 .marketing-prize-dialog .semi-modal-body { max-height: calc(100dvh - 190px); overflow-y: auto; }
+.marketing-publish-checks > section { border-bottom: 1px solid var(--crm-border); padding: 10px 0; display: grid; gap: 6px; }
+.marketing-publish-checks strong { font-size: 12px; }
+.marketing-publish-checks span { color: var(--crm-text-3); font-size: 11px; }
+.marketing-publish-checks ul { margin: 0; padding-left: 18px; }
+.marketing-publish-checks .semi-button { white-space: normal; height: auto; text-align: left; max-width: 100%; }
+.marketing-publish-checks .semi-button-content { white-space: normal; overflow-wrap: anywhere; }
+.marketing-code-cell { overflow-wrap: anywhere; white-space: normal; }
 .marketing-audit summary { padding: 12px 0; cursor: pointer; font-size: 12px; font-weight: 600; }
 .marketing-virtual-code { display: block; user-select: all; overflow-wrap: anywhere; padding: 10px; background: var(--semi-color-fill-0); }
 .marketing-redemption-surface { height: 100dvh; display: flex; flex-direction: column; background: var(--crm-canvas); color: var(--crm-text); }

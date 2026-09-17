@@ -43,6 +43,14 @@ async function shot(name) {
 }
 async function confirm() { const dialog = page.locator(".semi-modal:visible").last(); await dialog.waitFor(); await dialog.getByRole("button", { name: "confirm", exact: true }).click(); await dialog.waitFor({ state: "hidden" }); }
 async function step(label) { await page.locator(".semi-sidesheet:visible .semi-steps").getByText(label, { exact: true }).click(); }
+async function explicitActivityBasics() {
+  const local = (minutes) => new Date(Date.now() + minutes * 60_000 + 8 * 3_600_000).toISOString().slice(0, 16);
+  // V2.1 operators must explicitly enter dates; runnable QA data is intentionally active.
+  await page.getByLabel("活动说明", { exact: true }).fill("纯前端浏览器验收活动");
+  await page.getByLabel("活动地点", { exact: true }).fill("演示工作室");
+  await page.getByLabel("活动开始", { exact: true }).fill(local(-60));
+  await page.getByLabel("活动结束", { exact: true }).fill(local(360));
+}
 async function verify(code, action) {
   await route(`redemption/${encodeURIComponent(code)}`, "核销端");
   assert.equal(await page.locator(".sidebar").count(), 0);
@@ -79,6 +87,7 @@ try {
 
   await route("marketing", "营销活动"); await page.getByRole("button", { name: "新建活动", exact: true }).click();
   await page.getByLabel("活动名称", { exact: true }).fill("V2验收 · 无预约无抽奖");
+  await explicitActivityBasics();
   await page.getByRole("switch", { name: "开启活动预约", exact: true }).click(); await page.getByRole("switch", { name: "开启活动抽奖", exact: true }).click();
   await step("预约设置"); assert.equal(await page.getByLabel("场次名称", { exact: true }).count(), 0); await select("完成条件", "签到即完成");
   await step("抽奖设置"); assert.equal(await page.getByLabel("未中奖概率（%）", { exact: true }).count(), 0);
@@ -93,8 +102,11 @@ try {
 
   await route("marketing", "营销活动"); await page.getByRole("button", { name: "新建活动", exact: true }).click();
   await page.getByLabel("活动名称", { exact: true }).fill("V2验收 · 兑换码活动"); await page.getByRole("switch", { name: "开启活动预约", exact: true }).click();
+  await explicitActivityBasics();
   await step("预约设置"); await select("完成条件", "签到即完成");
   await step("抽奖设置"); await page.getByLabel("未中奖概率（%）", { exact: true }).fill("0");
+  await page.getByLabel("抽奖开始", { exact: true }).fill(new Date(Date.now() - 60 * 60_000 + 8 * 3_600_000).toISOString().slice(0, 16));
+  await page.getByLabel("抽奖截止", { exact: true }).fill(new Date(Date.now() + 480 * 60_000 + 8 * 3_600_000).toISOString().slice(0, 16));
   await step("奖品设置"); await page.getByRole("button", { name: "添加奖品", exact: true }).click();
   await page.getByLabel("奖品名称", { exact: true }).fill("V2浏览器兑换码奖品");
   assert.equal(await page.getByLabel("奖品领取地点", { exact: true }).count(), 1);
@@ -151,20 +163,21 @@ try {
 
   await route(`marketing/activity/${activity.id}/lottery`, activity.name);
   await page.getByRole("button", { name: "导入兑换码", exact: true }).click(); await page.getByLabel("兑换码文本", { exact: true }).fill("V2-BROWSER-003\nV2-BROWSER-001");
-  await page.getByRole("button", { name: "确认导入兑换码", exact: true }).click(); await page.getByText(/整批未导入/).last().waitFor();
-  assert.equal((await read())[2].activities.find((row) => row.id === activity.id).pool[0].codes.length, 2); await page.locator(".semi-modal:visible").getByRole("button", { name: "完成", exact: true }).click();
+  await page.getByRole("button", { name: "确认导入兑换码", exact: true }).click(); await page.getByText("成功导入：1，重复：1，非法：0，忽略空值：0", { exact: true }).waitFor();
+  assert.equal((await read())[2].activities.find((row) => row.id === activity.id).pool[0].codes.length, 3); await page.locator(".semi-modal:visible").getByRole("button", { name: "完成", exact: true }).click();
   await page.getByRole("button", { name: "复制活动", exact: true }).click();
   state = (await read())[2]; const copy = state.activities.find((row) => row.name === `${activity.name} · 副本`); await page.getByRole("heading", { name: copy.name, exact: true }).waitFor();
   assert.equal(copy.status, "DRAFT"); assert.equal(copy.pool[0].codes.length, 0); assert.notEqual(copy.pool[0].id, activity.pool[0].id); assert.equal(copy.pool[0].activityId, copy.id);
   for (const rows of [state.participations, state.bookings, state.chances, state.draws, state.awards, state.redemptions]) assert.equal(rows.filter((row) => row.activityId === copy.id).length, 0);
-  await page.getByRole("button", { name: "发布", exact: true }).click(); await page.locator(".semi-banner:visible").filter({ hasText: /兑换码不足/ }).waitFor(); assert.equal((await read())[2].activities.find((row) => row.id === copy.id).status, "DRAFT");
+  await page.getByRole("button", { name: "发布", exact: true }).click(); await page.getByRole("button", { name: /兑换码不足/ }).waitFor(); assert.equal(await page.getByRole("button", { name: "确认发布活动", exact: true }).isEnabled(), false); assert.equal((await read())[2].activities.find((row) => row.id === copy.id).status, "DRAFT");
   await shot("08-copy-config-no-codes-or-records");
+  await page.locator(".semi-modal:visible").getByRole("button", { name: "取消", exact: true }).click();
   await route(`marketing/activity/${copy.id}/lottery`, copy.name); await page.getByRole("button", { name: "编辑奖品", exact: true }).click();
   const prizeDialog = page.locator(".marketing-prize-dialog .semi-modal:visible"); await prizeDialog.waitFor();
   const bodyScroll = await prizeDialog.locator(".semi-modal-body").evaluate((body) => ({ height: body.clientHeight, scroll: body.scrollHeight, overflow: getComputedStyle(body).overflowY, viewport: innerHeight }));
   assert.ok(bodyScroll.height <= bodyScroll.viewport - 190 + 1); assert.equal(bodyScroll.overflow, "auto"); assert.ok(bodyScroll.scroll > bodyScroll.height);
   await prizeDialog.getByRole("button", { name: "cancel", exact: true }).click(); await prizeDialog.waitFor({ state: "hidden" });
-  pass("Duplicate imports atomically reject; copy independent configuration without codes, occupancy or business data; draft prize editor scrolls safely");
+  pass("Duplicate rows report partial import without rewriting existing codes; copy has no codes/records; publish review and draft prize editor scroll safely");
 
   await route(`marketing/activity/${sourceActivity.id}/lottery`, sourceActivity.name);
   const pickupRow = page.locator(".semi-table-row").filter({ hasText: sourceActivity.pool[1].name }); await pickupRow.getByRole("button", { name: "增加配额", exact: true }).click();

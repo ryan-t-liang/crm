@@ -7,21 +7,34 @@ const marketingDemoPrizes = [
   { id: "prize-demo-experience", name: "工坊体验（演示）", description: "独立时段容量的预约体验。", image: "", method: "EXPERIENCE" },
   { id: "prize-demo-code", name: "品牌兑换码（演示）", description: "仅保存演示兑换码，不调用外部发券系统。", image: "", method: "REDEMPTION_CODE" },
 ] satisfies Pick<ActivityPrize, "id" | "name" | "description" | "image" | "method">[];
-export function createMarketingSlot(id: string, now: number, capacity = 10): MarketingSlot {
+function createDemoMarketingSlot(id: string, now: number, capacity = 10): MarketingSlot {
   const at = (minutes: number) => new Date(now + minutes * 60_000).toISOString();
   return { id, label: "体验场次（演示）", startAt: at(30), endAt: at(120), bookingClosesAt: at(20), checkinStart: at(-30), checkinEnd: at(150), location: "演示工作室", capacity };
 }
-export function createMarketingActivity(brand: SowindBrandCode, now: number, prizes = marketingDemoPrizes): MarketingActivity {
+/** Suggestions are never in the past. An unset parent window keeps every time unset. */
+export function createMarketingSlot(id: string, parentStart: string, capacity = 10, now = Date.now()): MarketingSlot {
+  const start = Date.parse(parentStart), at = (minutes: number) => Number.isFinite(start) ? new Date(Math.max(start, now + 30 * 60_000) + minutes * 60_000).toISOString() : "";
+  return { id, label: "新场次", startAt: at(0), endAt: at(60), bookingClosesAt: at(-10), checkinStart: at(-10), checkinEnd: at(70), location: "", capacity };
+}
+/** Operator-created drafts are distinct from runnable demonstration fixtures.
+ * Empty strings preserve the V2 time contract without rewriting existing LocalStorage. */
+export function createMarketingActivity(brand: SowindBrandCode, now: number): MarketingActivity {
+  return { id: crypto.randomUUID(), name: "新活动", brand, description: "", cover: "", mode: "OFFLINE", location: "", status: "DRAFT", ruleVersion: 1,
+    startAt: "", endAt: "", bookingEnabled: true, allowWalkIn: true, allowCancel: true, allowReschedule: true, bookingStart: "", bookingEnd: "", completion: "STAFF", slots: [],
+    lotteryEnabled: true, lotteryStart: "", lotteryEnd: "", grantCount: 2, drawLimit: 2, dailyLimit: null, winLimit: 1, noWinProbability: 100, pool: [], createdAt: new Date(now).toISOString() };
+}
+/** Dynamic dates and virtual stock belong only to demo seeding / isolated QA fixtures. */
+export function createDemoMarketingActivity(brand: SowindBrandCode, now: number, prizes = marketingDemoPrizes): MarketingActivity {
   const at = (minutes: number) => new Date(now + minutes * 60_000).toISOString();
   const activityId = crypto.randomUUID();
   return { id: activityId, name: "新活动", brand, description: "免费单人活动（演示）", cover: "", mode: "OFFLINE", location: "演示工作室", status: "DRAFT", ruleVersion: 1,
-    startAt: at(-60), endAt: at(360), bookingEnabled: true, allowWalkIn: true, allowCancel: true, allowReschedule: true, bookingStart: at(-1440), bookingEnd: at(180), completion: "STAFF", slots: [createMarketingSlot(crypto.randomUUID(), now, 10)],
+    startAt: at(-60), endAt: at(360), bookingEnabled: true, allowWalkIn: true, allowCancel: true, allowReschedule: true, bookingStart: at(-1440), bookingEnd: at(180), completion: "STAFF", slots: [createDemoMarketingSlot(crypto.randomUUID(), now, 10)],
     lotteryEnabled: true, lotteryStart: at(-60), lotteryEnd: at(480), grantCount: 2, drawLimit: 2, dailyLimit: null, winLimit: 1, noWinProbability: 20,
     pool: prizes.map((prize, index) => ({ ...createActivityPrize(activityId, now), name: prize.name, image: prize.image, description: prize.description, label: ["一等奖", "二等奖", "体验奖", "虚拟奖"][index] ?? "奖项", quota: 10, probability: [20, 25, 15, 20][index] ?? 0, method: prize.method,
       prizeType: prize.method === "REDEMPTION_CODE" ? "VIRTUAL" : "PHYSICAL",
       location: prize.method === "REDEMPTION_CODE" ? "" : "演示工作室",
       codes: prize.method === "REDEMPTION_CODE" ? Array.from({ length: 10 }, (_, number) => ({ code: `DEMO-${activityId}-${number + 1}` })) : [],
-      slots: ["PICKUP", "EXPERIENCE"].includes(prize.method) ? [createMarketingSlot(crypto.randomUUID(), now, 20)] : [] })), createdAt: at(0) };
+      slots: ["PICKUP", "EXPERIENCE"].includes(prize.method) ? [createDemoMarketingSlot(crypto.randomUUID(), now, 20)] : [] })), createdAt: at(0) };
 }
 export function createActivityPrize(activityId: string, now: number): ActivityPrize {
   return { id: crypto.randomUUID(), activityId, name: "新奖品", label: "奖项", description: "演示奖品说明", image: "", prizeType: "PHYSICAL",
@@ -35,7 +48,7 @@ export function createMarketingDemoState(members: MemberOperationsState, now: nu
   if (!brands.length) return state; // Never invent identities or a new brand collection.
   const names = ["预约制表工坊（演示）", "开放日现场活动（演示）", "品牌沙龙签到（无抽奖演示）", "已结束活动 · 仍可领奖（演示）"];
   state.activities = names.map((name, index) => {
-    const activity = createMarketingActivity(brands[index % brands.length], now);
+    const activity = createDemoMarketingActivity(brands[index % brands.length], now);
     activity.id = `activity-demo-${index + 1}`; activity.name = name; activity.status = "PUBLISHED"; activity.publishedAt = activity.createdAt;
     activity.pool.forEach((item) => { item.activityId = activity.id; });
     if (index === 0) activity.slots.push({ ...activity.slots[0], id: "slot-demo-full", label: "满额场（演示）", capacity: 1 });

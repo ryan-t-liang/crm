@@ -12,6 +12,7 @@
     "lint": "npm --workspace frontend-react run lint",
     "qa:browser": "node qa/prototype-browser-qa.mjs",
     "qa:dashboard": "node qa/dashboard-browser-qa.mjs",
-    "qa:marketing": "node qa/marketing-v2-browser-qa.mjs"
+    "qa:marketing": "node qa/marketing-v2-browser-qa.mjs",
+    "qa:marketing:v21": "node qa/marketing-v21-browser-qa.mjs"
   }
 }

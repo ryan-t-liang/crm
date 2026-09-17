@@ -6,7 +6,7 @@ export type MarketingStatus = "DRAFT" | "PUBLISHED" | "PAUSED" | "CANCELED";
 // RESERVATION_PICKUP in the product. Type and fulfillment are independent.
 export type ClaimMethod = "DIRECT" | "PICKUP" | "EXPERIENCE" | "REDEMPTION_CODE" | "VIRTUAL_VOUCHER" | "LINK";
 export type MarketingPrizeType = "PHYSICAL" | "VIRTUAL" | "UNKNOWN";
-export interface MarketingSlot { id: string; label: string; startAt: string; endAt: string; location: string; capacity: number; bookingClosesAt: string; checkinStart: string; checkinEnd: string }
+export interface MarketingSlot { id: string; label: string; startAt: string; endAt: string; location: string; capacity: number; bookingClosesAt: string; checkinStart: string; checkinEnd: string; disabled?: boolean; deleted?: boolean }
 export interface MarketingCode { code: string; assignedAwardId?: string; assignedAt?: string }
 export interface ActivityPrize {
   id: string; activityId: string; name: string; description: string; image: string;

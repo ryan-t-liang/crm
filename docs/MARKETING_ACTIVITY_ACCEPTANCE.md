@@ -1,4 +1,103 @@
-# 营销活动 V2 验收记录
+# 营销活动 V2.1 验收记录
+
+日期：2026-09-17。本轮基于当前分支 `codex/kivisense-product-prototype` 的 Marketing V2，开始时本地 / 远端 HEAD 均为 `df24a0f12f3e4ae4fc9718caf236230aaa6b8e5a`。fetch 后分支无分歧；`origin/main` 基线为 `cc8e492f4a2409c55f10b3a16199eedeb652ce32`。原未跟踪 `artifacts/` 保留、不纳入提交。依用户要求验证后只正常提交 / 推送当前分支，最终SHA与远端一致性以交付回复和Git日志为准，不改 main、不部署、不强推。
+
+完整读取V2.1附件、AGENTS、设计系统 / 架构、Marketing类型 / Store / 集中动作 / 管理与编辑页面 / 独立Staff页面 / 种子 / 权限 / 原56项测试与两份营销文档。依 automated-test-engineer 分开记录规则、页面、持久状态及失败原因；另通过应用内浏览器查看现有本地活动 / 新建空日期 / 只读核销Tab，不保存任何用户改动。所有可写回归使用隔离Chrome BrowserContext与虚构数据，不接真实客户 / 后端。
+
+## 实际修改文件与边界
+
+| 范围 | 主要修改文件 |
+| --- | --- |
+| 集中规则 / 原型类型 | frontend-react/src/features/marketing/marketing-model.ts；frontend-react/src/types/marketing.ts |
+| 活动 / 演示工厂分离 | frontend-react/src/mock/marketing-demo-data.ts |
+| 配置与发布体验 | frontend-react/src/features/marketing/MarketingAdmin.tsx、MarketingEditor.tsx、MarketingUi.tsx |
+| Staff / 预览与只读数据 | frontend-react/src/features/marketing/MarketingPages.tsx、MarketingData.tsx |
+| 代码生命周期 | 新增 frontend-react/src/features/marketing/MarketingCodes.tsx；marketing-code-import.ts |
+| 产品组合样式 | frontend-react/src/styles/marketing.css，仅发布检查与代码单元格，不做全局override |
+| 规则回归 | 原 marketing-model.test.ts 56项保留；新增 marketing-v21.test.ts 40项 |
+| 页面回归 | 新增 qa/marketing-v21-browser-qa.mjs、保留并适配 qa/marketing-v2-browser-qa.mjs；package.json 新增 qa:marketing:v21 |
+| 文档 | 本文、MARKETING_ACTIVITY_MODULE.md、UI_ITERATION_ISSUES.md |
+
+Activity中心、活动自有奖品、Participation / Booking / Draw / Award / Redemption和中奖占库存都保留。未改营销Store / storage / 路由架构、销售 / 会员核心模型、两个Store、手机号 / UnionID / 集团关联、Purchase Intent、Dashboard代码 / 指标、SQL / backend / domain / database。没有Opportunity、金额、积分或ROI；不新增任何依赖。frontend-react/package.json / package-lock.json无差异；Sowind SQL SHA256仍为 `757ef1d2b038cfc982e9a23a646fa36d274f8f89c1715a6a39152e1ddd3701a9`。
+
+原56项测试没有删除。仅将旧运行中fixture显式改用demo工厂、固定发布时钟，并把“重复行整批失败”的旧断言适配本轮明确要求的部分导入，继续断言去重与实际库存，其他V2业务不变。旧页面脚本显式填写新建窗口，检查部分导入报告与发布检查弹窗，不删除原回归范围。
+
+## 最终产物与执行结果
+
+环境：本机 `http://127.0.0.1:4174` 构建预览，真实Chrome headless、Los Angeles时区与Shanghai业务显示；规则用固定时钟。每套页面使用独立BrowserContext；测试写入只在这些隔离上下文中，不读取 / 清除真实用户LocalStorage。code全量管理和Staff均为现有原型页面，不是静态图。
+
+| 检查 | 实际结果 |
+| --- | --- |
+| npm run lint / typecheck | PASS，项目lint实际为 `tsc -b`，0错误，不假称额外ESLint |
+| npm run test | PASS，5文件 /137项：原营销56 + V2.1新增40 + Dashboard24 +销售6 +会员11 |
+| npm run build | PASS，3473模块；保留 lottie-web eval 与>500KB chunk警告，不隐藏 |
+| qa:marketing:v21 | PASS，7组 /16截图；无会员配置/发布、容量、代码查看/删/清空/重导/配额、Staff与统计、五种尺寸 |
+| qa:marketing | PASS，原V2 18组 /25截图；代码分配与幂等、实体体验履约、只读后台、V1保护升级、重置隔离、权限 |
+| qa:browser | PASS，销售 /会员27组 /31截图；Qualified→Convert to Deal、Won/Lost、看板、跟进、附件、刷新、品牌/意向/权限 |
+| qa:dashboard | PASS，原三视图11组 /13截图；筛选、明细、比例分母、日期、存量与旧数据保留 |
+| Console / runtime / 请求 | 四套最终页面检查错误数组及failed request /response数组均0 |
+| git diff --check / 范围检查 | PASS；最终提交前再次检查，不含原artifacts或无关业务文件 |
+
+最终源码构建 SHA256：app.js `ad55c5251c1009a26389836d8b61a1c20c2b5c4175bda4279ebebf223731b64e`；app.css `0e5229cd681823d6ae6cc0e02cc4cf7e9bcb98020c97610a2ec6a4827d771c59`。这些只证明本机受测产物，不是部署证明。
+
+- [V2.1规则137项机器记录](../artifacts/prototype-qa/2026-09-17T08-23-55.628Z-marketing-v21/unit-results.json)
+- [V2.1最终页面机器记录](../artifacts/prototype-qa/2026-09-17T08-28-47.281Z-marketing-v21/results.json)、[16张截图索引](../artifacts/prototype-qa/2026-09-17T08-28-47.281Z-marketing-v21/evidence.md)：包含新增ASSIGNED时间 /关联用户精确断言与08a截图
+- [V2原页面回归](../artifacts/prototype-qa/2026-09-17T08-23-56.508Z-marketing-v2/results.json)、[25张截图索引](../artifacts/prototype-qa/2026-09-17T08-23-56.508Z-marketing-v2/evidence.md)
+- [销售/会员页面回归](../artifacts/prototype-qa/2026-09-17T08-23-57.855Z-sales-regression/results.json)、[31张截图索引](../artifacts/prototype-qa/2026-09-17T08-23-57.855Z-sales-regression/00-index.md)
+- [Dashboard原页面回归](../artifacts/prototype-qa/2026-09-17T08-23-58.943Z-dashboard-v1/results.json)
+- [修正规则与权限](MARKETING_ACTIVITY_MODULE.md)、[缺陷 / 脚本错误 / 重测](UI_ITERATION_ISSUES.md)
+
+QA artifacts沿用原忽略规则，只是本机证据，没有上传GitHub；源码 / 脚本 / 文档正常提交。原08-23-55 V2.1页面结果为7组 /15截图PASS，08-28-47是追加更严格分配信息断言后同一受测构建的最终7组 /16截图PASS；二者原始记录都保留。
+
+## V2.1要求的27项逐项验证
+
+“规则”指已执行单元测试；“页面”指真实控件操作及UI / LocalStorage最终状态断言；规则通过不冒充已有独立Staff账号或生产权限通过。
+
+| # | 场景 | 实际验证与层级 |
+| --- | --- | --- |
+| 1 | 零会员仍可创建 | 规则+页面PASS，清空隔离会员fixture后HQ新建UN草稿并发布未来免预约 /免抽奖活动 |
+| 2 | 无管理品牌不能创建 | 规则PASS；原V2页面分销商无品牌，列表直达被拒绝，没有创建按钮 |
+| 3 | 零会员预览明确空状态 | 页面PASS，预览与Staff均为“当前品牌暂无可用参与用户。”，配置 / 发布仍可用 |
+| 4 | 数量100 /容量20不发布 | 规则+页面PASS，准确显示80差额、确认禁用、错误返回奖品配置 |
+| 5 | 数量20 /容量20通过该项 | 规则+页面PASS；页面复制奖品仍缺代码，所以仅该项通过，不谎称整份复制活动已发布 |
+| 6 | 非法 /过期场次不贡献容量 | 规则PASS，过期/截止/禁用/删除/越界/非法时间，-1/小数/NaN/Infinity/缺失容量优先报配置错误 |
+| 7 | 运行中履约能力继续保护 | 新旧规则PASS；原V2页面追加库存仍只显示实际容量，取消不归还中奖库存 /履约承诺 |
+| 8 | 零库存正概率不能发布 | 规则PASS；其他奖品有库存也不能掩盖该空奖品 |
+| 9 | 零库存零概率可保存 | 规则PASS，可保留不参加抽取配置 |
+| 10 | 正概率无预约能力不发布 | 规则PASS；未来可领奖但有效预约容量为0仍拒绝 |
+| 11 | 正概率码不足不发布 | 新旧规则+原V2页面PASS，补足代码前拒绝，补足后合法发布 |
+| 12 | 正常耗尽区间转NONE | 新旧规则PASS，固定其他概率，不重新分配；浏览器不随机跑到每种库存耗尽 |
+| 13 | 批次重复识别 | 规则+页面PASS，报告成功3 /重复1 /非法1，并显示失败明细；规则另覆盖98/2/1 |
+| 14 | 已有码重复不写 | 规则+页面PASS，跨奖品 /活动重复也剔除，持久代码不重复 |
+| 15 | 草稿删除AVAILABLE | 规则+页面PASS，单删、清空、重导的持久库存均核对 |
+| 16 | ASSIGNED不能删除 | 规则+页面PASS，按钮禁用、分配信息可见，混合清空 /通用保存也不能擦除或解分配 |
+| 17 | 发布后删码保护剩余配额 | 规则+页面PASS，剩9码 /9配额时删1拒绝；追加1后可删冗余，刷新分配与awards不变 |
+| 18 | 重试中奖不重新分码 | 新旧规则+原V2页面PASS，同operationId /刷新仅原award /code /draw，库存不重复占用 |
+| 19 | redeem不能编辑 | 规则PASS，Staff-only具备redeem但无manage /preview仍能现场报名 /签到 /完成，编辑被拒绝 |
+| 20 | manage不必拥有redeem | 规则PASS，管理可配置但现场 /核销命令被拒绝 |
+| 21 | view-only无写操作 | 规则PASS，19个命令组合拒绝，原state引用与Audit不变；未新增只读页面账号 |
+| 22 | 直达URL不绕过权限 | 原V2页面PASS，分销商拒绝列表 /详情 /预览 /新旧Staff路径；规则覆盖显式view=false /越品牌credential |
+| 23 | 新活动不默认已开始 | 规则+页面PASS，六窗口为空、活动两placeholder、草稿持久后仍空，发布要求明确时间 |
+| 24 | 新场次不自动过去时间 | 规则+页面PASS，父开始时间空时场次空；规则测试未来 /过去父时间建议均在未来 |
+| 25 | 列表四指标正确 | 规则+页面PASS，现场→签到→完成后2有效预约 /1签到 /1完成 /0中奖，与原记录一致；人数 /次数 /份数分开 |
+| 26 | 取消不计当前预约 | 新旧规则PASS，历史记录仍保留；原V2页面取消 /重约 /指标同源明细回归 |
+| 27 | 爽约不算签到 | 规则PASS，checkinEnd后未签到为NO_SHOW，没有伪造checkedInAt；新增缺失 /禁用 /删除 /非法场次的INVALID排除与历史保留测试 |
+
+额外验证：现场报名的容量、活动状态、allowWalkIn、预约关闭分支、一个可靠主体的品牌别名不产生第二身份 /有效预约；Voucher /Link配置与过期；published追加配额 /未来场次保留历史；复制只有新ID配置，没有代码 /库存占用 /业务记录；通用保存不可擦除ASSIGNED。
+
+## 旧数据、权限、尺寸与未执行项
+
+V2 schema2解码与保存对旧fixture用户改名 /已分配码 /历史权益深度相等；新空时间草稿也直接往返，存储键和版本不变、不回填今天、不重新播种。页面删除 /补码后整页刷新保留已有awards、ASSIGNED与其他工作区原始字符串；原V2页面再跑V1精确backup与失败保护、未知版本、三工作区重置隔离。兼容样本是虚构V1 /V2合同fixture，不是所有真实用户旧数据抽样，未声称未知数据都已迁完。
+
+Desktop 1440×900 /1280×800 /1024×768：列表、数据内部滚动、奖品编辑 /发布弹窗及代码抽屉；375 /430：用户预览 /独立Staff。实际做document横向溢出与相关工作区 /按钮边界检查；人工查看容量检查、代码抽屉与窄屏Staff代表截图，不声称每张图逐像素审核。应用内浏览器只读检查现有已修改demo活动，0页面error；一次调用了不存在的树接口，属于工具用法错误，改用文档的AX接口，不是CRM runtime错误。
+
+独立view /manage /redeem /preview能力组合只在规则层跑；现有页面账号仍HQ全能力 /分销商无品牌，没有新建Event Staff、真实登录或后端权限。未执行Safari /Firefox、真机、摄像头、跨设备 /多用户压力、服务器权限、生产库存 /码事务、微信 /HQ或第三方发券。仍是LocalStorage、Math.random演示、非真实Voucher /链接发放、非生产并发锁。
+
+需后续产品确认但本轮不扩建：实际Event Staff与品牌 /地点范围的角色映射，以及生产开奖 /码库存 /权限 /恢复策略。原Dashboard没有可靠成交日期 /完整历史等指标继续未实现，不补假0或收入 /ROI。
+
+---
+
+# 营销活动 V2 验收记录（历史，非V2.1最新结果）
 
 日期：2026-09-17。当前分支 `codex/kivisense-product-prototype`；V2本地验收开始与完成时的 HEAD 基线均为 `9ffe2ed1b1000852cba5b3c27da4d74a41d0d9fb`，当时工作区改动未提交、未推送。用户随后明确授权将本轮源码提交并同步当前GitHub分支，具体提交以Git日志及远端分支为准；未授权部署、修改 main / 强推 / 回退。原未跟踪 artifacts 及所有旧成功 / 失败记录均保留。
 

@@ -9,12 +9,13 @@ import { parseCreatedAt, shanghaiDate } from "@/features/dashboard/dashboard-mod
 import { bookingLabels, bookingStatus, chances, claimLabels, needsReservation, participationIssue, prizeTypeLabels, redemptionLabels, slotFor } from "./marketing-model";
 import { displayDate, memberName, Panel, SelectField, TextField } from "./MarketingUi";
 
-const participantLabels = { REGISTERED: "已报名 / 未开始", BOOKED: "已预约", CHECKED_IN: "已签到 / 参与中", COMPLETED: "已完成", CANCELED: "已取消", NO_SHOW: "已爽约" };
+const participantLabels = { REGISTERED: "已报名 / 未开始", BOOKED: "已预约", CHECKED_IN: "已签到 / 参与中", COMPLETED: "已完成", CANCELED: "已取消", NO_SHOW: "已爽约", INVALID: "预约失效 / 场次待核对" };
 export function participationStatus(state: ReturnType<typeof useMarketing>["state"], row: MarketingParticipation, now: number) {
   if (row.completedAt) return "COMPLETED";
   if (row.checkedInAt) return "CHECKED_IN";
   const last = state.bookings.filter((booking) => booking.participationId === row.id && booking.kind === "ACTIVITY").at(-1);
-  return last ? bookingStatus(last, slotFor(state, last), now) === "BOOKED" ? "BOOKED" : last.status === "CANCELED" ? "CANCELED" : "NO_SHOW" : "REGISTERED";
+  const status = last && bookingStatus(last, slotFor(state, last), now);
+  return status === "INVALID" ? "INVALID" : last ? status === "BOOKED" ? "BOOKED" : last.status === "CANCELED" ? "CANCELED" : "NO_SHOW" : "REGISTERED";
 }
 function useDataFilters() {
   const [search, setSearch] = useState(""), [status, setStatus] = useState("ALL"), [date, setDate] = useState("");

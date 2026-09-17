@@ -1,13 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { createDemoState } from "@/mock/demo-data";
 import { createMemberOperationsDemoState } from "@/mock/member-demo-data";
-import { createMarketingActivity, createMarketingDemoState } from "@/mock/marketing-demo-data";
+import { createDemoMarketingActivity as createMarketingActivity, createMarketingDemoState } from "@/mock/marketing-demo-data";
 import { decodeMarketing, MARKETING_STORAGE_KEY, MARKETING_V1_BACKUP_KEY, saveMarketing } from "./marketing-storage";
 import { parseMarketingCodes } from "./marketing-code-import";
 import type { MarketingActivity, MarketingState } from "@/types/marketing";
-import { activityMetrics, bookingStatus, chances, codeInventory, executeMarketing, fulfillmentCapacity, identityFor, participationFor, quota, resolveCredential, slotOccupancy, validateActivity, winnable, type MarketingCommand, type MarketingContext } from "./marketing-model";
+import { activityMetrics, bookingStatus, chances, codeInventory, executeMarketing, fulfillmentCapacity, identityFor, participationFor, quota, resolveCredential, slotOccupancy, validateActivity as validateActivityAt, winnable, type MarketingCommand, type MarketingContext } from "./marketing-model";
 
 const now = Date.parse("2026-09-17T06:00:00Z");
+// Publication capacity is time-dependent; existing scenarios use their fixed fixture clock.
+const validateActivity = (activity: MarketingActivity, state: MarketingState, brands: MarketingActivity["brand"][]) => validateActivityAt(activity, state, brands, now);
 function fixture(patch: Partial<MarketingActivity> = {}) {
   const sales = createDemoState(), members = createMemberOperationsDemoState();
   const activity = { ...createMarketingActivity("gp", now), id: "activity-test", status: "PUBLISHED" as const, publishedAt: new Date(now).toISOString(), ...patch };
@@ -330,15 +332,15 @@ describe("V2 activity-owned prizes and virtual delivery", () => {
     expect(validateActivity(a, f.state, ["gp"])).toEqual([]);
     expect(item).not.toHaveProperty("viewedAt");
   });
-  it("insufficient code inventory blocks publish and append quota; atomic import rejects duplicates", () => {
+  it("insufficient code inventory blocks publish and append quota; imports report duplicate rows without writing them", () => {
     const f = fixture(), draft = createMarketingActivity("gp", now); draft.pool[3].codes = [];
     expect(f.run({ type: "SAVE_ACTIVITY", activity: draft }).ok).toBe(true);
     expect(f.run({ type: "STATUS", activityId: draft.id, status: "PUBLISHED" }).error).toContain("兑换码不足");
     const command = { type: "IMPORT_CODES" as const, activityId: draft.id, poolItemId: draft.pool[3].id };
-    expect(f.run({ ...command, codes: ["ONE", "ONE"] }).ok).toBe(false);
-    expect(f.run({ ...command, codes: ["ONE", "TWO"] }).ok).toBe(true);
-    expect(f.run({ ...command, codes: ["THREE", "ONE"] }).ok).toBe(false);
-    expect(f.state.activities.find((row) => row.id === draft.id)!.pool[3].codes.map((code) => code.code)).toEqual(["ONE", "TWO"]);
+    expect(f.run({ ...command, codes: ["ONE", "ONE"] }).codeImport).toMatchObject({ imported: 1, duplicate: 1 });
+    expect(f.run({ ...command, codes: ["ONE", "TWO"] }).codeImport).toMatchObject({ imported: 1, duplicate: 1 });
+    expect(f.run({ ...command, codes: ["THREE", "ONE"] }).codeImport).toMatchObject({ imported: 1, duplicate: 1 });
+    expect(f.state.activities.find((row) => row.id === draft.id)!.pool[3].codes.map((code) => code.code)).toEqual(["ONE", "TWO", "THREE"]);
     expect(f.run({ type: "IMPORT_CODES", activityId: f.activity.id, poolItemId: f.activity.pool[3].id, codes: ["ONE"] }).ok).toBe(false);
     expect(f.run({ type: "ADD_QUOTA", activityId: f.activity.id, poolItemId: f.activity.pool[3].id, count: 1 }).ok).toBe(false);
   });

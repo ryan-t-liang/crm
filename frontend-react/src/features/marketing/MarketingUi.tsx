@@ -13,14 +13,14 @@ export function SelectField({ label, value, list, onChange, disabled }: { label:
   const id = useId();
   return <label className="marketing-field"><span id={id}>{label}</span><Select aria-labelledby={id} value={value} optionList={list} onChange={(next) => onChange(String(next))} disabled={disabled} /></label>;
 }
-export function TextField({ label, value, onChange, type = "text", disabled }: { label: string; value: string; onChange: (value: string) => void; type?: string; disabled?: boolean }) {
-  return <label className="marketing-field"><span>{label}</span><Input aria-label={label} type={type} value={value} onChange={onChange} disabled={disabled} /></label>;
+export function TextField({ label, value, onChange, type = "text", disabled, placeholder }: { label: string; value: string; onChange: (value: string) => void; type?: string; disabled?: boolean; placeholder?: string }) {
+  return <label className="marketing-field"><span>{label}</span><Input aria-label={label} type={type} value={value} onChange={onChange} disabled={disabled} placeholder={placeholder} /></label>;
 }
 export function NumberField({ label, value, onChange }: { label: string; value: number; onChange: (value: number) => void }) {
   return <label className="marketing-field"><span>{label}</span><InputNumber aria-label={label} value={Number.isFinite(value) ? value : undefined} onChange={(next) => onChange(typeof next === "number" ? next : NaN)} /></label>;
 }
-export function TimeField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
-  return <TextField label={label} value={dateTime(value)} type="datetime-local" onChange={(value) => onChange(value ? `${value}:00+08:00` : "")} />;
+export function TimeField({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string }) {
+  return <div><TextField label={label} value={dateTime(value)} placeholder={placeholder} type="datetime-local" onChange={(value) => onChange(value ? `${value}:00+08:00` : "")} />{placeholder && !value && <small>{placeholder}</small>}</div>;
 }
 export function Panel({ title, children, note }: { title: string; children: ReactNode; note?: string }) {
   return <section className="marketing-panel"><header><h2>{title}</h2>{note && <p>{note}</p>}</header><div>{children}</div></section>;
