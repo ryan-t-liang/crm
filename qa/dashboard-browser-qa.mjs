@@ -78,8 +78,16 @@ try {
   const cnLeads = sales.leads.filter((row) => row.distributorId === "dist-cn");
   const rangeLabel = await page.locator(".dashboard-context").textContent();
   const start = Date.parse(`${rangeLabel.match(/创建期：(\d{4}-\d{2}-\d{2})/)[1]}T00:00:00+08:00`);
-  await drawer("本期新增 Lead", cnLeads.filter((row) => Date.parse(row.createdAt) >= start));
-  await drawer("当前进行中 Deal", sales.deals.filter((row) => row.distributorId === "dist-cn" && ["DISCOVERY", "SOLUTION", "QUOTATION", "NEGOTIATION"].includes(row.stage)));
+  const end = Date.parse(`${rangeLabel.match(/创建期：\d{4}-\d{2}-\d{2} — (\d{4}-\d{2}-\d{2})/)[1]}T00:00:00+08:00`) + 86_400_000;
+  // Existing sales seeds have whole-second timestamps. Use the displayed fixed
+  // snapshot, not wall-clock time or a start-only test expectation at LA midnight.
+  const snapshotAt = Date.parse(`${rangeLabel.match(/查看时刻：(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/)[1].replace(" ", "T")}+08:00`);
+  const inPeriod = (row) => { const time = Date.parse(row.createdAt); return time >= start && time < end && time <= snapshotAt; };
+  const notFuture = (row) => !Number.isFinite(Date.parse(row.createdAt)) || Date.parse(row.createdAt) <= snapshotAt;
+  await drawer("本期新增 Lead", cnLeads.filter(inPeriod));
+  const futureLeads = cnLeads.filter((row) => Date.parse(row.createdAt) > snapshotAt);
+  if (futureLeads.length) await drawer("Lead未来日期（未纳入）", futureLeads, [{ label: "匹配记录", ids: futureLeads.map((row) => row.id) }]);
+  await drawer("当前进行中 Deal", sales.deals.filter((row) => row.distributorId === "dist-cn" && notFuture(row) && ["DISCOVERY", "SOLUTION", "QUOTATION", "NEGOTIATION"].includes(row.stage)));
   await drawer("当前未关联会员的意向", members.purchaseIntents.filter((row) => row.brand === "gp" && row.user_id === null));
   await drawer("当前同步异常", members.purchaseIntents.filter((row) => row.brand === "gp" && row.hq_sync_status === 0 && row.error?.trim()));
   const currentBefore = await page.getByRole("button", { name: "当前进行中 Deal：查看明细", exact: true }).first().textContent();
@@ -89,15 +97,15 @@ try {
   assert.ok((await page.getByRole("combobox", { name: "统计周期" }).textContent()).includes("今天"));
   assert.ok((await page.getByRole("combobox", { name: "销售分销商范围" }).textContent()).includes("Shanghai Partner"));
   await select("统计周期", "最近 30 个自然日");
-  const cohortLeads = cnLeads.filter((row) => Date.parse(row.createdAt) >= start);
+  const cohortLeads = cnLeads.filter(inPeriod);
   const numerator = cohortLeads.filter((lead) => {
     const deal = sales.deals.find((row) => row.id === lead.convertedDealId && row.distributorId === "dist-cn");
-    return lead.status === "CONVERTED" && deal && (!deal.sourceLeadId || deal.sourceLeadId === lead.id) && sales.leads.filter((row) => row.convertedDealId === deal.id).length === 1;
+    return lead.status === "CONVERTED" && deal && notFuture(deal) && (!deal.sourceLeadId || deal.sourceLeadId === lead.id) && sales.leads.filter((row) => row.convertedDealId === deal.id).length === 1;
   });
   await drawer("新增 Lead 转 Deal 比例", [], [{ label: "分子：已确认转 Deal 的 Lead", ids: numerator.map((row) => row.id) }, { label: "分母：本期创建的全部 Lead", ids: cohortLeads.map((row) => row.id) }]);
   await page.locator(".dashboard-secondary > summary").click();
   const product = sales.products[0];
-  const productDeals = sales.deals.filter((row) => row.productId === product.id && row.distributorId === "dist-cn" && Date.parse(row.createdAt) >= start);
+  const productDeals = sales.deals.filter((row) => row.productId === product.id && row.distributorId === "dist-cn" && inPeriod(row));
   await drawer(`${product.name} / 新增 Deal`, productDeals);
   await page.locator('circle[role="button"]').first().click(); await page.locator(".dashboard-drilldown").waitFor(); assert.ok((await page.locator(".dashboard-drilldown").textContent()).includes("分桶")); await page.keyboard.press("Escape");
   await page.locator(".dashboard-trend-details > summary").click(); const firstBin = page.locator(".dashboard-trend-details tbody tr").first(); await firstBin.locator("button").first().click(); await page.locator(".dashboard-drilldown").waitFor(); await page.keyboard.press("Escape");

@@ -9,3 +9,9 @@ Semi Design, Semi Icons, the Kivisense Semi theme, React, and Recharts are the a
 The canonical sales flow is `Lead → Qualified → Convert to Deal → Won/Lost`. Do not create an Opportunity module and do not add price, value, revenue, discount, quotation amount, or transaction amount fields.
 
 Before creating a custom UI component, check whether Semi Design provides an appropriate component. Prefer Semi tokens and theming, keep interaction patterns consistent, and use custom CSS only for product-specific composition.
+
+## GitHub handoff
+
+The user requested GitHub synchronization after each completed implementation iteration. Unless the latest task explicitly says otherwise, run the relevant verification gates, commit only that iteration's changes, and push the current working branch to `origin`. Verify the remote branch matches the resulting commit before reporting success. If verification fails or the remote branch has diverged, resolve safely or report the blocker; do not force-push or bypass failed checks.
+
+Preserve unrelated staged, unstaged, and untracked work, including local QA archives. This handoff does not authorize modifying or overwriting `main`, merging branches, or deploying; those actions require an explicit request.

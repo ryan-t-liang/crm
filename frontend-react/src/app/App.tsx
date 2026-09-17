@@ -10,7 +10,7 @@ import { LeadsPage } from "@/features/leads/LeadsPage";
 import { BrandMembersPage, MemberCustomersPage, PurchaseIntentsPage } from "@/features/member-operations/MemberOperationsPages";
 import { SettingsPage } from "@/features/work/SettingsPage";
 import { TasksPage } from "@/features/work/TasksPage";
-import { MarketingPage } from "@/features/marketing/MarketingPages";
+import { MarketingPage, MarketingRedemptionSurface } from "@/features/marketing/MarketingPages";
 import { useCrm } from "@/stores/crm-store";
 
 const readRoute = () => window.location.hash.replace(/^#\/?/, "") || "dashboard";
@@ -24,6 +24,8 @@ export function App() {
     return () => window.removeEventListener("hashchange", change);
   }, []);
   const [section, id] = route.split("/");
+  // A separate existing staff surface, never rendered inside CRM navigation.
+  if (section === "redemption" || section === "marketing" && id === "redemption") return <MarketingRedemptionSurface code={route.split("/").slice(section === "redemption" ? 1 : 2).join("/")} />;
   const scopedDetailRows = section === "leads" ? state.leads : section === "deals" ? state.deals : section === "contacts" ? state.contacts : section === "organizations" ? state.organizations : null;
   const detailDenied = Boolean(id && scopedDetailRows && !isHq && !scopedDetailRows.some((row) => row.id === id && row.distributorId === currentUser.distributorId));
   let page: React.ReactNode;
