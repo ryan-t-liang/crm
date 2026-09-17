@@ -10,6 +10,8 @@
     "build": "npm --workspace frontend-react run build",
     "test": "npm --workspace frontend-react run test",
     "lint": "npm --workspace frontend-react run lint",
-    "qa:browser": "node qa/prototype-browser-qa.mjs"
+    "qa:browser": "node qa/prototype-browser-qa.mjs",
+    "qa:dashboard": "node qa/dashboard-browser-qa.mjs",
+    "qa:marketing": "node qa/marketing-browser-qa.mjs"
   }
 }

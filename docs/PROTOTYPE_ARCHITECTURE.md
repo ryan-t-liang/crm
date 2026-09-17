@@ -21,9 +21,21 @@ The sales lifecycle is `Lead → Qualified → Deal → Won/Lost`. Deals referen
 
 Member operations mirrors the requested Sowind object boundary as four independent frontend collections: `customer`, brand identity `user`, `user_profile`, and `user_purchase_intent`. The UI composes `user + user_profile` for a brand-member detail instead of creating a Membership entity. A `user.customer_id` or `user_purchase_intent.user_id` may remain `null`. Purchase-intent contact fields stay as their own historical snapshot and are not derived live from `user_profile`. Member Purchase Intents are not Sales Leads and never enter Deal conversion or sales analytics automatically.
 
-`docs/reference/sowind-schema.sql` was not present when this module was implemented. Types therefore include only fields explicitly named in the compatibility brief; complete SQL column, type, nullability, index, and constraint parity remains unverified. See `docs/SOWIND_MEMBER_FIELD_MAPPING.md`.
+The Dashboard V1 attachment supplies `docs/reference/sowind-schema.sql`. It has now been read and copied unchanged to the local reference directory (ignored by Git). Dashboard types expose SQL timestamps, `user.is_deleted`, intent merchandise fields and JSON `hq_ref` without rewriting existing data. Legacy aliases/extensions remain explicitly identified in `docs/SOWIND_MEMBER_FIELD_MAPPING.md`; these partial frontend display contracts do not claim complete database integration.
 
-## Persistence
+## Dashboard V1
+
+One navigation entry retains `#dashboard` (business summary), with `#dashboard/sales` and `#dashboard/members` as secondary tabs. `features/dashboard/dashboard-model.ts` is the shared read-only query layer: authority first, independent business filters second, one fixed Shanghai-time snapshot for KPIs, buckets and drilldown records. Read-only Semi SideSheets consume the same selected record arrays; no unfiltered list redirection. Date presets/custom selection stay mounted across dashboard tabs, and closing a drawer preserves filters. Role/query/data changes dismiss existing drawers.
+
+Current stock, created-in-period cohorts and those cohorts' current results are separate. No historical funnel or actual-close event metrics are inferred. The App route adds read-only distributor checks for direct Lead/Deal/Contact/Organization detail URLs. Business mutations and both store loaders/storage keys/reset implementations are unchanged. See `DASHBOARD_METRICS.md` and `DASHBOARD_V1_ACCEPTANCE.md`.
+
+## Marketing activities V1
+
+One additive member-and-brand navigation entry uses `#marketing`. `src/types/marketing.ts`, `src/mock/marketing-demo-data.ts`, `src/features/marketing/` and `src/stores/marketing-store.tsx` are an independent frontend bounded context, not SQL tables or a replacement sales/member model. The provider references existing members; all writes use one validated marketing action and one persistence commit. Participations freeze a reliable customer boundary or brand-user boundary; ACT/PRIZE bookings, chances, draws (including NONE), prize snapshots, quota and local audit records remain explicitly linked. User preview and staff workbench share the same state, and member detail adds only a readonly records tab. Existing store implementations and sales/member resets are unchanged.
+
+Marketing uses `kivisense-marketing-prototype-v1` (version 1); only a missing namespace initializes, unknown/corrupt contents are preserved, and confirmed marketing reset changes only this key. Browser quota failure commits no result/cost/stock. Frontend role/randomness/capacity checks are demonstrations, not production concurrency/security. See `MARKETING_ACTIVITY_MODULE.md` and `MARKETING_ACTIVITY_ACCEPTANCE.md`.
+
+## Existing persistence
 
 The initial state is generated from `src/mock/demo-data.ts`. Mutations are written to browser LocalStorage. “Reset Demo Data” restores the canonical dataset.
 

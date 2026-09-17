@@ -26,6 +26,7 @@ export function AppShell({ route, children }: { route: string; children: ReactNo
       { label: "集团客户", route: "member-customers", icon: <IconUserGroup />, count: memberState.customers.length, hqOnly: true },
       { label: "品牌会员", route: "brand-members", icon: <IconUserList />, count: memberState.brandUsers.length, hqOnly: true },
       { label: "购买意向", route: "purchase-intents", icon: <IconLayers />, count: memberState.purchaseIntents.length, hqOnly: true },
+      { label: "营销活动", route: "marketing", icon: <IconApps />, hqOnly: true },
     ] },
     { label: "CATALOG", items: [{ label: "产品", route: "products", icon: <IconGridView />, count: state.products.filter((item) => item.status === "ACTIVE").length }] },
     { label: "WORK", items: [{ label: "任务", route: "tasks", icon: <IconCheckList />, count: scoped(state.tasks).filter((item) => item.status === "OPEN").length }] },

@@ -1,7 +1,7 @@
 import type { MemberOperationsState } from "@/types/member-operations";
 
-// Fictional records shaped only from fields explicitly named in the Sowind compatibility brief.
-// The missing docs/reference/sowind-schema.sql prevents claiming complete column parity.
+// Fictional identities. SQL-compatible statistical fields are added ONLY to fresh demo seeds.
+// Loading existing LocalStorage never merges these fields or assigns missing dates to today.
 const baseState: MemberOperationsState = {
   version: 2,
   brandScope: "ALL",
@@ -42,5 +42,14 @@ const baseState: MemberOperationsState = {
 };
 
 export function createMemberOperationsDemoState(): MemberOperationsState {
-  return structuredClone(baseState);
+  const state = structuredClone(baseState);
+  const dayAgo = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString();
+  state.customers = state.customers.map((item, index) => ({ ...item, created_at: dayAgo(50 + index), updated_at: dayAgo(2) }));
+  state.brandUsers = state.brandUsers.map((item, index) => ({ ...item, created_at: dayAgo(index * 6), updated_at: dayAgo(0), source: 1, is_deleted: 0 }));
+  state.userProfiles = state.userProfiles.map((item) => {
+    const user = state.brandUsers.find((entry) => entry.id === item.user_id)!;
+    return { ...item, tel: user.phone ?? "", tel_country_code: user.country_code, created_at: user.created_at, updated_at: user.updated_at };
+  });
+  state.purchaseIntents = state.purchaseIntents.map((item, index) => ({ ...item, created_at: dayAgo(index * 9), updated_at: dayAgo(0), tel: item.phone, tel_country_code: item.country_code, product_sku: index < 2 ? `${item.brand.toUpperCase()}-DEMO-01` : null, model: index === 2 ? "GP Demo model" : null, source: item.id.includes("admin") ? 2 : 1, hq_ref: item.hq_ref ? { demo_reference: item.hq_ref } : null }));
+  return state;
 }

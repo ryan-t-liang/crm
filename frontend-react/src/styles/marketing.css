@@ -1,0 +1,40 @@
+.marketing-page > .semi-tabs .semi-tabs-content { display: none; }
+.marketing-demo-note { font-size: 11px; color: var(--crm-text-3); line-height: 1.7; margin: 10px 0 14px; }
+.marketing-panel { min-width: 0; border: 1px solid var(--crm-border); background: var(--crm-surface); border-radius: var(--crm-radius); margin: 12px 0; }
+.marketing-panel > header { padding: 11px 13px 8px; border-bottom: 1px solid var(--crm-border); }
+.marketing-panel h2 { margin: 0; font-size: 13px; }
+.marketing-panel header p { margin: 5px 0 0; color: var(--crm-text-3); font-size: 11px; line-height: 1.7; }
+.marketing-panel > div { padding: 12px 13px; min-width: 0; }
+.marketing-panel p, .marketing-panel li { font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+.marketing-field { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; min-width: 0; font-size: 11px; color: var(--crm-text-2); }
+.marketing-field .semi-select, .marketing-field .semi-input-number { width: 100%; min-width: 0; }
+.marketing-toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; }
+.marketing-toolbar .marketing-field { min-width: 145px; max-width: 260px; flex: 1; }
+.marketing-toolbar > .semi-button { margin-bottom: 8px; }
+.marketing-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px 14px; }
+.marketing-editor details { border-top: 1px solid var(--crm-border); padding: 8px 0; }
+.marketing-editor summary { cursor: pointer; font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+.marketing-cover { max-width: 180px; max-height: 130px; object-fit: contain; }
+.marketing-phases { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 8px; color: var(--crm-text-3); font-size: 10px; line-height: 1.5; margin-top: 7px; }
+.marketing-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; }
+.marketing-metrics > button { appearance: none; border: 0; border-right: 1px solid var(--crm-border); background: transparent; text-align: left; padding: 7px 12px; cursor: pointer; color: var(--crm-text-2); }
+.marketing-metrics span, .marketing-metrics small { display: block; font-size: 11px; line-height: 1.6; }
+.marketing-metrics strong { display: block; font-size: 23px; color: var(--crm-text); margin: 3px 0; }
+.marketing-metrics > button:hover { background: var(--semi-color-fill-0); }
+.marketing-metrics > button:focus-visible { outline: 2px solid var(--semi-color-focus-border); }
+.marketing-credential { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 15px; align-items: center; margin: 14px 0; padding: 12px; background: var(--semi-color-fill-0); }
+.marketing-credential img { display: block; width: 140px; height: 140px; image-rendering: pixelated; }
+.marketing-credential strong, .marketing-credential code, .marketing-credential small { display: block; margin-bottom: 8px; overflow-wrap: anywhere; line-height: 1.7; }
+.marketing-credential code { font-size: 12px; user-select: all; }
+.marketing-credential small { color: var(--crm-text-3); font-size: 10px; }
+.marketing-my-award { border-top: 1px solid var(--crm-border); padding: 10px 0; }
+.marketing-my-award h3 { font-size: 13px; margin: 3px 0; }
+.marketing-preview .data-list dd, .marketing-redemption .data-list dd { overflow-wrap: anywhere; }
+.marketing-draw-result { padding: 8px 10px; border-left: 2px solid var(--crm-brand); background: var(--crm-brand-soft); }
+@media (max-width: 700px) {
+  .marketing-form-grid { grid-template-columns: 1fr; }
+  .marketing-credential { grid-template-columns: 1fr; }
+  .marketing-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .marketing-preview .page-header { display: block; }
+  .marketing-toolbar .marketing-field { max-width: 100%; }
+}

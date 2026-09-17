@@ -1,12 +1,11 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { chromium } from "playwright";
 const base = process.env.PROTOTYPE_BASE_URL || "http://127.0.0.1:4173";
-const root = resolve("artifacts/prototype-qa");
+const root = resolve("artifacts/prototype-qa", `${new Date().toISOString().replaceAll(":", "-")}-sales-regression`);
 const screenshots = resolve(root, "screenshots");
-await rm(root, { recursive: true, force: true });
 await mkdir(screenshots, { recursive: true });
 
 const browser = await chromium.launch({ channel: "chrome", headless: true });
@@ -45,8 +44,8 @@ try {
   await page.goto(`${base}/#dashboard`, { waitUntil: "networkidle" });
   await page.evaluate(() => localStorage.clear());
   await page.reload({ waitUntil: "networkidle" });
-  await page.getByRole("heading", { name: "数据概览", exact: true }).waitFor();
-  assert.equal(await page.getByText("All Distributors", { exact: true }).count(), 1);
+  await page.getByRole("heading", { name: "业务总览", exact: true }).waitFor();
+  assert.equal(await page.getByText("全部授权分销商", { exact: true }).count(), 1);
   const userMenuLayout = await page.evaluate(() => {
     const topbar = document.querySelector(".topbar")?.getBoundingClientRect();
     const menu = document.querySelector(".user-menu")?.getBoundingClientRect();
@@ -160,8 +159,11 @@ try {
   await page.getByRole("button", { name: "Mark Won", exact: true }).click();
   await page.waitForFunction(() => { const state = JSON.parse(localStorage.getItem("kivisense-crm-prototype-v1") || "{}"); return state.deals.find((item) => item.name === "L'Oréal Interactive Beauty Launch Deal")?.stage === "WON"; });
   pass("Mark Deal Won and persist stage");
+  await page.getByRole("button", { name: "Mark Lost", exact: true }).click();
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem("kivisense-crm-prototype-v1")).deals.find((row) => row.name === "L\'Oréal Interactive Beauty Launch Deal")?.stage === "LOST");
+  pass("Mark Deal Lost and persist stage");
 
-  await route("deals", "Deals"); await page.getByText("Kanban", { exact: true }).click(); await page.getByLabel("Deal Pipeline").waitFor(); const card = page.locator(".deal-card").first(); const destination = page.locator(".kanban-column").nth(1); await card.dragTo(destination); pass("Deal Kanban drag changes stage"); await shot("deal-kanban-1440x900");
+  await route("deals", "Deals"); await page.getByText("Kanban", { exact: true }).click(); await page.getByLabel("Deal Pipeline").waitFor(); const card = page.locator(".deal-card").first(); const destination = page.locator(".kanban-column").nth(1); const draggedId = (await card.locator("a").getAttribute("href")).split("/").at(-1); await card.dragTo(destination, { sourcePosition: { x: 20, y: 110 }, targetPosition: { x: 50, y: 50 } }); await page.waitForFunction((id) => JSON.parse(localStorage.getItem("kivisense-crm-prototype-v1")).deals.find((row) => row.id === id)?.stage === "SOLUTION", draggedId); pass("Deal Kanban drag changes stage"); await shot("deal-kanban-1440x900");
 
   await route("contacts/contact-1", "Bob Martinez");
   await page.getByRole("tab", { name: "Notes", exact: true }).click(); await page.getByPlaceholder("Note title").fill("Buying committee"); await page.getByPlaceholder("Write a note…").fill("Digital commerce and innovation teams are aligned."); await page.getByRole("button", { name: "Save Note", exact: true }).click(); await page.getByLabel("Notes").getByText("Buying committee", { exact: true }).waitFor();
@@ -179,8 +181,8 @@ try {
   await page.getByText("当前 Demo User 无权访问 HQ 工作区", { exact: true }).waitFor();
   assert.equal(await page.getByRole("button", { name: /集团客户/ }).count(), 0);
   pass("Distributor role cannot enter member operations workspace");
-  await route("dashboard", "数据概览");
-  assert.equal(await page.getByText("All Distributors", { exact: true }).count(), 0);
+  await route("dashboard", "业务总览");
+  assert.equal(await page.getByText("全部授权分销商", { exact: true }).count(), 0);
   assert.equal(await page.getByRole("button", { name: /分销商/ }).count(), 0);
   const scopedLeadCount = await page.evaluate(() => { const state = JSON.parse(localStorage.getItem("kivisense-crm-prototype-v1") || "{}"); const user = state.users.find((item) => item.id === state.currentUserId); return state.leads.filter((item) => item.distributorId === user.distributorId).length; });
   assert.ok(scopedLeadCount > 0 && scopedLeadCount < 36);
@@ -188,7 +190,7 @@ try {
 
   await selectSemi(page.locator(".demo-user-select"), "Ryan · Kivisense Super Admin");
   await page.waitForFunction(() => JSON.parse(localStorage.getItem("kivisense-crm-prototype-v1") || "{}").currentUserId === "user-ryan");
-  for (const [width, height] of [[1600, 900], [1920, 1080], [1024, 768]]) { await page.setViewportSize({ width, height }); for (const [hash, heading] of [["dashboard", "数据概览"], ["leads", "Leads"], ["deals", "Deals"]]) { await route(hash, heading); await shot(`${hash}-${width}x${height}`); } }
+  for (const [width, height] of [[1600, 900], [1920, 1080], [1024, 768]]) { await page.setViewportSize({ width, height }); for (const [hash, heading] of [["dashboard", "业务总览"], ["leads", "Leads"], ["deals", "Deals"]]) { await route(hash, heading); await shot(`${hash}-${width}x${height}`); } }
   for (const [hash, heading] of [["member-customers", "集团客户"], ["brand-members", "品牌会员"], ["purchase-intents", "品牌购买意向"]]) { await route(hash, heading); await shot(`${hash}-1024x768`); }
   pass("Responsive desktop layouts", "Sales at 1600x900, 1920x1080, 1024x768; member workspace at 1440x900 and 1024x768");
   assert.deepEqual(consoleErrors, []); assert.deepEqual(failedResponses, []); pass("Console errors and failed requests", "0 / 0");

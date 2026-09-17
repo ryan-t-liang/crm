@@ -51,8 +51,8 @@ describe("Sowind-compatible member operations demo dataset", () => {
   it("preserves nulls and unresolved raw dictionary codes", () => {
     const state = createMemberOperationsDemoState();
     expect(state.userProfiles.some((profile) => profile.region === null && profile.areas_of_interest === null)).toBe(true);
-    expect(state.userProfiles.some((profile) => profile.favorite_series?.includes("UNKNOWN"))).toBe(true);
-    expect(state.purchaseIntents.some((intent) => intent.favorite_series?.includes("UNKNOWN"))).toBe(true);
+    expect(state.userProfiles.some((profile) => typeof profile.favorite_series === "string" && profile.favorite_series.includes("UNKNOWN"))).toBe(true);
+    expect(state.purchaseIntents.some((intent) => typeof intent.favorite_series === "string" && intent.favorite_series.includes("UNKNOWN"))).toBe(true);
   });
 
   it("applies brand + country code + phone candidate rules without auto-linking", () => {
