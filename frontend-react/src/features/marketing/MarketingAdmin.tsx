@@ -93,9 +93,11 @@ function PrizeSettings({ activity }: { activity: MarketingActivity }) {
   const { state } = useMarketing(), { currentUser } = useCrm(), access = marketingPermissions(currentUser), { run, feedback } = useAction(); const now = useClock();
   const [editing, setEditing] = useState<ActivityPrize | null>(null), [importId, setImportId] = useState(""), [codesId, setCodesId] = useState(""), [extra, setExtra] = useState({ itemId: "", count: 1 }), [addingSlot, setAddingSlot] = useState<{ itemId: string; slot: MarketingSlot } | null>(null);
   const rulesLocked = Boolean(activity.publishedAt || hasActivityBusinessData(state, activity.id));
+  const existingPrize = Boolean(editing && activity.pool.some(item => item.id === editing.id));
+  const creationBlocked = !existingPrize && (rulesLocked || !activity.lotteryEnabled || activity.status === "CANCELED");
   const codePrize = activity.pool.find((item) => item.id === codesId);
   return <>{feedback}
-    <Panel actions={!rulesLocked && <Button size="small" icon={<IconPlus />} disabled={!access.manage || !activity.lotteryEnabled} onClick={() => setEditing({ ...createActivityPrize(activity.id, Date.now()), fulfillmentMode: "DIRECT" })}>添加奖品</Button>}>
+    <Panel actions={<Button theme="solid" size="small" icon={<IconPlus />} disabled={!access.manage || !activity.lotteryEnabled || activity.status === "CANCELED"} onClick={() => setEditing({ ...createActivityPrize(activity.id, Date.now()), fulfillmentMode: "DIRECT" })}>创建奖品</Button>}>
       <Table rowKey="id" dataSource={activity.pool} pagination={{ pageSize: 10 }} scroll={{ x: 1260 }} empty={<EmptyBlock title="暂无奖品" description="添加奖品后，可分别配置领取方式、配额和中奖概率。" />} columns={[
         { title: "奖品", width: 210, render: (_: unknown, item: ActivityPrize) => <div className="marketing-summary-cell"><strong>{item.name}</strong><span>{item.label}</span></div> },
         { title: "类型", width: 120, render: (_: unknown, item: ActivityPrize) => prizeTypeLabels[item.prizeType] },
@@ -113,11 +115,13 @@ function PrizeSettings({ activity }: { activity: MarketingActivity }) {
         ]}><Button theme="borderless" size="small" icon={<IconMore />} aria-label={`更多奖品操作 · ${item.name}`} /></Dropdown></div> },
       ]} />
     </Panel>
-    {editing && <FormSideSheet visible className="marketing-prize-editor" title={activity.pool.some(item => item.id === editing.id) ? "编辑奖品" : "添加奖品"} width={720} okText="保存" cancelText="取消" onCancel={() => setEditing(null)} onOk={() => { if (run({ type: "SAVE_ACTIVITY_PRIZE", activityId: activity.id, prize: editing }).ok) setEditing(null); }}>{feedback}<DefinitionGrid rows={[
+    {editing && <FormSideSheet visible className="marketing-prize-editor" title={existingPrize ? "编辑奖品" : "创建奖品"} width={720} okText={existingPrize ? "保存" : "创建奖品"} cancelText="取消" okButtonProps={{ disabled: !access.manage || creationBlocked }} onCancel={() => setEditing(null)} onOk={() => { if (!access.manage || creationBlocked) return; if (run({ type: "SAVE_ACTIVITY_PRIZE", activityId: activity.id, prize: editing }).ok) setEditing(null); }}>{feedback}
+      {creationBlocked && <Banner type="warning" title="此活动不能新增奖品" description="活动已发布或已有业务记录，奖品规则已锁定。请在未发布且没有业务记录的活动中创建奖品。" closeIcon={null} />}
+      {existingPrize && <DefinitionGrid rows={[
       ["可继续中奖", winnable(state, activity.id, editing, now)], ["已领取 / 发放", quota(state, activity.id, editing).issued],
       ...(needsReservation(editing) ? [["待预约权益", fulfillmentCapacity(state, activity.id, editing, now).unreservedPromises], ["预约名额缺口", fulfillmentCapacity(state, activity.id, editing, now).shortfall]] as Array<[string, ReactNode]> : []),
       ...(editing.method === "REDEMPTION_CODE" ? [["兑换码：导入 / 分配 / 剩余", `${codeInventory(editing).imported} / ${codeInventory(editing).assigned} / ${codeInventory(editing).remaining}`]] as Array<[string, ReactNode]> : []),
-    ]} />{rulesLocked ? <><Banner title="奖品规则已锁定" description="文案修改不影响历史中奖记录；配额、兑换码和领奖时段可通过专用操作追加。" closeIcon={null} /><TextField label="奖品名称" value={editing.name} onChange={(name) => setEditing({ ...editing, name })} /><TextField label="奖项名称" value={editing.label} onChange={(label) => setEditing({ ...editing, label })} /><TextField label="奖品说明" value={editing.description} onChange={(description) => setEditing({ ...editing, description })} /><TextField label="使用 / 领取说明" value={editing.instructions} onChange={(instructions) => setEditing({ ...editing, instructions })} /><ImageField label="奖品图片" value={editing.image} onChange={(image) => setEditing({ ...editing, image })} /></> : <PrizeFields prize={editing} onChange={setEditing} />}</FormSideSheet>}
+    ]} />}{rulesLocked && existingPrize ? <><Banner title="奖品规则已锁定" description="文案修改不影响历史中奖记录；配额、兑换码和领奖时段可通过专用操作追加。" closeIcon={null} /><TextField label="奖品名称" value={editing.name} onChange={(name) => setEditing({ ...editing, name })} /><TextField label="奖项名称" value={editing.label} onChange={(label) => setEditing({ ...editing, label })} /><TextField label="奖品说明" value={editing.description} onChange={(description) => setEditing({ ...editing, description })} /><TextField label="使用 / 领取说明" value={editing.instructions} onChange={(instructions) => setEditing({ ...editing, instructions })} /><ImageField label="奖品图片" value={editing.image} onChange={(image) => setEditing({ ...editing, image })} /></> : <PrizeFields prize={editing} onChange={setEditing} />}</FormSideSheet>}
     {importId && <FormSideSheet visible title="导入当前奖品兑换码" width={650} footer={<Button onClick={() => setImportId("")}>完成</Button>} onCancel={() => setImportId("")}>
       {feedback}<CodeImporter onImport={(codes) => run({ type: "IMPORT_CODES", activityId: activity.id, poolItemId: importId, codes }).codeImport} />
     </FormSideSheet>}
@@ -160,11 +164,11 @@ export function MarketingDetail({ activity, requestedTab }: { activity: Marketin
     </>}
     actions={<Dropdown trigger="click" position="bottomRight" menu={activityMenu(activity, access.manage, now, run)}><Button theme="borderless" icon={<IconMore />} aria-label="更多操作" /></Dropdown>}
     sidebar={<>
-      <SideSection title="活动信息" actions={<Button size="small" disabled={!access.manage} onClick={() => setEditing(true)}>编辑活动</Button>}>
+      <SideSection title="活动信息" editLabel="编辑活动" editDisabled={!access.manage} onEdit={() => setEditing(true)}>
         <DataList rows={coreInfo} />
         <div className="marketing-rail-rule"><h3>活动规则</h3><ActivityRuleContent activity={activity} /></div>
       </SideSection>
-      {activity.bookingEnabled && <SideSection title="预约设置" actions={<Button size="small" disabled={!access.manage || locked} onClick={() => setConfiguration("booking")}>编辑</Button>}>
+      {activity.bookingEnabled && <SideSection title="预约设置" editDisabled={!access.manage || locked} onEdit={() => setConfiguration("booking")}>
         <DataList rows={[
           ["预约开放", displayDate(activity.bookingStart)], ["预约截止", displayDate(activity.bookingEnd)],
           ["完成条件", activity.completion === "CHECKIN" ? "签到即完成" : "工作人员确认完成"],
@@ -173,7 +177,7 @@ export function MarketingDetail({ activity, requestedTab }: { activity: Marketin
         ]} />
         <div className="marketing-session-actions row-actions"><Button size="small" onClick={() => setSessions(true)}>管理场次</Button></div>
       </SideSection>}
-      {activity.lotteryEnabled && <SideSection title="抽奖设置" actions={<Button size="small" disabled={!access.manage || locked} onClick={() => setConfiguration("lottery")}>编辑</Button>}>
+      {activity.lotteryEnabled && <SideSection title="抽奖设置" editDisabled={!access.manage || locked} onEdit={() => setConfiguration("lottery")}>
         <DataList rows={[
           ["抽奖时间", displayDateRange(activity.lotteryStart, activity.lotteryEnd).compact],
           ["完成后发放次数", String(activity.grantCount)], ["累计抽奖上限", String(activity.drawLimit)],

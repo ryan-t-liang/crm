@@ -1,6 +1,6 @@
 import type { ComponentProps, ReactNode } from "react";
-import { Avatar, Button, Empty, SideSheet, Skeleton, Tag, Typography } from "@douyinfe/semi-ui";
-import { IconArrowLeft, IconPlus } from "@douyinfe/semi-icons";
+import { Avatar, Button, Empty, SideSheet, Skeleton, Tag, Tooltip, Typography } from "@douyinfe/semi-ui";
+import { IconArrowLeft, IconEdit, IconPlus } from "@douyinfe/semi-icons";
 import { initials, navigate } from "@/utils/format";
 
 export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
@@ -49,8 +49,10 @@ export function DetailWorkspace({
   </div>;
 }
 
-export function SideSection({ title, children, actions }: { title: string; children: ReactNode; actions?: ReactNode }) {
-  return <section className="side-section"><header><Typography.Title heading={6}>{title}</Typography.Title>{actions}</header><div>{children}</div></section>;
+export function SideSection({ title, children, actions, onEdit, editDisabled = false, editLabel = `编辑${title}` }: {
+  title: string; children: ReactNode; actions?: ReactNode; onEdit?: () => void; editDisabled?: boolean; editLabel?: string;
+}) {
+  return <section className="side-section"><header><Typography.Title heading={6}>{title}</Typography.Title>{actions}{onEdit && <Tooltip content={editLabel}><span><Button theme="borderless" size="small" icon={<IconEdit />} aria-label={editLabel} disabled={editDisabled} onClick={onEdit} /></span></Tooltip>}</header><div>{children}</div></section>;
 }
 
 export function DataList({ rows }: { rows: Array<[string, ReactNode]> }) {

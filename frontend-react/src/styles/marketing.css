@@ -42,7 +42,7 @@
 .marketing-detail .marketing-record-metadata { margin: 0; }
 /* Explicit activity-page typography: readable body copy and equal-weight rail/tab titles. */
 .marketing-detail .record-tabs > .semi-tabs-bar .semi-tabs-tab,
-.marketing-detail .side-section > header h6 { font-size: 16px; line-height: 24px; }
+.marketing-detail .side-section > header h6 { font-size: 14px; line-height: 24px; }
 .marketing-detail .data-list dt, .marketing-detail .data-list dd,
 .marketing-prize-booking-modal .data-list dt, .marketing-prize-booking-modal .data-list dd { font-size: 14px; line-height: 22px; }
 .marketing-detail .data-list > div { column-gap: 15px; }
@@ -67,7 +67,7 @@
 .marketing-editor .semi-banner { margin-bottom: 20px; }
 .marketing-config-table { min-width: 0; }
 .marketing-config-table > .row-actions { margin-bottom: 12px; }
-.marketing-summary-cell { display: grid; gap: 4px; font-size: 14px; line-height: 22px; }
+.marketing-summary-cell { display: grid; justify-items: start; gap: 4px; font-size: 14px; line-height: 22px; }
 .marketing-summary-cell small { color: var(--crm-text-3); }
 .marketing-code-summary { display: flex; flex-wrap: wrap; gap: 12px 20px; margin: 12px 0 20px; }
 .marketing-rich-toolbar .semi-button { min-width: 32px; }

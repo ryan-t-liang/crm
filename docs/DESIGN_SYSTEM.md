@@ -17,6 +17,7 @@ Admin UI patterns are governed by the binding [Kivisense Design System V2](KIVIS
 - Lists: concise page header, metrics, search/filter toolbar, table or Kanban content, pagination, and internal horizontal scroll when needed.
 - New/edit forms: right-side Semi SideSheet / shared `FormSideSheet`, responsive bounded width, body scrolling and `sheet-footer` actions. Centered Modals remain only for confirmations.
 - Details: breadcrumb/back action, record title, owner/status actions, primary workspace tabs, and a 290-pixel contextual sidebar.
+- Card headers: edit uses a small borderless Semi Edit icon at the upper right, with an accessible action name and hover tooltip. `SideSection.onEdit` supplies this shared entry while retaining `actions` compatibility; permissions and existing edit SideSheets are unchanged. Non-edit actions keep their original purpose.
 - Feedback: Semi Toast, Banner, Skeleton, Empty, Modal confirmation, disabled controls, and visible focus states.
 - Activity: every meaningful Lead or Deal mutation adds a chronological event with actor, type, time, title, and detail.
 - Member operations: reuse the same list/detail shell, tables, compact filters, tags, and information density; distinguish brand scope through restrained GP/UN tags rather than a separate visual system.

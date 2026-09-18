@@ -49,7 +49,7 @@ export function ActivityBookingData({ activity, now, dataState }: { activity: Ma
     { title: "手机号", width: 150, render: (_: unknown, row: MarketingBooking) => { const participant = participantFor(row); return maskedPhone(participant && participantIdentity(participant, members).phone); } },
     { title: "性别", width: 90, render: (_: unknown, row: MarketingBooking) => participantGender(participantFor(row)) },
     { title: "活动名称", width: 190, render: () => activity.name },
-    { title: "参与时段", width: 240, render: (_: unknown, row: MarketingBooking) => { const slot = slotFor(state, row); return slot ? <div className="marketing-summary-cell"><span>{slot.label}</span><span>{displayDateRange(slot.startAt, slot.endAt).compact}</span></div> : "场次待核对"; } },
+    { title: "参与时段", width: 240, render: (_: unknown, row: MarketingBooking) => { const slot = slotFor(state, row); return slot ? displayDateRange(slot.startAt, slot.endAt).compact : "场次待核对"; } },
     { title: "创建时间", width: 180, render: (_: unknown, row: MarketingBooking) => displayDate(row.createdAt) },
     { title: "状态", width: 160, render: (_: unknown, row: MarketingBooking) => <div className="marketing-summary-cell"><Tag size="small" color={activityBookingPhase(row) === "REDEEMED" ? "green" : "grey"}>{activityBookingLabels[activityBookingPhase(row)]}</Tag>{["INVALID", "NO_SHOW"].includes(bookingStatus(row, slotFor(state, row), now)) && <small>{displayBookingLabels[bookingStatus(row, slotFor(state, row), now)]}</small>}</div> },
     { title: "操作", width: 110, fixed: "right", render: (_: unknown, row: MarketingBooking) => <Button theme="borderless" size="small" onClick={() => setSelectedId(row.id)}>查看</Button> },
@@ -57,7 +57,7 @@ export function ActivityBookingData({ activity, now, dataState }: { activity: Ma
     <SideSheet visible={Boolean(selected)} closeOnEsc title="活动预约详情" width={Math.min(640, window.innerWidth)} onCancel={() => setSelectedId("")}>
       {selected && <><IdentityData participant={participantFor(selected)} members={members} full={full} /><DataList rows={[
         ["活动名称", activity.name], ["状态", activityBookingLabels[activityBookingPhase(selected)]], ["预约校验", displayBookingLabels[bookingStatus(selected, selectedSlot, now)]],
-        ["参与时段", selectedSlot ? `${selectedSlot.label} · ${displayDateRange(selectedSlot.startAt, selectedSlot.endAt).compact}` : "场次待核对"],
+        ["参与时段", selectedSlot ? displayDateRange(selectedSlot.startAt, selectedSlot.endAt).compact : "场次待核对"],
         ["场地", selectedSlot?.location || "—"], ["创建时间", displayDate(selected.createdAt)], ["取消时间", displayDate(selected.canceledAt)],
         ["签到核销时间", selected.status === "CHECKED_IN" ? displayDate(participantFor(selected)?.checkedInAt) : "—"], ["预约编号", selected.id],
       ]} /></>}

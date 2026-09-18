@@ -12,7 +12,7 @@
 | OpenID | participation.identity.openId / identities引用 | 保留微信应用上下文；常规列表脱敏，管理权限详情显示完整保存值；空值— | 否 |
 | 姓名、手机号 | 现有participantDisplayName / participantIdentity读侧 | 活动identity快照优先，兼容现有会员引用；缺失不自动创建会员；列表手机号脱敏 | 否 |
 | 性别 | participation.identity.gender | 可选MALE / FEMALE / UNDISCLOSED / null；未提供显示未记录；不从Sowind称谓或姓名推断 | 是，活动表单快照；不是Sowind字段 |
-| 活动预约参与时段 | ACTIVITY booking.slotId → 当前活动slot | 名称与原开始 / 结束时间，缺失场次待核对 | 否 |
+| 活动预约参与时段 | ACTIVITY booking.slotId → 当前活动slot | 只展示原开始 / 结束时间，不附加场次名称；缺失场次待核对 | 否 |
 | 预约创建时间、取消时间 | booking.createdAt / canceledAt | 原时间；改约保留旧取消预约与新的BOOKED行 | 否 |
 | 活动预约状态 | booking.status | BOOKED / NO_SHOW=待核销（未到场单独说明），CHECKED_IN / FULFILLED=已核销，CANCELED=已取消；INVALID独立附加说明 | 只读展示口径 |
 | 抽奖参与 / 抽奖 / 核销时间 | participation.registeredAt / draw.occurredAt / award.fulfilledAt | 不把issuedAt当核销时间；无draw的行抽奖时间— | 否 |
@@ -45,4 +45,6 @@ Sowind四表和会员/销售Store未改；可选gender不混入user_profile，�
 
 src/mock/marketing-record-illustrations.ts创建独立命名空间的只读快照，只有详情中的两表及其查看/奖品预约弹窗使用合并后的dataState。示意场次、奖品、日期和历史是明确的展示夹具，不修改实际活动配置、真实业务状态、库存、统计或LocalStorage。页面打开时固定快照时刻，内部ID稳定；30条示意外的原有记录保留，所以总数可能大于30。已有与新浏览器都直接可见，不需加入示意、创建独立活动或重置；此前已保存的25条及用户修改不删除。
 
-页签与右侧卡片标题统一16px，右侧标签/正文14px；字段间距15px，模块20px，按钮15px。管理场次与上方字段块之间20px。仅活动详情与奖品预约弹窗范围调整，不改销售/会员页面或全局Token。
+页签与右侧卡片标题按最新要求统一14px，右侧标签/正文14px；字段间距15px，模块20px，按钮15px。管理场次与上方字段块之间20px。状态标签按内容宽度排列，不铺满单元格。仅活动详情与奖品预约弹窗范围调整，不改销售/会员页面或全局Token。
+
+奖品设置提供“创建奖品”按钮，复用720px右侧FormSideSheet和原PrizeFields，草稿保存仍调用SAVE_ACTIVITY_PRIZE。已发布或已有业务记录的活动可打开创建面板查看字段，但提示规则已锁定、禁用创建提交；权限、未启用抽奖及取消活动的限制保留，不放宽历史奖品规则。
