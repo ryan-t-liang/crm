@@ -55,6 +55,7 @@ export function decodeMarketing(value: string): DecodedMarketing {
       (row.ruleContent === undefined || typeof row.ruleContent === "string") &&
       (row.ruleContentFormat === undefined || row.ruleContentFormat === "html") &&
       (row.activityCode === undefined || typeof row.activityCode === "string" && /^ACT[A-Z0-9-]+$/.test(row.activityCode)) &&
+      (row.createdBy === undefined || typeof row.createdBy === "string") &&
       [row.bookingEnabled, row.allowWalkIn, row.lotteryEnabled].every((field) => typeof field === "boolean") &&
       [row.grantCount, row.drawLimit, row.winLimit, row.noWinProbability].every((field) => typeof field === "number" && Number.isFinite(field) || row.status === "DRAFT" && field === null) &&
       (row.dailyLimit === null || typeof row.dailyLimit === "number" && Number.isFinite(row.dailyLimit)) &&
@@ -64,7 +65,7 @@ export function decodeMarketing(value: string): DecodedMarketing {
         (row.participationChannel === undefined || ["WECHAT_MINIPROGRAM", "WECHAT_H5", "WEB_H5", "QR_H5", "STAFF", "OTHER"].includes(row.participationChannel)) &&
         (row.identity === undefined || row.identity && typeof row.identity === "object" && !Array.isArray(row.identity) && ["memberId", "unionId", "openId", "wechatAppId", "phone", "phoneCountryCode", "externalUserId", "anonymousId", "sessionId", "displayName"].every((key) => {
           const value = row.identity?.[key as keyof NonNullable<typeof row.identity>]; return value === undefined || value === null || typeof value === "string";
-        }))) &&
+        }) && (row.identity.gender === undefined || row.identity.gender === null || ["MALE", "FEMALE", "UNDISCLOSED"].includes(row.identity.gender)))) &&
       parsed.bookings.every((row) => typeof row.participationId === "string" && typeof row.slotId === "string" && ["ACTIVITY", "PRIZE"].includes(row.kind) && typeof row.status === "string") &&
       parsed.chances.every((row) => Number.isInteger(row.count) && row.count > 0) &&
       parsed.draws.every((row) => typeof row.operationId === "string" && typeof row.participationId === "string") &&

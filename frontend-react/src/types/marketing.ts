@@ -14,6 +14,8 @@ export interface MarketingParticipantIdentity {
   memberId?: string | null; unionId?: string | null; openId?: string | null; wechatAppId?: string | null;
   phone?: string | null; phoneCountryCode?: string | null; externalUserId?: string | null;
   anonymousId?: string | null; sessionId?: string | null; displayName?: string | null;
+  /** Optional activity-form snapshot, NOT a Sowind profile field or inferred from salutation. */
+  gender?: "MALE" | "FEMALE" | "UNDISCLOSED" | null;
 }
 export interface MarketingSlot { id: string; label: string; startAt: string; endAt: string; location: string; capacity: number; bookingClosesAt: string; checkinStart: string; checkinEnd: string; disabled?: boolean; deleted?: boolean }
 export interface MarketingCode { code: string; assignedAwardId?: string; assignedAt?: string }
@@ -40,6 +42,8 @@ export interface MarketingActivity {
   lotteryEnabled: boolean; lotteryStart: string; lotteryEnd: string; grantCount: number;
   drawLimit: number; dailyLimit: number | null; winLimit: number; noWinProbability: number;
   pool: MarketingPoolItem[]; createdAt: string; publishedAt?: string;
+  /** New prototype records only; legacy creator remains unknown. */
+  createdBy?: string;
 }
 export interface MarketingIdentity { userId: string; brand: SowindBrandCode; openid: string | null; unionid: string | null }
 export interface MarketingParticipation {

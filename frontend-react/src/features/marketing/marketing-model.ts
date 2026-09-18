@@ -269,11 +269,12 @@ export function participationIssue(row: MarketingParticipation, members: MemberO
   return row.identities.some((ref) => !members.brandUsers.some((user) => user.id === ref.userId && user.brand === ref.brand && user.openid === ref.openid && user.unionid === ref.unionid && user.is_deleted === 0)) ? "参与身份引用待核对" : "";
 }
 
-const identityKeys = ["memberId", "unionId", "openId", "wechatAppId", "phone", "phoneCountryCode", "externalUserId", "anonymousId", "sessionId", "displayName"] as const;
+const identityKeys = ["memberId", "unionId", "openId", "wechatAppId", "phone", "phoneCountryCode", "externalUserId", "anonymousId", "sessionId", "displayName", "gender"] as const;
 export function participantIdentityIssue(identity: MarketingParticipantIdentity | undefined, channel?: MarketingParticipationChannel) {
   if (channel !== undefined && !Object.prototype.hasOwnProperty.call(participationChannelLabels, channel)) return "参与渠道无效";
   if (identity === undefined) return "";
   if (!identity || typeof identity !== "object" || Array.isArray(identity) || identityKeys.some((key) => identity[key] !== undefined && identity[key] !== null && typeof identity[key] !== "string")) return "参与身份字段须为空值或文本";
+  if (identity.gender !== undefined && identity.gender !== null && !["MALE", "FEMALE", "UNDISCLOSED"].includes(identity.gender)) return "参与性别选项无效";
   if (identity.openId?.trim() && !identity.wechatAppId?.trim()) return "OpenID 需同时保存所属微信应用";
   return "";
 }
@@ -377,7 +378,7 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
       booking: ["bookingStart", "bookingEnd", "completion", "allowCancel", "allowReschedule", "allowWalkIn", "slots"],
       lottery: ["lotteryStart", "lotteryEnd", "grantCount", "drawLimit", "dailyLimit", "winLimit", "noWinProbability"],
     };
-    const candidate: MarketingActivity = existing && command.section ? { ...existing, ...Object.fromEntries(fields[command.section].map(key => [key, command.activity[key]])) } : command.activity;
+    const candidate: MarketingActivity = { ...(existing && command.section ? { ...existing, ...Object.fromEntries(fields[command.section].map(key => [key, command.activity[key]])) } : command.activity), createdBy: existing ? existing.createdBy : ctx.actor.id };
     // Switching an editable draft online cannot retain an offline-only completion rule.
     if (existing && command.section === "basic" && existing.mode !== "ONLINE" && candidate.mode === "ONLINE") candidate.completion = "STAFF";
     const code = existing ? activityCodes(state).get(existing.id)! : nextActivityCode(state, stamp);
@@ -543,7 +544,7 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
   if (command.type === "COPY_ACTIVITY") {
     const copyId = id();
     const copySlot = (slot: MarketingSlot) => ({ ...slot, id: id(), startAt: "", endAt: "", bookingClosesAt: "", checkinStart: "", checkinEnd: "" });
-    const copy = { ...activity, id: copyId, name: `${activity.name} · 副本`, status: "DRAFT" as const, createdAt: stamp, publishedAt: undefined, ruleVersion: 1, startAt: "", endAt: "", bookingStart: "", bookingEnd: "", lotteryStart: "", lotteryEnd: "", slots: activity.slots.map(copySlot), pool: activity.pool.map((item) => ({ ...item, id: id(), activityId: copyId, claimStart: "", claimEnd: "", codes: [], slots: item.slots.map(copySlot) })) };
+    const copy = { ...activity, id: copyId, name: `${activity.name} · 副本`, status: "DRAFT" as const, createdAt: stamp, createdBy: ctx.actor.id, publishedAt: undefined, ruleVersion: 1, startAt: "", endAt: "", bookingStart: "", bookingEnd: "", lotteryStart: "", lotteryEnd: "", slots: activity.slots.map(copySlot), pool: activity.pool.map((item) => ({ ...item, id: id(), activityId: copyId, claimStart: "", claimEnd: "", codes: [], slots: item.slots.map(copySlot) })) };
     copy.activityCode = nextActivityCode(state, stamp);
     state.activities.push(copy); return done(copy.id, "仅复制配置结构；所有日期须重新填写，兑换码须重新导入，无业务记录或库存占用");
   }

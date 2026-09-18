@@ -1,32 +1,28 @@
-# 营销活动模块（V4 CRM Style Revert）
+# 营销活动模块（V5 活动记录工作区）
 
-现有 GP / UN 纯前端原型的活动管理、用户流程预览与数据管理模块，使用现有 React、Semi Design / Icons、Kivisense 主题及 LocalStorage。不新增后端、数据库、SQL 表、登录系统、微信服务或部署架构。营销合同明确为前端原型扩展，不混入 Sowind 四表。
+现有纯前端原型的活动管理与独立数据模块，使用现有React、Semi Design / Icons、Kivisense主题及LocalStorage。不新增后端、数据库、SQL表、登录系统、微信服务或部署架构。营销合同为前端原型扩展，不混入Sowind四表，品牌显示名为Kivisense，底层gp / un范围保留。
 
-销售仍为 Lead → Qualified → Convert to Deal → Won/Lost，不新增 Opportunity 或金额字段。营销参与不成为 Sales Lead / Deal 或 Sowind 购买意向；集团与品牌用户关联、会员匹配规则、销售 / 会员 Store 及三视图 Dashboard 均未修改。
+销售仍为Lead → Qualified → Convert to Deal → Won/Lost，不新增Opportunity或金额。营销参与不成为Sales Lead / Deal或Sowind购买意向；集团 / 品牌用户关联、会员匹配、销售 / 会员Store、三视图Dashboard均未修改。
 
-## Activity 中心与页面职责
+## Activity中心与页面职责
 
-CRM 唯一营销主入口 `#marketing` 是活动列表，不再有顶层奖品库、预约记录、核销工作台。V4列表只显示活动编号、名称、类型、场地、活动时间、状态、参与方式、操作；不包含运营KPI。名称进入详情，行操作只有编辑与更多；活动更多菜单只有开始 / 暂停 / 结束。筛选为名称或编号、活动类型、生命周期状态、参与方式及授权品牌，先权限后筛选。线上场地显示“—”。
+唯一主入口#marketing为活动列表，八列和既有编辑 / 更多生命周期操作不变，仍先权限后筛选。详情复用DetailWorkspace、record-tabs主Card、Semi Table与SideSection / DataList右侧信息栏。新建 / 编辑仍是680px右侧FormSideSheet，核心字段和已有锁定不变。
 
-`#marketing/activity/<activityId>/<tab>` 拥有全部配置及业务数据：
+本轮用户明确将四入口改为三个固定页签，移除概览：
 
-| 一级入口 | 二级入口 / 职责 | 兼容旧 leaf route |
+| 一级入口 | 职责 | 路由 / 历史兼容 |
 | --- | --- | --- |
-| 概览 | 核心指标与抽奖 / 履约指标，同源只读明细 | 默认 / overview |
-| 活动设置 | 基本信息：编号、规则、品牌、参与方式、时间 | basic |
-| 活动设置 | 预约设置：仅预约参与显示；规则、完成条件、ACT场次与容量 | booking-settings |
-| 活动设置 | 抽奖设置：仅启用抽奖显示；时间、次数、上限、未中奖概率 | lottery |
-| 活动设置 | 奖品设置：仅启用抽奖显示；独立类型 / 履约、库存、概率、代码管理 | prizes（新增配置leaf） |
-| 参与管理 | 参与用户：身份、渠道、状态、抽奖次数及详情 | participants |
-| 参与管理 | 预约记录：仅ACTIVITY活动预约及历史 | bookings |
-| 参与管理 | 抽奖记录：每次draw，包括NONE | draws |
-| 中奖与核销 | 中奖记录：每份award及冻结权益内容 | awards |
-| 中奖与核销 | 领奖预约：仅PRIZE领取 / 使用预约及历史 | prize-bookings（新增只读leaf） |
-| 中奖与核销 | 核销记录：Redemption业务事实，不用Audit代替 | redemptions |
+| 活动预约记录 | OpenID、姓名、手机号、性别、活动名称、参与时段、创建时间、待核销 / 已核销 / 已取消与查看；仅ACTIVITY | 默认 / bookings；overview / basic / booking-settings默认此页；participants打开只读参与用户抽屉 |
+| 奖品设置 | 既有奖品 / 类型 / 领取方式 / 概率 / 配额 / 代码管理，增加领取有效期列 | prizes |
+| 抽奖记录 | 未抽奖用户、每次draw（含NONE）、award冻结快照、独立PRIZE预约与两条核销路径；查看及预约记录 | draws；awards / lottery适配此页；prize-bookings / redemptions同时打开对应只读历史抽屉 |
 
-V4的CRM Style Revert以现有Lead / Deal / Customer / Member为视觉母版，不更改业务信息架构。新建 / 编辑共享680px右侧Semi SideSheet，直接复用CRM的Header / Title / Padding / Footer，Body超高时内部滚动，只展示九个基础字段；创建后进入详情。新建取消 / 创建活动，编辑取消 / 保存。说明和封面不进入表单，旧字段保留读取，不删除用户资料。详情直接使用DetailWorkspace、detail-grid、record-tabs主Card和SideSection / DataList右侧栏。Header紧凑显示编号 / 品牌、状态、活动类型、参与方式、活动时间与场地；真实活动 / 预约 / 抽奖 / 领奖时间在右侧信息栏按能力展示，不保留独立时间Popover或后台职责Card。四个一级line Tabs仍为概览 / 活动设置 / 参与管理 / 中奖与核销，置于主Card内；二级为低权重文字导航。概览采用按活动表现 / 抽奖 / 领奖分组的紧凑CRM Summary Card，不为每个数字建立Card。设置在主信息Card内采用平面字段分组、左对齐有界Definition Grid；预约 / 抽奖仍为Focused Drawer，场次 / 奖品同样使用右侧SideSheet，无步骤或发布检查页。列表和相关表格复用data-surface / table-toolbar / EmptyBlock及Semi Table默认样式，不另写Marketing Table或一级Tabs视觉。允许有意义的主Card / Summary Card / Right Rail Card，禁止碎片化及重复嵌套装饰，具体规则见MARKETING_UI_DESIGN_RULES.md。
+左侧聚焦运营记录和奖品；右侧活动信息包含新建表单的全部字段、创建人 / 时间、规则和编辑活动。预约 / 抽奖设置在右侧独立摘要并使用原Focused Edit；场次管理用单主题SideSheet。Header克制Tag强调状态、品牌、类型、参与方式、创建人和地点，编号 / 时间独立成行。文字块15px、模块20px、按钮15px仅作用于此详情，不改变全局Token / CRM响应式规则或Semi一级Tabs和Table主题。无步骤、发布检查页、预览或复制按钮。
 
-直接参与不显示ACT预约场次、取消 / 改约或预约人数；无抽奖活动不显示抽奖 / 奖品指标和不适用配置。参与管理的预约记录按ACTIVITY查询，中奖与核销的领奖预约按PRIZE查询；直接参与且无历史活动预约可隐藏前者，但不能由参与方式隐藏后者。已有记录不删除、不合并；旧直接参与bookings链接在只有领奖预约时适配到新入口。负库存、非法整数或概率即使保存草稿也拒绝。产品页面移除研发 / 演示边界长文；这些边界仍在本文及验收记录中明确保留。
+新记录由集中创建 / 复制动作记录可选createdBy，编辑不能覆盖；旧创建人显示未记录。可选identity.gender是活动表单快照，不是Sowind字段，不从会员称谓推断，旧缺失值不回填。
+
+抽奖读侧阶段：1未抽奖、2已抽奖、3已核销（无需预约）、4已预约、5已核销（需要预约）。3 / 5中文相同但值 / 流程独立；未中奖仍为2，直接虚拟发放不冒充外部核销。取消、爽约、过期、缺资料保留真实附加说明。预约记录按活动 / 参与者 / 奖项过滤PRIZE历史，保留取消 / 改约和未预约空态，不混入活动预约。缺draw的历史权益和缺参与关联记录保留待核对。参与用户与Redemption仍有只读入口，实际核销动作只在独立Staff Surface。详见MARKETING_RECORD_FIELDS.md与MARKETING_UI_DESIGN_RULES.md。
+
+直接参与与无抽奖仍保留三个页签及清晰空态 / 历史。已有记录不删除、不合并、不回填日期，负库存、非法整数和概率校验不变。此次仅改读侧记录组织及可选元数据，不替换库存、额度、凭证、预约容量、抽奖或Staff核验模型。
 
 旧 `#marketing/prizes`、`#marketing/bookings` 显示活动列表和入口迁移说明，不保留全局模块。会员原营销 Tab 保持只读引用。用户流程预览UI已移除；旧 `#marketing/preview/<activityId>/<userId>` 只展示授权活动的后台详情。会员营销记录链接进入后台参与记录，不提供报名 / 抽奖预览。
 

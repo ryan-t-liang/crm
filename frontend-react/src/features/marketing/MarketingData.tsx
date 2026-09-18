@@ -51,10 +51,10 @@ export function ParticipantTable({ activity }: { activity: MarketingActivity }) 
     </SideSheet>
   </>;
 }
-export function BookingData({ activity, scope }: { activity: MarketingActivity; scope?: MarketingBooking["kind"] }) {
+export function BookingData({ activity, scope, participationId, awardId }: { activity: MarketingActivity; scope?: MarketingBooking["kind"]; participationId?: string; awardId?: string }) {
   const { state } = useMarketing(), { state: members } = useMemberOperations(), filters = useDataFilters(); const [kind, setKind] = useState("ALL");
   const selectedKind = scope ?? kind;
-  const rows = state.bookings.filter((row) => row.activityId === activity.id && (selectedKind === "ALL" || row.kind === selectedKind) && (filters.status === "ALL" || bookingStatus(row, slotFor(state, row), Date.now()) === filters.status) && dateMatches(row.createdAt, filters.date) && (() => { const participant = state.participations.find((item) => item.id === row.participationId); return Boolean(participant && `${participantDisplayName(participant, members)} ${participant.id} ${participant.identities.map((ref) => ref.userId).join(" ")}`.toLowerCase().includes(filters.search.toLowerCase())); })());
+  const rows = state.bookings.filter((row) => row.activityId === activity.id && (!participationId || row.participationId === participationId) && (!awardId || row.awardId === awardId) && (selectedKind === "ALL" || row.kind === selectedKind) && (filters.status === "ALL" || bookingStatus(row, slotFor(state, row), Date.now()) === filters.status) && dateMatches(row.createdAt, filters.date) && (() => { const participant = state.participations.find((item) => item.id === row.participationId); return !filters.search || Boolean(participant && `${participantDisplayName(participant, members)} ${participant.id} ${participant.identities.map((ref) => ref.userId).join(" ")}`.toLowerCase().includes(filters.search.toLowerCase())); })());
   return <><div className="table-toolbar">
     <Input prefix={<IconSearch />} aria-label="搜索预约用户" placeholder="搜索预约用户" value={filters.search} onChange={filters.setSearch} showClear />
     {!scope && <Select aria-label="预约类型" value={kind} onChange={value => setKind(String(value))} optionList={[{ value: "ALL", label: "全部预约类型" }, { value: "ACTIVITY", label: "活动预约" }, { value: "PRIZE", label: "领奖预约" }]} />}
@@ -72,14 +72,6 @@ export function BookingData({ activity, scope }: { activity: MarketingActivity; 
       { title: "来源", width: 120, render: (_: unknown, row: MarketingBooking) => ({ USER: "用户预约", WALK_IN: "现场报名", UNKNOWN: "旧记录未记录来源" })[row.source] },
     ]} />
   </>;
-}
-export function DrawData({ activity }: { activity: MarketingActivity }) {
-  const { state } = useMarketing(), { state: members } = useMemberOperations();
-  return <Table rowKey="id" dataSource={state.draws.filter((row) => row.activityId === activity.id).slice().reverse()} pagination={{ pageSize: 10 }} scroll={{ x: 610 }} empty={<EmptyBlock title="暂无抽奖记录" description="用户抽奖后，相关结果将在这里展示。" />} columns={[
-    { title: "用户", width: 180, render: (_: unknown, row: typeof state.draws[number]) => (() => { const participant = state.participations.find((item) => item.id === row.participationId); return participant ? participantDisplayName(participant, members) : "身份待核对"; })() },
-    { title: "结果", width: 230, render: (_: unknown, row: typeof state.draws[number]) => row.poolItemId ? state.awards.find((award) => award.drawId === row.id)?.prizeName || "历史奖项待核对" : "未中奖" },
-    { title: "抽奖时间", width: 200, render: (_: unknown, row: typeof state.draws[number]) => displayDate(row.occurredAt) },
-  ]} />;
 }
 export function VirtualAwardContent({ award }: { award: MarketingAward }) {
   const { state } = useMarketing();
