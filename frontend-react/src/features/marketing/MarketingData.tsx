@@ -5,7 +5,7 @@ import { DataList, EmptyBlock } from "@/components/CrmUi";
 import { useMarketing } from "@/stores/marketing-store";
 import { useMemberOperations, brandLabels } from "@/stores/member-operations-store";
 import { useCrm } from "@/stores/crm-store";
-import type { MarketingActivity, MarketingAward, MarketingBooking, MarketingParticipation, MarketingRedemption } from "@/types/marketing";
+import type { MarketingActivity, MarketingAward, MarketingBooking, MarketingParticipation, MarketingRedemption, MarketingState } from "@/types/marketing";
 import { parseCreatedAt, shanghaiDate } from "@/features/dashboard/dashboard-model";
 import { bookingStatus, chances, marketingPermissions, needsReservation, participantChannel, participantDisplayName, participantIdentity, participantIdentityReview, participationIssue, prizeTypeLabels, redemptionLabels, slotFor } from "./marketing-model";
 import { DefinitionGrid, displayDate, displayAwardStatus as awardFulfillmentLabel, displayBookingLabels as bookingLabels, displayChannelLabels, marketingBusinessCopy, Panel, prizeReceivingLabel } from "./MarketingUi";
@@ -51,8 +51,9 @@ export function ParticipantTable({ activity }: { activity: MarketingActivity }) 
     </SideSheet>
   </>;
 }
-export function BookingData({ activity, scope, participationId, awardId }: { activity: MarketingActivity; scope?: MarketingBooking["kind"]; participationId?: string; awardId?: string }) {
-  const { state } = useMarketing(), { state: members } = useMemberOperations(), filters = useDataFilters(); const [kind, setKind] = useState("ALL");
+export function BookingData({ activity, scope, participationId, awardId, dataState }: { activity: MarketingActivity; scope?: MarketingBooking["kind"]; participationId?: string; awardId?: string; dataState?: MarketingState }) {
+  const { state: stored } = useMarketing(), { state: members } = useMemberOperations(), filters = useDataFilters(); const [kind, setKind] = useState("ALL");
+  const state = dataState ?? stored;
   const selectedKind = scope ?? kind;
   const rows = state.bookings.filter((row) => row.activityId === activity.id && (!participationId || row.participationId === participationId) && (!awardId || row.awardId === awardId) && (selectedKind === "ALL" || row.kind === selectedKind) && (filters.status === "ALL" || bookingStatus(row, slotFor(state, row), Date.now()) === filters.status) && dateMatches(row.createdAt, filters.date) && (() => { const participant = state.participations.find((item) => item.id === row.participationId); return !filters.search || Boolean(participant && `${participantDisplayName(participant, members)} ${participant.id} ${participant.identities.map((ref) => ref.userId).join(" ")}`.toLowerCase().includes(filters.search.toLowerCase())); })());
   return <><div className="table-toolbar">
@@ -73,8 +74,8 @@ export function BookingData({ activity, scope, participationId, awardId }: { act
     ]} />
   </>;
 }
-export function VirtualAwardContent({ award }: { award: MarketingAward }) {
-  const { state } = useMarketing();
+export function VirtualAwardContent({ award, dataState }: { award: MarketingAward; dataState?: MarketingState }) {
+  const { state: stored } = useMarketing(), state = dataState ?? stored;
   if (needsReservation(award) && !award.issuedAt) return <DefinitionGrid rows={[["内容状态", awardFulfillmentLabel(state, award, Date.now())], ["领取方式", prizeReceivingLabel(award)], ["奖品内容", "领取 / 使用完成后显示"], ["有效期", `${displayDate(award.claimStart)} 至 ${displayDate(award.claimEnd)}`]]} />;
   return <>
     <DataList rows={[["内容状态", awardFulfillmentLabel(state, award, Date.now())], ["分配时间", displayDate(award.issuedAt)], ["有效期", `${displayDate(award.claimStart)} 至 ${displayDate(award.claimEnd)}`], ["使用说明", award.instructions]]} />

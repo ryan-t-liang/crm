@@ -6,8 +6,6 @@ import { matchPurchaseIntentMember } from "@/features/member-operations/member-m
 import { memberAccess, parseCreatedAt, shanghaiDate } from "@/features/dashboard/dashboard-model";
 import { inspectMarketingCodes, validMarketingCode, type MarketingCodeImportReport } from "./marketing-code-import";
 import { activityCodes, nextActivityCode } from "./marketing-activity-code";
-import { createDemoMarketingActivity } from "@/mock/marketing-demo-data";
-import { appendMarketingIllustrations } from "@/mock/marketing-illustration-data";
 
 // Existing access fixtures without view remain compatible; concrete role mappings always expose it.
 export interface MarketingPermissions { brands: SowindBrandCode[]; view?: boolean; manage: boolean; redeem: boolean; preview: boolean }
@@ -16,7 +14,6 @@ export function marketingPermissions(actor: DemoUser): MarketingPermissions { co
 export function activityCreationIssue(access: MarketingPermissions) { return !access.brands.length ? "当前账号没有可管理的品牌。" : !access.manage ? "当前账号没有活动管理权限。" : ""; }
 export interface MarketingContext { actor: DemoUser; members: MemberOperationsState; now: number; random?: () => number; id?: () => string; access?: MarketingPermissions }
 export type MarketingCommand =
-  | { type: "ADD_ILLUSTRATION" }
   | { type: "SAVE_ACTIVITY"; activity: MarketingActivity; section?: "basic" | "booking" | "lottery" }
   | { type: "STATUS"; activityId: string; status: MarketingStatus }
   | { type: "COPY_ACTIVITY"; activityId: string }
@@ -352,7 +349,7 @@ export function activityMetrics(state: MarketingState, activity: MarketingActivi
 /** One action owns validation, result generation, chances and stock. Provider persists once. */
 export function executeMarketing(input: MarketingState, command: MarketingCommand, ctx: MarketingContext): MarketingResult {
   const access = ctx.access ?? marketingPermissions(ctx.actor), stamp = new Date(ctx.now).toISOString();
-  const management = ["ADD_ILLUSTRATION", "SAVE_ACTIVITY", "STATUS", "COPY_ACTIVITY", "DELETE_ACTIVITY", "ADD_QUOTA", "ADD_PRIZE_SLOT", "SAVE_ACTIVITY_PRIZE", "DELETE_ACTIVITY_PRIZE", "IMPORT_CODES", "DELETE_CODES", "SAVE_ACTIVITY_SLOT", "DELETE_ACTIVITY_SLOT"].includes(command.type);
+  const management = ["SAVE_ACTIVITY", "STATUS", "COPY_ACTIVITY", "DELETE_ACTIVITY", "ADD_QUOTA", "ADD_PRIZE_SLOT", "SAVE_ACTIVITY_PRIZE", "DELETE_ACTIVITY_PRIZE", "IMPORT_CODES", "DELETE_CODES", "SAVE_ACTIVITY_SLOT", "DELETE_ACTIVITY_SLOT"].includes(command.type);
   // Denied capabilities do not even write an audit. View-only truly means no writes.
   if (management && !access.manage) return { state: input, ok: false, error: "无权管理活动规则" };
   if ((command.type === "VERIFY" || command.type === "REGISTER" && command.walkIn) && !access.redeem) return { state: input, ok: false, error: "无权执行核销或现场报名" };
@@ -370,23 +367,6 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
   const reject = (error: string): MarketingResult => { if (activityId) { state = structuredClone(input); if (redemptionTarget) recordRedemption(redemptionTarget.type, "REJECTED", error); audit("REJECTED", error, targetId || activityId); } else state = input; return { state, ok: false, error }; };
   const done = (resultId?: string, detail = "操作完成"): MarketingResult => { audit("SUCCESS", detail, resultId); return { state, ok: true, resultId }; };
   const allowedActivity = (target: string) => state.activities.find((row) => row.id === target && access.brands.includes(row.brand));
-  if (command.type === "ADD_ILLUSTRATION") {
-    const brand = access.brands[0];
-    if (!brand) return reject("当前账号没有可管理的品牌");
-    activityId = `activity-record-illustration-${brand}-v1`;
-    // Explicit, idempotent opt-in: never replace configurations or refresh old dates.
-    if (allowedActivity(activityId)) return { state: input, ok: true, resultId: activityId };
-    if (state.activities.some(row => row.id === activityId)) return reject("示意活动标识已占用，不覆盖已有活动");
-    const activity = createDemoMarketingActivity(brand, ctx.now);
-    activity.id = activityId; activity.name = "活动记录示意（25 位虚构用户）"; activity.createdBy = ctx.actor.id;
-    activity.activityCode = nextActivityCode(state, stamp); activity.status = "PUBLISHED";
-    activity.description = "仅用于原型展示，所有用户、预约、抽奖和核销均为虚构示意；与销售和会员资料隔离。";
-    activity.ruleContent = "本活动仅为数据示意，展示活动预约三种状态与抽奖 1–5 五种状态，不代表真实用户操作或正式业务结果。";
-    activity.pool.forEach(prize => { prize.activityId = activity.id; });
-    state.activities.push(activity);
-    appendMarketingIllustrations(state, activity, ctx.now);
-    return done(activity.id, "显式新增独立示意活动与 25 条虚构参与记录，未覆盖已有活动、销售或会员数据。");
-  }
   if (command.type === "SAVE_ACTIVITY") {
     if (!access.manage || !access.brands.includes(command.activity.brand)) return reject("无权编辑此品牌活动");
     const existing = state.activities.find((row) => row.id === command.activity.id);

@@ -1,6 +1,5 @@
 import type { MemberOperationsState, SowindBrandCode } from "@/types/member-operations";
 import type { ActivityPrize, MarketingActivity, MarketingSlot, MarketingState } from "@/types/marketing";
-import { appendMarketingIllustrations } from "./marketing-illustration-data";
 
 const marketingDemoPrizes = [
   { id: "prize-demo-direct", name: "工坊纪念礼（演示）", description: "演示现场礼品，不是真实库存。", image: "", method: "DIRECT" },
@@ -87,7 +86,6 @@ export function createMarketingDemoState(members: MemberOperationsState, now: nu
     });
     state.draws.push({ id: "draw-demo-no-win", operationId: "operation-demo-no-win", participationId: participant.id, activityId: ended.id, occurredAt: participant.completedAt!, poolItemId: null, ruleVersion: 1, randomValue: 0.95 });
   }
-  appendMarketingIllustrations(state, first, now);
-  state.audits.push({ id: "audit-demo-seed", action: "DEMO_SEED", targetId: "", actorId: "prototype", occurredAt: state.seededAt, result: "SUCCESS", detail: "初始化一次：全部虚构演示，含 25 条活动记录示意；历史结果为明确种子，不是生产抽奖。" });
+  state.audits.push({ id: "audit-demo-seed", action: "DEMO_SEED", targetId: "", actorId: "prototype", occurredAt: state.seededAt, result: "SUCCESS", detail: "初始化一次：全部虚构演示，历史结果为明确种子，不是生产抽奖。" });
   return state;
 }

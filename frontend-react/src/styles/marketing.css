@@ -40,6 +40,23 @@
 .marketing-rail-rule h3 { margin: 0 0 15px; font-size: 12px; font-weight: 600; }
 .marketing-rail-rule .marketing-rule-content p { margin-bottom: 15px; }
 .marketing-detail .marketing-record-metadata { margin: 0; }
+/* Explicit activity-page typography: readable body copy and equal-weight rail/tab titles. */
+.marketing-detail .record-tabs > .semi-tabs-bar .semi-tabs-tab,
+.marketing-detail .side-section > header h6 { font-size: 16px; line-height: 24px; }
+.marketing-detail .data-list dt, .marketing-detail .data-list dd,
+.marketing-prize-booking-modal .data-list dt, .marketing-prize-booking-modal .data-list dd { font-size: 14px; line-height: 22px; }
+.marketing-detail .data-list > div { column-gap: 15px; }
+.marketing-detail .marketing-record-metadata { font-size: 14px; line-height: 22px; }
+.marketing-detail .marketing-rail-rule h3 { font-size: 14px; line-height: 22px; }
+.marketing-session-actions { margin-top: 20px; }
+.marketing-panel-actions { justify-content: flex-end; margin-bottom: 20px; }
+.marketing-record-content { min-width: 0; margin-bottom: 20px; }
+.marketing-detail .table-toolbar { gap: 15px; }
+.marketing-record-content > .semi-banner { margin-bottom: 20px; }
+.marketing-prize-booking-history { min-width: 0; margin-top: 20px; }
+.marketing-prize-booking-history .table-toolbar { gap: 15px; }
+.marketing-prize-booking-modal .data-list { display: grid; gap: 15px; }
+.marketing-prize-booking-modal .data-list > div { padding: 0; border-bottom: 0; }
 .marketing-definition { margin: 0; min-width: 0; }
 .marketing-definition > div { min-width: 0; }
 .marketing-definition dt { font-size: 10.5px; line-height: 20px; color: var(--crm-text-3); margin-bottom: 4px; }

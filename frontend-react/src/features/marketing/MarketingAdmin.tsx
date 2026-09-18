@@ -6,6 +6,7 @@ import { useCrm } from "@/stores/crm-store";
 import { brandLabels } from "@/stores/member-operations-store";
 import { useMarketing } from "@/stores/marketing-store";
 import { createActivityPrize, createMarketingActivity, createMarketingSlot } from "@/mock/marketing-demo-data";
+import { createMarketingRecordIllustrations, withMarketingRecordIllustrations } from "@/mock/marketing-record-illustrations";
 import type { ActivityPrize, MarketingActivity, MarketingSlot } from "@/types/marketing";
 import { parseCreatedAt } from "@/features/dashboard/dashboard-model";
 import { navigate } from "@/utils/format";
@@ -14,7 +15,6 @@ import { activityCodes, activityLifecycle, lifecycleLabels } from "./marketing-a
 import { ActivityEditor, ActivityConfigurationEditor, CodeImporter, PrizeFields } from "./MarketingEditor";
 import { ActivityRuleContent } from "./MarketingRuleEditor";
 import { CodeManager } from "./MarketingCodes";
-import { BookingData, ParticipantTable, RedemptionData } from "./MarketingData";
 import { ActivityBookingData, DrawData } from "./MarketingRecords";
 import { activityDetailTab } from "./marketing-records";
 import { DateRange, DefinitionGrid, displayDate, displayDateRange, ImageField, NumberField, options, Panel, prizeReceivingLabel, SlotFields, TextField, useAction } from "./MarketingUi";
@@ -46,7 +46,7 @@ export function MarketingList({ migratedEntry }: { migratedEntry?: string }) {
   const update = (key: keyof typeof filters, value: string) => setFilters(old => ({ ...old, [key]: value }));
   const creationIssue = activityCreationIssue(access);
   return <>
-    <PageHeader title="营销活动" description="管理品牌活动。" actions={<><Button disabled={Boolean(creationIssue)} onClick={() => { const result = run({ type: "ADD_ILLUSTRATION" }); if (result.ok && result.resultId) navigate(`marketing/activity/${result.resultId}`); }}>加入示意数据</Button><Button theme="solid" disabled={Boolean(creationIssue)} onClick={() => setEditing({ ...createMarketingActivity(access.brands[0], Date.now()), name: "" })} icon={<IconPlus />}>新建活动</Button></>} />
+    <PageHeader title="营销活动" description="管理品牌活动。" actions={<Button theme="solid" disabled={Boolean(creationIssue)} onClick={() => setEditing({ ...createMarketingActivity(access.brands[0], Date.now()), name: "" })} icon={<IconPlus />}>新建活动</Button>} />
     {feedback}{migratedEntry && <Banner type="info" title="请选择活动查看相关记录" closeIcon={null} />}{creationIssue && <Banner type="warning" title={creationIssue} closeIcon={null} />}
     <section className="data-surface">
     <div className="table-toolbar">
@@ -74,7 +74,7 @@ export function MarketingList({ migratedEntry }: { migratedEntry?: string }) {
 function ActivitySessions({ activity }: { activity: MarketingActivity }) {
   const { state } = useMarketing(), { currentUser } = useCrm(), access = marketingPermissions(currentUser), { run, feedback } = useAction();
   const [slot, setSlot] = useState<MarketingSlot | null>(null);
-  return <>{feedback}<Panel title="活动场次" actions={<Button size="small" icon={<IconPlus />} disabled={!access.manage || activity.status === "CANCELED"} onClick={() => setSlot(createMarketingSlot(crypto.randomUUID(), activity.startAt))}>添加场次</Button>}>
+  return <>{feedback}<Panel actions={<Button size="small" icon={<IconPlus />} disabled={!access.manage || activity.status === "CANCELED"} onClick={() => setSlot(createMarketingSlot(crypto.randomUUID(), activity.startAt))}>添加场次</Button>}>
       <Table rowKey="id" dataSource={activity.slots} pagination={false} scroll={{ x: 1070 }} empty={<EmptyBlock title="暂无活动场次" description="添加场次后，用户可选择时间预约。" />} columns={[
         { title: "日期 / 场次", width: 150, render: (_: unknown, row: MarketingSlot) => <div className="marketing-summary-cell"><span>{displayDate(row.startAt).slice(0, 10)}</span><span>{row.label}</span></div> },
         { title: "时间", width: 170, render: (_: unknown, row: MarketingSlot) => displayDateRange(row.startAt, row.endAt).time },
@@ -95,7 +95,7 @@ function PrizeSettings({ activity }: { activity: MarketingActivity }) {
   const rulesLocked = Boolean(activity.publishedAt || hasActivityBusinessData(state, activity.id));
   const codePrize = activity.pool.find((item) => item.id === codesId);
   return <>{feedback}
-    <Panel title="奖品设置" actions={!rulesLocked && <Button size="small" icon={<IconPlus />} disabled={!access.manage || !activity.lotteryEnabled} onClick={() => setEditing({ ...createActivityPrize(activity.id, Date.now()), fulfillmentMode: "DIRECT" })}>添加奖品</Button>}>
+    <Panel actions={!rulesLocked && <Button size="small" icon={<IconPlus />} disabled={!access.manage || !activity.lotteryEnabled} onClick={() => setEditing({ ...createActivityPrize(activity.id, Date.now()), fulfillmentMode: "DIRECT" })}>添加奖品</Button>}>
       <Table rowKey="id" dataSource={activity.pool} pagination={{ pageSize: 10 }} scroll={{ x: 1260 }} empty={<EmptyBlock title="暂无奖品" description="添加奖品后，可分别配置领取方式、配额和中奖概率。" />} columns={[
         { title: "奖品", width: 210, render: (_: unknown, item: ActivityPrize) => <div className="marketing-summary-cell"><strong>{item.name}</strong><span>{item.label}</span></div> },
         { title: "类型", width: 120, render: (_: unknown, item: ActivityPrize) => prizeTypeLabels[item.prizeType] },
@@ -131,9 +131,10 @@ export function MarketingDetail({ activity, requestedTab }: { activity: Marketin
   const { state } = useMarketing(), { state: sales, currentUser } = useCrm(), access = marketingPermissions(currentUser), { run, feedback } = useAction(), now = useClock();
   const [editing, setEditing] = useState(false), [configuration, setConfiguration] = useState<"booking" | "lottery" | null>(null);
   const [sessions, setSessions] = useState(false);
-  const legacyInspection = requestedTab === "participants" ? "participants" : requestedTab === "prize-bookings" ? "prize-bookings" : requestedTab === "redemptions" ? "redemptions" : null;
-  const [inspection, setInspection] = useState<string | null>(legacyInspection);
-  useEffect(() => { setInspection(legacyInspection); setSessions(false); }, [activity.id, currentUser.id, legacyInspection]);
+  useEffect(() => { setSessions(false); }, [activity.id, currentUser.id]);
+  const illustrationAt = useMemo(() => Date.now(), [activity.id]);
+  const illustrations = useMemo(() => createMarketingRecordIllustrations(activity, illustrationAt), [activity, illustrationAt]);
+  const recordState = useMemo(() => withMarketingRecordIllustrations(state, illustrations), [state, illustrations]);
   const locked = Boolean(activity.publishedAt || hasActivityBusinessData(state, activity.id));
   const code = activityCodes(state).get(activity.id), tab = activityDetailTab(requestedTab);
   const creator = activity.createdBy ? sales.users.find(user => user.id === activity.createdBy)?.name || "历史人员待核对" : "未记录";
@@ -170,7 +171,7 @@ export function MarketingDetail({ activity, requestedTab }: { activity: Marketin
           ["允许取消", activity.allowCancel ? "截止前且未签到" : "不允许"], ["允许改约", activity.allowReschedule ? "允许" : "不允许"],
           ["现场报名", activity.allowWalkIn ? "允许" : "不允许"], ["活动场次", String(activity.slots.length)],
         ]} />
-        <div className="row-actions"><Button size="small" onClick={() => setSessions(true)}>管理场次</Button></div>
+        <div className="marketing-session-actions row-actions"><Button size="small" onClick={() => setSessions(true)}>管理场次</Button></div>
       </SideSection>}
       {activity.lotteryEnabled && <SideSection title="抽奖设置" actions={<Button size="small" disabled={!access.manage || locked} onClick={() => setConfiguration("lottery")}>编辑</Button>}>
         <DataList rows={[
@@ -183,19 +184,17 @@ export function MarketingDetail({ activity, requestedTab }: { activity: Marketin
     </>}
     tabs={<>{feedback}<Tabs type="line" className="record-tabs" activeKey={tab} onChange={go}>
       <TabPane itemKey="bookings" tab="活动预约记录">
-        <Panel title="活动预约记录" actions={<Button size="small" onClick={() => setInspection("participants")}>参与用户</Button>}>
-          <ActivityBookingData key={`${activity.id}:${currentUser.id}`} activity={activity} now={now} />
-        </Panel>
+        <section className="marketing-record-content"><ActivityBookingData key={`${activity.id}:${currentUser.id}`} activity={activity} now={now} dataState={recordState} /></section>
       </TabPane>
       <TabPane itemKey="prizes" tab="奖品设置">
         {!activity.lotteryEnabled && <Banner type="info" title="此活动未启用抽奖" closeIcon={null} />}
         <PrizeSettings key={`${activity.id}:${currentUser.id}`} activity={activity} />
       </TabPane>
       <TabPane itemKey="draws" tab="抽奖记录">
-        <Panel title="抽奖记录" actions={<Button size="small" onClick={() => setInspection("redemptions")}>核销记录</Button>}>
-          {!activity.lotteryEnabled && <Banner type="info" title="此活动未启用抽奖，仅展示已有历史记录" closeIcon={null} />}
-          <DrawData key={`${activity.id}:${currentUser.id}`} activity={activity} now={now} />
-        </Panel>
+        <section className="marketing-record-content">
+          {!activity.lotteryEnabled && <Banner type="info" title="此活动未启用抽奖" closeIcon={null} />}
+          <DrawData key={`${activity.id}:${currentUser.id}`} activity={activity} now={now} dataState={recordState} />
+        </section>
       </TabPane>
     </Tabs></>}
   /></div>
@@ -203,11 +202,6 @@ export function MarketingDetail({ activity, requestedTab }: { activity: Marketin
     {configuration && <ActivityConfigurationEditor key={configuration} initial={structuredClone(activity)} section={configuration} onClose={() => setConfiguration(null)} />}
     <SideSheet visible={sessions} closeOnEsc title="活动场次" width={Math.min(720, window.innerWidth)} onCancel={() => setSessions(false)}>
       {sessions && <ActivitySessions activity={activity} />}
-    </SideSheet>
-    <SideSheet visible={Boolean(inspection)} closeOnEsc title={inspection === "participants" ? "参与用户" : inspection === "prize-bookings" ? "领奖预约记录" : "核销记录"} width={Math.min(720, window.innerWidth)} onCancel={() => setInspection(null)}>
-      {inspection === "participants" && <ParticipantTable key={currentUser.id} activity={activity} />}
-      {inspection === "prize-bookings" && <BookingData key={currentUser.id} activity={activity} scope="PRIZE" />}
-      {inspection === "redemptions" && <RedemptionData key={currentUser.id} activity={activity} />}
     </SideSheet>
   </>;
 }

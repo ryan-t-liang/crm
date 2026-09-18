@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { Button, Input, Select, SideSheet, Table, Tag } from "@douyinfe/semi-ui";
+import { Button, Input, Modal, Select, SideSheet, Table, Tag } from "@douyinfe/semi-ui";
 import { IconSearch } from "@douyinfe/semi-icons";
 import { DataList, EmptyBlock } from "@/components/CrmUi";
 import { useMarketing } from "@/stores/marketing-store";
 import { useMemberOperations } from "@/stores/member-operations-store";
 import { useCrm } from "@/stores/crm-store";
-import type { MarketingActivity, MarketingBooking, MarketingParticipation } from "@/types/marketing";
+import type { MarketingActivity, MarketingBooking, MarketingParticipation, MarketingState } from "@/types/marketing";
 import type { MemberOperationsState } from "@/types/member-operations";
 import { parseCreatedAt, shanghaiDate } from "@/features/dashboard/dashboard-model";
-import { bookingStatus, marketingPermissions, needsReservation, participantDisplayName, participantIdentity, slotFor } from "./marketing-model";
+import { bookingStatus, marketingPermissions, participantDisplayName, participantIdentity, slotFor } from "./marketing-model";
 import { activityBookingLabels, activityBookingPhase, activityDrawRecords, drawPhaseOptions, drawRecordLabels, participantGender, type ActivityDrawRecord } from "./marketing-records";
 import { BookingData, maskedPhone, VirtualAwardContent } from "./MarketingData";
 import { displayAwardStatus, displayBookingLabels, displayDate, displayDateRange, prizeReceivingLabel, DefinitionGrid } from "./MarketingUi";
@@ -28,21 +28,22 @@ function IdentityData({ participant, members, full }: { participant?: MarketingP
     ["性别", participantGender(participant)], ["参与编号", participant?.id || "—"],
   ]} />;
 }
-export function ActivityBookingData({ activity, now }: { activity: MarketingActivity; now: number }) {
-  const { state } = useMarketing(), { state: members } = useMemberOperations(), { currentUser } = useCrm();
+export function ActivityBookingData({ activity, now, dataState }: { activity: MarketingActivity; now: number; dataState?: MarketingState }) {
+  const { state: stored } = useMarketing(), { state: members } = useMemberOperations(), { currentUser } = useCrm();
+  const state = dataState ?? stored;
   const [search, setSearch] = useState(""), [status, setStatus] = useState("ALL"), [date, setDate] = useState("");
-  const [selectedId, setSelectedId] = useState(""), [historyId, setHistoryId] = useState("");
+  const [selectedId, setSelectedId] = useState("");
   const participantFor = (row: MarketingBooking) => state.participations.find(item => item.activityId === activity.id && item.id === row.participationId);
   const rows = state.bookings.filter(row => row.activityId === activity.id && row.kind === "ACTIVITY" &&
     participantSearch(participantFor(row), members).includes(search.trim().toLowerCase()) && (status === "ALL" || activityBookingPhase(row) === status) && dateMatches(row.createdAt, date));
-  const selected = rows.find(row => row.id === selectedId), history = rows.find(row => row.id === historyId);
+  const selected = rows.find(row => row.id === selectedId);
   const selectedSlot = selected && slotFor(state, selected), full = marketingPermissions(currentUser).manage;
-  const hasPrizeReservation = (row: MarketingBooking) => state.awards.some(award => award.activityId === activity.id && award.participationId === row.participationId && needsReservation(award));
   return <><div className="table-toolbar">
     <Input prefix={<IconSearch />} aria-label="搜索活动预约" placeholder="姓名、手机号或 OpenID" value={search} onChange={setSearch} showClear />
     <Select aria-label="活动预约状态" value={status} onChange={value => setStatus(String(value))} optionList={[{ value: "ALL", label: "全部状态" }, ...Object.entries(activityBookingLabels).map(([value, label]) => ({ value, label }))]} />
     <Input aria-label="活动预约创建日期" type="date" value={date} onChange={setDate} />
-  </div><Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: 1605 }} empty={<EmptyBlock title="暂无活动预约记录" description={activity.bookingEnabled ? "用户提交活动预约后，将在这里展示。" : "此活动直接参与，无需预约；可查看参与用户。"} />} columns={[
+    {dataState && <Tag size="small">含 30 条虚构示意</Tag>}
+  </div><Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: 1525 }} empty={<EmptyBlock title="暂无活动预约记录" description={activity.bookingEnabled ? "用户提交活动预约后，将在这里展示。" : "此活动直接参与，无需预约。"} />} columns={[
     { title: "OpenID", width: 155, render: (_: unknown, row: MarketingBooking) => { const participant = participantFor(row); return maskedOpenId(participant && participantIdentity(participant, members).openId); } },
     { title: "姓名", width: 150, render: (_: unknown, row: MarketingBooking) => { const participant = participantFor(row); return participant ? participantDisplayName(participant, members) : "身份待核对"; } },
     { title: "手机号", width: 150, render: (_: unknown, row: MarketingBooking) => { const participant = participantFor(row); return maskedPhone(participant && participantIdentity(participant, members).phone); } },
@@ -51,7 +52,7 @@ export function ActivityBookingData({ activity, now }: { activity: MarketingActi
     { title: "参与时段", width: 240, render: (_: unknown, row: MarketingBooking) => { const slot = slotFor(state, row); return slot ? <div className="marketing-summary-cell"><span>{slot.label}</span><span>{displayDateRange(slot.startAt, slot.endAt).compact}</span></div> : "场次待核对"; } },
     { title: "创建时间", width: 180, render: (_: unknown, row: MarketingBooking) => displayDate(row.createdAt) },
     { title: "状态", width: 160, render: (_: unknown, row: MarketingBooking) => <div className="marketing-summary-cell"><Tag size="small" color={activityBookingPhase(row) === "REDEEMED" ? "green" : "grey"}>{activityBookingLabels[activityBookingPhase(row)]}</Tag>{["INVALID", "NO_SHOW"].includes(bookingStatus(row, slotFor(state, row), now)) && <small>{displayBookingLabels[bookingStatus(row, slotFor(state, row), now)]}</small>}</div> },
-    { title: "操作", width: 190, fixed: "right", render: (_: unknown, row: MarketingBooking) => <div className="row-actions"><Button theme="borderless" size="small" onClick={() => setSelectedId(row.id)}>查看</Button>{hasPrizeReservation(row) && <Button theme="borderless" size="small" onClick={() => setHistoryId(row.id)}>预约记录</Button>}</div> },
+    { title: "操作", width: 110, fixed: "right", render: (_: unknown, row: MarketingBooking) => <Button theme="borderless" size="small" onClick={() => setSelectedId(row.id)}>查看</Button> },
   ]} />
     <SideSheet visible={Boolean(selected)} closeOnEsc title="活动预约详情" width={Math.min(640, window.innerWidth)} onCancel={() => setSelectedId("")}>
       {selected && <><IdentityData participant={participantFor(selected)} members={members} full={full} /><DataList rows={[
@@ -61,17 +62,15 @@ export function ActivityBookingData({ activity, now }: { activity: MarketingActi
         ["签到核销时间", selected.status === "CHECKED_IN" ? displayDate(participantFor(selected)?.checkedInAt) : "—"], ["预约编号", selected.id],
       ]} /></>}
     </SideSheet>
-    <SideSheet visible={Boolean(history)} closeOnEsc title="领奖预约记录" width={Math.min(720, window.innerWidth)} onCancel={() => setHistoryId("")}>
-      {history && <BookingData key={history.id} activity={activity} scope="PRIZE" participationId={history.participationId} />}
-    </SideSheet>
   </>;
 }
-export function DrawData({ activity, now }: { activity: MarketingActivity; now: number }) {
-  const { state } = useMarketing(), { state: members } = useMemberOperations(), { currentUser } = useCrm();
+export function DrawData({ activity, now, dataState }: { activity: MarketingActivity; now: number; dataState?: MarketingState }) {
+  const { state: stored } = useMarketing(), { state: members } = useMemberOperations(), { currentUser } = useCrm();
+  const state = dataState ?? stored;
   const [search, setSearch] = useState(""), [status, setStatus] = useState("ALL"), [date, setDate] = useState("");
   const [selectedId, setSelectedId] = useState(""), [historyId, setHistoryId] = useState("");
   const rows = activityDrawRecords(state, activity, now).filter(row =>
-    (activity.lotteryEnabled || row.draw || row.award) && participantSearch(row.participant, members).includes(search.trim().toLowerCase()) &&
+    (activity.lotteryEnabled || row.draw || row.award || row.participant?.id.startsWith(`${activity.id}:record-samples-v2:`)) && participantSearch(row.participant, members).includes(search.trim().toLowerCase()) &&
     (status === "ALL" || String(row.phase) === status) && dateMatches(row.draw?.occurredAt ?? row.award?.wonAt ?? row.participant?.registeredAt, date));
   const selected = rows.find(row => row.id === selectedId), history = rows.find(row => row.id === historyId);
   const result = (row: ActivityDrawRecord) => row.award?.prizeName || (row.phase === 1 ? "—" : row.draw?.poolItemId ? "中奖权益待核对" : "未中奖");
@@ -80,6 +79,7 @@ export function DrawData({ activity, now }: { activity: MarketingActivity; now: 
     <Input prefix={<IconSearch />} aria-label="搜索抽奖记录" placeholder="姓名、手机号或 OpenID" value={search} onChange={setSearch} showClear />
     <Select aria-label="抽奖记录状态" value={status} onChange={value => setStatus(String(value))} optionList={[{ value: "ALL", label: "全部状态" }, ...drawPhaseOptions]} />
     <Input aria-label="抽奖记录日期" type="date" value={date} onChange={setDate} />
+    {dataState && <Tag size="small">含 30 条虚构示意</Tag>}
   </div><Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: 1760 }} empty={<EmptyBlock title="暂无抽奖记录" description="参与用户与每次抽奖结果将在这里展示。" />} columns={[
     { title: "OpenID", width: 155, render: (_: unknown, row: ActivityDrawRecord) => maskedOpenId(identityFor(row)?.openId) },
     { title: "姓名", width: 150, render: (_: unknown, row: ActivityDrawRecord) => row.participant ? participantDisplayName(row.participant, members) : "身份待核对" },
@@ -105,10 +105,10 @@ export function DrawData({ activity, now }: { activity: MarketingActivity; now: 
         ["奖品处理情况", displayAwardStatus(state, selected.award, now)], ["领奖凭证", selected.award.credential],
         ["领取有效期", displayDateRange(selected.award.claimStart, selected.award.claimEnd).compact],
         ["领取地点", selected.award.location || "—"], ["领取说明", selected.award.instructions || "—"],
-      ]} />{selected.award.prizeType === "VIRTUAL" && <VirtualAwardContent award={selected.award} />}</>}</>}
+      ]} />{selected.award.prizeType === "VIRTUAL" && <VirtualAwardContent award={selected.award} dataState={state} />}</>}</>}
     </SideSheet>
-    <SideSheet visible={Boolean(history?.award)} closeOnEsc title="领奖预约记录" width={Math.min(720, window.innerWidth)} onCancel={() => setHistoryId("")}>
-      {history?.award && <BookingData key={history.award.id} activity={activity} scope="PRIZE" participationId={history.award.participationId} awardId={history.award.id} />}
-    </SideSheet>
+    <Modal visible={Boolean(history?.award)} className="marketing-prize-booking-modal" title="奖品预约记录" width={Math.min(960, window.innerWidth - 40)} bodyStyle={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto" }} onCancel={() => setHistoryId("")} footer={<Button onClick={() => setHistoryId("")}>关闭</Button>}>
+      {history?.award && <><DataList rows={[["用户", history.participant ? participantDisplayName(history.participant, members) : "身份待核对"], ["奖品", history.award.prizeName]]} /><div className="marketing-prize-booking-history"><BookingData key={history.award.id} activity={activity} scope="PRIZE" participationId={history.award.participationId} awardId={history.award.id} dataState={state} /></div></>}
+    </Modal>
   </>;
 }

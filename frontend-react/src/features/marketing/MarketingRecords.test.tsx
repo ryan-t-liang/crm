@@ -60,8 +60,8 @@ describe("activity record workspace with real Semi components", () => {
     const row = [...container.querySelectorAll("tbody tr")].find(row => row.textContent?.includes(state.awards[1].prizeName))!;
     expect([...row.querySelectorAll("button")].map(button => button.textContent)).toEqual(["查看", "预约记录"]);
     await act(async () => [...row.querySelectorAll<HTMLButtonElement>("button")].find(button => button.textContent === "预约记录")!.click());
-    const sheet = document.querySelector(".semi-sidesheet")!;
-    expect(sheet.textContent).toContain("领奖预约记录"); expect(sheet.querySelectorAll("tbody tr")).toHaveLength(1);
+    const sheet = document.querySelector(".semi-modal")!;
+    expect(sheet.textContent).toContain("奖品预约记录"); expect(sheet.querySelectorAll("tbody tr")).toHaveLength(1);
     expect(sheet.textContent).toContain("领奖预约"); expect(sheet.textContent).not.toContain("活动预约");
     expect(write).not.toHaveBeenCalled();
   });

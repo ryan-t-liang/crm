@@ -5,13 +5,13 @@ import type { MarketingActivity, MarketingAward, MarketingParticipation, Marketi
 export function appendMarketingIllustrations(state: MarketingState, activity: MarketingActivity, now: number) {
   const at = (minutes: number) => new Date(now + minutes * 60_000).toISOString();
   const key = `${activity.id}:illustration`;
-  const slot = { id: `${key}:slot`, label: "示意专场（25 条虚构记录）", startAt: at(-30), endAt: at(180), bookingClosesAt: at(-31), checkinStart: at(-45), checkinEnd: at(210), location: activity.location, capacity: 30 };
+  const slot = { id: `${key}:slot`, label: "示意专场（30 条虚构记录）", startAt: at(-30), endAt: at(180), bookingClosesAt: at(-31), checkinStart: at(-45), checkinEnd: at(210), location: activity.location, capacity: 35 };
   activity.slots.push(slot);
   activity.createdAt = at(-1440); activity.publishedAt = at(-120);
   const channels: MarketingParticipationChannel[] = ["WECHAT_MINIPROGRAM", "WECHAT_H5", "WEB_H5", "QR_H5", "STAFF"];
   const genders = ["MALE", "FEMALE", "UNDISCLOSED", null] as const;
-  for (let index = 0; index < 25; index++) {
-    const number = String(index + 1).padStart(2, "0"), prefix = `${key}:${number}`, completed = index >= 5;
+  for (let index = 0; index < 30; index++) {
+    const number = String(index + 1).padStart(2, "0"), prefix = `${key}:${number}`, completed = index >= 6;
     const participant: MarketingParticipation = {
       id: `${prefix}:participant`, activityId: activity.id, participantId: `${prefix}:subject`, subjectKey: `participant:${prefix}:subject`, identities: [],
       identity: { displayName: `示意用户 ${number}`, openId: `demo-openid-${activity.brand}-${number}`, wechatAppId: "demo-app", phoneCountryCode: "86", phone: `138000000${number}`, gender: genders[index % genders.length] },
@@ -25,13 +25,13 @@ export function appendMarketingIllustrations(state: MarketingState, activity: Ma
     for (const type of ["CHECKIN", "COMPLETE"] as const) state.redemptions.push({ id: `${prefix}:${type}`, activityId: activity.id, participationId: participant.id, targetId: participant.id,
       type, credential: participant.credential, occurredAt: type === "CHECKIN" ? participant.checkedInAt! : participant.completedAt!, actorId: "prototype", result: "SUCCESS", source: "DEMO_SEED", detail: "虚构示意：活动签到 / 完成，并非真实用户操作。" });
     state.chances.push({ id: `${prefix}:chance`, activityId: activity.id, participationId: participant.id, count: activity.grantCount, grantedAt: participant.completedAt!, ruleVersion: activity.ruleVersion });
-    // Four non-winning draws, then four examples per existing demonstration prize.
-    const prizeIndex = index < 9 ? -1 : Math.floor((index - 9) / 4), prize = activity.pool[prizeIndex];
+    // Four non-winning draws, then five examples per demonstration prize.
+    const prizeIndex = index < 10 ? -1 : Math.floor((index - 10) / 5), prize = activity.pool[prizeIndex];
     const drawId = `${prefix}:draw`, awardId = `${prefix}:award`;
     state.draws.push({ id: drawId, operationId: `${prefix}:operation`, activityId: activity.id, participationId: participant.id, occurredAt: at(-15), poolItemId: prize?.id ?? null,
       ruleVersion: activity.ruleVersion, randomValue: prize ? [0.1, 0.3, 0.5, 0.7][prizeIndex] : 0.95 });
     if (!prize) continue;
-    const reserved = ["PICKUP", "EXPERIENCE"].includes(prize.method), fulfilled = prize.prizeType === "PHYSICAL" && (index - 9) % 4 >= 2;
+    const reserved = ["PICKUP", "EXPERIENCE"].includes(prize.method), fulfilled = prize.prizeType === "PHYSICAL" && (index - 10) % 5 >= (reserved ? 3 : 2);
     const code = prize.method === "REDEMPTION_CODE" ? prize.codes.find(row => !row.assignedAwardId) : undefined;
     if (code) { code.assignedAwardId = awardId; code.assignedAt = at(-15); }
     const award: MarketingAward = { id: awardId, drawId, participationId: participant.id, activityId: activity.id, poolItemId: prize.id, credential: `WIN-DEMO-${prefix}`,

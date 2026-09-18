@@ -44,8 +44,8 @@ export function NumberField({ label, value, onChange }: { label: string; value: 
 export function TimeField({ label, value, onChange, placeholder, disabled }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string; disabled?: boolean }) {
   return <div><TextField label={label} value={dateTime(value)} placeholder={placeholder} disabled={disabled} type="datetime-local" onChange={(value) => onChange(value ? `${value}:00+08:00` : "")} />{placeholder && !value && <small>{placeholder}</small>}</div>;
 }
-export function Panel({ title, children, note, actions }: { title: string; children: ReactNode; note?: string; actions?: ReactNode }) {
-  return <section className="marketing-panel"><header className="tab-panel-header"><div><h2>{title}</h2>{note && <p>{note}</p>}</div>{actions}</header><div>{children}</div></section>;
+export function Panel({ title, children, note, actions }: { title?: string; children: ReactNode; note?: string; actions?: ReactNode }) {
+  return <section className="marketing-panel">{(title || note || actions) && <header className={title || note ? "tab-panel-header" : "marketing-panel-actions row-actions"}>{(title || note) && <div>{title && <h2>{title}</h2>}{note && <p>{note}</p>}</div>}{actions}</header>}<div>{children}</div></section>;
 }
 export function DefinitionGrid({ rows }: { rows: Array<[string, ReactNode]> }) {
   return <dl className="form-grid marketing-definition">{rows.map(([label, value], index) => <div key={`${label}-${index}`} className={label === "活动规则" ? "marketing-definition-wide" : undefined}><dt>{label}</dt><dd>{value === "" ? "—" : value ?? "—"}</dd></div>)}</dl>;
