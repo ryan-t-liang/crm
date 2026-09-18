@@ -1,39 +1,18 @@
 import { useState } from "react";
-import { Banner, Button, Dropdown, Empty, TextArea, Modal, Radio, RadioGroup, SideSheet, Steps, Switch, Table } from "@douyinfe/semi-ui";
-import { IconAlertTriangle, IconChevronRight, IconMore, IconPlus, IconTickCircle } from "@douyinfe/semi-icons";
+import { Banner, Button, Dropdown, Empty, TextArea, Modal, Radio, RadioGroup, SideSheet, Switch, Table } from "@douyinfe/semi-ui";
+import { IconMore, IconPlus } from "@douyinfe/semi-icons";
 import { useCrm } from "@/stores/crm-store";
 import { brandLabels } from "@/stores/member-operations-store";
 import { useMarketing } from "@/stores/marketing-store";
-import { createActivityPrize, createMarketingSlot } from "@/mock/marketing-demo-data";
+import { createMarketingSlot } from "@/mock/marketing-demo-data";
 import type { ActivityPrize, MarketingActivity, MarketingSlot } from "@/types/marketing";
 import { navigate } from "@/utils/format";
-import { codeInventory, draftActivityErrors, hasActivityBusinessData, marketingPermissions, needsReservation, prizeErrors, prizeTypeLabels, publishChecks, validateActivity, type MarketingPublishCheck } from "./marketing-model";
+import { codeInventory, hasActivityBusinessData, marketingPermissions, needsReservation, prizeTypeLabels } from "./marketing-model";
 import { inspectMarketingCodes, parseMarketingCodeRows, type MarketingCodeImportReport } from "./marketing-code-import";
-import { activityEditorSteps, buildPublishReadiness, editorStepComplete } from "./marketing-editor-readiness";
+import { parseCreatedAt } from "@/features/dashboard/dashboard-model";
+import { MarketingRuleEditor } from "./MarketingRuleEditor";
 import { CodeManager } from "./MarketingCodes";
 import { displayDate, ImageField, NumberField, options, Panel, SelectField, SlotFields, TextField, TimeField, useAction } from "./MarketingUi";
-
-export function PublishChecklist({ checks, onFix, activity }: { checks: MarketingPublishCheck[]; onFix: (step: number) => void; activity?: MarketingActivity }) {
-  const readiness = buildPublishReadiness(checks, activity);
-  const rows = <div className="marketing-readiness-rows">{readiness.rows.map((row) => <section key={row.key} data-check-key={row.key} className={`marketing-readiness-row ${row.pending ? "is-error" : "is-complete"}`}>
-      <span className="marketing-readiness-icon" aria-label={row.pending ? "待完善" : "已完成"}>{row.pending ? <IconAlertTriangle /> : <IconTickCircle />}</span>
-      <div className="marketing-readiness-copy"><strong>{row.title}</strong><p>{row.summary}</p>{row.errors.length > 1 && <details><summary>查看另外 {row.errors.length - 1} 项</summary>{row.errors.slice(1).map((error) => <p key={error}>{error}</p>)}</details>}</div>
-      {row.pending && <Button size="small" theme="borderless" icon={<IconChevronRight />} iconPosition="right" onClick={() => onFix(row.step)}>去完善</Button>}
-    </section>)}</div>;
-  return <section className="marketing-publish-readiness" aria-label="发布检查">
-    <header className="marketing-readiness-header"><div><h2>{readiness.ready ? <><IconTickCircle /> 已准备好发布</> : "发布检查"}</h2><p className="marketing-readiness-counts">{readiness.pending ? `${readiness.pending} 项待完善 · ` : ""}已完成 {readiness.completed} / {readiness.total} 项检查</p></div></header>
-    {!readiness.ready && rows}
-    {readiness.ready && activity && <dl className="marketing-readiness-summary"><div><dt>所属品牌</dt><dd>{brandLabels[activity.brand]}</dd></div><div><dt>活动时间</dt><dd>{displayDate(activity.startAt)} — {displayDate(activity.endAt)}</dd></div><div><dt>参与方式</dt><dd>{activity.bookingEnabled ? "预约参与" : "直接参与"}</dd></div><div><dt>抽奖</dt><dd>{activity.lotteryEnabled ? "已启用" : "不启用"}</dd></div><div><dt>奖品数量</dt><dd>{activity.lotteryEnabled ? activity.pool.length : "—"}</dd></div></dl>}
-    {readiness.ready && <details className="marketing-readiness-completed"><summary>查看已完成的检查</summary>{rows}</details>}
-  </section>;
-}
-export function PublishReview({ activity, onClose, onFix }: { activity: MarketingActivity; onClose: () => void; onFix: (step: number) => void }) {
-  const { state } = useMarketing(), { currentUser } = useCrm(), access = marketingPermissions(currentUser), { run, feedback } = useAction();
-  const checks = publishChecks(activity, state, access.brands);
-  return <Modal visible className="marketing-prize-dialog" title={`发布活动 · ${activity.name}`} width={Math.min(760, window.innerWidth - 20)} onCancel={onClose} footer={<div className="marketing-footer-actions"><Button onClick={onClose}>取消</Button><Button theme="solid" disabled={!access.manage || checks.some((check) => check.errors.length > 0)} onClick={() => { if (run({ type: "STATUS", activityId: activity.id, status: "PUBLISHED" }).ok) onClose(); }}>发布活动</Button></div>}>
-    {feedback}<PublishChecklist checks={checks} activity={activity} onFix={(step) => { onClose(); onFix(step); }} />
-  </Modal>;
-}
 
 export function CodeImporter({ onImport }: { onImport: (codes: string[]) => MarketingCodeImportReport | undefined }) {
   const [text, setText] = useState(""), [error, setError] = useState(""), [report, setReport] = useState<MarketingCodeImportReport | null>(null);
@@ -105,47 +84,60 @@ export function PrizeFields({ prize, onChange }: { prize: ActivityPrize; onChang
   </>;
 }
 
-export function PrizeConfiguration({ activity, onChange }: { activity: MarketingActivity; onChange: (activity: MarketingActivity) => void }) {
-  const { state } = useMarketing(); const [editing, setEditing] = useState<ActivityPrize | null>(null), [error, setError] = useState("");
-  const savePrize = () => { if (!editing) return; const errors = prizeErrors(editing, activity, false); if (errors.length) { setError(errors.join("；")); return; } const old = activity.pool.find((row) => row.id === editing.id); onChange({ ...activity, pool: old ? activity.pool.map((row) => row.id === editing.id ? editing : row) : [...activity.pool, editing] }); setEditing(null); setError(""); };
-  const awarded = (prize: ActivityPrize) => state.awards.filter((award) => award.activityId === activity.id && award.poolItemId === prize.id).length;
-  return <Panel title="活动奖品"><div className="marketing-config-table">
-    <div className="marketing-row-actions"><Button size="small" icon={<IconPlus />} onClick={() => setEditing({ ...createActivityPrize(activity.id, Date.now()), fulfillmentMode: "DIRECT", instructions: "凭领奖凭证在有效期内办理领取。" })}>添加奖品</Button></div>
-    {activity.pool.length ? <Table size="small" rowKey="id" dataSource={activity.pool} pagination={false} scroll={{ x: 750 }} columns={[
-      { title: "奖品", width: 180, render: (_: unknown, row: ActivityPrize) => <div className="marketing-summary-cell"><strong>{row.name}</strong><span>{row.label}</span></div> },
-      { title: "类型", width: 90, render: (_: unknown, row: ActivityPrize) => prizeTypeLabels[row.prizeType] },
-      { title: "领取方式", width: 100, render: (_: unknown, row: ActivityPrize) => needsReservation(row) ? row.prizeType === "VIRTUAL" ? "预约履约" : "预约领取" : row.prizeType === "VIRTUAL" ? "直接发放" : "直接领取" },
-      { title: "概率", width: 75, render: (_: unknown, row: ActivityPrize) => `${row.probability}%` }, { title: "配额", dataIndex: "quota", width: 65 },
-      { title: "已中奖", width: 75, render: (_: unknown, row: ActivityPrize) => awarded(row) }, { title: "剩余", width: 65, render: (_: unknown, row: ActivityPrize) => Math.max(0, row.quota - awarded(row)) },
-      { title: "操作", width: 100, fixed: "right", render: (_: unknown, row: ActivityPrize) => <div className="marketing-row-actions"><Button size="small" theme="borderless" onClick={() => setEditing(structuredClone(row))}>编辑</Button><Dropdown trigger="click" position="bottomRight" render={<Dropdown.Menu><Dropdown.Item type="danger" onClick={() => Modal.confirm({ title: "删除奖品？", content: `将从当前活动移除「${row.name}」。`, onOk: () => onChange({ ...activity, pool: activity.pool.filter((prize) => prize.id !== row.id) }) })}>删除奖品</Dropdown.Item></Dropdown.Menu>}><Button size="small" theme="borderless" icon={<IconMore />} aria-label={`更多操作 · ${row.name}`} /></Dropdown></div> },
-    ]} /> : <Empty title="暂无奖品" description="添加本活动的奖品、概率与领取方式。" />}
-    {editing && <Modal visible className="marketing-prize-dialog" title="配置奖品" width={Math.min(760, window.innerWidth - 20)} okText="保存奖品" cancelText="取消" onCancel={() => { setEditing(null); setError(""); }} onOk={savePrize}>{error && <Banner type="warning" title={error} closeIcon={null} />}<PrizeFields prize={editing} onChange={setEditing} /></Modal>}
-  </div></Panel>;
+export function ActivityEditor({ initial, onClose }: { initial: MarketingActivity; onClose: () => void }) {
+  const { state } = useMarketing(), { currentUser } = useCrm(), access = marketingPermissions(currentUser), { run, feedback } = useAction();
+  const [form, setForm] = useState(initial), [error, setError] = useState("");
+  const existing = state.activities.some(activity => activity.id === initial.id);
+  const locked = Boolean(initial.publishedAt || hasActivityBusinessData(state, initial.id));
+  const update = <K extends keyof MarketingActivity>(key: K, value: MarketingActivity[K]) => setForm(old => ({ ...old, [key]: value }));
+  const save = () => {
+    if (!form.name.trim() || !access.brands.includes(form.brand)) { setError("填写活动名称并选择授权品牌。"); return; }
+    if (!Number.isFinite(parseCreatedAt(form.startAt)) || !Number.isFinite(parseCreatedAt(form.endAt)) || parseCreatedAt(form.endAt) <= parseCreatedAt(form.startAt)) { setError("填写有效的开始、结束时间，结束时间须晚于开始时间。"); return; }
+    if (form.mode === "OFFLINE" && !form.location.trim()) { setError("填写线下活动场地。"); return; }
+    const result = run({ type: "SAVE_ACTIVITY", activity: form, section: "basic" });
+    if (!result.ok) return;
+    onClose();
+    if (!existing) navigate(`marketing/activity/${form.id}`);
+  };
+  return <SideSheet visible closeOnEsc className="marketing-activity-editor" width={Math.min(720, window.innerWidth - 24)} title={existing ? "编辑活动" : "新建活动"} onCancel={onClose}
+    footer={<div className="marketing-editor-footer"><Button onClick={onClose}>取消</Button><Button theme="solid" disabled={!access.manage || !access.brands.includes(initial.brand)} onClick={save}>{existing ? "保存" : "创建活动"}</Button></div>}>
+    <div className="marketing-editor">{feedback}{error && <Banner type="warning" title={error} closeIcon={null} />}
+      <section className="marketing-form-section"><h2>基本信息</h2><div className="marketing-form-grid">
+        <div className="marketing-field-wide"><TextField label="活动名称" value={form.name} onChange={value => update("name", value)} /></div>
+        <SelectField label="所属品牌" value={form.brand} disabled={locked} list={access.brands.map(brand => ({ value: brand, label: brandLabels[brand] }))} onChange={value => update("brand", value as MarketingActivity["brand"])} />
+        <div className="marketing-field"><span>活动类型</span><RadioGroup aria-label="活动类型" value={form.mode} disabled={locked} onChange={event => setForm(old => ({ ...old, mode: event.target.value, completion: event.target.value === "ONLINE" ? "STAFF" : old.completion }))}><Radio value="ONLINE">线上活动</Radio><Radio value="OFFLINE">线下活动</Radio></RadioGroup></div>
+        {form.mode === "OFFLINE" && <div className="marketing-field-wide"><TextField label="活动场地" value={form.location} disabled={locked} onChange={value => update("location", value)} /></div>}
+        <TimeField label="开始时间" value={form.startAt} disabled={locked} onChange={value => update("startAt", value)} /><TimeField label="结束时间" value={form.endAt} disabled={locked} onChange={value => update("endAt", value)} />
+        <div className="marketing-field marketing-field-wide"><span>参与方式</span><RadioGroup className="marketing-mode-options" aria-label="参与方式" value={form.bookingEnabled ? "RESERVATION" : "DIRECT"} disabled={locked} onChange={event => update("bookingEnabled", event.target.value === "RESERVATION")}>
+          <Radio value="RESERVATION"><span>预约参与<small>用户需要先预约活动场次。</small></span></Radio><Radio value="DIRECT"><span>直接参与<small>用户无需预约，可直接参加活动。</small></span></Radio>
+        </RadioGroup></div>
+        <div className="marketing-field marketing-field-wide marketing-switch-field"><span>启用抽奖</span><Switch aria-label="启用抽奖" checked={form.lotteryEnabled} disabled={locked} onChange={value => update("lotteryEnabled", value)} /></div>
+      </div></section>
+      <section className="marketing-form-section"><MarketingRuleEditor value={form.ruleContent ?? ""} format={form.ruleContentFormat} onChange={html => setForm(old => ({ ...old, ruleContent: html, ruleContentFormat: "html" }))} /></section>
+    </div>
+  </SideSheet>;
 }
 
-export function ActivityEditor({ initial, onClose, initialStep = 0 }: { initial: MarketingActivity; onClose: () => void; initialStep?: number }) {
+/** Created objects own their later configuration; these are independent forms, never steps. */
+export function ActivityConfigurationEditor({ initial, section, onClose }: { initial: MarketingActivity; section: "booking" | "lottery"; onClose: () => void }) {
   const { state } = useMarketing(), { currentUser } = useCrm(), access = marketingPermissions(currentUser), { run, feedback } = useAction();
-  const [form, setForm] = useState(initial), [step, setStep] = useState(Math.max(0, Math.min(4, initialStep))), [error, setError] = useState("");
+  const [form, setForm] = useState(initial);
   const locked = Boolean(initial.publishedAt || hasActivityBusinessData(state, initial.id));
-  const update = <K extends keyof MarketingActivity>(key: K, value: MarketingActivity[K]) => setForm((old) => ({ ...old, [key]: value }));
-  const checks = publishChecks(form, state, access.brands), errors = validateActivity(form, state, access.brands), draftErrors = draftActivityErrors(form);
-  const save = (publish: boolean) => { if (publish && errors.length) { setError("还有配置待完善，请完成发布检查。"); setStep(4); return; } const result = run({ type: "SAVE_ACTIVITY", activity: form }); if (!result.ok) return; if (publish && !run({ type: "STATUS", activityId: form.id, status: "PUBLISHED" }).ok) return; onClose(); navigate(`marketing/activity/${form.id}`); };
-  if (!access.manage || !access.brands.includes(initial.brand)) return <SideSheet visible title="无权编辑活动" onCancel={onClose}><Banner type="warning" title="当前账号没有活动管理权限或品牌授权。" closeIcon={null} /></SideSheet>;
-  return <SideSheet visible closeOnEsc className="marketing-activity-editor" width={Math.min(960, window.innerWidth - 20)} title={locked ? "编辑活动内容" : state.activities.some((activity) => activity.id === initial.id) ? "编辑活动" : "新建活动"} onCancel={onClose} footer={<div className="marketing-editor-footer"><Button onClick={locked || step < 4 ? onClose : () => setStep(3)}>{!locked && step === 4 ? "返回" : "取消"}</Button><div className="marketing-footer-actions"><Button disabled={!locked && draftErrors.length > 0} onClick={() => save(false)}>{locked ? "保存内容" : "保存草稿"}</Button>{!locked && (step < 4 ? <Button theme="solid" onClick={() => { setError(""); setStep(step + 1); }}>下一步</Button> : <Button theme="solid" disabled={errors.length > 0} onClick={() => save(true)}>发布活动</Button>)}</div></div>}>
-    <div className={`marketing-editor-layout ${locked ? "is-locked" : ""}`}>
-      {!locked && <nav className="marketing-editor-nav" aria-label="活动配置步骤"><Steps type="basic" direction="vertical" size="small" current={step} hasLine={false} onChange={(next) => { setError(""); setStep(next); }}>{activityEditorSteps.map((title, index) => <Steps.Step key={title} title={<span className="marketing-step-copy">{title}</span>} className={`marketing-editor-step ${step === index ? "is-current" : editorStepComplete(checks, index) ? "is-complete" : ""}`} status={step === index ? "process" : editorStepComplete(checks, index) ? "finish" : "wait"} />)}</Steps></nav>}
-      <div className="marketing-editor-content marketing-editor">{(locked || step !== 4) && <header className="marketing-editor-heading"><h2>{locked ? "活动内容" : activityEditorSteps[step]}</h2>{!locked && <p>{["完善活动介绍、规则与基本设置。", "设置参与方式对应的预约与完成条件。", "配置抽奖时间、次数与中奖限制。", "独立设置每个奖品的类型与领取方式。", "确认配置完整后发布活动。"][step]}</p>}</header>}{feedback}{error && <Banner type="warning" title={error} closeIcon={null} />}
-        {(locked || step === 0) && <><Panel title="活动内容"><div className="marketing-form-grid"><TextField label="活动名称" value={form.name} onChange={(value) => update("name", value)} /><ImageField label="活动封面" value={form.cover} onChange={(value) => update("cover", value)} /><label className="marketing-field marketing-field-wide"><span>活动说明</span><TextArea aria-label="活动说明" value={form.description} onChange={(value) => update("description", value)} autosize={{ minRows: 2, maxRows: 5 }} /></label><label className="marketing-field marketing-field-wide"><span>活动规则</span><TextArea aria-label="活动规则" value={form.ruleContent ?? ""} onChange={(value) => update("ruleContent", value)} autosize={{ minRows: 3, maxRows: 8 }} placeholder="说明参与限制与奖品领取规则" /></label></div></Panel>
-          {!locked && <Panel title="活动设置"><div className="marketing-form-grid"><SelectField label="所属品牌" value={form.brand} list={access.brands.map((brand) => ({ value: brand, label: brandLabels[brand] }))} onChange={(value) => update("brand", value as MarketingActivity["brand"])} /><SelectField label="活动类型" value={form.mode} list={options({ OFFLINE: "线下活动", ONLINE: "线上活动" })} onChange={(value) => setForm((old) => ({ ...old, mode: value as MarketingActivity["mode"], completion: value === "ONLINE" ? "STAFF" : old.completion }))} /><div className="marketing-field marketing-field-wide"><span>参与方式</span><RadioGroup aria-label="参与方式" value={form.bookingEnabled ? "RESERVATION" : "DIRECT"} onChange={(event) => update("bookingEnabled", event.target.value === "RESERVATION")}><Radio value="RESERVATION">预约参与</Radio><Radio value="DIRECT">直接参与</Radio></RadioGroup></div>{form.mode === "OFFLINE" && <TextField label="活动地点" value={form.location} onChange={(value) => update("location", value)} />}<TimeField label="活动开始" value={form.startAt} onChange={(value) => update("startAt", value)} /><TimeField label="活动结束" value={form.endAt} onChange={(value) => update("endAt", value)} /></div></Panel>}</>}
-        {locked && <p className="marketing-field-help">参与、抽奖与奖品规则已锁定；需要更改时可复制为新活动。</p>}
-        {!locked && step === 1 && <><Panel title="完成条件"><SelectField label="完成条件" value={form.completion} list={[{ value: "STAFF", label: "工作人员确认完成" }, ...(form.mode === "OFFLINE" ? [{ value: "CHECKIN", label: "签到即完成" }] : [])]} onChange={(value) => update("completion", value as MarketingActivity["completion"])} />{!form.bookingEnabled && <p className="marketing-field-help">用户直接参与活动，达到完成条件后获得抽奖机会。</p>}</Panel>
-          {form.bookingEnabled && <><Panel title="预约规则"><div className="marketing-form-grid"><TimeField label="预约开放" value={form.bookingStart} onChange={(value) => update("bookingStart", value)} /><TimeField label="预约截止" value={form.bookingEnd} onChange={(value) => update("bookingEnd", value)} /><label className="marketing-field"><span>允许取消</span><Switch aria-label="允许取消预约" checked={form.allowCancel} onChange={(value) => update("allowCancel", value)} /></label><label className="marketing-field"><span>允许改约</span><Switch aria-label="允许改约" checked={form.allowReschedule} onChange={(value) => update("allowReschedule", value)} /></label><label className="marketing-field"><span>允许现场报名</span><Switch aria-label="允许现场报名" checked={form.allowWalkIn} onChange={(value) => update("allowWalkIn", value)} /></label></div></Panel><SlotConfigurationTable slots={form.slots} onChange={(slots) => update("slots", slots)} parentStart={form.startAt} activityId={form.id} /></>}
-        </>}
-        {!locked && step === 2 && <Panel title="抽奖规则"><label className="marketing-field"><span>启用抽奖</span><Switch aria-label="开启活动抽奖" checked={form.lotteryEnabled} onChange={(value) => update("lotteryEnabled", value)} /></label>{form.lotteryEnabled ? <div className="marketing-form-grid"><TimeField label="抽奖开始" value={form.lotteryStart} onChange={(value) => update("lotteryStart", value)} /><TimeField label="抽奖截止" value={form.lotteryEnd} onChange={(value) => update("lotteryEnd", value)} />{(["grantCount", "drawLimit", "winLimit", "noWinProbability"] as const).map((key, index) => <NumberField key={key} label={["完成后发放次数", "累计抽奖上限", "累计中奖上限", "未中奖概率（%）"][index]} value={form[key]} onChange={(value) => update(key, value)} />)}<label className="marketing-field"><span>每日上限</span><Switch aria-label="启用每日抽奖上限" checked={form.dailyLimit !== null} onChange={(value) => update("dailyLimit", value ? 1 : null)} /></label>{form.dailyLimit !== null && <NumberField label="每日抽奖上限" value={form.dailyLimit} onChange={(value) => update("dailyLimit", value)} />}</div> : <p className="marketing-field-help">本活动不启用抽奖</p>}</Panel>}
-        {!locked && step === 3 && (form.lotteryEnabled ? <PrizeConfiguration activity={form} onChange={setForm} /> : <Empty title="本活动不启用抽奖" description="无需配置奖品与概率。" />)}
-        {!locked && draftErrors.length > 0 && <Banner type="warning" title="部分字段需要修正" description={draftErrors.join("；")} closeIcon={null} />}
-        {!locked && step === 4 && <PublishChecklist checks={checks} activity={form} onFix={setStep} />}
-      </div>
-    </div>
+  const update = <K extends keyof MarketingActivity>(key: K, value: MarketingActivity[K]) => setForm(old => ({ ...old, [key]: value }));
+  return <SideSheet visible closeOnEsc className="marketing-configuration-editor" width={Math.min(720, window.innerWidth - 24)} title={section === "booking" ? "预约设置" : "抽奖设置"} onCancel={onClose}
+    footer={<div className="marketing-editor-footer"><Button onClick={onClose}>取消</Button><Button theme="solid" disabled={locked || !access.manage || !access.brands.includes(initial.brand)} onClick={() => { if (run({ type: "SAVE_ACTIVITY", activity: form, section }).ok) onClose(); }}>保存</Button></div>}>
+    <div className="marketing-editor">{feedback}{section === "booking" ? <>
+      <section className="marketing-form-section"><h2>预约规则</h2><div className="marketing-form-grid">
+        <TimeField label="预约开放时间" value={form.bookingStart} onChange={value => update("bookingStart", value)} /><TimeField label="预约截止时间" value={form.bookingEnd} onChange={value => update("bookingEnd", value)} />
+        <SelectField label="完成条件" value={form.completion} list={[{ value: "STAFF", label: "工作人员确认完成" }, ...(form.mode === "OFFLINE" ? [{ value: "CHECKIN", label: "签到即完成" }] : [])]} onChange={value => update("completion", value as MarketingActivity["completion"])} />
+        {(["allowCancel", "allowReschedule", "allowWalkIn"] as const).map((key, index) => <div className="marketing-field marketing-switch-field" key={key}><span>{["允许取消", "允许改约", "允许现场报名"][index]}</span><Switch aria-label={["允许取消", "允许改约", "允许现场报名"][index]} checked={form[key]} onChange={value => update(key, value)} /></div>)}
+      </div></section>
+      <SlotConfigurationTable slots={form.slots} parentStart={form.startAt} activityId={form.id} onChange={slots => update("slots", slots)} />
+    </> : <section className="marketing-form-section"><h2>抽奖规则</h2><div className="marketing-form-grid">
+      <TimeField label="抽奖开始时间" value={form.lotteryStart} onChange={value => update("lotteryStart", value)} /><TimeField label="抽奖截止时间" value={form.lotteryEnd} onChange={value => update("lotteryEnd", value)} />
+      {(["grantCount", "drawLimit", "winLimit", "noWinProbability"] as const).map((key, index) => <NumberField key={key} label={["完成后发放次数", "累计抽奖上限", "累计中奖上限", "未中奖概率（%）"][index]} value={form[key]} onChange={value => update(key, value)} />)}
+      <div className="marketing-field marketing-switch-field"><span>启用每日上限</span><Switch aria-label="启用每日抽奖上限" checked={form.dailyLimit !== null} onChange={value => update("dailyLimit", value ? 1 : null)} /></div>
+      {form.dailyLimit !== null && <NumberField label="每日抽奖上限" value={form.dailyLimit} onChange={value => update("dailyLimit", value)} />}
+    </div></section>}</div>
   </SideSheet>;
 }

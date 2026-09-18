@@ -5,6 +5,7 @@ import { readBrandPhone } from "@/features/member-operations/sowind-read";
 import { matchPurchaseIntentMember } from "@/features/member-operations/member-model";
 import { memberAccess, parseCreatedAt, shanghaiDate } from "@/features/dashboard/dashboard-model";
 import { inspectMarketingCodes, validMarketingCode, type MarketingCodeImportReport } from "./marketing-code-import";
+import { activityCodes, nextActivityCode } from "./marketing-activity-code";
 
 // Existing access fixtures without view remain compatible; concrete role mappings always expose it.
 export interface MarketingPermissions { brands: SowindBrandCode[]; view?: boolean; manage: boolean; redeem: boolean; preview: boolean }
@@ -13,7 +14,7 @@ export function marketingPermissions(actor: DemoUser): MarketingPermissions { co
 export function activityCreationIssue(access: MarketingPermissions) { return !access.brands.length ? "当前账号没有可管理的品牌。" : !access.manage ? "当前账号没有活动管理权限。" : ""; }
 export interface MarketingContext { actor: DemoUser; members: MemberOperationsState; now: number; random?: () => number; id?: () => string; access?: MarketingPermissions }
 export type MarketingCommand =
-  | { type: "SAVE_ACTIVITY"; activity: MarketingActivity }
+  | { type: "SAVE_ACTIVITY"; activity: MarketingActivity; section?: "basic" | "booking" | "lottery" }
   | { type: "STATUS"; activityId: string; status: MarketingStatus }
   | { type: "COPY_ACTIVITY"; activityId: string }
   | { type: "DELETE_ACTIVITY"; activityId: string }
@@ -192,7 +193,7 @@ export function publishChecks(activity: MarketingActivity, state: MarketingState
     { key: "codes", label: "兑换码数量", step: 3, errors: [] },
   ];
   const errors = checks[0].errors;
-  if (!activity.name.trim() || !activity.description.trim() || !brands.includes(activity.brand)) errors.push("填写活动名称、说明及有效授权品牌");
+  if (!activity.name.trim() || !brands.includes(activity.brand)) errors.push("填写活动名称及有效授权品牌");
   if (!windowValid(activity.startAt, activity.endAt)) errors.push("活动起止时间无效");
   if (activity.mode === "OFFLINE" && !activity.location.trim()) errors.push("线下活动须填写地点");
   if (activity.completion === "CHECKIN" && activity.mode !== "OFFLINE") errors.push("到场即完成仅适用于线下活动");
@@ -228,6 +229,7 @@ export function validateActivity(activity: MarketingActivity, state: MarketingSt
 export function draftActivityErrors(activity: MarketingActivity) {
   const errors = activity.pool.flatMap((item) => prizeErrors(item, activity, false));
   if (activity.ruleContent !== undefined && typeof activity.ruleContent !== "string") errors.push("活动规则须为文本");
+  if (activity.ruleContentFormat !== undefined && activity.ruleContentFormat !== "html") errors.push("活动规则格式无效");
   for (const [label, start, end] of [["活动", activity.startAt, activity.endAt], ["预约", activity.bookingStart, activity.bookingEnd], ["抽奖", activity.lotteryStart, activity.lotteryEnd]]) errors.push(...partialWindowError(label, start, end));
   if (!Number.isFinite(activity.noWinProbability) || activity.noWinProbability < 0 || activity.noWinProbability > 100) errors.push("未中奖概率须为0–100的数字");
   if ([activity.grantCount, activity.drawLimit, activity.winLimit].some((count) => !nonnegative(count)) || activity.dailyLimit !== null && !positive(activity.dailyLimit)) errors.push("次数须为合法非负整数，每日上限须为正整数");
@@ -369,20 +371,31 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     const existing = state.activities.find((row) => row.id === command.activity.id);
     if (existing && !access.brands.includes(existing.brand)) return reject("无权编辑活动");
     activityId = command.activity.id;
-    const basicPrizeErrors = draftActivityErrors(command.activity);
+    if (!existing && command.section && command.section !== "basic") return reject("请先创建活动，再配置业务规则");
+    const fields: Record<"basic" | "booking" | "lottery", Array<keyof MarketingActivity>> = {
+      basic: ["name", "brand", "mode", "location", "startAt", "endAt", "bookingEnabled", "lotteryEnabled", "ruleContent", "ruleContentFormat"],
+      booking: ["bookingStart", "bookingEnd", "completion", "allowCancel", "allowReschedule", "allowWalkIn", "slots"],
+      lottery: ["lotteryStart", "lotteryEnd", "grantCount", "drawLimit", "dailyLimit", "winLimit", "noWinProbability"],
+    };
+    const candidate: MarketingActivity = existing && command.section ? { ...existing, ...Object.fromEntries(fields[command.section].map(key => [key, command.activity[key]])) } : command.activity;
+    // Switching an editable draft online cannot retain an offline-only completion rule.
+    if (existing && command.section === "basic" && existing.mode !== "ONLINE" && candidate.mode === "ONLINE") candidate.completion = "STAFF";
+    const code = existing ? activityCodes(state).get(existing.id)! : nextActivityCode(state, stamp);
+    if (existing && command.activity.activityCode !== undefined && command.activity.activityCode !== code) return reject("活动编号由系统生成，不可修改");
+    const basicPrizeErrors = draftActivityErrors(candidate);
     if (basicPrizeErrors.length) return reject([...new Set(basicPrizeErrors)].join("；"));
-    if (new Set(command.activity.pool.map((row) => row.id)).size !== command.activity.pool.length || new Set(command.activity.slots.map((row) => row.id)).size !== command.activity.slots.length) return reject("活动奖品 / 场次标识不能重复");
-    const allCodes = state.activities.filter((row) => row.id !== activityId).flatMap((row) => row.pool.flatMap((item) => item.codes.map((code) => code.code))).concat(command.activity.pool.flatMap((item) => item.codes.map((code) => code.code)));
+    if (new Set(candidate.pool.map((row) => row.id)).size !== candidate.pool.length || new Set(candidate.slots.map((row) => row.id)).size !== candidate.slots.length) return reject("活动奖品 / 场次标识不能重复");
+    const allCodes = state.activities.filter((row) => row.id !== activityId).flatMap((row) => row.pool.flatMap((item) => item.codes.map((code) => code.code))).concat(candidate.pool.flatMap((item) => item.codes.map((code) => code.code)));
     if (new Set(allCodes).size !== allCodes.length) return reject("兑换码已存在，不允许跨奖品或活动重复导入");
-    if (command.activity.pool.some((item) => item.codes.some((code) => code.assignedAwardId && !existing?.pool.find((row) => row.id === item.id)?.codes.some((old) => JSON.stringify(old) === JSON.stringify(code))))) return reject("兑换码分配状态仅由抽奖动作修改");
-    if (existing && !assignedCodesPreserved(existing.pool, command.activity.pool)) return reject("已分配兑换码永久保留，不允许删除或修改分配状态");
+    if (candidate.pool.some((item) => item.codes.some((code) => code.assignedAwardId && !existing?.pool.find((row) => row.id === item.id)?.codes.some((old) => JSON.stringify(old) === JSON.stringify(code))))) return reject("兑换码分配状态仅由抽奖动作修改");
+    if (existing && !assignedCodesPreserved(existing.pool, candidate.pool)) return reject("已分配兑换码永久保留，不允许删除或修改分配状态");
     if (existing && (existing.publishedAt || hasActivityBusinessData(state, existing.id))) {
-      const descriptive = { ...existing, name: command.activity.name, description: command.activity.description, cover: command.activity.cover, ruleContent: readActivityRule(command.activity) };
-      const { ruleContent: _newRule, ...incomingBusiness } = { ...command.activity, name: existing.name, description: existing.description, cover: existing.cover };
-      const { ruleContent: _oldRule, ...existingBusiness } = existing;
+      const descriptive = { ...existing, activityCode: code, name: candidate.name, description: candidate.description, cover: candidate.cover, ruleContent: readActivityRule(candidate), ruleContentFormat: candidate.ruleContentFormat };
+      const { ruleContent: _newRule, ruleContentFormat: _newFormat, activityCode: _newCode, ...incomingBusiness } = { ...candidate, name: existing.name, description: existing.description, cover: existing.cover };
+      const { ruleContent: _oldRule, ruleContentFormat: _oldFormat, activityCode: _oldCode, ...existingBusiness } = existing;
       if (JSON.stringify(incomingBusiness) !== JSON.stringify(existingBusiness)) return reject("发布后业务规则锁定；只可改名称、说明、活动规则文案和封面。实质变化请复制活动");
       state.activities[state.activities.indexOf(existing)] = descriptive;
-    } else { const draft = { ...command.activity, status: "DRAFT" as const, publishedAt: undefined, ruleVersion: 1 }; if (!draft.name.trim()) return reject("填写活动名称"); const index = state.activities.findIndex((row) => row.id === draft.id); if (index < 0) state.activities.push(draft); else state.activities[index] = draft; }
+    } else { const draft = { ...candidate, activityCode: code, status: "DRAFT" as const, publishedAt: undefined, ruleVersion: 1 }; if (!draft.name.trim()) return reject("填写活动名称"); const index = state.activities.findIndex((row) => row.id === draft.id); if (index < 0) state.activities.push(draft); else state.activities[index] = draft; }
     return done(activityId);
   }
   if (command.type === "CANCEL_BOOKING" || command.type === "RESCHEDULE") {
@@ -531,6 +544,7 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     const copyId = id();
     const copySlot = (slot: MarketingSlot) => ({ ...slot, id: id(), startAt: "", endAt: "", bookingClosesAt: "", checkinStart: "", checkinEnd: "" });
     const copy = { ...activity, id: copyId, name: `${activity.name} · 副本`, status: "DRAFT" as const, createdAt: stamp, publishedAt: undefined, ruleVersion: 1, startAt: "", endAt: "", bookingStart: "", bookingEnd: "", lotteryStart: "", lotteryEnd: "", slots: activity.slots.map(copySlot), pool: activity.pool.map((item) => ({ ...item, id: id(), activityId: copyId, claimStart: "", claimEnd: "", codes: [], slots: item.slots.map(copySlot) })) };
+    copy.activityCode = nextActivityCode(state, stamp);
     state.activities.push(copy); return done(copy.id, "仅复制配置结构；所有日期须重新填写，兑换码须重新导入，无业务记录或库存占用");
   }
   if (command.type === "DELETE_ACTIVITY") { if (!canDeleteDraft(state, activity)) return reject("仅无任何业务记录、无已分配兑换码的未发布草稿可删除；其他活动请取消并保留历史权益"); state.activities = state.activities.filter((row) => row.id !== activity.id); return done(activity.id, "删除未使用草稿及其配置；操作审计保留"); }

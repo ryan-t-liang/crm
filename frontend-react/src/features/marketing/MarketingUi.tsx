@@ -19,14 +19,14 @@ export function TextField({ label, value, onChange, type = "text", disabled, pla
 export function NumberField({ label, value, onChange }: { label: string; value: number; onChange: (value: number) => void }) {
   return <label className="marketing-field"><span>{label}</span><InputNumber aria-label={label} value={Number.isFinite(value) ? value : undefined} onChange={(next) => onChange(typeof next === "number" ? next : NaN)} /></label>;
 }
-export function TimeField({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string }) {
-  return <div><TextField label={label} value={dateTime(value)} placeholder={placeholder} type="datetime-local" onChange={(value) => onChange(value ? `${value}:00+08:00` : "")} />{placeholder && !value && <small>{placeholder}</small>}</div>;
+export function TimeField({ label, value, onChange, placeholder, disabled }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string; disabled?: boolean }) {
+  return <div><TextField label={label} value={dateTime(value)} placeholder={placeholder} disabled={disabled} type="datetime-local" onChange={(value) => onChange(value ? `${value}:00+08:00` : "")} />{placeholder && !value && <small>{placeholder}</small>}</div>;
 }
 export function Panel({ title, children, note }: { title: string; children: ReactNode; note?: string }) {
   return <section className="marketing-panel"><header><h2>{title}</h2>{note && <p>{note}</p>}</header><div>{children}</div></section>;
 }
 export function DefinitionGrid({ rows }: { rows: Array<[string, ReactNode]> }) {
-  return <dl className="marketing-definition">{rows.map(([label, value]) => <div key={label} className={label === "活动规则" || label === "活动说明" ? "marketing-definition-wide" : undefined}><dt>{label}</dt><dd>{value === "" ? "—" : value ?? "—"}</dd></div>)}</dl>;
+  return <dl className="marketing-definition">{rows.map(([label, value]) => <div key={label} className={label === "活动规则" ? "marketing-definition-wide" : undefined}><dt>{label}</dt><dd>{value === "" ? "—" : value ?? "—"}</dd></div>)}</dl>;
 }
 export function ImageField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   const [error, setError] = useState("");

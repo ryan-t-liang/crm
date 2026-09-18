@@ -11,6 +11,7 @@ import { parseCreatedAt } from "@/features/dashboard/dashboard-model";
 import { awardFulfillmentLabel, bookingLabels, bookingStatus, canViewMarketing, chances, claimLabels, drawBlock, isAwardFulfilled, marketingPermissions, needsReservation, participantChannel, participationChannelLabels, participantDisplayName, participantIdentity, readActivityRule, participationFor, participationIssue, resolveCredential, slotFor, slotOccupancy } from "./marketing-model";
 import { MarketingDetail, MarketingList } from "./MarketingAdmin";
 import { VirtualAwardContent } from "./MarketingData";
+import { ActivityRuleContent } from "./MarketingRuleEditor";
 import { ActivityPhases, DefinitionGrid, displayDate, Panel, SelectField, TextField, options, useAction } from "./MarketingUi";
 
 const uid = () => crypto.randomUUID();
@@ -76,7 +77,7 @@ function MarketingPreview({ activity, initialUserId }: { activity: MarketingActi
       <SelectField label="参与渠道" value={channel} disabled={Boolean(row)} list={options(participationChannelLabels)} onChange={(value) => setChannel(value as MarketingParticipationChannel)} />
       {(scene === "PHONE" || scene === "WX_FULL") && <><TextField label="参与手机号" value={phone} onChange={setPhone} /><TextField label="参与国家码" value={country} onChange={setCountry} /></>}
     </div>{feedback}{identityError && <Banner type="warning" title={identityError} closeIcon={null} />}
-    <Panel title="参加活动"><ActivityPhases activity={activity} /><p>{activity.description}</p>{readActivityRule(activity) && <details className="marketing-rule"><summary>活动规则</summary><p>{readActivityRule(activity)}</p></details>}
+    <Panel title="参加活动"><ActivityPhases activity={activity} />{readActivityRule(activity) && <details className="marketing-rule"><summary>活动规则</summary><ActivityRuleContent activity={activity} /></details>}
       <DefinitionGrid rows={[["参与方式", activity.bookingEnabled ? "预约参与" : "直接参与"], ["会员状态", participantIdentity(row || { id: "", activityId: activity.id, identities: [], subjectKey: "", credential: "", registeredAt: "", ruleVersion: 0, identity }, members).memberId ? "已关联会员" : "未关联会员"]]} />
       {activity.bookingEnabled && <SelectField label="参加活动场次" value={slotId} onChange={setSlotId} list={activity.slots.map((slot) => ({ value: slot.id, label: slot.label + " · " + displayDate(slot.startAt) + " · 剩余 " + Math.max(0, slot.capacity - slotOccupancy(state, activity.id, "ACTIVITY", slot.id)) }))} />}
       <Button theme="solid" disabled={activity.status !== "PUBLISHED" || Boolean(identityError)} onClick={() => { const result = run({ type: "REGISTER", activityId: activity.id, userId: memberScene && selectedUser ? selectedUser.id : undefined, participantId: row?.participantId || row?.id || participantId, identity, participationChannel: channel, slotId: activity.bookingEnabled ? slotId : undefined }); if (result.ok && result.resultId) navigate("marketing/preview/" + activity.id + "/p:" + result.resultId); }}>{activity.bookingEnabled ? "预约参加" : "直接报名参加"}</Button>

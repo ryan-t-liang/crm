@@ -53,6 +53,8 @@ export function decodeMarketing(value: string): DecodedMarketing {
     const shapes = objects && parsed.activities.every((row) =>
       [row.name, row.brand, row.description, row.mode, row.location, row.status, row.startAt, row.endAt, row.bookingStart, row.bookingEnd, row.lotteryStart, row.lotteryEnd].every((field) => typeof field === "string") &&
       (row.ruleContent === undefined || typeof row.ruleContent === "string") &&
+      (row.ruleContentFormat === undefined || row.ruleContentFormat === "html") &&
+      (row.activityCode === undefined || typeof row.activityCode === "string" && /^ACT[A-Z0-9-]+$/.test(row.activityCode)) &&
       [row.bookingEnabled, row.allowWalkIn, row.lotteryEnabled].every((field) => typeof field === "boolean") &&
       [row.grantCount, row.drawLimit, row.winLimit, row.noWinProbability].every((field) => typeof field === "number" && Number.isFinite(field) || row.status === "DRAFT" && field === null) &&
       (row.dailyLimit === null || typeof row.dailyLimit === "number" && Number.isFinite(row.dailyLimit)) &&
@@ -76,7 +78,8 @@ export function decodeMarketing(value: string): DecodedMarketing {
       [row.activityId, row.participationId, row.credential, row.actorId, row.occurredAt].every((field) => typeof field === "string") && ["CHECKIN", "COMPLETE", "PRIZE_CLAIM", "EXPERIENCE_CLAIM"].includes(row.type));
     const codes = owned ? parsed.activities.flatMap((activity) => activity.pool.flatMap((item) => item.codes.map((code) => ({ ...code, activityId: activity.id, prizeId: item.id })))) : [];
     const validAllocations = records && new Set(codes.map((row) => row.code)).size === codes.length && codes.every((code) => !code.assignedAwardId || parsed.awards.some((award) => award.id === code.assignedAwardId && award.activityId === code.activityId && award.poolItemId === code.prizeId && award.virtualContent?.code === code.code)) && parsed.awards.every((award) => award.prizeType !== "VIRTUAL" || award.method !== "REDEMPTION_CODE" || codes.some((code) => code.assignedAwardId === award.id && code.code === award.virtualContent?.code));
-    if (parsed.version === 2 && validAllocations) return { state: { ...parsed, version: 2, revision: parsed.revision ?? 0 } };
+    const activityCodes = parsed.activities?.flatMap(row => row.activityCode ? [row.activityCode] : []) ?? [];
+    if (parsed.version === 2 && validAllocations && new Set(activityCodes).size === activityCodes.length) return { state: { ...parsed, version: 2, revision: parsed.revision ?? 0 } };
     return { issue: "营销数据版本 / 集合 / 字段不兼容，原数据已保留；请备份或明确重置营销数据。" };
   } catch { return { issue: "营销本地数据无法读取，原内容已保留，不自动清库。" }; }
 }

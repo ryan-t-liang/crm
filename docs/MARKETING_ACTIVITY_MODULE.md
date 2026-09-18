@@ -1,4 +1,4 @@
-# 营销活动模块（Marketing Refinement V2）
+# 营销活动模块（Marketing UI Refinement V3）
 
 现有 GP / UN 纯前端原型的活动管理、用户流程预览与数据管理模块，使用现有 React、Semi Design / Icons、Kivisense 主题及 LocalStorage。不新增后端、数据库、SQL 表、登录系统、微信服务或部署架构。营销合同明确为前端原型扩展，不混入 Sowind 四表。
 
@@ -6,23 +6,24 @@
 
 ## Activity 中心与页面职责
 
-CRM 唯一营销主入口 `#marketing` 是活动列表，不再有顶层奖品库、预约记录、核销工作台。列表含名称、原品牌、线上 / 线下、时间、管理状态与独立阶段、参与方式 / 抽奖设置、有效预约 / 已签到 / 已完成 / 中奖人数，支持查看、编辑、复制、发布、暂停 / 恢复、取消及“更多”进入同一活动数据 Tab。举行日期筛选是与活动时间区间相交，不是新增统计。
+CRM 唯一营销主入口 `#marketing` 是活动列表，不再有顶层奖品库、预约记录、核销工作台。V3列表只显示活动编号、名称、类型、场地、活动时间、状态、参与方式、操作；不包含运营KPI。名称进入详情，行操作只有编辑与更多；活动更多菜单只有开始 / 暂停 / 结束。筛选为名称或编号、活动类型、生命周期状态、参与方式及授权品牌，先权限后筛选。线上场地显示“—”。
 
 `#marketing/activity/<activityId>/<tab>` 拥有全部配置及业务数据：
 
 | 一级入口 | 二级入口 / 职责 | 兼容旧 leaf route |
 | --- | --- | --- |
 | 概览 | 核心指标与抽奖 / 履约指标，同源只读明细 | 默认 / overview |
-| 活动配置 | 基本信息：内容、规则、品牌、参与方式、时间 | basic |
-| 活动配置 | 参与设置：完成条件；预约活动的规则、ACT场次与容量 | booking-settings |
-| 活动配置 | 抽奖与奖品：规则、独立类型 / 履约、库存、概率、代码管理 | lottery |
+| 活动配置 | 基本信息：编号、规则、品牌、参与方式、时间 | basic |
+| 活动配置 | 预约设置：仅预约参与显示；规则、完成条件、ACT场次与容量 | booking-settings |
+| 活动配置 | 抽奖设置：仅启用抽奖显示；时间、次数、上限、未中奖概率 | lottery |
+| 活动配置 | 奖品设置：仅启用抽奖显示；独立类型 / 履约、库存、概率、代码管理 | prizes（新增配置leaf） |
 | 参与记录 | 参与用户：身份、渠道、状态、抽奖次数及详情 | participants |
 | 参与记录 | 预约记录：ACT / PRIZE独立预约及历史 | bookings |
 | 参与记录 | 抽奖记录：每次draw，包括NONE | draws |
 | 奖品履约 | 中奖记录：每份award及冻结权益内容 | awards |
 | 奖品履约 | 核销记录：Redemption业务事实，不用Audit代替 | redemptions |
 
-详情是全宽工作区，不再有“后台职责”卡片、固定时间侧栏或规则版本 / 业务归属说明。轻量阶段标签和“查看时间安排”展示相互独立的窗口，时间策略未改变。编辑为Semi SideSheet左侧五步导航：基本信息 → 参与设置 → 抽奖规则 → 奖品设置 → 发布检查。内容说明与活动规则分开；每次编辑一个奖品。非最终步骤底部为取消 / 保存草稿 / 下一步，最终步骤为返回 / 保存草稿 / 发布活动。发布检查每项“去完善”回到真实对应步骤，不跳过集中校验。
+详情是全宽工作区，不再有后台职责卡片、固定时间侧栏、规则版本说明或创建Wizard。新建 / 编辑共享一个720px Semi SideSheet，只展示九个基础字段；创建后进入详情。新建底部为取消 / 创建活动，编辑为取消 / 保存。活动说明和封面不再进入基础表单，旧字段保留读取，不删除旧用户内容。详情四个一级入口继续保留，配置分为基本信息 / 预约设置 / 抽奖设置 / 奖品设置，能力不适用时隐藏对应配置；旧能力不适用的配置leaf回到基本信息。预约与抽奖设置是独立表单，不是步骤；奖品沿用独立编辑。普通表单 / 表格不套Card，间距与Surface详见MARKETING_UI_DESIGN_RULES.md。
 
 直接参与不显示ACT预约场次、取消 / 改约或预约人数；无抽奖活动不显示抽奖 / 奖品指标和不适用配置。是否显示预约记录同时考虑独立的PRIZE履约预约，不能由活动参与方式错误隐藏奖品预约。负库存、非法整数或概率即使保存草稿也拒绝。产品页面移除研发 / 演示边界长文；这些边界仍在本文及验收记录中明确保留。
 
@@ -36,7 +37,9 @@ CRM 唯一营销主入口 `#marketing` 是活动列表，不再有顶层奖品�
 
 新建使用独立createMarketingActivity：活动 / 预约 / 抽奖窗口为未填写的空字符串，场次与奖品为空；保留原字符串类型，不升级存储schema。新建日期控件保持未填写（input值为空），不自动生成日期。演示种子的相对动态过去时间由独立createDemoMarketingActivity生成，不能复用到新建。添加场次在父开始时间未填时保持空；已填则建议不早于父开始时间与当前时间后30分钟，运营仍需填写地点并检查全部窗口，建议值不等于已经配置成功。
 
-草稿允许时间缺失、场次未配置、概率未合计100%、代码未导足；非法负数 / 非整数数量、0–100之外概率、已填写的非法 / 反向时间则阻止保存。发布前集中显示七组检查：基本信息、预约配置、抽奖概率与次数、实体库存与有效期、预约型履约容量、虚拟发放内容、兑换码数量。错误按钮回到对应五步配置位置；列表与详情的“发布”也先打开该检查，不逐次Toast试错。确认提交再次校验当前数据 / 时钟 / 权限。
+创建表单要求名称、有效授权品牌、合法活动开始 / 结束时间，以及线下活动场地；不要求预约、抽奖和奖品已配置。创建只是保存内部DRAFT，不等于开始。原集中校验仍拒绝非法数量 / 概率 / 已填写的反向时间。开始复用原STATUS=PUBLISHED首次启用校验，继续检查预约、抽奖、库存、履约容量和虚拟内容，旧description不再是必填项；但不显示发布检查页 / Checklist / 步骤跳转。已启用活动的锁定和恢复规则保持原逻辑。
+
+列表生命周期只有待开始 / 进行中 / 已结束：未启用或尚未到活动开始时间是待开始；有效举行期内的PUBLISHED/PAUSED均是进行中；CANCELED或活动结束时间已到是已结束。暂停不生成第四状态；暂停后“开始”调用原恢复动作。开始不改写设定时间，未到开始时间或已结束时不可用；举行期内已正常运行时不可重复开始。结束二次确认后调用原CANCELED语义，取消未到场ACT预约，保留已有中奖权益、PRIZE预约及履约历史。未重写底层业务状态机。
 
 ## 数据模型与归属
 
@@ -44,7 +47,7 @@ CRM 唯一营销主入口 `#marketing` 是活动列表，不再有顶层奖品�
 
 | 集合 | 字段 / 关联 |
 | --- | --- |
-| activities | 原品牌、管理状态、独立时间、预约 / 抽奖规则；可选ruleContent展示文字；沿用 pool 名，但内容是独立 ActivityPrize |
+| activities | 原品牌、管理状态、独立时间、预约 / 抽奖规则；可选activityCode、ruleContent及ruleContentFormat；沿用 pool 名，但内容是独立 ActivityPrize |
 | ActivityPrize | id + activityId；名称、说明、图片、奖项、prizeType、quota、probability、perPersonLimit、method、有效期、instructions、履约 slots、codes、虚拟内容 |
 | participations | activityId、稳定内部participantId / participation.id、可选身份观察和渠道、兼容旧subjectKey / identities、ACT码、报名 / 签到 / 完成 |
 | bookings | activityId + participationId；ACTIVITY 或 PRIZE（awardId / poolItemId）；场次、状态、历史时间、USER / WALK_IN / UNKNOWN 来源 |
@@ -58,7 +61,9 @@ CRM 唯一营销主入口 `#marketing` 是活动列表，不再有顶层奖品�
 
 ## 规则、参与方式及可选身份
 
-`ruleContent?: string` 是活动展示规则，与description分开保存、编辑、详情 / 预览展示和复制；旧记录缺失时只读解释为空，不触发回填。它不解析成grantCount、drawLimit、winLimit、probability或预约约束，不改变真正业务配置。
+`ruleContent?: string` 是活动展示规则，V3用简单富文本编辑并在详情 / 用户预览展示。`ruleContentFormat?: "html"`显式标记富文本，缺省仍按旧纯文本安全展示；不会猜测旧文本中的标签是HTML或自动改写LocalStorage。只允许段落、加粗、斜体、有序 / 无序列表、换行与安全HTTP(S)链接，渲染时重建HTML白名单，不提供HTML源码 / 媒体 / CMS。旧description保留存储但不再展示或编辑。规则仍不解析成grantCount、drawLimit、winLimit、probability或预约约束。
+
+`activityCode?: string`由保存动作自动分配，形式ACT+上海日期+至少四位流水，检查整个营销命名空间（不是品牌筛选后的列表），不可手工更改；复制模型生成新编号。旧缺编号活动只读生成可扫描的业务编号，内部UUID不直接展示；只有显式保存该活动时才固化编号，不批量回填或覆盖其他活动。唯一性是本地前端命名空间约束，不声称有跨设备真实后端全局编号服务。新基础 / 预约 / 抽奖表单各自只保存对应字段，并保留当前其他配置，避免用过期表单快照覆盖奖品或另一份配置。
 
 活动参与方式`RESERVATION / DIRECT`沿用`bookingEnabled`作兼容映射（true / false），不是新增数据库字段。RESERVATION选ACT场次并预约，再签到 / 完成；DIRECT创建稳定Participation，无ACT Booking或ACT slot要求。预约和直接报名都不等于完成，不直接发放机会。
 
@@ -154,7 +159,7 @@ PRIZE预约引用具体获奖权益与该活动奖品slots，不重报名、不�
 
 仍用 `kivisense-marketing-prototype-v1`，内部 schema2；仅缺键初始化，刷新不移动时间、不重播种、不覆盖修改。升级先将完整原始字符串备份到 `kivisense-marketing-prototype-v1:backup-v1`，再写 V2。
 
-Refinement V2不改存储键 / schema2、不清空LocalStorage、不回填日期、代码或会员。旧活动缺ruleContent、旧Participation缺新身份 / 渠道字段、旧奖品缺fulfillmentMode都以只读适配解释，已有V2用户修改不被演示种子覆盖。缺省场次标记解释为未禁用 / 未删除；历史正概率空库存与不足履约配置不强行重写。新建与demo工厂分离仍保留。
+Refinement V2 / V3不改存储键 / schema2、不清空LocalStorage、不回填日期、代码或会员。旧活动缺ruleContent、ruleContentFormat或activityCode，旧Participation缺新身份 / 渠道字段、旧奖品缺fulfillmentMode都以只读适配解释，已有用户修改不被演示种子覆盖。缺省场次标记解释为未禁用 / 未删除；历史正概率空库存与不足履约配置不强行重写。新建与demo工厂分离仍保留。
 
 旧全局定义复制为各活动自己的 ActivityPrize，保留 pool / award / participation / booking / chance / draw ID、履约承诺，prizeId 留 legacyPrizeId 可追溯。DIRECT / PICKUP / EXPERIENCE → PHYSICAL，不能判断 → UNKNOWN。历史缺图片 / 说明不拿今天可变定义伪造快照。仅从有对象 / 演员 / 动作且成功时间匹配的旧 CHECKIN / COMPLETE / CLAIM Audit 转可信核销，标 LEGACY_AUDIT；孤立时间不造事实，配置 Audit 不混入。虚构演示事实标 DEMO_SEED。
 

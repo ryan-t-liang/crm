@@ -31,6 +31,8 @@ export type MarketingPoolItem = ActivityPrize;
 export interface MarketingActivity {
   id: string; name: string; brand: SowindBrandCode; description: string; cover: string;
   ruleContent?: string;
+  ruleContentFormat?: "html";
+  activityCode?: string;
   mode: "ONLINE" | "OFFLINE"; location: string; status: MarketingStatus; ruleVersion: number;
   startAt: string; endAt: string; bookingEnabled: boolean; allowWalkIn: boolean;
   allowCancel: boolean; allowReschedule: boolean;
