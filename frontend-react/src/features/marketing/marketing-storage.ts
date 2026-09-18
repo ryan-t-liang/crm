@@ -52,11 +52,17 @@ export function decodeMarketing(value: string): DecodedMarketing {
     const objects = arrays.every((rows) => Array.isArray(rows) && rows.every((row) => row && typeof row === "object" && typeof row.id === "string"));
     const shapes = objects && parsed.activities.every((row) =>
       [row.name, row.brand, row.description, row.mode, row.location, row.status, row.startAt, row.endAt, row.bookingStart, row.bookingEnd, row.lotteryStart, row.lotteryEnd].every((field) => typeof field === "string") &&
+      (row.ruleContent === undefined || typeof row.ruleContent === "string") &&
       [row.bookingEnabled, row.allowWalkIn, row.lotteryEnabled].every((field) => typeof field === "boolean") &&
       [row.grantCount, row.drawLimit, row.winLimit, row.noWinProbability].every((field) => typeof field === "number" && Number.isFinite(field) || row.status === "DRAFT" && field === null) &&
       (row.dailyLimit === null || typeof row.dailyLimit === "number" && Number.isFinite(row.dailyLimit)) &&
       Array.isArray(row.slots) && Array.isArray(row.pool) && row.pool.every((item) => typeof item.label === "string" && Array.isArray(item.slots))) &&
-      parsed.participations.every((row) => typeof row.activityId === "string" && typeof row.subjectKey === "string" && typeof row.credential === "string" && Array.isArray(row.identities) && row.identities.every((ref) => typeof ref.userId === "string" && typeof ref.brand === "string")) &&
+      parsed.participations.every((row) => typeof row.activityId === "string" && typeof row.subjectKey === "string" && typeof row.credential === "string" && Array.isArray(row.identities) && row.identities.every((ref) => typeof ref.userId === "string" && typeof ref.brand === "string") &&
+        (row.participantId === undefined || typeof row.participantId === "string" && Boolean(row.participantId)) &&
+        (row.participationChannel === undefined || ["WECHAT_MINIPROGRAM", "WECHAT_H5", "WEB_H5", "QR_H5", "STAFF", "OTHER"].includes(row.participationChannel)) &&
+        (row.identity === undefined || row.identity && typeof row.identity === "object" && !Array.isArray(row.identity) && ["memberId", "unionId", "openId", "wechatAppId", "phone", "phoneCountryCode", "externalUserId", "anonymousId", "sessionId", "displayName"].every((key) => {
+          const value = row.identity?.[key as keyof NonNullable<typeof row.identity>]; return value === undefined || value === null || typeof value === "string";
+        }))) &&
       parsed.bookings.every((row) => typeof row.participationId === "string" && typeof row.slotId === "string" && ["ACTIVITY", "PRIZE"].includes(row.kind) && typeof row.status === "string") &&
       parsed.chances.every((row) => Number.isInteger(row.count) && row.count > 0) &&
       parsed.draws.every((row) => typeof row.operationId === "string" && typeof row.participationId === "string") &&
@@ -64,8 +70,9 @@ export function decodeMarketing(value: string): DecodedMarketing {
     if (shapes && parsed.version === 1) return { state: migrateV1(parsed), originalV1: value };
     const owned = shapes && parsed.activities.every((row) => typeof row.allowCancel === "boolean" && typeof row.allowReschedule === "boolean" && row.pool.every((item) =>
       item.activityId === row.id && ["PHYSICAL", "VIRTUAL", "UNKNOWN"].includes(item.prizeType) &&
+      (item.fulfillmentMode === undefined || ["DIRECT", "RESERVATION"].includes(item.fulfillmentMode)) &&
       [item.name, item.description, item.image, item.voucherName, item.voucherDescription, item.link].every((field) => typeof field === "string") && Array.isArray(item.codes) && item.codes.every((code) => typeof code.code === "string")));
-    const records = owned && parsed.bookings.every((row) => ["USER", "WALK_IN", "UNKNOWN"].includes(row.source)) && parsed.awards.every((row) => ["PHYSICAL", "VIRTUAL", "UNKNOWN"].includes(row.prizeType)) && parsed.redemptions.every((row) =>
+    const records = owned && parsed.bookings.every((row) => ["USER", "WALK_IN", "UNKNOWN"].includes(row.source)) && parsed.awards.every((row) => ["PHYSICAL", "VIRTUAL", "UNKNOWN"].includes(row.prizeType) && (row.fulfillmentMode === undefined || ["DIRECT", "RESERVATION"].includes(row.fulfillmentMode))) && parsed.redemptions.every((row) =>
       [row.activityId, row.participationId, row.credential, row.actorId, row.occurredAt].every((field) => typeof field === "string") && ["CHECKIN", "COMPLETE", "PRIZE_CLAIM", "EXPERIENCE_CLAIM"].includes(row.type));
     const codes = owned ? parsed.activities.flatMap((activity) => activity.pool.flatMap((item) => item.codes.map((code) => ({ ...code, activityId: activity.id, prizeId: item.id })))) : [];
     const validAllocations = records && new Set(codes.map((row) => row.code)).size === codes.length && codes.every((code) => !code.assignedAwardId || parsed.awards.some((award) => award.id === code.assignedAwardId && award.activityId === code.activityId && award.poolItemId === code.prizeId && award.virtualContent?.code === code.code)) && parsed.awards.every((award) => award.prizeType !== "VIRTUAL" || award.method !== "REDEMPTION_CODE" || codes.some((code) => code.assignedAwardId === award.id && code.code === award.virtualContent?.code));

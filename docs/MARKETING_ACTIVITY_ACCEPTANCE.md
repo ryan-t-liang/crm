@@ -1,4 +1,119 @@
-# 营销活动最终验收记录
+# 营销活动验收记录
+
+## Marketing Refinement V2 — 本轮验收
+
+基线：`2fd58a2a0558b10877d1249b46ee22300ad5ec4b`，分支`codex/kivisense-product-prototype`。本轮仅普通推送当前分支；不修改main、不部署。下面的历史Final Acceptance结论不能代替本轮验收。
+
+当前状态：**PASSED（已执行的纯前端原型范围）**，2026-09-18。最终冻结构建后，本轮41项、附加虚拟预约履约 / 旧匿名兼容、原六套79组、TypeScript / lint / 407项test / build均通过。未发现未处理P0 / P1；不代表真实微信、服务端身份、库存事务或生产并发通过。原Final库存占用、不可逆代码分配、快照、权限、容量承诺和安全存储门禁未削减。完成后仅交付UI / IA review，不合并main、不部署。
+
+### 实际改动
+
+| 范围 | 本轮变化 |
+| --- | --- |
+| types/marketing.ts、marketing-model.ts、marketing-storage.ts、marketing-store.tsx | 可选ruleContent、独立fulfillmentMode、内部参与标识 / 可选身份 / 渠道；只读旧字段解释、后关联会员不造新记录；虚拟预约型分配 / 发放分离；保留集中权限 / 容量 / 库存 / 幂等；修复UNKNOWN / 缺虚拟内容误计履约 |
+| MarketingAdmin.tsx | 全宽详情、四一级 / 二级导航、轻量时间查看、More操作；旧leaf路由兼容；没有后台职责卡片 / 时间侧栏 |
+| MarketingEditor.tsx、MarketingCodes.tsx | 五步竖向编辑、活动内容 / 设置分组、规则文案独立、参与方式 / 奖品领取方式独立；ACT / Prize modal和表格、操作型发布检查、真实去完善跳转 / 正确footer；代码管理中文交互 |
+| MarketingData.tsx | 参与列表渠道 / 身份掩码 / 状态，详情空值；中奖快照 / 履约状态；预约型未issued虚拟内容不提前显示 |
+| MarketingPages.tsx | 四个可选身份演示、已有会员兼容、六渠道选择、p:id精确回访；旧匿名缺participantId复用row.id；独立Staff仍单独核验 |
+| MarketingUi.tsx、styles/marketing.css、mock/marketing-demo-data.ts | 两列字段 / 规则全宽、紧凑指标与布局、竖向编辑 / 内部滚动、时间Popover及简洁空态；新种子仅增加规则内容，不覆盖已存数据 |
+| 新marketing-refinement.test.ts、marketing-editor-readiness.test.ts | 新增53+14=67项；原marketing129项保留，当前marketing196项全部通过 |
+| qa/marketing-refinement-browser-qa.mjs、原三个marketing QA、package.json | 新41项+附加真实链路 / 明确fixture；原QA只适配导航与新表单 / 业务文本并保留原断言；新增执行入口，不增加依赖 |
+| 本文、MARKETING_ACTIVITY_MODULE.md、PROTOTYPE_ARCHITECTURE.md营销section | 字段 / 规则 / 层级 / 验收映射、真实证据及限制；历史记录保留 |
+
+销售 / 会员模型、两个Store、数据、权限范围、关联和Dashboard查询未改；没有SQL / backend / database、金额或Opportunity改动。普通新建UI奖品显式存DIRECT，旧工厂 / 历史method仍只读推导，不大范围回填旧对象。
+
+本轮真实浏览器套件：`qa/marketing-refinement-browser-qa.mjs`（只允许localhost / 127.0.0.1预览，默认4174；独立Chrome Context，虚构数据）。A–D活动创建、配置、发布、参加、完成、抽奖、奖品预约及核验均通过UI操作，并读取最终持久状态。旧字段缺失使用单独标注的隔离fixture，只证明兼容读取，不冒充UI创建链路。奖品概率通过页面配置100%；不覆写Math.random或生产随机逻辑。
+
+### 41项验收矩阵
+
+R=新增真实UI套件；U=本轮规则 / readiness测试；F=重跑原Final及既有套件。最终状态以实际results.json为准，未运行项不得标PASS。
+
+| # | 合同 / 预期 | 验证层级 / 持久断言 | 当前状态 |
+| --- | --- | --- | --- |
+| 1 | 新建规则独立保存 | R草稿保存ruleContent | PASS（所列层级） |
+| 2 | 修改规则并保存 | R重新打开Editor修改后的字段 | PASS（所列层级） |
+| 3 | 详情显示规则 | R基本信息与description分开显示 | PASS（所列层级） |
+| 4 | 用户预览显示规则 | R四链路预览中的原规则文字 | PASS（所列层级） |
+| 5 | 副本保留规则 | R真实复制；日期 / 业务记录仍清空 | PASS（所列层级） |
+| 6 | 旧记录无规则兼容 | R明确旧V2fixture读取 / 刷新原文字节不变 | PASS（所列层级） |
+| 7 | 文案不解析抽奖限制 | R写“999次”且drawLimit仍1；U | PASS（所列层级） |
+| 8 | 预约方式创建ACT预约 | R真实预约，Booking.kind=ACTIVITY | PASS（所列层级） |
+| 9 | 直接参加不依赖Booking | R报名成功而ACT Booking=0 | PASS（所列层级） |
+| 10 | 直接参加稳定内部身份 | RparticipantId存在，刷新报名幂等 | PASS（所列层级） |
+| 11 | 直接方式不要求ACT场次 | R隐藏窗口 / 场次 / 取消字段，正常发布 | PASS（所列层级） |
+| 12 | 预约发布要求有效ACT场次 | R检查阻断与真实步骤跳转；U | PASS（所列层级） |
+| 13 | 直接领奖无PRIZE预约 | R实际中奖、PRIZE Booking=0 | PASS（所列层级） |
+| 14 | 直接领奖生成WIN凭证 | R WIN与ACT独立，Staff按WIN核验 | PASS（所列层级） |
+| 15 | 预约履约先预约后核验 | R先拒绝未预约CLAIM，再预约并成功 | PASS（所列层级） |
+| 16 | PRIZE与ACT场次分开 | R poolItemId / awardId / slotId精确归属 | PASS（所列层级） |
+| 17 | 活动与奖品方式独立 | R四组合持久字段；U | PASS（所列层级） |
+| 18 | 预约参与+预约履约 | R A全UI链路+最终履约事实 | PASS（所列层级） |
+| 19 | 预约参与+直接履约 | R B全UI链路+最终履约事实 | PASS（所列层级） |
+| 20 | 直接参与+预约履约 | R C全UI链路+最终履约事实 | PASS（所列层级） |
+| 21 | 直接参与+直接履约 | R D全UI链路+最终履约事实 | PASS（所列层级） |
+| 22 | 无memberId可参加 | R匿名 / OpenID场景真实参加；U | PASS（所列层级） |
+| 23 | 无UnionID可参加 | R OpenID / 手机 / 匿名；U | PASS（所列层级） |
+| 24 | 无OpenID可参加 | R手机 / 匿名；U | PASS（所列层级） |
+| 25 | 无手机号可参加 | R OpenID / 匿名；U | PASS（所列层级） |
+| 26 | OpenID+AppID单独身份 | R缺Union / 手机 / 会员仍实际参加 | PASS（所列层级） |
+| 27 | 手机号H5参与 | R手机号+国家码、不依赖微信字段 | PASS（所列层级） |
+| 28 | 匿名H5参与 | R匿名直接活动真实参加 | PASS（所列层级） |
+| 29 | 匿名可预约 | R A匿名ACT预约 | PASS（所列层级） |
+| 30 | 匿名完成可获机会 | R Staff完成，Chance恰好1条 | PASS（所列层级） |
+| 31 | 匿名可以中奖 | R匿名即时抽奖与Award内部关联 | PASS（所列层级） |
+| 32 | Award不依赖手机号 | R匿名Award成功，原身份phone缺失 | PASS（所列层级） |
+| 33 | Redemption不依赖微信 | R匿名 / 手机场景Staff实际成功 | PASS（所列层级） |
+| 34 | OpenID有App上下文 | R持久wechatAppId；U缺App拒绝 / 跨App不合并 | PASS（所列层级） |
+| 35 | 弱身份不误合并 | R匿名与微信独立、刷新同内部主体幂等；U同OpenID跨App / 同姓名 / 手机候选歧义 / 后关联会员 | PASS（所列层级） |
+| 36 | Basic错误返回基本步骤 | R basic行“去完善”显示活动名称表单 | PASS（所列层级） |
+| 37 | ACT错误返回参与步骤 | R booking行“去完善”显示预约字段 | PASS（所列层级） |
+| 38 | Draw错误返回抽奖步骤 | R lottery行跳回累计上限表单 | PASS（所列层级） |
+| 39 | Prize错误返回奖品步骤 | R履约容量不足行跳回真实奖品设置 | PASS（所列层级） |
+| 40 | “去完善”真实跳转 | R 36–39逐个检查非空跳转 / 非逐次Toast | PASS（所列层级） |
+| 41 | 全部检查完成可发布 | R无待完善CTA发布，持久status=PUBLISHED | PASS（所列层级） |
+
+### 页面、尺寸及原逻辑回归
+
+- 桌面1440×900、1280×800、1024×768：四一级 / 对应二级入口、概览、时间Popover、参与列表、身份掩码、空值、Editor、发布检查；检查document水平溢出，宽表保持内部滚动。
+- 手机375、430：真实用户预览与独立Staff，检查document水平溢出；不以桌面截图冒充移动端。
+- 纯前端 / 不接微信HQ / 并发限制等研发说明保留在文档，而不是后台职责卡片或常驻正常页面；规则版本 / 业务归属不作为运营首页噪声。
+- 虚拟DIRECT仍本地发放且不执行实体CLAIM；虚拟RESERVATION先冻结代码并占库存，合法PRIZE预约 / CLAIM才issuedAt+fulfilledAt。此分支另由U和真实浏览器新增补充场景验证，不把4×PHYSICAL组合等同所有类型覆盖。
+- 原六套浏览器回归已全量重跑，保持旧断言：销售 / 会员27组、Dashboard11组、Marketing V2 18组、V2.1 7组、Final 5组、Core 11组，共79组。Sales / Member存储原文字节不变；不改销售流、权限、集团关联或概览口径。
+
+明确层级：OpenID跨App同值、缺App拒绝、同姓名 / 手机歧义、后续关联会员及权限能力组合由U规则夹具验证；当前Preview是明确虚构身份场景，不是微信授权、手机号验证或真实CRM匹配端。R证明内部记录不误合并与页面链路，不冒称已通过上述真实外部服务或全部UI录入边界。旧V2缺字段仅隔离fixture兼容读取。
+
+额外兼容检查：克隆D链路真实UI创建 / 完成 / 中奖 / 核销的直接匿名记录，在第二个隔离Context仅移除可选participantId / identity / channel；通过原`p:<participation.id>`刷新和UI再次直接报名，断言所有Participation ID / 数量、Booking / Chance / Draw / Award / Redemption事实完全不变，Sales / Member命名空间不变。这是明确标注的旧元数据fixture，不声称字段删除是产品UI功能；原case6纯只读字节保留检查同时保留。
+
+### 本轮实际门禁
+
+| 检查 | 实际结果 |
+| --- | --- |
+| Typecheck / lint | PASS，exit0；现有lint是tsc，不宣称额外ESLint |
+| 全部test / 本轮marketing规则 | 407/407 PASS；marketing196（原129+新53模型+14readiness）；本轮新增67，不削弱Final断言 |
+| build | PASS，exit0；冻结后未再改生产源码；既有lottie eval / chunk-size警告不伪装消失 |
+| 新浏览器41项 / 桌面 / 手机 | 41/41 PASS，6组及142截图，三个桌面 / 两个手机宽度；实际点击一级 / 二级导航覆盖全部配置与记录明细、Editor五步和两种参与方式；附虚拟预约和旧匿名p:idfixture兼容 |
+| 原六套Browser / Console / Request | 79/79组PASS、155截图；七套（含新增）console / runtime / failed-request均0 |
+| 真实微信、HQ、后端、并发 / 真机 | 本轮未接入 / 未执行，不声称通过 |
+
+证据输出为新时间戳目录下`00-evidence/evidence.md`、逐步骤截图、`01-issues/issues.md`及`results.json`。截图与本地archives不提交。首次失败记录保留，修复后另开时间戳重跑；记录功能失败与视觉一致性覆盖差异。
+
+### 最终构建与本地证据
+
+最终构建SHA256：app.js `3445937f9577a6dc400ae6777ed0f3deb0ae06ec949db54165a240a3fb074402`；app.css `eb2214fe4f7a8d0478e539550a7a25f851e80e8e593f835ced74e2a544c3de31`。Sowind SQL保持`757ef1d2b038cfc982e9a23a646fa36d274f8f89c1715a6a39152e1ddd3701a9`。以下是本地档案，不随GitHub提交（相对链接仅本地checkout可打开），不是线上部署验收：
+
+- [Refinement 41项 / 142步骤与截图](../artifacts/prototype-qa/2026-09-18T06-33-37.804Z-marketing-refinement-v2/00-evidence/evidence.md)；[机器结果](../artifacts/prototype-qa/2026-09-18T06-33-37.804Z-marketing-refinement-v2/results.json)；[问题与覆盖](../artifacts/prototype-qa/2026-09-18T06-33-37.804Z-marketing-refinement-v2/01-issues/issues.md)
+- [Sales / Member 27组](../artifacts/prototype-qa/2026-09-18T06-27-29.624Z-sales-regression/results.json)
+- [Dashboard 11组](../artifacts/prototype-qa/2026-09-18T06-27-29.620Z-dashboard-v1/results.json)
+- [Core 11组](../artifacts/prototype-qa/2026-09-18T06-27-29.627Z-core-integrity/results.json)
+- [Marketing V2 18组](../artifacts/prototype-qa/2026-09-18T06-27-34.430Z-marketing-v2/results.json)
+- [Marketing V2.1 7组](../artifacts/prototype-qa/2026-09-18T06-27-34.443Z-marketing-v21/results.json)
+- [Marketing Final 5组](../artifacts/prototype-qa/2026-09-18T06-27-34.474Z-marketing-final/results.json)
+
+此前定位轮保留：06:11:14 Semi按钮图标可访问名、06:12:30全局固定Math.random导致Radio ID碰撞、06:13:22 Modal的aria-label=confirm与中文okText差异、06:14:16隐藏Tab规则重复、06:18:08场景hash切换的Dropdown时序、06:19:24内部scroll容器祖先scope、06:32:06将hash路由误作pathname的URL等待。这些是测试环境 / 定位假阳性，修正定位而非业务断言。06:14:50新增Direct prize缺显式fulfillmentMode在新UI对象定点修复，未全域更改旧工厂；06:21:02定位轮完整通过，06:27:31冻结构建重跑通过，06:31:05补齐明细与Editor截图通过。最终06:33:37在同一冻结构建实际点击一级 / 二级Tab后再次41项全部通过，完成时间06:34:49 UTC。所有失败档案原文保留，没有覆盖旧证据或降低不变量。
+
+人工复核1024概览 / 基本Editor / 发布检查 / 参与详情、最终1024抽奖记录 / 抽奖规则Editor / 奖品设置Editor、375预览 / Staff关键截图，没有溢出或遮挡阻断；不声称297张（155+142）全部逐像素审查。继承的封面native file input是非P0 / P1视觉细项，未伪称新增完整Semi Upload。真实微信授权、手机校验、HQ、服务器角色 / 并发、防作弊、真机 / Safari / Firefox及扫码硬件未覆盖。本轮Git最终提交 / 远端一致性由正常推送后的Git日志及交付回复报告，不将验收基线误作交付SHA；main / 部署未由本轮改变。
+
+## 历史记录（以下非本轮验收结论）
 
 # Final Acceptance
 

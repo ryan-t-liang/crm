@@ -22,12 +22,14 @@ const read = async () => (await raw()).map((row) => JSON.parse(row));
 const local = (minutes) => new Date(Date.now() + minutes * 60_000 + 8 * 3_600_000).toISOString().slice(0, 16);
 const pass = (name) => { results.push({ name, status: "PASS" }); process.stdout.write(`PASS ${name}\n`); };
 async function route(path, heading) { await page.goto(`${base}/#${path}`, { waitUntil: "networkidle" }); if (heading) await page.getByRole("heading", { name: heading, exact: true }).waitFor(); }
-async function step(name) { await page.locator(".semi-sidesheet:visible .semi-steps").getByText(name, { exact: true }).click(); }
+async function step(name) { await page.locator(".marketing-editor-nav").getByText(name, { exact: true }).click(); }
 async function select(label, value) {
   await page.getByRole("combobox", { name: label, exact: true }).click();
   await page.locator(".semi-select-option:visible").filter({ hasText: new RegExp(`^${value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`) }).click();
 }
-async function confirm() { const modal = page.locator(".semi-modal:visible").last(); await modal.getByRole("button", { name: "confirm", exact: true }).click(); await modal.waitFor({ state: "hidden" }); }
+async function confirm() { const modal = page.locator(".semi-modal:visible").last(); await modal.getByRole("button", { name: /^(confirm|保存奖品|保存场次)$/ }).click(); await modal.waitFor({ state: "hidden" }); }
+async function more(name) { await page.locator(".semi-modal:visible").waitFor({ state: "hidden" }); await page.getByRole("button", { name: "更多操作", exact: true }).click(); await page.waitForTimeout(150); await page.locator(".semi-dropdown-item:visible").filter({ hasText: new RegExp(`^${name}$`) }).click(); }
+async function rowAction(row, name) { await page.locator(".semi-modal:visible").waitFor({ state: "hidden" }); await page.waitForTimeout(150); const direct = row.getByRole("button", { name, exact: true }); if (await direct.count()) return direct.click(); await row.getByRole("button", { name: "更多", exact: true }).click(); await page.waitForTimeout(150); await page.locator(".semi-dropdown-item:visible").filter({ hasText: new RegExp(`^${name}$`) }).click(); }
 async function shot(name) {
   await page.waitForTimeout(250);
   const layout = await page.evaluate(() => ({ width: innerWidth, height: innerHeight, documentWidth: document.documentElement.scrollWidth }));
@@ -47,16 +49,17 @@ async function create(name, virtual, booking) {
   await route("marketing", "营销活动"); await page.getByRole("button", { name: "新建活动", exact: true }).click();
   assert.equal(await page.getByLabel("活动开始", { exact: true }).inputValue(), "");
   for (const [label, value] of [["活动名称", name], ["活动说明", "Final Acceptance · 独立虚构数据"], ["活动地点", "验收工坊"], ["活动开始", local(-60)], ["活动结束", local(360)]]) await page.getByLabel(label, { exact: true }).fill(value);
-  if (!booking) await page.getByRole("switch", { name: "开启活动预约", exact: true }).click();
-  await step("预约设置"); await select("完成条件", "工作人员确认完成");
+  if (!booking) await page.getByRole("radio", { name: "直接参与", exact: true }).click();
+  await step("参与设置"); await select("完成条件", "工作人员确认完成");
   if (booking) {
     await page.getByLabel("预约开放", { exact: true }).fill(local(-1440)); await page.getByLabel("预约截止", { exact: true }).fill(local(180));
-    await page.getByRole("button", { name: "添加活动场次", exact: true }).click();
+    await page.getByRole("button", { name: /添加活动场次$/ }).click();
     for (const [label, value] of [["场次名称", "验收场次"], ["场次地点", "验收工坊"], ["场次容量", "2"], ["场次开始", local(30)], ["场次结束", local(120)], ["场次预约截止", local(20)], ["允许签到开始", local(-30)], ["允许签到结束（含配置宽限）", local(150)]]) await page.getByLabel(label, { exact: true }).fill(value);
+    await confirm();
   }
-  await shot(`${name}-booking-config`); await step("抽奖设置");
+  await shot(`${name}-booking-config`); await step("抽奖规则");
   await page.getByLabel("抽奖开始", { exact: true }).fill(local(-60)); await page.getByLabel("抽奖截止", { exact: true }).fill(local(480)); await page.getByLabel("未中奖概率（%）", { exact: true }).fill("0");
-  await step("奖品设置"); await page.getByRole("button", { name: "添加奖品", exact: true }).click();
+  await step("奖品设置"); await page.getByRole("button", { name: /添加奖品$/ }).click();
   await page.getByLabel("奖品名称", { exact: true }).fill(`${name} · 奖品`); await page.getByLabel("奖品配置数量", { exact: true }).fill("2"); await page.getByLabel("中奖概率（%）", { exact: true }).fill("100");
   if (virtual) {
     await select("奖品类型", "虚拟奖品"); await page.getByLabel("奖品领取地点", { exact: true }).waitFor({ state: "detached" });
@@ -64,7 +67,7 @@ async function create(name, virtual, booking) {
     await page.getByText("成功导入：2，重复：0，非法：0，忽略空值：0", { exact: true }).waitFor();
   } else await page.getByLabel("奖品领取地点", { exact: true }).fill("验收工坊");
   await page.getByLabel("奖品有效开始", { exact: true }).fill(local(-60)); await page.getByLabel("奖品有效截止", { exact: true }).fill(local(8 * 1440));
-  await shot(`${name}-prize-config`); await confirm(); await page.getByRole("button", { name: "保存并发布", exact: true }).click();
+  await shot(`${name}-prize-config`); await confirm(); await step("发布检查"); await page.getByRole("button", { name: "发布活动", exact: true }).click();
   await page.getByRole("heading", { name, exact: true }).waitFor(); const activity = (await read())[2].activities.find((row) => row.name === name);
   assert.equal(activity.status, "PUBLISHED"); assert.equal(activity.bookingEnabled, booking); await shot(`${name}-published`); return activity;
 }
@@ -84,7 +87,7 @@ try {
   state = (await read())[2]; assert.equal(state.chances.filter((row) => row.activityId === physical.id).length, 1);
   await route(`marketing/preview/${physical.id}/${user.id}`, "用户流程预览"); await page.getByRole("button", { name: "即时抽奖", exact: true }).click(); await page.getByRole("status").filter({ hasText: "最近已保存结果" }).waitFor();
   state = (await read())[2]; const physicalAward = state.awards.find((row) => row.activityId === physical.id);
-  assert.equal(physicalAward.prizeType, "PHYSICAL"); assert.equal(physicalAward.fulfilledAt, undefined); await page.getByText("现场直接领取 · 待领取", { exact: true }).waitFor(); await shot("A-winner-awaiting-claim");
+  assert.equal(physicalAward.prizeType, "PHYSICAL"); assert.equal(physicalAward.fulfilledAt, undefined); await page.getByText("直接领取 · 待领取", { exact: true }).waitFor(); await shot("A-winner-awaiting-claim");
   await verify(physicalAward.credential, "奖品领取 / 体验核销", "A-claim");
   state = (await read())[2]; assert.ok(state.awards.find((row) => row.id === physicalAward.id).fulfilledAt);
   assert.deepEqual(state.redemptions.filter((row) => row.activityId === physical.id).map((row) => row.type), ["CHECKIN", "COMPLETE", "PRIZE_CLAIM"]);
@@ -98,7 +101,7 @@ try {
   await verify(participant.credential, "活动签到（不默认完成）", "B-checkin"); await verify(participant.credential, "工作人员确认完成（不默认领奖）", "B-complete");
   await route(`marketing/preview/${virtual.id}/${user.id}`, "用户流程预览"); await page.getByRole("button", { name: "即时抽奖", exact: true }).click(); await page.getByRole("status").filter({ hasText: "最近已保存结果" }).waitFor();
   const issued = (await read())[2].awards.find((row) => row.activityId === virtual.id); assert.equal(issued.virtualContent.code, "FINAL-CODE-001"); assert.ok(issued.issuedAt); assert.equal(issued.fulfilledAt, undefined);
-  await page.getByText("兑换码 · 兑换码已分配", { exact: true }).waitFor(); await shot("B-code-issued");
+  await page.getByText("直接发放 · 兑换码已分配", { exact: true }).waitFor(); await shot("B-code-issued");
   await page.reload({ waitUntil: "networkidle" }); await page.getByRole("button", { name: "重试上次请求（返回原结果）", exact: true }).click();
   state = (await read())[2]; assert.deepEqual(state.awards.find((row) => row.id === issued.id), issued); assert.equal(state.draws.filter((row) => row.activityId === virtual.id).length, 1);
   assert.equal(state.activities.find((row) => row.id === virtual.id).pool[0].codes.filter((row) => row.assignedAwardId === issued.id).length, 1);
@@ -108,7 +111,7 @@ try {
 
   checkpoint = "C old activity copy / all dates unset / no history or codes / draft delete confirmation";
   const ended = seeded.activities[3]; await route(`marketing/activity/${ended.id}`, ended.name);
-  const before = (await read())[2]; await page.getByRole("button", { name: "复制活动", exact: true }).click();
+  const before = (await read())[2]; await more("复制活动");
   state = (await read())[2]; const copy = state.activities.find((row) => row.name === `${ended.name} · 副本`); await page.getByRole("heading", { name: copy.name, exact: true }).waitFor();
   assert.deepEqual([copy.startAt, copy.endAt, copy.bookingStart, copy.bookingEnd, copy.lotteryStart, copy.lotteryEnd], Array(6).fill(""));
   assert.ok(copy.pool.every((item) => item.claimStart === "" && item.claimEnd === "" && item.codes.length === 0));
@@ -118,10 +121,10 @@ try {
   await page.getByRole("button", { name: "编辑活动", exact: true }).click(); assert.equal(await page.getByLabel("活动开始", { exact: true }).inputValue(), ""); await shot("C-copy-editor-empty"); await page.locator(".semi-sidesheet:visible").getByRole("button", { name: "取消", exact: true }).click();
   await route(`marketing/activity/${copy.id}/lottery`, copy.name);
   const codeRow = page.locator(".semi-table-row").filter({ hasText: copy.pool.find((item) => item.method === "REDEMPTION_CODE").name });
-  await codeRow.getByRole("button", { name: "导入兑换码", exact: true }).click(); await page.getByLabel("兑换码文本", { exact: true }).fill("FINAL-UNUSED-DRAFT"); await page.getByRole("button", { name: "确认导入兑换码", exact: true }).click(); await page.locator(".semi-modal:visible").getByRole("button", { name: "完成", exact: true }).click();
-  await page.getByRole("button", { name: "删除无记录草稿", exact: true }).click(); await page.getByRole("heading", { name: "删除草稿活动？", exact: true }).waitFor(); await shot("C-delete-second-confirm");
+  await rowAction(codeRow, "导入兑换码"); await page.getByLabel("兑换码文本", { exact: true }).fill("FINAL-UNUSED-DRAFT"); await page.getByRole("button", { name: "确认导入兑换码", exact: true }).click(); await page.locator(".semi-modal:visible").getByRole("button", { name: "完成", exact: true }).click();
+  await more("删除无记录草稿"); await page.getByRole("heading", { name: "删除草稿活动？", exact: true }).waitFor(); await shot("C-delete-second-confirm");
   await page.locator(".semi-modal:visible").getByRole("button", { name: "cancel", exact: true }).click(); assert.ok((await read())[2].activities.some((row) => row.id === copy.id));
-  await page.getByRole("button", { name: "删除无记录草稿", exact: true }).click(); await confirm(); await page.getByRole("heading", { name: "营销活动", exact: true }).waitFor();
+  await more("删除无记录草稿"); await confirm(); await page.getByRole("heading", { name: "营销活动", exact: true }).waitFor();
   state = (await read())[2]; assert.equal(state.activities.some((row) => row.id === copy.id), false); assert.equal(state.activities.flatMap((row) => row.pool.flatMap((item) => item.codes)).some((code) => code.code === "FINAL-UNUSED-DRAFT"), false);
   for (const key of ["participations", "bookings", "chances", "draws", "awards", "redemptions"]) assert.deepEqual(state[key], before[key]);
   assert.ok(state.audits.some((row) => row.action === "DELETE_ACTIVITY" && row.activityId === copy.id && row.result === "SUCCESS")); pass(checkpoint);

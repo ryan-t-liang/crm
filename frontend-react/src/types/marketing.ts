@@ -6,12 +6,22 @@ export type MarketingStatus = "DRAFT" | "PUBLISHED" | "PAUSED" | "CANCELED";
 // RESERVATION_PICKUP in the product. Type and fulfillment are independent.
 export type ClaimMethod = "DIRECT" | "PICKUP" | "EXPERIENCE" | "REDEMPTION_CODE" | "VIRTUAL_VOUCHER" | "LINK";
 export type MarketingPrizeType = "PHYSICAL" | "VIRTUAL" | "UNKNOWN";
+export type MarketingParticipationMode = "RESERVATION" | "DIRECT";
+export type MarketingFulfillmentMode = "RESERVATION" | "DIRECT";
+export type MarketingParticipationChannel = "WECHAT_MINIPROGRAM" | "WECHAT_H5" | "WEB_H5" | "QR_H5" | "STAFF" | "OTHER";
+/** Optional external observations, never natural-person uniqueness keys. */
+export interface MarketingParticipantIdentity {
+  memberId?: string | null; unionId?: string | null; openId?: string | null; wechatAppId?: string | null;
+  phone?: string | null; phoneCountryCode?: string | null; externalUserId?: string | null;
+  anonymousId?: string | null; sessionId?: string | null; displayName?: string | null;
+}
 export interface MarketingSlot { id: string; label: string; startAt: string; endAt: string; location: string; capacity: number; bookingClosesAt: string; checkinStart: string; checkinEnd: string; disabled?: boolean; deleted?: boolean }
 export interface MarketingCode { code: string; assignedAwardId?: string; assignedAt?: string }
 export interface ActivityPrize {
   id: string; activityId: string; name: string; description: string; image: string;
   label: string; prizeType: MarketingPrizeType; quota: number; probability: number;
   perPersonLimit: number; method: ClaimMethod; location: string; claimStart: string;
+  fulfillmentMode?: MarketingFulfillmentMode;
   claimEnd: string; instructions: string; slots: MarketingSlot[]; codes: MarketingCode[];
   voucherName: string; voucherDescription: string; link: string;
   legacyPrizeId?: string;
@@ -20,6 +30,7 @@ export interface ActivityPrize {
 export type MarketingPoolItem = ActivityPrize;
 export interface MarketingActivity {
   id: string; name: string; brand: SowindBrandCode; description: string; cover: string;
+  ruleContent?: string;
   mode: "ONLINE" | "OFFLINE"; location: string; status: MarketingStatus; ruleVersion: number;
   startAt: string; endAt: string; bookingEnabled: boolean; allowWalkIn: boolean;
   allowCancel: boolean; allowReschedule: boolean;
@@ -31,6 +42,7 @@ export interface MarketingActivity {
 export interface MarketingIdentity { userId: string; brand: SowindBrandCode; openid: string | null; unionid: string | null }
 export interface MarketingParticipation {
   id: string; activityId: string; subjectKey: string; identities: MarketingIdentity[];
+  participantId?: string; identity?: MarketingParticipantIdentity; participationChannel?: MarketingParticipationChannel;
   credential: string; registeredAt: string; checkedInAt?: string; completedAt?: string;
   completionActorId?: string; ruleVersion: number;
 }
@@ -45,6 +57,7 @@ export interface MarketingAward {
   id: string; drawId: string; participationId: string; activityId: string; poolItemId: string; credential: string;
   prizeName: string; method: ClaimMethod; location: string; instructions: string; claimStart: string; claimEnd: string;
   prizeType: MarketingPrizeType; image: string; description: string; awardLabel: string;
+  fulfillmentMode?: MarketingFulfillmentMode;
   virtualContent?: { code?: string; link?: string; name?: string; description?: string };
   issuedAt?: string; ruleVersion: number; wonAt: string; fulfilledAt?: string;
 }

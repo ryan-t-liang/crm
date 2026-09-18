@@ -1,5 +1,5 @@
 import { useId, useState, type ReactNode } from "react";
-import { Banner, Input, InputNumber, Select } from "@douyinfe/semi-ui";
+import { Banner, Input, InputNumber, Select, Tag } from "@douyinfe/semi-ui";
 import { useMarketing } from "@/stores/marketing-store";
 import { parseCreatedAt } from "@/features/dashboard/dashboard-model";
 import type { MarketingActivity, MarketingSlot } from "@/types/marketing";
@@ -7,7 +7,7 @@ import type { MemberOperationsState } from "@/types/member-operations";
 import { phase, type MarketingCommand } from "./marketing-model";
 
 const dateTime = (value: string) => Number.isFinite(parseCreatedAt(value)) ? new Date(parseCreatedAt(value) + 8 * 3_600_000).toISOString().slice(0, 16) : "";
-export const displayDate = (value?: string) => value && Number.isFinite(parseCreatedAt(value)) ? dateTime(value).replace("T", " ") : "未提供";
+export const displayDate = (value?: string) => value && Number.isFinite(parseCreatedAt(value)) ? dateTime(value).replace("T", " ") : "—";
 export const options = (labels: Record<string, string>) => Object.entries(labels).map(([value, label]) => ({ value, label }));
 export function SelectField({ label, value, list, onChange, disabled }: { label: string; value: string; list: { value: string; label: string }[]; onChange: (value: string) => void; disabled?: boolean }) {
   const id = useId();
@@ -25,16 +25,16 @@ export function TimeField({ label, value, onChange, placeholder }: { label: stri
 export function Panel({ title, children, note }: { title: string; children: ReactNode; note?: string }) {
   return <section className="marketing-panel"><header><h2>{title}</h2>{note && <p>{note}</p>}</header><div>{children}</div></section>;
 }
-export function DemoNote() {
-  return <p className="marketing-demo-note">纯前端演示 · 免费单人活动 · Asia/Shanghai（UTC+08）· 本地抽奖、容量和权限不具备生产并发安全或防作弊能力，不发送消息、不连接微信 / HQ。</p>;
+export function DefinitionGrid({ rows }: { rows: Array<[string, ReactNode]> }) {
+  return <dl className="marketing-definition">{rows.map(([label, value]) => <div key={label} className={label === "活动规则" || label === "活动说明" ? "marketing-definition-wide" : undefined}><dt>{label}</dt><dd>{value === "" ? "—" : value ?? "—"}</dd></div>)}</dl>;
 }
 export function ImageField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   const [error, setError] = useState("");
-  return <label className="marketing-field"><span>{label}（仅本地预览，不上传）</span><input aria-label={label} type="file" accept="image/*" onChange={(event) => {
+  return <label className="marketing-field"><span>{label}</span><input aria-label={label} type="file" accept="image/*" onChange={(event) => {
     const file = event.target.files?.[0]; if (!file) return;
     if (!file.type.startsWith("image/") || file.size > 2_000_000) { setError("请选择不超过2MB的图片"); return; }
     const reader = new FileReader(); reader.onload = () => { onChange(String(reader.result)); setError(""); }; reader.readAsDataURL(file);
-  }} />{value && <img className="marketing-cover" src={value} alt="本地演示封面" />}{error && <small>{error}</small>}</label>;
+  }} />{value && <img className="marketing-cover" src={value} alt="活动图片" />}{error && <small>{error}</small>}</label>;
 }
 export function SlotFields({ slot, onChange }: { slot: MarketingSlot; onChange: (slot: MarketingSlot) => void }) {
   const update = <K extends keyof MarketingSlot>(key: K, value: MarketingSlot[K]) => onChange({ ...slot, [key]: value });
@@ -47,7 +47,9 @@ export function useAction() {
 }
 export function ActivityPhases({ activity }: { activity: MarketingActivity }) {
   const now = Date.now();
-  return <div className="marketing-phases">{activity.bookingEnabled && <span>预约：{phase(now, activity.bookingStart, activity.bookingEnd)}</span>}<span>活动：{phase(now, activity.startAt, activity.endAt)}</span>{activity.lotteryEnabled && <><span>抽奖：{phase(now, activity.lotteryStart, activity.lotteryEnd)}</span><span>领奖：{activity.pool.some((item) => phase(now, item.claimStart, item.claimEnd) === "有效期内") ? "仍有有效权益期" : "无当前有效期"}</span></>}</div>;
+  const active = (start: string, end: string) => phase(now, start, end) === "有效期内";
+  const labels = [activity.bookingEnabled && active(activity.bookingStart, activity.bookingEnd) && "预约中", active(activity.startAt, activity.endAt) && "活动进行中", activity.lotteryEnabled && active(activity.lotteryStart, activity.lotteryEnd) && "抽奖中", activity.lotteryEnabled && activity.pool.some((item) => active(item.claimStart, item.claimEnd)) && "领奖有效"].filter(Boolean);
+  return <div className="marketing-phases">{labels.map((label) => <Tag key={String(label)} size="small">{label}</Tag>)}</div>;
 }
 export function memberName(members: MemberOperationsState, userId?: string) {
   const profile = members.userProfiles.find((row) => row.user_id === userId);

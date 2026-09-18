@@ -19,7 +19,7 @@ export function createMarketingSlot(id: string, parentStart: string, capacity = 
 /** Operator-created drafts are distinct from runnable demonstration fixtures.
  * Empty strings preserve the V2 time contract without rewriting existing LocalStorage. */
 export function createMarketingActivity(brand: SowindBrandCode, now: number): MarketingActivity {
-  return { id: crypto.randomUUID(), name: "新活动", brand, description: "", cover: "", mode: "OFFLINE", location: "", status: "DRAFT", ruleVersion: 1,
+  return { id: crypto.randomUUID(), name: "新活动", brand, description: "", ruleContent: "", cover: "", mode: "OFFLINE", location: "", status: "DRAFT", ruleVersion: 1,
     startAt: "", endAt: "", bookingEnabled: true, allowWalkIn: true, allowCancel: true, allowReschedule: true, bookingStart: "", bookingEnd: "", completion: "STAFF", slots: [],
     lotteryEnabled: true, lotteryStart: "", lotteryEnd: "", grantCount: 2, drawLimit: 2, dailyLimit: null, winLimit: 1, noWinProbability: 100, pool: [], createdAt: new Date(now).toISOString() };
 }
@@ -27,7 +27,7 @@ export function createMarketingActivity(brand: SowindBrandCode, now: number): Ma
 export function createDemoMarketingActivity(brand: SowindBrandCode, now: number, prizes = marketingDemoPrizes): MarketingActivity {
   const at = (minutes: number) => new Date(now + minutes * 60_000).toISOString();
   const activityId = crypto.randomUUID();
-  return { id: activityId, name: "新活动", brand, description: "免费单人活动（演示）", cover: "", mode: "OFFLINE", location: "演示工作室", status: "DRAFT", ruleVersion: 1,
+  return { id: activityId, name: "新活动", brand, description: "参与品牌体验，完成互动后可参与抽奖。", ruleContent: "完成活动后获得抽奖机会；中奖后按奖品领取方式在有效期内领取。", cover: "", mode: "OFFLINE", location: "演示工作室", status: "DRAFT", ruleVersion: 1,
     startAt: at(-60), endAt: at(360), bookingEnabled: true, allowWalkIn: true, allowCancel: true, allowReschedule: true, bookingStart: at(-1440), bookingEnd: at(180), completion: "STAFF", slots: [createDemoMarketingSlot(crypto.randomUUID(), now, 10)],
     lotteryEnabled: true, lotteryStart: at(-60), lotteryEnd: at(480), grantCount: 2, drawLimit: 2, dailyLimit: null, winLimit: 1, noWinProbability: 20,
     pool: prizes.map((prize, index) => ({ ...createActivityPrize(activityId, now), name: prize.name, image: prize.image, description: prize.description, label: ["一等奖", "二等奖", "体验奖", "虚拟奖"][index] ?? "奖项", quota: 10, probability: [20, 25, 15, 20][index] ?? 0, method: prize.method,
@@ -38,7 +38,7 @@ export function createDemoMarketingActivity(brand: SowindBrandCode, now: number,
 }
 export function createActivityPrize(activityId: string, now: number): ActivityPrize {
   return { id: crypto.randomUUID(), activityId, name: "新奖品", label: "奖项", description: "演示奖品说明", image: "", prizeType: "PHYSICAL",
-    quota: 1, probability: 0, perPersonLimit: 1, method: "DIRECT", location: "演示工作室", instructions: "凭中奖权益办理；纯前端原型。",
+    quota: 1, probability: 0, perPersonLimit: 1, method: "DIRECT", location: "演示工作室", instructions: "请在领取有效期内出示中奖凭证。",
     claimStart: new Date(now - 3_600_000).toISOString(), claimEnd: new Date(now + 8 * 86_400_000).toISOString(), slots: [], codes: [], voucherName: "", voucherDescription: "", link: "" };
 }
 /** Called ONLY when the marketing namespace is absent or the user explicitly resets it. */

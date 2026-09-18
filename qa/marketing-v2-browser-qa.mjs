@@ -41,8 +41,10 @@ async function shot(name) {
   const bytes = await page.screenshot({ path: resolve(root, `${name}.png`), fullPage: true });
   evidence.push({ step: evidence.length + 1, name, layout, sha256: createHash("sha256").update(bytes).digest("hex") });
 }
-async function confirm() { const dialog = page.locator(".semi-modal:visible").last(); await dialog.waitFor(); await dialog.getByRole("button", { name: "confirm", exact: true }).click(); await dialog.waitFor({ state: "hidden" }); }
-async function step(label) { await page.locator(".semi-sidesheet:visible .semi-steps").getByText(label, { exact: true }).click(); }
+async function confirm() { const dialog = page.locator(".semi-modal:visible").last(); await dialog.waitFor(); await dialog.getByRole("button", { name: /^(confirm|保存奖品|保存场次)$/ }).click(); await dialog.waitFor({ state: "hidden" }); }
+async function more(name) { await page.locator(".semi-modal:visible").waitFor({ state: "hidden" }); await page.getByRole("button", { name: "更多操作", exact: true }).click(); await page.waitForTimeout(150); await page.locator(".semi-dropdown-item:visible").filter({ hasText: new RegExp(`^${name}$`) }).click(); }
+async function rowAction(row, name) { await page.locator(".semi-modal:visible").waitFor({ state: "hidden" }); await page.waitForTimeout(150); const direct = row.getByRole("button", { name, exact: true }); if (await direct.count()) return direct.click(); await row.getByRole("button", { name: "更多", exact: true }).click(); await page.waitForTimeout(150); await page.locator(".semi-dropdown-item:visible").filter({ hasText: new RegExp(`^${name}$`) }).click(); }
+async function step(label) { await page.locator(".marketing-editor-nav").getByText(label, { exact: true }).click(); }
 async function explicitActivityBasics() {
   const local = (minutes) => new Date(Date.now() + minutes * 60_000 + 8 * 3_600_000).toISOString().slice(0, 16);
   // V2.1 operators must explicitly enter dates; runnable QA data is intentionally active.
@@ -75,60 +77,60 @@ try {
   await page.getByLabel("活动举行日期", { exact: true }).fill("2099-01-01"); await page.getByText("暂无匹配活动", { exact: true }).waitFor(); await page.getByLabel("活动举行日期", { exact: true }).fill("");
   pass("Activity-centered list, required columns, independent activity data, filters and three desktop sizes");
 
-  await route("marketing/prizes", "营销活动"); await page.getByText("此入口已归入活动详情", { exact: true }).waitFor();
+  await route("marketing/prizes", "营销活动"); await page.getByText("请选择活动查看相关记录", { exact: true }).waitFor();
   assert.equal(await page.getByRole("heading", { name: "奖品库", exact: true }).count(), 0);
-  await route("marketing/bookings", "营销活动"); await page.getByText("此入口已归入活动详情", { exact: true }).waitFor();
+  await route("marketing/bookings", "营销活动"); await page.getByText("请选择活动查看相关记录", { exact: true }).waitFor();
   const sourceActivity = seeded.activities[0];
   await route("marketing", "营销活动"); const sourceRow = page.locator(".semi-table-row").filter({ has: page.getByRole("link", { name: sourceActivity.name, exact: true }) });
-  await sourceRow.getByRole("button", { name: "更多", exact: true }).click(); await page.locator(".semi-dropdown-item:visible").filter({ hasText: /^预约数据$/ }).click();
-  assert.ok(page.url().endsWith(`/activity/${sourceActivity.id}/bookings`)); await page.getByRole("tab", { name: "预约数据", exact: true }).waitFor();
+  await sourceRow.getByRole("button", { name: "更多", exact: true }).click(); await page.locator(".semi-dropdown-item:visible").filter({ hasText: /^预约记录$/ }).click();
+  assert.ok(page.url().endsWith(`/activity/${sourceActivity.id}/bookings`)); await page.getByRole("tab", { name: "预约记录", exact: true }).waitFor();
   assert.equal(await page.getByRole("button", { name: "确认执行所选动作", exact: true }).count(), 0);
   pass("Legacy top-level library/bookings retired; list More opens same Activity data tab without copied collections");
 
   await route("marketing", "营销活动"); await page.getByRole("button", { name: "新建活动", exact: true }).click();
   await page.getByLabel("活动名称", { exact: true }).fill("V2验收 · 无预约无抽奖");
   await explicitActivityBasics();
-  await page.getByRole("switch", { name: "开启活动预约", exact: true }).click(); await page.getByRole("switch", { name: "开启活动抽奖", exact: true }).click();
-  await step("预约设置"); assert.equal(await page.getByLabel("场次名称", { exact: true }).count(), 0); await select("完成条件", "签到即完成");
-  await step("抽奖设置"); assert.equal(await page.getByLabel("未中奖概率（%）", { exact: true }).count(), 0);
-  await step("奖品设置"); assert.equal(await page.getByRole("button", { name: "添加奖品", exact: true }).count(), 0);
-  await page.getByRole("button", { name: "保存并发布", exact: true }).click(); await page.getByRole("heading", { name: "V2验收 · 无预约无抽奖", exact: true }).waitFor();
+  await page.locator(".semi-radio").filter({ hasText: /^直接参与$/ }).click();
+  await step("参与设置"); assert.equal(await page.getByLabel("场次名称", { exact: true }).count(), 0); await select("完成条件", "签到即完成");
+  await step("抽奖规则"); await page.getByRole("switch", { name: "开启活动抽奖", exact: true }).click(); assert.equal(await page.getByLabel("未中奖概率（%）", { exact: true }).count(), 0);
+  await step("奖品设置"); assert.equal(await page.getByRole("button", { name: /添加奖品$/ }).count(), 0);
+  await step("发布检查"); await page.getByRole("button", { name: "发布活动", exact: true }).click(); await page.getByRole("heading", { name: "V2验收 · 无预约无抽奖", exact: true }).waitFor();
   const simple = (await read())[2].activities.find((row) => row.name === "V2验收 · 无预约无抽奖"); assert.equal(simple.status, "PUBLISHED");
-  await page.getByRole("button", { name: "暂停", exact: true }).click(); assert.equal((await read())[2].activities.find((row) => row.id === simple.id).status, "PAUSED");
-  await page.getByRole("button", { name: "恢复", exact: true }).click(); await page.getByRole("button", { name: "编辑活动", exact: true }).click();
-  await page.getByLabel("活动说明", { exact: true }).fill("真实页面修改说明"); await page.getByRole("button", { name: "保存说明", exact: true }).click();
+  await more("暂停活动"); assert.equal((await read())[2].activities.find((row) => row.id === simple.id).status, "PAUSED");
+  await more("恢复活动"); await page.getByRole("button", { name: "编辑活动", exact: true }).click();
+  await page.getByLabel("活动说明", { exact: true }).fill("真实页面修改说明"); await page.getByRole("button", { name: "保存内容", exact: true }).click();
   assert.equal((await read())[2].activities.find((row) => row.id === simple.id).description, "真实页面修改说明");
   pass("Five-step create, optional capabilities hide fields, publish/pause/resume and rule-safe description edit");
 
   await route("marketing", "营销活动"); await page.getByRole("button", { name: "新建活动", exact: true }).click();
-  await page.getByLabel("活动名称", { exact: true }).fill("V2验收 · 兑换码活动"); await page.getByRole("switch", { name: "开启活动预约", exact: true }).click();
+  await page.getByLabel("活动名称", { exact: true }).fill("V2验收 · 兑换码活动"); await page.locator(".semi-radio").filter({ hasText: /^直接参与$/ }).click();
   await explicitActivityBasics();
-  await step("预约设置"); await select("完成条件", "签到即完成");
-  await step("抽奖设置"); await page.getByLabel("未中奖概率（%）", { exact: true }).fill("0");
+  await step("参与设置"); await select("完成条件", "签到即完成");
+  await step("抽奖规则"); await page.getByLabel("未中奖概率（%）", { exact: true }).fill("0");
   await page.getByLabel("抽奖开始", { exact: true }).fill(new Date(Date.now() - 60 * 60_000 + 8 * 3_600_000).toISOString().slice(0, 16));
   await page.getByLabel("抽奖截止", { exact: true }).fill(new Date(Date.now() + 480 * 60_000 + 8 * 3_600_000).toISOString().slice(0, 16));
-  await step("奖品设置"); await page.getByRole("button", { name: "添加奖品", exact: true }).click();
+  await step("奖品设置"); await page.getByRole("button", { name: /添加奖品$/ }).click();
   await page.getByLabel("奖品名称", { exact: true }).fill("V2浏览器兑换码奖品");
   assert.equal(await page.getByLabel("奖品领取地点", { exact: true }).count(), 1);
   await select("奖品类型", "虚拟奖品"); await page.getByLabel("奖品领取地点", { exact: true }).waitFor({ state: "detached" }); assert.equal(await page.getByLabel("奖品领取地点", { exact: true }).count(), 0);
-  await select("虚拟奖品发放方式", "虚拟凭证"); await page.getByLabel("虚拟凭证名称", { exact: true }).waitFor(); assert.equal(await page.getByLabel("虚拟凭证名称", { exact: true }).count(), 1);
-  await select("虚拟奖品发放方式", "领取链接"); await page.getByLabel("领取链接", { exact: true }).waitFor(); await page.getByLabel("虚拟凭证名称", { exact: true }).waitFor({ state: "detached" }); assert.equal(await page.getByLabel("领取链接", { exact: true }).count(), 1); assert.equal(await page.getByLabel("虚拟凭证名称", { exact: true }).count(), 0);
-  await select("虚拟奖品发放方式", "兑换码");
+  await select("虚拟奖品内容", "虚拟权益"); await page.getByLabel("虚拟凭证名称", { exact: true }).waitFor(); assert.equal(await page.getByLabel("虚拟凭证名称", { exact: true }).count(), 1);
+  await select("虚拟奖品内容", "领取链接"); await page.getByLabel("领取链接", { exact: true }).waitFor(); await page.getByLabel("虚拟凭证名称", { exact: true }).waitFor({ state: "detached" }); assert.equal(await page.getByLabel("领取链接", { exact: true }).count(), 1); assert.equal(await page.getByLabel("虚拟凭证名称", { exact: true }).count(), 0);
+  await select("虚拟奖品内容", "兑换码");
   await page.getByLabel("奖品配置数量", { exact: true }).fill("-1"); await page.locator(".semi-modal:visible").getByRole("button", { name: "confirm", exact: true }).click();
   await page.getByText(/数量须为非负整数/).last().waitFor(); assert.equal(await page.locator(".semi-modal:visible").count(), 1);
   await page.getByLabel("奖品配置数量", { exact: true }).fill("2"); await page.getByLabel("中奖概率（%）", { exact: true }).fill("99");
   await page.getByLabel("兑换码文本", { exact: true }).fill("V2-BROWSER-001"); await page.getByRole("button", { name: "确认导入兑换码", exact: true }).click();
   await shot("03-prize-virtual-form-text-import"); await confirm();
-  await page.getByRole("button", { name: "保存并发布", exact: true }).click();
+  await step("发布检查"); assert.equal(await page.getByRole("button", { name: "发布活动", exact: true }).isEnabled(), false);
   await page.getByText(/各奖品概率 \+ 未中奖须合计100%/).waitFor(); await page.getByText(/兑换码不足：已导入数量/).waitFor(); await shot("04-publish-validation");
-  await step("奖品设置"); await page.getByRole("button", { name: "配置奖品", exact: true }).click();
+  await step("奖品设置"); await page.locator(".marketing-editor-content .semi-table-row").getByRole("button", { name: "编辑", exact: true }).click();
   await page.getByLabel("中奖概率（%）", { exact: true }).fill("100");
   await page.getByLabel("兑换码CSV", { exact: true }).setInputFiles({ name: "codes.csv", mimeType: "text/csv", buffer: Buffer.from("code\nV2-BROWSER-002\n") });
   await page.waitForFunction(() => document.querySelector('[aria-label="兑换码文本"]')?.value.includes("V2-BROWSER-002"));
   await page.getByRole("button", { name: "确认导入兑换码", exact: true }).click();
   await page.getByLabel("奖品图片", { exact: true }).setInputFiles({ name: "test.png", mimeType: "image/png", buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jC14AAAAASUVORK5CYII=", "base64") });
-  await page.getByRole("img", { name: "本地演示封面", exact: true }).waitFor(); await confirm();
-  await page.getByRole("button", { name: "保存并发布", exact: true }).click(); await page.getByRole("heading", { name: "V2验收 · 兑换码活动", exact: true }).waitFor();
+  await page.getByRole("img", { name: "活动图片", exact: true }).waitFor(); await confirm();
+  await step("发布检查"); await page.getByRole("button", { name: "发布活动", exact: true }).click(); await page.getByRole("heading", { name: "V2验收 · 兑换码活动", exact: true }).waitFor();
   const activity = (await read())[2].activities.find((row) => row.name === "V2验收 · 兑换码活动");
   assert.equal(activity.pool[0].codes.length, 2); assert.ok(activity.pool[0].image.startsWith("data:image/png;base64,"));
   assert.deepEqual((await read())[2].activities.find((row) => row.id === sourceActivity.id), sourceActivity);
@@ -154,22 +156,22 @@ try {
   pass("Separate staff surface, incomplete cannot draw, checkin completion grants once, code assignment and refresh/retry/win-limit idempotence");
 
   await route(`marketing/activity/${activity.id}/awards`, activity.name);
-  assert.ok(!(await page.locator(".semi-tabs-content").innerText()).includes(award.virtualContent.code));
+  assert.ok(!(await page.locator(".marketing-primary-tabs > .semi-tabs-content").innerText()).includes(award.virtualContent.code));
   await page.getByRole("button", { name: "查看权益", exact: true }).click(); await page.getByText(award.virtualContent.code, { exact: true }).waitFor();
   assert.equal(await page.getByRole("button", { name: "确认执行所选动作", exact: true }).count(), 0); await shot("07-award-detail-masked-list"); await page.keyboard.press("Escape");
-  await verify(award.credential, "奖品领取 / 体验核销"); await page.getByText("虚拟奖品或待确认类型不由现场核销端发放", { exact: true }).waitFor();
+  await verify(award.credential, "奖品领取 / 体验核销"); await page.getByText("直接发放虚拟奖品或待确认类型不由现场核销端发放", { exact: true }).waitFor();
   assert.equal((await read())[2].awards.find((row) => row.id === award.id).fulfilledAt, undefined);
   pass("Ordinary award list masks codes, detail reveals snapshot, management read-only and virtual prize never physically redeemed");
 
   await route(`marketing/activity/${activity.id}/lottery`, activity.name);
-  await page.getByRole("button", { name: "导入兑换码", exact: true }).click(); await page.getByLabel("兑换码文本", { exact: true }).fill("V2-BROWSER-003\nV2-BROWSER-001");
+  await rowAction(page.locator(".semi-table-row").filter({ hasText: activity.pool[0].name }), "导入兑换码"); await page.getByLabel("兑换码文本", { exact: true }).fill("V2-BROWSER-003\nV2-BROWSER-001");
   await page.getByRole("button", { name: "确认导入兑换码", exact: true }).click(); await page.getByText("成功导入：1，重复：1，非法：0，忽略空值：0", { exact: true }).waitFor();
   assert.equal((await read())[2].activities.find((row) => row.id === activity.id).pool[0].codes.length, 3); await page.locator(".semi-modal:visible").getByRole("button", { name: "完成", exact: true }).click();
-  await page.getByRole("button", { name: "复制活动", exact: true }).click();
+  await more("复制活动");
   state = (await read())[2]; const copy = state.activities.find((row) => row.name === `${activity.name} · 副本`); await page.getByRole("heading", { name: copy.name, exact: true }).waitFor();
   assert.equal(copy.status, "DRAFT"); assert.equal(copy.pool[0].codes.length, 0); assert.notEqual(copy.pool[0].id, activity.pool[0].id); assert.equal(copy.pool[0].activityId, copy.id);
   for (const rows of [state.participations, state.bookings, state.chances, state.draws, state.awards, state.redemptions]) assert.equal(rows.filter((row) => row.activityId === copy.id).length, 0);
-  await page.getByRole("button", { name: "发布", exact: true }).click(); await page.getByRole("button", { name: /兑换码不足/ }).waitFor(); assert.equal(await page.getByRole("button", { name: "确认发布活动", exact: true }).isEnabled(), false); assert.equal((await read())[2].activities.find((row) => row.id === copy.id).status, "DRAFT");
+  await page.getByRole("button", { name: "发布", exact: true }).click(); await page.locator('.marketing-readiness-row[data-check-key="codes"]').getByText(/兑换码不足/).waitFor(); assert.equal(await page.getByRole("button", { name: "发布活动", exact: true }).isEnabled(), false); assert.equal((await read())[2].activities.find((row) => row.id === copy.id).status, "DRAFT");
   await shot("08-copy-config-no-codes-or-records");
   await page.locator(".semi-modal:visible").getByRole("button", { name: "取消", exact: true }).click();
   await route(`marketing/activity/${copy.id}/lottery`, copy.name); await page.getByRole("button", { name: "编辑奖品", exact: true }).click();
@@ -180,16 +182,16 @@ try {
   pass("Duplicate rows report partial import without rewriting existing codes; copy has no codes/records; publish review and draft prize editor scroll safely");
 
   await route(`marketing/activity/${sourceActivity.id}/lottery`, sourceActivity.name);
-  const pickupRow = page.locator(".semi-table-row").filter({ hasText: sourceActivity.pool[1].name }); await pickupRow.getByRole("button", { name: "增加配额", exact: true }).click();
+  const pickupRow = page.locator(".semi-table-row").filter({ hasText: sourceActivity.pool[1].name }); await rowAction(pickupRow, "增加配额");
   await page.getByLabel("追加配额", { exact: true }).fill("50");
   await page.locator(".semi-modal:visible").getByRole("button", { name: "confirm", exact: true }).click();
   await page.locator(".semi-modal:visible").getByText("追加后履约容量不足，请先追加合法履约时段再增加配额", { exact: true }).waitFor();
   assert.equal((await read())[2].activities.find((row) => row.id === sourceActivity.id).pool[1].quota, 10);
   await shot("09a-quota-addition-capacity-rejected");
   await page.locator(".semi-modal:visible").getByRole("button", { name: "cancel", exact: true }).click();
-  await pickupRow.getByRole("button", { name: "追加履约时段", exact: true }).click();
+  await rowAction(pickupRow, "追加履约时段");
   await page.getByLabel("场次地点", { exact: true }).fill("演示工作室"); await page.getByLabel("场次容量", { exact: true }).fill("50"); await confirm();
-  await pickupRow.getByRole("button", { name: "增加配额", exact: true }).click(); await page.getByLabel("追加配额", { exact: true }).fill("50"); await confirm();
+  await rowAction(pickupRow, "增加配额"); await page.getByLabel("追加配额", { exact: true }).fill("50"); await confirm();
   state = (await read())[2]; assert.equal(state.activities.find((row) => row.id === sourceActivity.id).pool[1].quota, 60);
   assert.ok((await pickupRow.innerText()).includes("60 / 0 / 0 / 60")); assert.ok((await pickupRow.innerText()).includes("60 · 未预约0"));
   await shot("09-safe-quota-after-added-fulfillment-capacity"); pass("Unsafe reservation quota addition denied; explicit extra fulfillment capacity then allows backed quota; runtime stock/capacity remains constrained");
@@ -209,33 +211,45 @@ try {
   const ended = seeded.activities[3], pickup = seeded.awards.find((row) => row.activityId === ended.id && row.method === "PICKUP"), expired = seeded.awards.find((row) => row.activityId === ended.id && row.method === "EXPERIENCE"), historicalUser = seeded.participations.find((row) => row.id === pickup.participationId).identities[0].userId;
   await route(`marketing/preview/${ended.id}/${historicalUser}`, "用户流程预览"); await page.getByRole("button", { name: "取消预约", exact: true }).click();
   assert.equal((await read())[2].awards.find((row) => row.id === pickup.id).fulfilledAt, undefined); await page.getByRole("button", { name: "预约奖品领取 / 体验", exact: true }).first().click();
-  await route(`marketing/activity/${ended.id}`, ended.name); await page.getByRole("button", { name: "取消活动", exact: true }).click(); await confirm();
+  await route(`marketing/activity/${ended.id}`, ended.name); await more("取消活动"); await confirm();
   await verify(pickup.credential, "奖品领取 / 体验核销"); assert.ok((await read())[2].awards.find((row) => row.id === pickup.id).fulfilledAt);
   await verify(expired.credential, "奖品领取 / 体验核销"); await page.getByText("奖品尚未到有效期或已过期，占用配额不退回", { exact: true }).waitFor();
   await shot("11-ended-canceled-retains-prize-rights"); pass("Ended/canceled activity still fulfills reserved physical prize; booking cancel retains rights; expired experience rejects");
 
   await route(`marketing/activity/${sourceActivity.id}/redemptions`, sourceActivity.name);
   assert.equal(await page.getByRole("button", { name: "确认执行所选动作", exact: true }).count(), 0);
-  assert.ok(!(await page.locator(".semi-tabs-content").innerText()).includes("ADD_QUOTA"));
+  assert.ok(!(await page.locator(".marketing-primary-tabs > .semi-tabs-content").innerText()).includes("ADD_QUOTA"));
   state = (await read())[2]; assert.deepEqual(state.redemptions.filter((row) => row.activityId === sourceActivity.id).map((row) => row.type), ["CHECKIN", "COMPLETE", "EXPERIENCE_CLAIM"]);
   await shot("12-readonly-redemptions-not-audit");
-  await route(`marketing/activity/${sourceActivity.id}/basic`, sourceActivity.name); await page.getByText("配置与操作审计（不是核销数据）", { exact: true }).click();
+  await route(`marketing/activity/${sourceActivity.id}/basic`, sourceActivity.name); await more("操作记录");
   assert.equal(await page.getByText("ADD_QUOTA", { exact: true }).count(), 2);
   const quotaAudits = (await read())[2].audits.filter((row) => row.activityId === sourceActivity.id && row.action === "ADD_QUOTA");
   assert.deepEqual(quotaAudits.map((row) => row.result), ["REJECTED", "SUCCESS"]);
-  await shot("13-separate-config-audit"); pass("Activity redemption rows contain actual business facts only; config audit retained separately");
+  await shot("13-separate-config-audit"); await page.keyboard.press("Escape"); pass("Activity redemption rows contain actual business facts only; config audit retained separately");
 
   await route(`marketing/activity/${activity.id}/overview`, activity.name); state = (await read())[2];
   const expected = { "当前有效预约人数": [], "到场人数": [participant.id], "完成人数": [participant.id], "抽奖人数": [participant.id], "抽奖次数": [draw.id], "中奖人数": [participant.id], "中奖份数": [award.id], "已履约份数": [award.id] };
   for (const [label, ids] of Object.entries(expected)) {
     const button = page.locator(".marketing-metrics > button").filter({ has: page.locator("span", { hasText: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`) }) });
+    if (label === "当前有效预约人数") {
+      assert.equal(activity.bookingEnabled, false); assert.equal(await button.count(), 0, "Direct activity hides the inapplicable booking metric");
+      assert.deepEqual(state.bookings.filter((booking) => booking.activityId === activity.id && booking.kind === "ACTIVITY"), ids, "Direct activity still has no activity bookings");
+      continue;
+    }
     assert.equal(await button.locator("strong").textContent(), String(ids.length)); await button.click();
     const sheet = page.locator(".semi-sidesheet:visible"); await sheet.waitFor(); if (ids.length) assert.deepEqual((await sheet.locator(".semi-table-row-cell").allTextContents()).sort(), [...ids].sort()); else await sheet.getByText("当前口径暂无记录", { exact: true }).waitFor();
     await page.keyboard.press("Escape"); await sheet.waitFor({ state: "hidden" });
   }
+  // Preserve the eighth source-ID drilldown on an actually Reservation activity;
+  // a hidden Direct-only booking metric is not treated as a clickable zero.
+  await route(`marketing/activity/${sourceActivity.id}/overview`, sourceActivity.name);
+  const reservationIds = state.participations.filter((row) => row.activityId === sourceActivity.id && state.bookings.some((booking) => booking.participationId === row.id && booking.kind === "ACTIVITY" && ["BOOKED", "CHECKED_IN"].includes(booking.status))).map((row) => row.id);
+  assert.ok(sourceActivity.slots.every((slot) => Date.parse(slot.checkinEnd) > Date.now()), "Reservation metric fixture is still within its source window");
+  const reservationMetric = page.getByRole("button", { name: /^当前有效预约人数/ }); assert.equal(await reservationMetric.locator("strong").textContent(), String(reservationIds.length)); await reservationMetric.click();
+  const reservationSheet = page.locator(".semi-sidesheet:visible"); await reservationSheet.waitFor(); assert.deepEqual((await reservationSheet.locator(".semi-table-row-cell").allTextContents()).sort(), reservationIds.sort()); await page.keyboard.press("Escape"); await reservationSheet.waitFor({ state: "hidden" });
   await shot("14-exact-eight-metric-drilldowns");
   await route(`marketing/activity/${activity.id}/participants`, activity.name); await page.getByLabel("搜索参与用户", { exact: true }).fill("NO_SUCH_USER");
-  const participantRows = page.locator(".marketing-detail .semi-tabs-pane:visible .semi-table-row[data-row-key]"); await participantRows.waitFor({ state: "detached" }); assert.equal(await participantRows.count(), 0);
+  const participantRows = page.locator(".marketing-detail .semi-table-row[data-row-key]:visible"); await participantRows.waitFor({ state: "detached" }); assert.equal(await participantRows.count(), 0);
   await page.getByLabel("搜索参与用户", { exact: true }).fill(""); await select("参与状态", "已完成"); await participantRows.waitFor(); assert.equal(await participantRows.count(), 1);
   await page.getByLabel("参与创建日期", { exact: true }).fill("2099-01-01"); await participantRows.waitFor({ state: "detached" }); assert.equal(await participantRows.count(), 0);
   await route(`brand-members/${user.id}`); await page.getByRole("tab", { name: "营销活动", exact: true }).click(); await page.getByRole("link", { name: activity.name, exact: true }).waitFor();
@@ -284,7 +298,7 @@ try {
   await page.getByRole("button", { name: "确认后重置营销数据", exact: true }).click(); await confirm();
   const afterFailedMigrationReset = (await read())[2]; assert.equal(afterFailedMigrationReset.version, 2);
   await route(`marketing/activity/${afterFailedMigrationReset.activities[0].id}`, afterFailedMigrationReset.activities[0].name);
-  await page.getByRole("button", { name: "复制活动", exact: true }).click();
+  await more("复制活动");
   await page.waitForFunction((key) => JSON.parse(localStorage.getItem(key)).activities.length === 5, keys[2]);
   assert.equal(await page.evaluate((key) => localStorage.getItem(`${key}:backup-v1`), keys[2]), v1);
   assert.equal((await raw())[0], beforeMigration[0]); assert.equal((await raw())[1], beforeMigration[1]);
@@ -292,7 +306,7 @@ try {
 
   const corrupt = '{"version":99,"user-edit":"KEEP"}'; await isolatedSet(2, corrupt); await route("marketing"); await page.getByText(/营销数据版本 \/ 集合 \/ 字段不兼容/).waitFor(); assert.equal((await raw())[2], corrupt); await page.reload({ waitUntil: "networkidle" }); assert.equal((await raw())[2], corrupt);
   await isolatedSet(2, beforeMigration[2]); await route(`marketing/activity/${activity.id}`, activity.name);
-  const beforeReset = await raw(); await page.getByRole("button", { name: "重置营销演示数据", exact: true }).click(); await confirm();
+  const beforeReset = await raw(); await more("重置营销数据"); await confirm();
   const reset = await raw(); assert.equal(reset[0], beforeReset[0]); assert.equal(reset[1], beforeReset[1]); assert.notEqual(reset[2], beforeReset[2]); assert.equal(await page.evaluate((key) => localStorage.getItem(`${key}:backup-v1`), keys[2]), v1);
   await route("settings"); await page.getByRole("button", { name: "Reset Sales Demo Data", exact: true }).click(); await confirm(); assert.equal((await raw())[2], reset[2]);
   await page.getByRole("button", { name: "Reset Member Demo Data", exact: true }).click(); await confirm(); assert.equal((await raw())[2], reset[2]);
