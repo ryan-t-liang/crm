@@ -46,7 +46,7 @@ export function MarketingList({ migratedEntry }: { migratedEntry?: string }) {
   const update = (key: keyof typeof filters, value: string) => setFilters(old => ({ ...old, [key]: value }));
   const creationIssue = activityCreationIssue(access);
   return <>
-    <PageHeader title="营销活动" description="管理品牌活动。" actions={<Button theme="solid" disabled={Boolean(creationIssue)} onClick={() => setEditing({ ...createMarketingActivity(access.brands[0], Date.now()), name: "" })} icon={<IconPlus />}>新建活动</Button>} />
+    <PageHeader title="营销活动" description="管理品牌活动。" actions={<><Button disabled={Boolean(creationIssue)} onClick={() => { const result = run({ type: "ADD_ILLUSTRATION" }); if (result.ok && result.resultId) navigate(`marketing/activity/${result.resultId}`); }}>加入示意数据</Button><Button theme="solid" disabled={Boolean(creationIssue)} onClick={() => setEditing({ ...createMarketingActivity(access.brands[0], Date.now()), name: "" })} icon={<IconPlus />}>新建活动</Button></>} />
     {feedback}{migratedEntry && <Banner type="info" title="请选择活动查看相关记录" closeIcon={null} />}{creationIssue && <Banner type="warning" title={creationIssue} closeIcon={null} />}
     <section className="data-surface">
     <div className="table-toolbar">
