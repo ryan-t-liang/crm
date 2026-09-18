@@ -98,11 +98,28 @@ try {
   assert.ok((await page.getByRole("combobox", { name: "销售分销商范围" }).textContent()).includes("Shanghai Partner"));
   await select("统计周期", "最近 30 个自然日");
   const cohortLeads = cnLeads.filter(inPeriod);
+  const metricActor = sales.users.find((user) => user.id === sales.currentUserId);
+  assert.ok(metricActor, "metric actor must exist");
+  const authorized = (rows) => metricActor.role === "HQ_ADMIN" ? rows : ["DISTRIBUTOR_MANAGER", "DISTRIBUTOR_SALES", "VIEWER"].includes(metricActor.role) ? rows.filter((row) => row.distributorId === metricActor.distributorId) : [];
+  const visibleLeads = authorized(sales.leads), visibleDeals = authorized(sales.deals);
   const numerator = cohortLeads.filter((lead) => {
-    const deal = sales.deals.find((row) => row.id === lead.convertedDealId && row.distributorId === "dist-cn");
-    return lead.status === "CONVERTED" && deal && notFuture(deal) && (!deal.sourceLeadId || deal.sourceLeadId === lead.id) && sales.leads.filter((row) => row.convertedDealId === deal.id).length === 1;
+    const targets = visibleDeals.filter((row) => row.id === lead.convertedDealId && row.distributorId === "dist-cn" && notFuture(row));
+    if (targets.length !== 1) return false;
+    const deal = targets[0], reverse = visibleDeals.filter((row) => row.sourceLeadId === lead.id);
+    return lead.status === "CONVERTED" && deal.sourceLeadId === lead.id && deal.distributorId === lead.distributorId
+      && visibleLeads.filter((row) => row.id === lead.id).length === 1
+      && visibleLeads.filter((row) => row.convertedDealId === deal.id).length === 1
+      && visibleDeals.filter((row) => row.id === deal.id).length === 1
+      && reverse.length === 1 && reverse[0].id === deal.id;
   });
+  const expectedConversion = cohortLeads.length ? `${Math.round(numerator.length / cohortLeads.length * 100)}%` : "—";
+  assert.equal(await page.getByRole("button", { name: "新增 Lead 转 Deal 比例：查看明细", exact: true }).textContent(), expectedConversion);
   await drawer("新增 Lead 转 Deal 比例", [], [{ label: "分子：已确认转 Deal 的 Lead", ids: numerator.map((row) => row.id) }, { label: "分母：本期创建的全部 Lead", ids: cohortLeads.map((row) => row.id) }]);
+  const cohortDeals = visibleDeals.filter((row) => row.distributorId === "dist-cn" && inPeriod(row));
+  const won = cohortDeals.filter((row) => row.stage === "WON"), lost = cohortDeals.filter((row) => row.stage === "LOST");
+  const expectedWinRate = won.length + lost.length ? `${Math.round(won.length / (won.length + lost.length) * 100)}%` : "—";
+  assert.equal(await page.getByRole("button", { name: "已结案记录胜率：查看明细", exact: true }).textContent(), expectedWinRate);
+  await drawer("已结案记录胜率", [], [{ label: "分子：当前赢单", ids: won.map((row) => row.id) }, { label: "分母：当前已结案", ids: [...won, ...lost].map((row) => row.id) }]);
   await page.locator(".dashboard-secondary > summary").click();
   const product = sales.products[0];
   const productDeals = sales.deals.filter((row) => row.productId === product.id && row.distributorId === "dist-cn" && inPeriod(row));

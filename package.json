@@ -14,6 +14,7 @@
     "qa:dashboard": "node qa/dashboard-browser-qa.mjs",
     "qa:marketing": "node qa/marketing-v2-browser-qa.mjs",
     "qa:marketing:v21": "node qa/marketing-v21-browser-qa.mjs",
-    "qa:marketing:final": "node qa/marketing-final-browser-qa.mjs"
+    "qa:marketing:final": "node qa/marketing-final-browser-qa.mjs",
+    "qa:core": "node qa/core-integrity-browser-qa.mjs"
   }
 }

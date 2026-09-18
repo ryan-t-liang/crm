@@ -5,8 +5,8 @@ import { useCrm } from "@/stores/crm-store";
 import { useMemberOperations } from "@/stores/member-operations-store";
 
 export function SettingsPage() {
-  const { currentUser, state, reset } = useCrm();
-  const { state: memberState, resetMemberData } = useMemberOperations();
+  const { currentUser, state, reset, isHq } = useCrm();
+  const { state: memberState, resetMemberData, recoveryIssue: memberIssue } = useMemberOperations();
   const [lab, setLab] = useState<"normal" | "loading" | "empty" | "error">("normal");
   const [memberResetOpen, setMemberResetOpen] = useState(false);
 
@@ -15,11 +15,10 @@ export function SettingsPage() {
     <div className="settings-grid">
       <SideSection title="Sales Demo Data">
         <p>销售数据使用原有 LocalStorage 键。重置只恢复 Lead、Deal、Organization、Contact 等销售数据。</p>
-        <Button type="danger" onClick={() => Modal.confirm({ title: "Reset Sales Demo Data?", content: "只清除当前浏览器中的销售原型操作；会员数据不会受影响。", onOk: reset })}>Reset Sales Demo Data</Button>
+        {isHq ? <Button type="danger" onClick={() => Modal.confirm({ title: "Reset Sales Demo Data?", content: "此操作会清除当前浏览器中的 Sales Demo 数据并恢复初始数据。会员和营销数据不会受影响。", onOk: () => { reset(); } })}>Reset Sales Demo Data</Button> : <p>仅 HQ 管理员可重置销售演示数据。</p>}
       </SideSection>
       <SideSection title="Member Operations Data">
-        <p>{memberState.customers.length} 个 customer、{memberState.brandUsers.length} 个 brand user、{memberState.userProfiles.length} 个 user_profile、{memberState.purchaseIntents.length} 条 user_purchase_intent，使用独立 LocalStorage。</p>
-        <Button type="danger" onClick={() => setMemberResetOpen(true)}>Reset Member Demo Data</Button>
+        {isHq ? <><p>{memberIssue ? "会员数据暂不可读取，数量未知；原始数据已保留。" : `${memberState.customers.length} 个 customer、${memberState.brandUsers.length} 个 brand user、${memberState.userProfiles.length} 个 user_profile、${memberState.purchaseIntents.length} 条 user_purchase_intent，使用独立 LocalStorage。`}</p><Button type="danger" onClick={() => setMemberResetOpen(true)}>Reset Member Demo Data</Button></> : <p>仅 HQ 管理员可查看和重置会员演示数据。</p>}
       </SideSection>
       <SideSection title="Current Demo User">
         <p><strong>{currentUser.name}</strong></p><p>{currentUser.title}</p><p>{state.distributors.find((item) => item.id === currentUser.distributorId)?.name}</p>
@@ -30,7 +29,7 @@ export function SettingsPage() {
       </SideSection>
     </div>
     <Modal visible={memberResetOpen} title="Reset Member Demo Data?" onCancel={() => setMemberResetOpen(false)} onOk={() => { resetMemberData(); setMemberResetOpen(false); }}>
-      只清除会员与品牌运营原型操作；销售数据不会受影响。
+      此操作会清除当前浏览器中的 Member Demo 数据并恢复初始数据。销售和营销数据不会受影响。
     </Modal>
   </div>;
 }

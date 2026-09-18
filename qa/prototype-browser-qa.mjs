@@ -159,9 +159,14 @@ try {
   await page.getByRole("button", { name: "Mark Won", exact: true }).click();
   await page.waitForFunction(() => { const state = JSON.parse(localStorage.getItem("kivisense-crm-prototype-v1") || "{}"); return state.deals.find((item) => item.name === "L'Oréal Interactive Beauty Launch Deal")?.stage === "WON"; });
   pass("Mark Deal Won and persist stage");
+  assert.equal(await page.getByRole("button", { name: "Mark Lost", exact: true }).isDisabled(), true, "WON is terminal; ordinary Mark Lost cannot reopen/replace it");
+  const otherOpenDeal = await page.evaluate(() => JSON.parse(localStorage.getItem("kivisense-crm-prototype-v1")).deals.find((row) => ["DISCOVERY", "SOLUTION", "QUOTATION", "NEGOTIATION"].includes(row.stage)));
+  assert.ok(otherOpenDeal, "Use a separate open Deal for LOST acceptance; never weaken terminal lock");
+  await route(`deals/${otherOpenDeal.id}`, otherOpenDeal.name);
   await page.getByRole("button", { name: "Mark Lost", exact: true }).click();
-  await page.waitForFunction(() => JSON.parse(localStorage.getItem("kivisense-crm-prototype-v1")).deals.find((row) => row.name === "L\'Oréal Interactive Beauty Launch Deal")?.stage === "LOST");
-  pass("Mark Deal Lost and persist stage");
+  await page.waitForFunction((id) => JSON.parse(localStorage.getItem("kivisense-crm-prototype-v1")).deals.find((row) => row.id === id)?.stage === "LOST", otherOpenDeal.id);
+  assert.equal(await page.evaluate((id) => JSON.parse(localStorage.getItem("kivisense-crm-prototype-v1")).deals.find((row) => row.id === id).probability, otherOpenDeal.id), 0);
+  pass("Mark a separate open Deal Lost; WON remains terminal and LOST probability is zero");
 
   await route("deals", "Deals"); await page.getByText("Kanban", { exact: true }).click(); await page.getByLabel("Deal Pipeline").waitFor(); const card = page.locator(".deal-card").first(); const destination = page.locator(".kanban-column").nth(1); const draggedId = (await card.locator("a").getAttribute("href")).split("/").at(-1); await card.dragTo(destination, { sourcePosition: { x: 20, y: 110 }, targetPosition: { x: 50, y: 50 } }); await page.waitForFunction((id) => JSON.parse(localStorage.getItem("kivisense-crm-prototype-v1")).deals.find((row) => row.id === id)?.stage === "SOLUTION", draggedId); pass("Deal Kanban drag changes stage"); await shot("deal-kanban-1440x900");
 

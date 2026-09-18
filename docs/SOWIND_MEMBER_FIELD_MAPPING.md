@@ -31,8 +31,8 @@
 | 意向联系快照 | first_name/last_name varchar(100)、email varchar(255)、tel varchar(30)、tel_country_code varchar(10)默认86：均可空 | 保留独立快照。旧 name 为姓名展示别名；phone/country_code 为 tel/tel_country_code 的旧别名。原生电话优先，NULL不回退会员电话 | 否；name/phone/country_code 是旧别名 |
 | 意向称谓/联系偏好 | salutation tinyint可空（同资料称谓）；preferred_contact tinyint可空：1微信/2电话/3email/4短信；language varchar(10)可空 | 未用于概览，不编造偏好统计 | 否；尚未全面接入页面 |
 | 意向地区/城市/生日 | region varchar(10)可空：zh/hk/tw/mc/us；city varchar(100)、birthday datetime可空 | 与 profile.region 分别解释；未知旧码原样展示 | 否 |
-| 意向腕表/营销选择 | has_watch / accepts_marketing：tinyint非空默认0，0未选择/1是/2否 | 旧NULL是数据未知，不是SQL允许值；只读保留，不纠正为0，也不布尔化 | 否；旧NULL为兼容异常 |
-| 意向数据同意 | personal_data_consent tinyint非空默认0：0否/1是 | 无发送能力，不跨品牌复制同意 | 否；尚未全面接入页面 |
+| 意向腕表/营销选择 | has_watch / accepts_marketing：tinyint非空默认0，0未选择/1是/2否 | 旧NULL是数据未知，不是SQL允许值；加载和展示只读保留，不自动纠正为0或布尔化。新建及 has_watch 修改仅写0/1/2；允许人工将旧NULL改为有效值，不允许写回NULL | 否；旧NULL为兼容异常 |
+| 意向数据同意 / 数据处理同意（SQL 快照） | user_purchase_intent.personal_data_consent tinyint非空默认0：0否/1是 | 保留原始数字值；无发送能力，不跨品牌复制同意 | 否 |
 | 意向商品 | product_sku / model：varchar(100)可空 | 品牌+SKU；缺SKU按品牌+model；两者缺失单列未填写，每条一次 | 否；种子为演示商品码 |
 | 意向零售渠道/门店/来源 | purchase_channel tinyint可空：1零售商；retailer smallint可空；source tinyint非空默认1：1小程序/2管理员 | 数字原码保留；旧字符串门店兼容，字典待配置；不编造正式品牌选项 | 否；部分未接入页面 |
 | 意向兴趣/喜爱系列（旧页保留） | user_purchase_intent 无 areas_of_interest / favorite_series 列 | 不声称现有后端字段，不用于概览商品归因，保留已有用户值 | 是，旧原型扩展 / 待后端支持 |
@@ -46,6 +46,6 @@
 
 资料和意向的 has_watch 修改继续各自独立。意向关联用户不实时覆盖姓名、电话、邮箱、地区、同意或营销选择；跨品牌也不复制。集团关系只按已有 customer_id，不按手机号、openid、unionid 合并。
 
-旧手机号匹配演示动作仍使用 user.phone/country_code 别名，按本轮任务明确要求未修改。它与 SQL 的 profile 电话来源以及“管理员创建时为空”注释的差异需后续确认：如何迁移候选读取、唯一匹配是否写 user_id、多候选如何处理。当前未声称后端实现了自动关联，也不自动修复已有关系。
+Core Integrity Fix 已将候选展示与后台创建统一到 `matchPurchaseIntentMember()` 和 `sowind-read`：优先读取 user_profile.tel / tel_country_code，显式NULL不回退；仅原生字段缺失时在读取层兼容旧 user.phone/country_code。按当前品牌、国家码、手机号匹配明确有效的 user.is_deleted=0 用户；唯一候选关联 user_id，零候选或多候选保留NULL，多候选返回待核验提示，不自动建会员或合并集团。与 SQL“管理员创建时为空”注释的差异仍待后端确认；当前只模拟前端规则，不声称后端实现，也不自动修复已有关系。后续导入/小程序应复用同一匹配函数，详见 `CRM_CORE_INTEGRITY.md`。
 
 前端类型是局部展示契约，不是逐列完整数据库模型。未接入的SQL字段不被补成默认值；字典、生产时区及同步错误清理规则仍待正式确认。

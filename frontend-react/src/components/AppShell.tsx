@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { Avatar, Button, Dropdown, Select, Typography } from "@douyinfe/semi-ui";
+import { Avatar, Button, Dropdown, Modal, Select, Typography } from "@douyinfe/semi-ui";
 import {
   IconApartment, IconApps, IconBriefcase, IconChevronDown, IconCheckList, IconGridView, IconHome,
   IconLayers, IconMenu, IconSetting, IconUserGroup, IconUserList,
@@ -11,31 +11,33 @@ import { initials, navigate } from "@/utils/format";
 type NavItem = { label: string; route: string; icon: ReactNode; count?: number; hqOnly?: boolean };
 
 export function AppShell({ route, children }: { route: string; children: ReactNode }) {
-  const { state, currentUser, isHq, setCurrentUser, scoped, reset } = useCrm();
-  const { state: memberState, resetMemberData } = useMemberOperations();
+  const { state, currentUser, isHq, setCurrentUser, scoped, reset, recoveryIssue: salesIssue } = useCrm();
+  const { state: memberState, resetMemberData, recoveryIssue: memberIssue } = useMemberOperations();
+  const knownSalesCount = (size: number) => salesIssue ? undefined : size;
+  const knownMemberCount = (size: number) => memberIssue ? undefined : size;
   const [collapsed, setCollapsed] = useState(false);
   const groups: Array<{ label: string; items: NavItem[] }> = [
     { label: "OVERVIEW", items: [{ label: "数据概览", route: "dashboard", icon: <IconHome /> }] },
     { label: "SALES", items: [
-      { label: "Leads", route: "leads", icon: <IconLayers />, count: scoped(state.leads).length },
-      { label: "Deals", route: "deals", icon: <IconBriefcase />, count: scoped(state.deals).length },
-      { label: "联系人", route: "contacts", icon: <IconUserGroup />, count: scoped(state.contacts).length },
-      { label: "组织", route: "organizations", icon: <IconApartment />, count: scoped(state.organizations).length },
+      { label: "Leads", route: "leads", icon: <IconLayers />, count: knownSalesCount(scoped(state.leads).length) },
+      { label: "Deals", route: "deals", icon: <IconBriefcase />, count: knownSalesCount(scoped(state.deals).length) },
+      { label: "联系人", route: "contacts", icon: <IconUserGroup />, count: knownSalesCount(scoped(state.contacts).length) },
+      { label: "组织", route: "organizations", icon: <IconApartment />, count: knownSalesCount(scoped(state.organizations).length) },
     ] },
     { label: "MEMBER & BRAND", items: [
-      { label: "集团客户", route: "member-customers", icon: <IconUserGroup />, count: memberState.customers.length, hqOnly: true },
-      { label: "品牌会员", route: "brand-members", icon: <IconUserList />, count: memberState.brandUsers.length, hqOnly: true },
-      { label: "购买意向", route: "purchase-intents", icon: <IconLayers />, count: memberState.purchaseIntents.length, hqOnly: true },
+      { label: "集团客户", route: "member-customers", icon: <IconUserGroup />, count: knownMemberCount(memberState.customers.length), hqOnly: true },
+      { label: "品牌会员", route: "brand-members", icon: <IconUserList />, count: knownMemberCount(memberState.brandUsers.length), hqOnly: true },
+      { label: "购买意向", route: "purchase-intents", icon: <IconLayers />, count: knownMemberCount(memberState.purchaseIntents.length), hqOnly: true },
       { label: "营销活动", route: "marketing", icon: <IconApps />, hqOnly: true },
     ] },
     { label: "CATALOG", items: [{ label: "产品", route: "products", icon: <IconGridView />, count: state.products.filter((item) => item.status === "ACTIVE").length }] },
-    { label: "WORK", items: [{ label: "任务", route: "tasks", icon: <IconCheckList />, count: scoped(state.tasks).filter((item) => item.status === "OPEN").length }] },
+    { label: "WORK", items: [{ label: "任务", route: "tasks", icon: <IconCheckList />, count: knownSalesCount(scoped(state.tasks).filter((item) => item.status === "OPEN").length) }] },
     { label: "MANAGEMENT", items: [
       { label: "分销商", route: "distributors", icon: <IconApps />, count: state.distributors.length, hqOnly: true },
       { label: "用户", route: "users", icon: <IconUserList />, count: state.users.length, hqOnly: true },
     ] },
   ];
-  const roleLabel = currentUser.role === "HQ_ADMIN" ? "Kivisense Super Admin" : currentUser.role === "DISTRIBUTOR_MANAGER" ? "Distributor Manager" : "Distributor Sales";
+  const roleLabel = currentUser.role === "HQ_ADMIN" ? "Kivisense Super Admin" : currentUser.role === "DISTRIBUTOR_MANAGER" ? "Distributor Manager" : currentUser.role === "DISTRIBUTOR_SALES" ? "Distributor Sales" : "Viewer · Read only";
   const activeTop = route.split("/")[0];
   const isMemberWorkspace = ["member-customers", "brand-members", "purchase-intents"].includes(activeTop);
 
@@ -80,7 +82,7 @@ export function AppShell({ route, children }: { route: string; children: ReactNo
             />
             <Dropdown
               trigger="click"
-              render={<Dropdown.Menu><Dropdown.Item onClick={() => navigate("settings")}>Prototype 设置</Dropdown.Item><Dropdown.Item onClick={reset}>Reset Sales Demo Data</Dropdown.Item>{isHq && <Dropdown.Item onClick={resetMemberData}>Reset Member Demo Data</Dropdown.Item>}</Dropdown.Menu>}
+              render={<Dropdown.Menu><Dropdown.Item onClick={() => navigate("settings")}>Prototype 设置</Dropdown.Item>{isHq && <><Dropdown.Item onClick={() => Modal.confirm({ title: "Reset Sales Demo Data?", content: "此操作会清除当前浏览器中的 Sales Demo 数据并恢复初始数据。会员和营销数据不会受影响。", onOk: () => { reset(); } })}>Reset Sales Demo Data</Dropdown.Item><Dropdown.Item onClick={() => Modal.confirm({ title: "Reset Member Demo Data?", content: "此操作会清除当前浏览器中的 Member Demo 数据并恢复初始数据。销售和营销数据不会受影响。", onOk: () => { resetMemberData(); } })}>Reset Member Demo Data</Dropdown.Item></>}</Dropdown.Menu>}
             >
               <Button theme="borderless" className="user-menu"><Avatar size="small" color={currentUser.avatarColor as "green"}>{initials(currentUser.name)}</Avatar><span className="user-menu-copy"><Typography.Text strong>{currentUser.name}</Typography.Text><small>{roleLabel}</small></span><IconChevronDown /></Button>
             </Dropdown>

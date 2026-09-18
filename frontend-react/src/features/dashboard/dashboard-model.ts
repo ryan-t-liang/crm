@@ -1,5 +1,7 @@
 import type { CrmState, DemoUser, Lead, Deal, CrmTask } from "@/types/crm";
 import type { MemberOperationsState, MemberBrandScope, SowindBrandCode, SowindBrandUser, SowindCustomer, SowindPurchaseIntent } from "@/types/member-operations";
+import { authorizedSales, confirmedConversions, dealOutcome, openStages, ratio, winRate } from "@/features/shared/sales-metrics";
+export { authorizedSales, confirmedConversions, dealOutcome, openStages, ratio, winRate } from "@/features/shared/sales-metrics";
 
 export const DAY = 86_400_000;
 const OFFSET = 8 * 3_600_000;
@@ -79,7 +81,6 @@ export function cohort<T>(records: T[], date: (record: T) => unknown, range: Dat
 }
 export const leadLabels: Record<string, string> = { NEW: "新建", CONTACTED: "已联系", NURTURING: "培育中", QUALIFIED: "已合格", CONVERTED: "已转为 Deal", UNQUALIFIED: "不合格", UNKNOWN: "未知状态" };
 export const stageLabels: Record<string, string> = { DISCOVERY: "需求发现", SOLUTION: "方案沟通", QUOTATION: "报价阶段", NEGOTIATION: "谈判阶段", WON: "赢单", LOST: "输单", UNKNOWN: "未知阶段" };
-export const openStages = ["DISCOVERY", "SOLUTION", "QUOTATION", "NEGOTIATION"];
 export type HqCategory = "pending" | "anomaly" | "success" | "inconsistent" | "unknown";
 export function hqCategory(intent: Pick<SowindPurchaseIntent, "hq_sync_status" | "error">): HqCategory {
   const error = typeof intent.error === "string" && intent.error.trim().length > 0;
@@ -93,28 +94,8 @@ export function association(intent: SowindPurchaseIntent, users: SowindBrandUser
   if (intent.user_id === null) return "unlinked";
   return users.some((user) => user.id === intent.user_id && user.brand === intent.brand && user.is_deleted === 0) ? "linked" : "invalid";
 }
-export function confirmedConversions(leads: Lead[], deals: Deal[], allVisibleLeads = leads) {
-  const linked = new Map<string, Lead[]>();
-  allVisibleLeads.forEach((lead) => { if (lead.convertedDealId) linked.set(lead.convertedDealId, [...(linked.get(lead.convertedDealId) ?? []), lead]); });
-  const confirmed: Lead[] = [], conflicts: Lead[] = [];
-  leads.forEach((lead) => {
-    if (lead.status !== "CONVERTED") {
-      if (lead.convertedDealId) conflicts.push(lead);
-      return;
-    }
-    const deal = deals.find((item) => item.id === lead.convertedDealId);
-    const reverse = deals.filter((item) => item.sourceLeadId === lead.id);
-    if (deal && deal.distributorId === lead.distributorId && (!deal.sourceLeadId || deal.sourceLeadId === lead.id) && linked.get(deal.id)?.length === 1 && reverse.every((item) => item.id === deal.id)) confirmed.push(lead);
-    else conflicts.push(lead);
-  });
-  return { confirmed, conflicts };
-}
-export function ratio(numerator: number, denominator: number): string { return denominator ? `${Math.round(numerator / denominator * 100)}%` : "—"; }
 export interface MemberAccess { brands: SowindBrandCode[]; group: boolean; crossBrand: boolean }
 export function memberAccess(actor: DemoUser): MemberAccess { return actor.role === "HQ_ADMIN" ? { brands: ["gp", "un"], group: true, crossBrand: true } : { brands: [], group: false, crossBrand: false }; }
-export function authorizedSales<T extends { distributorId: string }>(rows: T[], actor: DemoUser): T[] {
-  return actor.role === "HQ_ADMIN" ? rows : rows.filter((row) => row.distributorId === actor.distributorId);
-}
 export interface DashboardQuery { range: DateRange; distributorId: string; brand: MemberBrandScope; actor: DemoUser; access?: MemberAccess }
 export interface RowGroup<T> { key: string; label: string; rows: T[] }
 function partition<T>(rows: T[], keys: string[], classify: (row: T) => string, labels: Record<string, string>): RowGroup<T>[] {
@@ -129,11 +110,11 @@ export function buildDashboard(sales: CrmState, members: MemberOperationsState, 
   const currentDeals = deals.filter((row) => notFuture(row.createdAt));
   const openDeals = currentDeals.filter((row) => openStages.includes(row.stage));
   const overdueTasks = tasks.filter((row) => row.status === "OPEN" && Number.isFinite(parseCreatedAt(row.dueAt)) && parseCreatedAt(row.dueAt) < range.now);
-  const conversion = confirmedConversions(leadCohort.rows, currentDeals, authorizedSales(sales.leads, actor));
+  const conversion = confirmedConversions(leadCohort.rows, currentDeals, authorizedSales(sales.leads, actor), authorizedSales(sales.deals, actor));
   const leadStatuses = partition(leadCohort.rows, Object.keys(leadLabels), (row) => leadLabels[row.status] ? row.status : "UNKNOWN", leadLabels);
   const currentStages = partition(openDeals, openStages, (row) => row.stage, stageLabels);
-  const unknownDeals = currentDeals.filter((row) => !stageLabels[row.stage]);
-  const outcomes = partition(dealCohort.rows, ["OPEN", "WON", "LOST", "UNKNOWN"], (row) => openStages.includes(row.stage) ? "OPEN" : ["WON", "LOST"].includes(row.stage) ? row.stage : "UNKNOWN", { OPEN: "进行中", WON: "当前赢单", LOST: "当前输单", UNKNOWN: "未知阶段" });
+  const unknownDeals = currentDeals.filter((row) => dealOutcome(row) === "UNKNOWN");
+  const outcomes = partition(dealCohort.rows, ["OPEN", "WON", "LOST", "UNKNOWN"], dealOutcome, { OPEN: "进行中", WON: "当前赢单", LOST: "当前输单", UNKNOWN: "未知阶段" });
   const access = query.access ?? memberAccess(actor);
   const authorizedUsers = members.brandUsers.filter((row) => access.brands.includes(row.brand));
   const authorizedIntents = members.purchaseIntents.filter((row) => access.brands.includes(row.brand));
@@ -187,6 +168,14 @@ export function buildDashboard(sales: CrmState, members: MemberOperationsState, 
   return { query, access, leads, deals, tasks, leadCohort, dealCohort, openDeals, overdueTasks, conversion, leadStatuses, currentStages, unknownDeals, outcomes, users, effectiveUsers, unknownDeletion, userCohort, userDateCoverage, intentCohort, intents, customers, noCustomer, invalidCustomer, unlinkedIntents, syncGroups, syncAnomalies, associations, groupRelationships, brandComparison, merchandise: [...merchandise.values()], trend, distributors, products, addons };
 }
 export type DashboardSnapshot = ReturnType<typeof buildDashboard>;
+/** Distributor Performance is current stock, unlike the Dashboard creation cohort. */
+export function buildCurrentDistributorMetrics(sales: CrmState, actor: DemoUser, distributorId: string, now: number) {
+  const visibleLeads = authorizedSales(sales.leads, actor), visibleDeals = authorizedSales(sales.deals, actor);
+  const current = <T extends { distributorId: string; createdAt: string }>(rows: T[]) => rows.filter((row) => row.distributorId === distributorId && (!Number.isFinite(parseCreatedAt(row.createdAt)) || parseCreatedAt(row.createdAt) <= now));
+  const leads = current(visibleLeads), deals = current(visibleDeals);
+  const conversion = confirmedConversions(leads, deals, visibleLeads, visibleDeals);
+  return { leads, deals, conversion, conversionRate: ratio(conversion.confirmed.length, leads.length), winRate: winRate(deals), openDeals: deals.filter((deal) => dealOutcome(deal) === "OPEN"), wonDeals: deals.filter((deal) => dealOutcome(deal) === "WON") };
+}
 export type DashboardRecord = Lead | Deal | CrmTask | SowindBrandUser | SowindPurchaseIntent | SowindCustomer;
 export type RecordKind = "lead" | "deal" | "task" | "user" | "intent" | "customer";
 export function recordLabel(row: DashboardRecord): string { return "name" in row && row.name ? row.name : "title" in row ? row.title : row.id; }

@@ -1,11 +1,12 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { Input, Select, TabPane, Table, Tabs, Tag } from "@douyinfe/semi-ui";
+import { Banner, Button, Input, Modal, Select, TabPane, Table, Tabs, Tag, Toast } from "@douyinfe/semi-ui";
 import { IconSearch } from "@douyinfe/semi-icons";
 import { DataList, DetailWorkspace, EmptyBlock, PageHeader, SideSection, TableEntity } from "@/components/CrmUi";
 import { describeSowindPhoneMatch } from "@/features/member-operations/member-model";
 import { readBrandPhone, readIntentPhone } from "@/features/member-operations/sowind-read";
 import { brandLabels, useMemberOperations } from "@/stores/member-operations-store";
-import type { MemberBrandScope, SowindBrandCode, SowindBrandUser, SowindIntentChoice, SowindPurchaseIntent, SowindUserProfile } from "@/types/member-operations";
+import { useCrm } from "@/stores/crm-store";
+import type { MemberBrandScope, SowindBrandCode, SowindBrandUser, SowindIntentChoice, SowindPurchaseIntent, SowindPurchaseIntentInput, SowindUserProfile } from "@/types/member-operations";
 import { navigate } from "@/utils/format";
 import { MemberMarketingRecords } from "@/features/marketing/MarketingPages";
 
@@ -15,7 +16,7 @@ const brandOptions = [
   { value: "un", label: "Ulysse Nardin" },
 ];
 const profileWatchOptions = [{ value: "0", label: "0 · 否" }, { value: "1", label: "1 · 是" }, { value: "NULL", label: "NULL · 未提供" }];
-const intentWatchOptions = [{ value: "0", label: "0 · 未选择" }, { value: "1", label: "1 · 是" }, { value: "2", label: "2 · 否" }, { value: "NULL", label: "NULL · 未提供" }];
+const intentWatchOptions = [{ value: "0", label: "0 · 未选择" }, { value: "1", label: "1 · 是" }, { value: "2", label: "2 · 否" }, { value: "NULL", label: "NULL · 旧数据未知（只读）", disabled: true }];
 
 function BrandTag({ brand }: { brand: SowindBrandCode }) {
   return <Tag color={brand === "gp" ? "green" : "blue"} size="small">{brand}</Tag>;
@@ -108,7 +109,7 @@ export function BrandMembersPage({ id }: { id?: string }) {
 function BrandMemberList() {
   const { state } = useMemberOperations();
   const [keyword, setKeyword] = useState("");
-  const rows = state.brandUsers.filter((item) => (state.brandScope === "ALL" || item.brand === state.brandScope) && (!keyword || `${item.id} ${item.openid} ${item.unionid} ${item.country_code} ${item.phone}`.toLowerCase().includes(keyword.toLowerCase())));
+  const rows = state.brandUsers.filter((item) => (state.brandScope === "ALL" || item.brand === state.brandScope) && (!keyword || `${item.id} ${item.openid} ${item.unionid} ${readBrandPhone(item, state.userProfiles).country} ${readBrandPhone(item, state.userProfiles).number}`.toLowerCase().includes(keyword.toLowerCase())));
   const columns = [
     { title: "品牌用户身份", dataIndex: "id", width: 250, render: (value: string, item: SowindBrandUser) => <TableEntity name={value} detail="user.id" route={`brand-members/${item.id}`} /> },
     { title: "brand", dataIndex: "brand", width: 90, render: (value: SowindBrandCode) => <BrandTag brand={value} /> },
@@ -141,8 +142,10 @@ export function PurchaseIntentsPage({ id }: { id?: string }) {
 
 function PurchaseIntentList() {
   const { state } = useMemberOperations();
+  const { currentUser } = useCrm();
   const [keyword, setKeyword] = useState("");
-  const rows = state.purchaseIntents.filter((item) => (state.brandScope === "ALL" || item.brand === state.brandScope) && (!keyword || `${item.id} ${item.name} ${item.phone} ${item.email}`.toLowerCase().includes(keyword.toLowerCase())));
+  const [createOpen, setCreateOpen] = useState(false);
+  const rows = state.purchaseIntents.filter((item) => (state.brandScope === "ALL" || item.brand === state.brandScope) && (!keyword || `${item.id} ${item.name} ${readIntentPhone(item).number} ${item.email}`.toLowerCase().includes(keyword.toLowerCase())));
   const columns = [
     { title: "购买意向", dataIndex: "name", width: 250, render: (value: string | null, item: SowindPurchaseIntent) => <TableEntity name={value || item.id} detail={item.id} route={`purchase-intents/${item.id}`} /> },
     { title: "brand", dataIndex: "brand", width: 90, render: (value: SowindBrandCode) => <BrandTag brand={value} /> },
@@ -150,14 +153,51 @@ function PurchaseIntentList() {
     { title: "国家码 + 手机号", width: 175, render: (_: unknown, item: SowindPurchaseIntent) => phone(readIntentPhone(item).country, readIntentPhone(item).number) },
     { title: "has_watch", dataIndex: "has_watch", width: 125, render: intentChoice },
     { title: "accepts_marketing", dataIndex: "accepts_marketing", width: 155, render: intentChoice },
-    { title: "手机号匹配", width: 230, render: (_: unknown, item: SowindPurchaseIntent) => describeSowindPhoneMatch(state.brandUsers, item).label },
+    { title: "手机号匹配", width: 230, render: (_: unknown, item: SowindPurchaseIntent) => describeSowindPhoneMatch(state.brandUsers, item, state.userProfiles).label },
     { title: "HQ 同步", width: 145, render: (_: unknown, item: SowindPurchaseIntent) => <HqSync value={item.hq_sync_status} error={item.error} /> },
   ];
   const noUser = rows.filter((item) => item.user_id === null).length;
-  return <div className="page member-workspace"><PageHeader title="品牌购买意向" description="user_purchase_intent 保留独立联系资料，可不关联 user；不会创建 Sales Lead 或 Deal。" actions={<BrandScopeSelect />} />
-    <div className="metric-strip"><div><span>user_purchase_intent</span><strong>{rows.length}</strong></div><div><span>未关联 user</span><strong>{noUser}</strong></div><div><span>多候选待处理</span><strong>{rows.filter((item) => describeSowindPhoneMatch(state.brandUsers, item).code === "AMBIGUOUS").length}</strong></div><div><span>HQ 未同步</span><strong>{rows.filter((item) => item.hq_sync_status === 0).length}</strong></div></div>
+  return <div className="page member-workspace"><PageHeader title="品牌购买意向" description="user_purchase_intent 保留独立联系资料，可不关联 user；不会创建 Sales Lead 或 Deal。" actions={<><BrandScopeSelect />{currentUser.role === "HQ_ADMIN" && <Button theme="solid" onClick={() => setCreateOpen(true)}>新建购买意向</Button>}</>} />
+    <div className="metric-strip"><div><span>user_purchase_intent</span><strong>{rows.length}</strong></div><div><span>未关联 user</span><strong>{noUser}</strong></div><div><span>多候选待处理</span><strong>{rows.filter((item) => describeSowindPhoneMatch(state.brandUsers, item, state.userProfiles).code === "AMBIGUOUS").length}</strong></div><div><span>HQ 未同步</span><strong>{rows.filter((item) => item.hq_sync_status === 0).length}</strong></div></div>
     <section className="data-surface"><div className="table-toolbar"><Input prefix={<IconSearch />} value={keyword} onChange={setKeyword} showClear placeholder="搜索意向 ID、姓名、电话或 Email" /></div>{rows.length ? <Table rowKey="id" columns={columns} dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: 1350 }} /> : <EmptyBlock title="没有匹配的购买意向" description="调整搜索或品牌范围。" />}</section>
+    <CreatePurchaseIntentModal key={`${state.brandScope}:${createOpen}`} visible={createOpen} onClose={() => setCreateOpen(false)} onCreated={() => { setKeyword(""); setCreateOpen(false); }} />
   </div>;
+}
+
+function CreatePurchaseIntentModal({ visible, onClose, onCreated }: { visible: boolean; onClose: () => void; onCreated: () => void }) {
+  const { state, createPurchaseIntent } = useMemberOperations();
+  const [error, setError] = useState("");
+  const [form, setForm] = useState<SowindPurchaseIntentInput>(() => ({
+    brand: state.brandScope === "un" ? "un" : "gp", first_name: null, last_name: null, tel: null, tel_country_code: "86",
+    email: null, product_sku: null, model: null, has_watch: 0, accepts_marketing: 0, personal_data_consent: 0, region: null,
+  }));
+  const text = (field: "first_name" | "last_name" | "tel" | "tel_country_code" | "email" | "product_sku" | "model" | "region", value: string) => setForm((current) => ({ ...current, [field]: value === "" ? null : value }));
+  const save = () => {
+    const result = createPurchaseIntent(form);
+    if (!result.ok) { setError(result.error); return; }
+    if (result.warning) Toast.warning(result.warning);
+    else Toast.success(result.match.code === "UNIQUE" ? `购买意向已创建，已关联 ${result.intent.user_id}` : "购买意向已创建，未关联会员。");
+    onCreated();
+  };
+  const choices = intentWatchOptions.filter((option) => option.value !== "NULL");
+  return <Modal visible={visible} title="新建购买意向" width={680} okText="创建购买意向" cancelText="取消" onCancel={onClose} onOk={save}>
+    {error && <Banner type="danger" description={error} />}
+    <p>按同品牌国家码和手机号匹配会员；无匹配或多候选时保留空关联。以下资料是此意向的独立快照。</p>
+    <div className="form-grid">
+      <label>品牌<Select aria-label="购买意向品牌" value={form.brand} onChange={(value) => setForm((current) => ({ ...current, brand: String(value) as SowindBrandCode }))} optionList={brandOptions.filter((option) => option.value !== "ALL" && (state.brandScope === "ALL" || option.value === state.brandScope))} /></label>
+      <label>国家码<Input aria-label="购买意向国家码" maxLength={10} value={form.tel_country_code ?? ""} onChange={(value) => text("tel_country_code", value)} /></label>
+      <label>名字<Input aria-label="购买意向名字" maxLength={100} value={form.first_name ?? ""} onChange={(value) => text("first_name", value)} /></label>
+      <label>姓氏<Input aria-label="购买意向姓氏" maxLength={100} value={form.last_name ?? ""} onChange={(value) => text("last_name", value)} /></label>
+      <label>电话号码<Input aria-label="购买意向电话号码" maxLength={30} value={form.tel ?? ""} onChange={(value) => text("tel", value)} /></label>
+      <label>Email<Input aria-label="购买意向 Email" maxLength={255} value={form.email ?? ""} onChange={(value) => text("email", value)} /></label>
+      <label>产品 SKU<Input aria-label="购买意向产品 SKU" maxLength={100} value={form.product_sku ?? ""} onChange={(value) => text("product_sku", value)} /></label>
+      <label>产品型号<Input aria-label="购买意向产品型号" maxLength={100} value={form.model ?? ""} onChange={(value) => text("model", value)} /></label>
+      <label>has_watch<Select aria-label="新建意向 has_watch" value={String(form.has_watch)} onChange={(value) => setForm((current) => ({ ...current, has_watch: Number(value) as 0 | 1 | 2 }))} optionList={choices} /></label>
+      <label>accepts_marketing<Select aria-label="新建意向 accepts_marketing" value={String(form.accepts_marketing)} onChange={(value) => setForm((current) => ({ ...current, accepts_marketing: Number(value) as 0 | 1 | 2 }))} optionList={choices} /></label>
+      <label>个人数据处理同意<Select aria-label="新建意向 personal_data_consent" value={String(form.personal_data_consent)} onChange={(value) => setForm((current) => ({ ...current, personal_data_consent: Number(value) as 0 | 1 }))} optionList={[{ value: "0", label: "0 · 否" }, { value: "1", label: "1 · 是" }]} /></label>
+      <label>region 原始编码<Input aria-label="新建意向 region" maxLength={10} value={form.region ?? ""} onChange={(value) => text("region", value)} /></label>
+    </div>
+  </Modal>;
 }
 
 function PurchaseIntentDetail({ id }: { id: string }) {
@@ -166,8 +206,8 @@ function PurchaseIntentDetail({ id }: { id: string }) {
   if (!intent) return <div className="page"><EmptyBlock title="购买意向不存在" action={() => navigate("purchase-intents")} /></div>;
   const user = userFor(state.brandUsers, intent.user_id);
   const customer = user?.customer_id ? state.customers.find((item) => item.id === user.customer_id) : undefined;
-  const matching = describeSowindPhoneMatch(state.brandUsers, intent);
-  return <DetailWorkspace eyebrow="会员与品牌运营 / user_purchase_intent" title={intent.name || intent.id} subtitle={`${intent.id} · ${phone(readIntentPhone(intent).country, readIntentPhone(intent).number)}`} backRoute="purchase-intents" tags={<><BrandTag brand={intent.brand} />{!user && <Tag color="amber" size="small">未关联 user</Tag>}</>} actions={<Select aria-label="user_purchase_intent.has_watch" value={intent.has_watch === null ? "NULL" : String(intent.has_watch)} onChange={(value) => updatePurchaseIntentHasWatch(intent.id, value === "NULL" ? null : Number(value) as 0 | 1 | 2)} optionList={intentWatchOptions} />} tabs={<Tabs className="record-tabs">
+  const matching = describeSowindPhoneMatch(state.brandUsers, intent, state.userProfiles);
+  return <DetailWorkspace eyebrow="会员与品牌运营 / user_purchase_intent" title={intent.name || intent.id} subtitle={`${intent.id} · ${phone(readIntentPhone(intent).country, readIntentPhone(intent).number)}`} backRoute="purchase-intents" tags={<><BrandTag brand={intent.brand} />{!user && <Tag color="amber" size="small">未关联 user</Tag>}</>} actions={<Select aria-label="user_purchase_intent.has_watch" value={intent.has_watch === null ? "NULL" : String(intent.has_watch)} onChange={(value) => updatePurchaseIntentHasWatch(intent.id, value === "NULL" ? null : Number(value) as 0 | 1 | 2)} optionList={intent.has_watch === null ? intentWatchOptions : intentWatchOptions.filter((option) => option.value !== "NULL")} />} tabs={<Tabs className="record-tabs">
     <TabPane tab="购买意向资料" itemKey="data"><section className="data-panel"><PageHeader title="user_purchase_intent" description="姓名、电话、Email 与选择项是意向快照；即使关联 user 也不从会员资料实时覆盖。" /><DataList rows={[["id", intent.id], ["brand", intent.brand], ["user_id", intent.user_id ? <a href={`#brand-members/${intent.user_id}`}>{intent.user_id}</a> : raw(null)], ["name", raw(intent.name)], ["country_code", raw(intent.country_code)], ["phone", raw(intent.phone)], ["email", raw(intent.email)], ["has_watch", intentChoice(intent.has_watch)], ["accepts_marketing", intentChoice(intent.accepts_marketing)], ["region（intent 映射）", raw(intent.region)], ["areas_of_interest", raw(intent.areas_of_interest)], ["favorite_series", dictionary(intent.favorite_series)], ["retailer", dictionary(intent.retailer)], ["hq_ref", raw(intent.hq_ref === null ? null : typeof intent.hq_ref === "string" ? intent.hq_ref : JSON.stringify(intent.hq_ref))], ["hq_sync_status", `${intent.hq_sync_status} · ${intent.hq_sync_status === 1 ? "成功" : "未同步"}`], ["error", raw(intent.error)]]} /></section></TabPane>
-  </Tabs>} sidebar={<><SideSection title="关联关系"><DataList rows={[["品牌 user", user ? <a href={`#brand-members/${user.id}`}>{user.id}</a> : "未关联（NULL）"], ["集团 customer", customer ? <a href={`#member-customers/${customer.id}`}>{customer.id}</a> : "未关联"], ["手机号匹配", matching.label]]} /></SideSection><SideSection title="待核对规则"><p>当前仅展示“同品牌 + 国家码 + 手机号”候选结果。管理员创建可留空与自动尝试匹配的差异仍需后端确认；原型不会自动建 user 或合并 customer。</p></SideSection><SideSection title="资料独立"><p>修改此处 has_watch 只更新购买意向，不覆盖 user_profile；两个 region 也分别原样展示。</p></SideSection></>} />;
+  </Tabs>} sidebar={<><SideSection title="关联关系"><DataList rows={[["品牌 user", user ? <a href={`#brand-members/${user.id}`}>{user.id}</a> : "未关联（NULL）"], ["集团 customer", customer ? <a href={`#member-customers/${customer.id}`}>{customer.id}</a> : "未关联"], ["手机号匹配", matching.label]]} /></SideSection><SideSection title="SQL 快照"><DataList rows={[["first_name", raw(intent.first_name ?? null)], ["last_name", raw(intent.last_name ?? null)], ["tel", raw(readIntentPhone(intent).number)], ["tel_country_code", raw(readIntentPhone(intent).country)], ["product_sku", raw(intent.product_sku ?? null)], ["model", raw(intent.model ?? null)], ["数据处理同意", raw(intent.personal_data_consent ?? null)], ["source", raw(intent.source ?? null)], ["created_at", raw(intent.created_at ?? null)]]} /></SideSection><SideSection title="待核对规则"><p>原型后台创建会尝试“同品牌 + 国家码 + 手机号”匹配。SQL 注释“管理员创建时为空”与该业务规则的差异仍需后端确认；没有调用后端、自动建 user 或合并 customer。</p></SideSection><SideSection title="资料独立"><p>修改此处 has_watch 只更新购买意向，不覆盖 user_profile；两个 region 也分别原样展示。</p></SideSection></>} />;
 }

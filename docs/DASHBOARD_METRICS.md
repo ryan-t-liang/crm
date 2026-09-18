@@ -46,7 +46,15 @@
 | 销售产品分析 / 销售次级区 | 当前productId分组：本期Deal及其中当前开放/WON/LOST | 当前产品归属，非历史归因；产品列不混腕表SKU | 每格相同产品Deal |
 | 产品 Add-on / 销售次级区 | 按productId+capabilityId分组本期Deal及其中当前WON | 同名能力不跨产品合并；一Deal可有多个能力，不能跨行求业务总量 | 每格同产品、能力、创建期、结果的Deal |
 
-确认转换同时要求：Lead.status=CONVERTED；convertedDealId 指向授权且符合当前分销商范围的 Deal；若 Deal.sourceLeadId 非空必须匹配；归属分销商一致；授权 Lead 集合没有重复 convertedDealId；反向 sourceLeadId 没有另一个冲突 Deal。一个 Lead 最多一次。无效引用只标“待核验”，不泄露隐藏目标；不修复种子中的真实冲突。
+确认转换同时要求：Lead.status=CONVERTED；convertedDealId 指向授权且符合当前分销商范围的唯一 Deal；Deal.sourceLeadId **必须**等于 Lead.id，不再把缺少反向来源的旧关联计为成功；归属分销商一致；授权 Lead 集合没有重复 convertedDealId 或重复 Lead.id；授权 Deal 集合没有重复 Deal.id，且唯一反向 sourceLeadId 就是该 Deal。一个 Lead 最多一次。关系冲突检查使用完整授权集合，不因日期或分销商的业务筛选漏掉可见的冲突。无效引用只标“待核验”，不泄露隐藏目标；不修复种子中的真实冲突。
+
+### Core Integrity V1：共享指标与 Distributor Performance
+
+`features/shared/sales-metrics.ts` 提供 `confirmedLeadConversion`、`confirmedConversions`、`dealOutcome`、`winRate`、`ratio`、`authorizedSales`。Dashboard 与 Distributor Performance 使用同一组函数，不复制转换或胜率公式。只识别四个明确的开放阶段；未知阶段不计进行中。
+
+Distributor Performance 明确标记为“当前存量，截至当前”，不是 Dashboard 的“本期创建，截至当前”创建 cohort。当前 Lead 转 Deal = 当前已确认转化 Lead / 当前全部 Lead；当前已结案 Deal Win Rate = 当前 WON / (当前 WON + 当前 LOST)。分母为零统一显示 `—`，未结案 Deal 不进入胜率分母。当前列表和概况使用相同存量记录；已知未来创建记录排除，缺失日期保持只读当前口径，不补为今天。先做实际 actor 权限过滤，后做 distributor 归属过滤。
+
+相同授权、时间范围和记录总体下，两页转换确认结果和胜率相同；不同时间总体不会伪称相同指标。新增共享回归覆盖双向缺失、重复前向/反向链接、跨范围冲突、零分母、未来创建与权限范围。
 
 旧 Lead.productInterest 只有名称数组，缺乏可靠产品+能力关联，因此不编造跨产品 Add-on 兴趣数量；保留原 Lead 字段和展示。
 
@@ -83,6 +91,7 @@
 3. user.is_deleted未知保留原数据、不猜0或1；全未知时有效档案及其新增显示暂不可统计，其他情况下显示已确认有效子集并提示排除数量。
 4. 无权限：对应业务指标/明细不可见，不显示0或隐藏品牌数量。当前角色没有会员权限时直接会员概览URL只有拒绝提示；销售详情URL也受分销商只读范围检查。
 5. 缺profile或关联不自动补建。NULL保留，不统一替换空字符串；原始枚举不统一布尔化。
+6. Member LocalStorage 恢复异常时，会员摘要 / 会员概览显示“暂不可统计”及保留原始数据的恢复提示，不把空的恢复占位数据显示为零。业务总览的销售指标仍正常展示，会员覆盖和关注项暂停；只允许管理员确认恢复。Sales 恢复异常由应用恢复界面拦截，避免输出演示数据统计。
 
 ## 明细承接
 

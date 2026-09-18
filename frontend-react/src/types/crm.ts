@@ -1,4 +1,4 @@
-export type UserRole = "HQ_ADMIN" | "DISTRIBUTOR_MANAGER" | "DISTRIBUTOR_SALES";
+export type UserRole = "HQ_ADMIN" | "DISTRIBUTOR_MANAGER" | "DISTRIBUTOR_SALES" | "VIEWER";
 export type LeadStatus = "NEW" | "CONTACTED" | "NURTURING" | "QUALIFIED" | "CONVERTED" | "UNQUALIFIED";
 export type DealStage = "DISCOVERY" | "SOLUTION" | "QUOTATION" | "NEGOTIATION" | "WON" | "LOST";
 export type ActivityType = "EMAIL" | "CALL" | "COMMENT" | "TASK" | "NOTE" | "ATTACHMENT" | "STATUS_CHANGE" | "STAGE_CHANGE" | "SYSTEM";

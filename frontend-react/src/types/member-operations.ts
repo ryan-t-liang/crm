@@ -61,6 +61,13 @@ export interface SowindPurchaseIntent extends SowindTimestamps {
   product_sku?: string | null;
   model?: string | null;
   source?: 1 | 2;
+  salutation?: number | null;
+  language?: string | null;
+  preferred_contact?: number | null;
+  city?: string | null;
+  birthday?: string | null;
+  personal_data_consent?: 0 | 1;
+  purchase_channel?: 1 | null;
   /** Legacy display aliases below remain untouched when old LocalStorage is loaded. */
   name: string | null;
   country_code: string | null;
@@ -75,6 +82,29 @@ export interface SowindPurchaseIntent extends SowindTimestamps {
   hq_ref: SowindJson;
   error: string | null;
   hq_sync_status: SowindHqSyncStatus;
+}
+
+/** Admin creation uses SQL fields, not the legacy display aliases. */
+export interface SowindPurchaseIntentInput {
+  brand: SowindBrandCode;
+  first_name: string | null;
+  last_name: string | null;
+  tel: string | null;
+  tel_country_code: string | null;
+  email: string | null;
+  product_sku: string | null;
+  model: string | null;
+  has_watch: 0 | 1 | 2;
+  accepts_marketing: 0 | 1 | 2;
+  personal_data_consent: 0 | 1;
+  salutation?: number | null;
+  language?: string | null;
+  preferred_contact?: number | null;
+  region?: string | null;
+  city?: string | null;
+  birthday?: string | null;
+  purchase_channel?: 1 | null;
+  retailer?: number | null;
 }
 
 export interface MemberOperationsState {
