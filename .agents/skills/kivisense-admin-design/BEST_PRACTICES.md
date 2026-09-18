@@ -2,7 +2,7 @@
 
 ## 1. Design tokens
 
-Use a small spacing system only:
+For existing CRM modules, reuse the mature Lead / Deal / Customer / Member components and their spacing. `app.css` and `components.css` are authoritative; preserve their compact values instead of restyling the baseline pages. The values below are fallbacks when there is no established CRM pattern:
 
 - 4
 - 8
@@ -19,28 +19,30 @@ Default applications:
 |---|---:|
 | icon ↔ text | 8px |
 | label ↔ field | 8px |
-| adjacent form fields | 20px |
+| adjacent form fields | 12–20px; existing `form-grid` wins |
 | content within one section | 16–20px |
-| section ↔ section | 32px |
-| page header ↔ first content | 24px |
-| desktop page horizontal padding | 24–32px |
-| modal content padding | 24px |
+| section ↔ section | 12–20px in compact record workspaces |
+| page header ↔ first content | shared `detail-header` / `page-header` spacing |
+| desktop page horizontal padding | shared `page` / `detail-page` spacing |
+| information Card padding | 16–20px where appropriate; shared component wins |
+| modal content padding | existing CRM Semi Modal default |
 
 Do not create arbitrary 13/18/27/36px gaps without a component-level reason.
 
 ## 2. Typography
 
-Default hierarchy:
+Do not invent module-specific typography. Reuse the existing CRM hierarchy:
 
-| Role | Size / line-height / weight |
+| Role | Existing source |
 |---|---|
-| Page title | 24 / 32 / 600 |
-| Modal title | 20 / 28 / 600 |
-| Section title | 16 / 24 / 600 |
-| Body | 14 / 22 / 400 |
-| Field label | 13–14 / 20 / 500 |
-| Help text | 12 / 18 / 400 |
-| Table text | 14 / 20 / 400 |
+| Page title | `page-header` |
+| Record title / metadata | `detail-title`, `detail-tags` |
+| Modal title / buttons | CRM Semi Modal defaults |
+| Section title | `tab-panel-header`, `side-section`, `chart-panel` |
+| Readonly business fields | `data-list` hierarchy |
+| Form label / fields | `form-grid`, `form-stack`, Semi controls |
+| Help text | `form-hint` / existing shared helper styling |
+| Table header / row / actions | Semi Table defaults and existing CRM row composition |
 
 Avoid oversized headings in dense operational screens.
 
@@ -55,6 +57,8 @@ Use at most three visual layers:
 Avoid chains such as:
 
 `gray page → gray sidebar → white drawer → gray stepper → white cards → gray form blocks`.
+
+The established CRM surface model is `crm-canvas` page background + white `crm-surface` Cards + light `crm-border`, using `crm-radius`. Reuse these tokens and classes; do not create approximate colors or change global tokens for a module.
 
 ## 4. Content width
 
@@ -75,13 +79,15 @@ Do not place two short definition fields at opposite edges of a 1600px screen.
 - Prefer 1–2 columns.
 - Two columns only when fields are semantically equal and short enough.
 - Full-width fields for rich text, rules, descriptions, large selectors, and complex editors.
+- Reuse the existing CRM Semi Modal chrome for create/edit; no module-specific header/footer/title redesign.
+- Keep ordinary rich text around 160–200px high initially, using the existing CRM `rich-editor` / `rich-editor-toolbar` surface rather than a CMS-sized editor.
 - Keep labels above controls unless an existing Kivisense pattern clearly requires otherwise.
 - Use help text only when it changes user behavior.
 - Hide irrelevant fields based on the selected business mode.
 
 ## 6. Tables
 
-- Default row height: roughly 48–52px.
+- Reuse Lead / Deal / Task table header, row height, borders, hover, actions and empty states. Do not add module-specific Semi Table cell padding / typography overrides.
 - Keep headers concise.
 - Put row actions at the right edge.
 - Prefer `Edit` + `…` rather than many equal actions.
@@ -93,6 +99,7 @@ Do not place two short definition fields at opposite edges of a 1600px screen.
 Primary Tabs:
 
 - use line style;
+- put Tabs inside the main Card and reuse `record-tabs` styling;
 - concise labels;
 - ideally 3–5 items;
 - represent major mental models, not database tables.
@@ -105,11 +112,14 @@ Secondary navigation:
 
 ## 8. Cards
 
-Use cards for information that deserves its own visual object.
+Prohibit fragmented Cards, not forms in Cards. Keep the CRM's clear visual boundaries.
 
 Good:
 
-- KPI summary;
+- one main information / record-workspace Card;
+- compact business Summary Cards grouping related metrics;
+- Right Rail Info Cards with actual business fields;
+- the standard CRM table container;
 - customer/company summary;
 - alert requiring attention;
 - independent object preview.
@@ -118,8 +128,11 @@ Bad:
 
 - every field group;
 - every section of a form;
-- table wrapper with no additional meaning;
-- nested cards.
+- redundant decorative wrapper around an existing Card or table container;
+- Cards nested inside a business Summary Card;
+- meaningless explanation Cards, including `后台职责`.
+
+Record detail defaults to `App Sidebar + Top Header + Page Header + Main Card + Optional Right Information Rail`. Use `DetailWorkspace`, `SideSection`, `DataList`, `detail-grid`, `record-tabs`, `data-surface` and `table-toolbar`. The existing grid / responsive rail behavior wins over arbitrary module-specific percentages or breakpoints.
 
 ## 9. Status
 

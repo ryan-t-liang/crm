@@ -11,12 +11,14 @@ This skill is the default UI contract for Kivisense admin products. It exists to
 
 Before changing any admin UI, determine the page type and select an existing Kivisense pattern. Do not start styling components until the pattern is chosen.
 
+Respect explicit task requirements first. For the visual language, the established Lead Detail, Deal Detail and Customer / Member Detail screens are the canonical Kivisense baseline.
+
 Priority order:
 
-1. Existing Kivisense Design rule in this skill.
-2. Existing Kivisense screen that already follows this skill.
+1. Mature Kivisense CRM screens and their shared components, classes and tokens.
+2. This skill's interaction patterns, composed within that CRM visual language.
 3. Semi Design component semantics and interaction behavior.
-4. External product references for interaction principles only.
+4. External product references for creation, object, navigation and interaction principles only.
 
 Do not invent a fifth design language.
 
@@ -31,7 +33,9 @@ Key principles validated from those references:
 - Use record detail pages for ongoing configuration and related records.
 - Use side panels/drawers for quick inspection or focused editing, not as an entire application shell.
 - Keep list pages scan-friendly and action-light.
-- Reduce visual noise; prefer strong information hierarchy over decorative containers.
+- Reduce visual noise without removing the CRM's useful surface boundaries, cards or information rail.
+
+External minimalism must not replace Kivisense's own visual identity. Marketing should look like a sibling of Lead / Deal / Member, not a separate Plane-inspired product.
 
 Do not copy AGPL application source from Plane, Frappe CRM, or the AGPL portions of Twenty into Kivisense. Re-implement patterns with Semi Design and Kivisense styles. Twenty packages explicitly marked MIT may be evaluated separately, but Semi Design remains the default component library.
 
@@ -116,22 +120,29 @@ They are not for:
 - large dashboards,
 - pages with their own left navigation + tabs + nested cards.
 
-### 6. Card rule
+### 6. CRM record detail and Card rule
 
-Cards are reserved for:
+Default record pattern:
 
-- KPI/summary blocks,
-- independent business-object summaries,
-- alerts or clearly separated high-value information.
+`App Sidebar + Top Header + Page Header + Main Card + Optional Right Information Rail`
 
-Do not wrap every form section or table in a card. Prefer section title + content + spacing/divider.
+Reuse `DetailWorkspace`, `SideSection`, `DataList` and the existing `detail-grid` / `record-tabs` classes. Primary line Tabs belong inside the main workspace Card. The rail is for actual record identity, relationships and business time information, not developer explanations. Do not replace this with full-width unbounded white content.
+
+Prohibit fragmented Cards, not forms in Cards. Allow:
+
+- one main information / workspace Card;
+- a compact business Summary Card grouping related measures;
+- Right Rail Info Cards;
+- the existing CRM table container.
+
+Do not create a Card for every two fields or every number, add redundant decorative Card wrappers, or nest Cards inside a business Summary Card. Inside a configuration workspace, use flat field groups and compact dividers.
 
 ### 7. Navigation rule
 
 Primary record navigation and secondary configuration navigation must not look identical.
 
-- Primary record navigation: Semi `Tabs` with `type="line"`.
-- Secondary navigation: compact text subnav or segmented navigation with substantially lower visual weight.
+- Primary record navigation: Semi `Tabs` with `type="line"`, using the existing CRM `record-tabs` Card and styling, not module-specific primary Tabs CSS.
+- Secondary navigation: compact text subnav / small underline with substantially lower visual weight; no large segmented buttons or filled blue blocks.
 
 Never stack two equally prominent rows of tabs.
 
@@ -165,7 +176,7 @@ Put implementation limitations in docs, not normal business pages.
 
 Enterprise admin UI should be compact, readable, and information-dense without becoming cramped.
 
-Do not create large white deserts around a small amount of information. Use bounded content widths and meaningful grouping.
+Do not create large white deserts around a small amount of information. Reuse CRM page background, white surfaces, light borders, radii, typography and table density. Keep fields roughly 12–20px apart and information Card padding around 16–20px where the established component permits; shared CRM component spacing wins over generic recommendations. Do not change global tokens to match a module.
 
 ### 11. Action hierarchy
 

@@ -2,7 +2,7 @@
 
 The CRM uses Semi Design, Semi Icons, `@semi-bot/semi-theme-kivicrm`, and the Kivisense logo as its single product foundation. React components provide behavior; `frontend-react/src/index.css` and `frontend-react/src/styles/` own application styling.
 
-Admin UI patterns are governed by the binding [Kivisense Design System V2](KIVISENSE_DESIGN_SYSTEM_V2.md) and [kivisense-admin-design skill](../.agents/skills/kivisense-admin-design/SKILL.md). Marketing V4 applies the quick-create/edit Modal, compact record header, line primary tabs, lighter subnav and grouped-summary patterns. Other modules are not rewritten as part of this scoped iteration.
+Admin UI patterns are governed by the binding [Kivisense Design System V2](KIVISENSE_DESIGN_SYSTEM_V2.md) and [kivisense-admin-design skill](../.agents/skills/kivisense-admin-design/SKILL.md). Mature Lead / Deal / Customer / Member screens are the final visual baseline. Marketing reuses their DetailWorkspace, main Card with record-tabs, business information rail, CRM list/table surfaces and Semi Modal defaults; compact grouped Summary Cards are allowed, fragmented or redundant nested Cards are not. Existing Sales / Member pages and global tokens are not rewritten to match Marketing.
 
 ## Product character
 

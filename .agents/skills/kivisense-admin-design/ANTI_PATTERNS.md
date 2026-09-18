@@ -32,11 +32,11 @@ Use a normal modal for creation or a real detail page for complex work.
 
 Bad:
 
-Page → Card → Card → Table / Card.
+Workspace Card → redundant decorative Card → field-group Card / Table.
 
 Fix:
 
-Page sections + spacing/dividers; reserve cards for summary objects and alerts.
+Use the CRM main workspace Card, meaningful business Summary Cards and Right Rail Info Cards. Keep settings groups flat inside their existing workspace; do not put a decorative Card around an already-contained group or nest more Cards inside a business summary. Forms are not prohibited from using a main Card.
 
 ## 4. Two identical navigation rows
 
@@ -68,7 +68,7 @@ Every number becomes its own bordered card.
 
 Fix:
 
-Group metrics by business meaning or use a compact summary row.
+Group metrics by business meaning in compact CRM Summary Cards; do not respond by making the entire overview a naked white canvas.
 
 ## 7. Developer documentation in the UI
 
@@ -140,3 +140,23 @@ Trying to fix a wrong layout by changing border-radius, background, and margin.
 Fix:
 
 Correct the interaction pattern and information architecture first.
+
+## 13. External minimalism replacing CRM identity
+
+Bad:
+
+Marketing has its own white page background, primary Tabs CSS, table density and Modal chrome to resemble Plane, while Lead / Deal / Member use the mature CRM layout.
+
+Fix:
+
+Treat existing CRM screens as the final visual authority. Reuse their shell, tokens, Cards, Tabs, Table and Modal defaults. External references inform interaction, not the visual brand. Do not change Sales / Member to match Marketing.
+
+## 14. No Cards interpreted as no boundaries
+
+Bad:
+
+Record Tabs float on an unbounded white page; a few fields span the full workspace and real contextual information has nowhere to go.
+
+Fix:
+
+Use Page Header + main Card with Tabs + optional business information rail. Reject fragmented or meaningless Cards, not the CRM's useful surface boundaries.

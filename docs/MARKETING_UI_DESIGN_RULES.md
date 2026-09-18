@@ -1,10 +1,10 @@
-# Marketing UI Design Rules — V4
+# Marketing UI Design Rules — V4 CRM Style Revert
 
 本文件是营销UI实现规则，不是测试或验收报告。绑定规范为仓库中的kivisense-admin-design Skill（含PATTERNS / ANTI_PATTERNS / BEST_PRACTICES / WORKFLOWS / REFERENCES与营销示例）及KIVISENSE_DESIGN_SYSTEM_V2.md。React、Semi Design / Icons与Kivisense主题继续使用，不复制外部AGPL应用源码，不更换CRM基础库。
 
 ## 先创建对象，再配置业务
 
-List → Quick Create Modal → 创建Activity → Record Detail → 配置高级能力。创建 / 编辑共用760px居中Semi Modal，内容超高时仅Body滚动；24px内容padding，一个主操作。核心字段为名称、品牌、线上 / 线下、线下场地、活动开始 / 结束、参与方式、抽奖开关、规则富文本。活动编号只读。编辑字段顺序相同；已有业务规则锁定继续生效。创建取消 / 创建活动，编辑取消 / 保存。
+List → Quick Create Modal → 创建Activity → Record Detail → 配置高级能力。创建 / 编辑共用760px居中Semi Modal，内容超高时仅Body滚动；Header / Title / Close / Padding / Footer / Button直接复用当前CRM的Semi默认样式，不另造Marketing Modal。核心字段为名称、品牌、线上 / 线下、线下场地、活动开始 / 结束、参与方式、抽奖开关、规则富文本。活动编号只读。编辑字段顺序相同；已有业务规则锁定继续生效。创建取消 / 创建活动，编辑取消 / 保存。
 
 不恢复创建SideSheet、Steps、Wizard、说明 / 封面输入、发布检查页，不把预约窗口 / 场次 / 容量、次数 / 概率或奖品配置塞进创建。已创建对象的预约 / 抽奖配置继续使用单主题Focused Drawer，场次和奖品使用小型 / 中型Modal。
 
@@ -12,11 +12,13 @@ List → Quick Create Modal → 创建Activity → Record Detail → 配置高�
 
 八列：活动编号、名称、类型、场地、活动时间、状态、参与方式、操作。名称进入详情，编辑 + 图标更多，无列表KPI。更多仅开始 / 暂停 / 结束，原时间与启用校验不变，不自行改写业务窗口。
 
-三生命周期标签保持待开始 / 进行中 / 已结束，暂停只作为运营控制。线上场地为“—”，同日时间压缩，跨日保留两端日期。Header紧凑呈现编号 / 品牌 / 类型，状态 / 举行时间 / 场地 / 参与方式在元信息中；时间安排只是同一行的小型Popover。编辑主操作、用户预览次操作、图标更多。
+三生命周期标签保持待开始 / 进行中 / 已结束，暂停只作为运营控制。线上场地为“—”，同日时间压缩，跨日保留两端日期。列表直接复用CRM PageHeader右侧新建操作及data-surface / table-toolbar / Semi Table。详情Header由DetailWorkspace提供，紧凑呈现编号 / 品牌、状态 / 类型 / 参与方式与活动时间 / 场地；编辑主操作、用户预览次操作、图标更多。原时间Popover改为右侧真实时间信息，不增加新业务字段。
+
+详情使用Lead / Deal相同的detail-grid：主内容Card + 默认290px右侧信息栏，响应式行为沿用现有CRM。右侧复用SideSection / DataList展示活动信息、按能力显示的活动 / 预约 / 抽奖时间及奖品领奖时间，不展示后台职责等研发说明。
 
 ## 四个业务入口
 
-一级Semi line Tabs固定：概览 / 活动设置 / 参与管理 / 中奖与核销。
+一级Semi line Tabs固定：概览 / 活动设置 / 参与管理 / 中奖与核销。置于record-tabs主Card内，直接复用Lead / Deal的Tabs视觉，不重写一级Tabs选中状态。
 
 二级为低权重文字导航，无浅蓝选中背景，不再堆叠第二套同权重Tabs。
 
@@ -24,11 +26,11 @@ List → Quick Create Modal → 创建Activity → Record Detail → 配置高�
 - 参与管理：参与用户、活动预约记录、抽奖记录。界面预约记录只查ACTIVITY，不混入PRIZE。直接参与且无历史活动预约时隐藏该入口。
 - 中奖与核销：中奖记录、领奖预约（需要预约或有历史记录）、核销记录。领奖预约只查PRIZE，保留取消 / 爽约等历史。旧直接参与活动的bookings链接在只有领奖预约时适配到prize-bookings。
 
-设置内容左对齐、max-width1040px，紧凑Definition Grid。普通Section / Table不套Card；表单仍按单主题编辑，不增加新的业务操作。
+设置内容在主信息Card内左对齐、max-width1040px，紧凑Definition Grid复用form-grid间距，平面Section使用共用tab-panel-header。允许主Card，不为每两个字段新建Card或再次添加装饰性套层；表单仍按单主题编辑，不增加业务操作。
 
 ## 概览口径与明细
 
-数字按业务分组，共用一个轻量Summary Row，不给每项数字单独套Card。
+数字按业务分组，每组使用一张既有CRM chart-panel Summary Card，组内紧凑并列数字，不给每项数字单独套Card或建立更多Card层级；统计来源和明细集合不变。
 
 - 活动表现：该活动全部Participation数；到场 / 完成 / 中奖人数复用原activityMetrics参与主体集合。
 - 抽奖情况：抽奖人数、次数（包含未中奖）、中奖份数，复用原指标集合。
@@ -48,8 +50,8 @@ List → Quick Create Modal → 创建Activity → Record Detail → 配置高�
 
 ## Style与保留边界
 
-最多三层Surface；间距4 / 8 / 12 / 16 / 20 / 24 / 32 / 40。标题 / Label / Help遵循绑定Skill。只修改既有marketing.css，不建立override / fix文件。
+成熟Lead / Deal / Customer / Member页面决定视觉：AppShell / Sidebar / Top Header保持不变，页面继承crm-canvas背景，Card使用crm-surface / crm-border / crm-radius。直接复用page / detail-page / record-tabs / side-section / data-surface / table-toolbar / form-grid / rich-editor等既有组件与Class。表格Header / Row / Border / Hover / Action与EmptyBlock沿用CRM，不保留Marketing专属Semi Table Cell覆盖。字段间距12–20px，Card信息密度以现有组件为准，不重复32–48px留白。规则编辑器默认180px高，沿用CRM富文本外壳。只修改既有marketing.css的必要组合样式，移除专属背景、一级Tabs及Modal Chrome覆盖，不改全局Token，不建立override / fix文件。
 
 规则编辑器沿用Tiptap基础和HTML白名单，旧未标记内容仍按纯文本展示。activityCode生成、品牌权限、规则锁定、机会 / 库存 / 代码分配、ACT / PRIZE容量、不可逆中奖权益、Staff核销与LocalStorage迁移均不变。Sales / Member Store、Dashboard、SQL、后端、数据库和依赖不改。
 
-本轮按用户要求不运行测试、浏览器QA、截图或UI Gate，不增改测试 / QA脚本，不生成QA artifact。仅正常静态类型检查；历史验收不作为V4验收。提交并普通推送当前产品原型分支，不改main / 部署 / Release，等待人工UI Review。
+本轮CRM Style Revert按用户要求不运行测试、浏览器QA、截图或UI Gate，不增改测试 / QA脚本，不生成QA artifact。仅正常静态类型与Skill格式检查；历史验收不作为本轮验收。提交并普通推送当前产品原型分支，不改main / 部署 / Release，等待人工Review。

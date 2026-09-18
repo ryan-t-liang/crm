@@ -20,7 +20,19 @@ Complex business modules should be modeled as persistent records with related co
 
 ### Less visual noise
 
-Hierarchy comes from typography, spacing, alignment, and navigation—not from wrapping every section in a card.
+Hierarchy comes from typography, spacing, alignment, navigation and meaningful CRM Card boundaries—not from wrapping every two fields or every metric in a separate Card. Forms are allowed in one main information Card.
+
+### Existing CRM visual authority
+
+The mature Lead Detail, Deal Detail and Customer / Member Detail screens determine the final visual language. Reuse their AppShell, page background, Cards, border/radius tokens, typography, Tabs, Table, Form and Modal / Drawer treatment. Do not change Sales / Member to match an isolated Marketing style or adjust global tokens for a module.
+
+### Kivisense CRM Record Detail Pattern
+
+`App Sidebar + Top Header + Page Header + Main Card + Optional Right Information Rail`
+
+Reuse `DetailWorkspace`, `SideSection`, `DataList`, `detail-grid` and `record-tabs`. Primary line Tabs live inside the main Card. The information rail uses real identity, relationships and business windows with the existing CRM grid / responsive behavior. No full-width unbounded white page, floating primary Tabs or `后台职责` Card.
+
+Allow one main information Card, compact business Summary Cards and Right Rail Info Cards. Reject fragmented, meaningless and redundant nested Card wrappers; inside settings or a business summary, keep field groups / metrics flat. Related tables reuse `data-surface`, `table-toolbar`, Semi Table and `EmptyBlock` instead of a Marketing-specific table stylesheet.
 
 ### Enterprise density
 
@@ -51,7 +63,7 @@ Chinese UI must sound like an operations product, not source code or architectur
 - full-screen create drawer for a small form;
 - nested application inside a SideSheet;
 - equal-weight primary and secondary tab rows;
-- card-per-section forms;
+- fragmented Card-per-field-group forms and redundant nested Card wrappers;
 - large empty canvases around a few fields;
 - many equal action buttons;
 - implementation disclaimers in business UI;
@@ -61,8 +73,10 @@ Chinese UI must sound like an operations product, not source code or architectur
 
 Use Semi Design components and existing Kivisense theme tokens. Extend styling only where needed to enforce Kivisense spacing, density, content width, and hierarchy.
 
+Existing `app.css` / `components.css` spacing and typography take precedence over generic new-page recommendations. Keep record fields around 12–20px apart and information Card padding compact (around 16–20px when appropriate); do not repeat 32–48px blank gaps. Create/edit use the existing CRM Semi Modal chrome, with quick-create core fields and a compact 160–200px rich-text editor rather than a wizard or CMS-sized form.
+
 Do not replace Semi Design with another component library for isolated screens.
 
 ## Source references
 
-The system's interaction principles were informed by current patterns in Plane, Frappe CRM, Twenty, and Semi Design documentation. These references are used to validate product patterns, not to clone their visual brand or copy AGPL application source.
+Plane, Frappe CRM, Twenty and other external references inform creation, object models, navigation and interaction only. Mature Kivisense CRM screens determine the final visual language. Do not clone an external visual brand, override local CRM identity to resemble Plane, or copy AGPL application source.

@@ -1,4 +1,4 @@
-# 营销活动模块（Marketing UI Rebuild V4）
+# 营销活动模块（V4 CRM Style Revert）
 
 现有 GP / UN 纯前端原型的活动管理、用户流程预览与数据管理模块，使用现有 React、Semi Design / Icons、Kivisense 主题及 LocalStorage。不新增后端、数据库、SQL 表、登录系统、微信服务或部署架构。营销合同明确为前端原型扩展，不混入 Sowind 四表。
 
@@ -24,7 +24,7 @@ CRM 唯一营销主入口 `#marketing` 是活动列表，不再有顶层奖品�
 | 中奖与核销 | 领奖预约：仅PRIZE领取 / 使用预约及历史 | prize-bookings（新增只读leaf） |
 | 中奖与核销 | 核销记录：Redemption业务事实，不用Audit代替 | redemptions |
 
-V4按绑定的Kivisense Admin Design Skill实现对象式页面。新建 / 编辑共享760px居中Semi Modal，Body超高时内部滚动，只展示九个基础字段；创建后进入详情。新建取消 / 创建活动，编辑取消 / 保存。说明和封面不进入表单，旧字段保留读取，不删除用户资料。Header直接显示活动时间、场地、状态与参与方式，时间安排只在元信息同行以小型Popover查看。四个一级line Tabs固定概览 / 活动设置 / 参与管理 / 中奖与核销，二级采用低权重文字导航。设置左对齐max-width1040px，预约 / 抽奖继续Focused Drawer，场次和奖品独立Modal，无步骤或发布检查页。普通Section / Table不套Card，具体规则见MARKETING_UI_DESIGN_RULES.md。
+V4的CRM Style Revert以现有Lead / Deal / Customer / Member为视觉母版，不更改业务信息架构。新建 / 编辑共享760px居中Semi Modal，直接复用CRM的Header / Title / Padding / Footer，Body超高时内部滚动，只展示九个基础字段；创建后进入详情。新建取消 / 创建活动，编辑取消 / 保存。说明和封面不进入表单，旧字段保留读取，不删除用户资料。详情直接使用DetailWorkspace、detail-grid、record-tabs主Card和SideSection / DataList右侧栏。Header紧凑显示编号 / 品牌、状态、活动类型、参与方式、活动时间与场地；真实活动 / 预约 / 抽奖 / 领奖时间在右侧信息栏按能力展示，不保留独立时间Popover或后台职责Card。四个一级line Tabs仍为概览 / 活动设置 / 参与管理 / 中奖与核销，置于主Card内；二级为低权重文字导航。概览采用按活动表现 / 抽奖 / 领奖分组的紧凑CRM Summary Card，不为每个数字建立Card。设置在主信息Card内采用平面字段分组、左对齐有界Definition Grid；预约 / 抽奖仍为Focused Drawer，场次 / 奖品为独立Modal，无步骤或发布检查页。列表和相关表格复用data-surface / table-toolbar / EmptyBlock及Semi Table默认样式，不另写Marketing Table或一级Tabs视觉。允许有意义的主Card / Summary Card / Right Rail Card，禁止碎片化及重复嵌套装饰，具体规则见MARKETING_UI_DESIGN_RULES.md。
 
 直接参与不显示ACT预约场次、取消 / 改约或预约人数；无抽奖活动不显示抽奖 / 奖品指标和不适用配置。参与管理的预约记录按ACTIVITY查询，中奖与核销的领奖预约按PRIZE查询；直接参与且无历史活动预约可隐藏前者，但不能由参与方式隐藏后者。已有记录不删除、不合并；旧直接参与bookings链接在只有领奖预约时适配到新入口。负库存、非法整数或概率即使保存草稿也拒绝。产品页面移除研发 / 演示边界长文；这些边界仍在本文及验收记录中明确保留。
 

@@ -51,8 +51,8 @@ export function MarketingRuleEditor({ value, format, onChange }: { value: string
     if (editor && sanitizeRuleHtml(editor.getHTML()) !== ruleHtml(value, format) && !(editor.isEmpty && !value)) editor.commands.setContent(ruleHtml(value, format), { emitUpdate: false });
   }, [editor, value, format]);
   const action = (label: string, content: string, run: () => void, active = false) => <Button key={label} aria-label={label} title={label} size="small" theme={active ? "light" : "borderless"} aria-pressed={active} disabled={!editor} onMouseDown={event => event.preventDefault()} onClick={run}>{content}</Button>;
-  return <div className="marketing-field marketing-field-wide"><span id="marketing-rule-label">活动规则</span><div className="marketing-rich-editor">
-    <div role="toolbar" aria-label="活动规则格式" className="marketing-rich-toolbar">
+  return <div className="marketing-field marketing-field-wide"><span id="marketing-rule-label">活动规则</span><div className="rich-editor marketing-rich-editor">
+    <div role="toolbar" aria-label="活动规则格式" className="rich-editor-toolbar marketing-rich-toolbar">
       {action("加粗", "B", () => editor?.chain().focus().toggleBold().run(), editor?.isActive("bold"))}
       {action("斜体", "I", () => editor?.chain().focus().toggleItalic().run(), editor?.isActive("italic"))}
       {action("有序列表", "1.", () => editor?.chain().focus().toggleOrderedList().run(), editor?.isActive("orderedList"))}

@@ -5,7 +5,7 @@
 1. Identify the business object.
 2. Decide whether this is list, create, detail, configuration, or related-data work.
 3. Select the matching pattern from `PATTERNS.md`.
-4. Reuse existing Kivisense/Semi components.
+4. Inspect the established Lead / Deal / Customer / Member screen and reuse its Kivisense/Semi components, classes and tokens as the final visual baseline.
 5. Define visible fields and actions based on the operator's decision needs.
 6. Check `ANTI_PATTERNS.md`.
 7. Only then implement styling.
@@ -63,10 +63,11 @@ Do not launch a full-record wizard.
 ## Workflow 6 — Record detail information architecture
 
 1. Compact identity header.
-2. 3–5 major tabs.
-3. Each major tab maps to a business mental model.
-4. Use secondary subnav only when necessary.
-5. Keep configuration and operational records separate.
+2. Existing App Sidebar + Top Header + Page Header + main Card, with an optional business information rail using the shared CRM detail grid.
+3. Put 3–5 major line tabs inside the main Card and reuse `record-tabs` styling.
+4. Each major tab maps to a business mental model.
+5. Use lighter text / small-underline secondary subnav only when necessary.
+6. Keep configuration and operational records separate; do not change their models or routes for a visual-only task.
 
 ## Workflow 7 — Destructive operation
 
@@ -82,10 +83,11 @@ Do not immediately adjust spacing.
 
 Audit in this order:
 
+0. Identify the mature CRM visual baseline. For a style-only task, keep existing business information architecture and state behavior.
 1. Is the interaction pattern wrong?
 2. Is the information architecture wrong?
 3. Is navigation duplicated?
-4. Are surfaces/cards overused?
+4. Are Cards fragmented or meaningless, or have useful CRM Card boundaries / the information rail been removed?
 5. Is content width wrong?
 6. Are actions poorly prioritized?
 7. Then adjust spacing, typography, borders, and color.
@@ -96,6 +98,6 @@ When referencing Plane/Frappe/Twenty/etc.:
 
 1. Identify the interaction principle.
 2. Re-implement with Semi Design.
-3. Keep Kivisense copy and visual identity.
+3. Keep Kivisense copy and visual identity; mature local CRM screens determine the final appearance, not the external product.
 4. Do not paste AGPL application code into Kivisense.
 5. If considering source reuse, verify the exact file/package license first.

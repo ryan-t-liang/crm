@@ -1,55 +1,33 @@
 .marketing-page, .marketing-detail, .marketing-preview, .marketing-redemption-surface,
 .marketing-activity-modal, .marketing-configuration-editor, .marketing-prize-dialog {
-  --marketing-space-xs: 4px;
-  --marketing-space-sm: 8px;
-  --marketing-space-md: 12px;
-  --marketing-space-lg: 16px;
-  --marketing-field-gap: 20px;
-  --marketing-content-gap: 24px;
-  --marketing-section-gap: 32px;
-  --marketing-space-xl: 40px;
   min-width: 0;
 }
-.marketing-page, .marketing-detail { padding: 24px 32px; background: var(--crm-surface); }
-.marketing-page .page-header, .marketing-detail .page-header { margin-bottom: 24px; }
-.marketing-page .page-header h1, .marketing-detail .page-header h1 { font-size: 24px; line-height: 32px; font-weight: 600; }
-.marketing-panel { min-width: 0; margin: var(--marketing-section-gap, 32px) 0; }
-.marketing-panel > header { padding: 0; }
-.marketing-panel-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.marketing-panel h2, .marketing-form-section h2 { margin: 0; font-size: 16px; line-height: 24px; font-weight: 600; }
-.marketing-panel header p { margin: 8px 0 0; color: var(--crm-text-3); font-size: 12px; line-height: 18px; }
-.marketing-panel > div { padding-top: 16px; min-width: 0; }
-.marketing-panel p, .marketing-panel li { font-size: 14px; line-height: 22px; overflow-wrap: anywhere; }
-.marketing-field { display: flex; flex-direction: column; gap: 8px; margin: 0; min-width: 0; font-size: 13px; line-height: 20px; color: var(--crm-text-2); }
-.marketing-field > span { font-weight: 500; }
+.marketing-panel { min-width: 0; margin: 0 0 16px; }
+.marketing-panel p, .marketing-panel li { overflow-wrap: anywhere; }
+.marketing-field { display: flex; flex-direction: column; gap: 5px; margin: 0; min-width: 0; font-size: 10.5px; line-height: 20px; font-weight: 600; color: var(--crm-text-2); }
+.marketing-form-section h2 { margin: 0; font-size: 14px; line-height: 20px; }
 .marketing-field .semi-select, .marketing-field .semi-input-number { width: 100%; min-width: 0; }
-.marketing-toolbar { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
-.marketing-toolbar .marketing-field { min-width: 140px; max-width: 260px; flex: 1; }
-.marketing-list-toolbar { display: flex; gap: 16px; align-items: flex-end; margin-bottom: 24px; min-width: 0; }
-.marketing-list-toolbar > .semi-button { flex-shrink: 0; }
-.marketing-list-filters { display: flex; gap: 12px; align-items: flex-end; flex: 1; min-width: 0; overflow-x: auto; padding-bottom: 4px; }
-.marketing-list-filters .marketing-field { flex: 0 0 140px; }
-.marketing-list-filters .marketing-field:first-child { flex-basis: 220px; }
 .marketing-activity-name { font-weight: 500; }
 .marketing-activity-code { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--crm-text-3); }
 .marketing-date-range { font-size: 13px; line-height: 20px; font-variant-numeric: tabular-nums; }
-.marketing-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--marketing-field-gap, 20px) var(--marketing-content-gap, 24px); }
 .marketing-field-wide { grid-column: 1 / -1; min-width: 0; }
-.marketing-form-section > h2 { margin-bottom: 20px; }
-.marketing-form-section + .marketing-form-section { margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--crm-border); }
+.marketing-form-section > h2 { margin-bottom: 12px; }
+.marketing-form-section + .marketing-form-section { margin-top: 16px; }
 .marketing-switch-field { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
-.marketing-mode-options { display: flex; align-items: flex-start; gap: 24px; flex-wrap: wrap; }
+.marketing-mode-options { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
 .marketing-mode-options small { display: block; margin-top: 4px; font-size: 12px; line-height: 18px; color: var(--crm-text-3); font-weight: 400; }
 .marketing-field-help { font-size: 12px; line-height: 18px; color: var(--crm-text-3); }
 .marketing-cover { max-width: 180px; max-height: 130px; object-fit: contain; }
 .marketing-phases { display: flex; flex-wrap: wrap; gap: 4px 8px; margin: 4px 0; }
-.marketing-summary-section + .marketing-summary-section { margin-top: 32px; }
-.marketing-summary-row { display: flex; min-width: 0; border-top: 1px solid var(--crm-border); border-bottom: 1px solid var(--crm-border); padding: 16px 0; }
-.marketing-summary-row > button { appearance: none; flex: 1; min-width: 0; border: 0; border-radius: 0; background: transparent; text-align: left; padding: 0 24px; cursor: pointer; color: var(--crm-text-2); }
+.marketing-summary-section + .marketing-summary-section { margin-top: 12px; }
+.marketing-summary-section > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.marketing-summary-section > header span { color: var(--crm-text-3); font-size: 10px; }
+.marketing-summary-section > .marketing-summary-row { display: flex; min-width: 0; padding: 12px 16px; }
+.marketing-summary-row > button { appearance: none; flex: 1; min-width: 0; border: 0; border-radius: 0; background: transparent; text-align: left; padding: 0 16px; cursor: pointer; color: var(--crm-text-2); }
 .marketing-summary-row > button:first-child { padding-left: 0; }
 .marketing-summary-row > button + button { border-left: 1px solid var(--crm-border); }
-.marketing-summary-row > button > span { display: block; font-size: 13px; line-height: 20px; }
-.marketing-summary-row strong { display: block; margin-top: 8px; font-size: 24px; line-height: 32px; font-weight: 600; color: var(--crm-text); font-variant-numeric: tabular-nums; }
+.marketing-summary-row > button > span { display: block; font-size: 10.5px; line-height: 20px; }
+.marketing-summary-row strong { display: block; margin-top: 4px; font-size: 18px; line-height: 24px; font-weight: 600; color: var(--crm-text); font-variant-numeric: tabular-nums; }
 .marketing-summary-row strong small { margin-left: 8px; font-size: 12px; line-height: 18px; font-weight: 400; color: var(--crm-text-3); }
 .marketing-summary-row > button:hover > span { color: var(--crm-brand); }
 .marketing-summary-row > button:focus-visible { outline: 2px solid var(--semi-color-focus-border); outline-offset: 4px; }
@@ -64,68 +42,33 @@
 .marketing-preview .button-row { flex-wrap: wrap; }
 .marketing-preview .marketing-panel { padding: 16px; border: 1px solid var(--crm-border); border-radius: var(--semi-border-radius-small, 4px); background: var(--crm-surface); }
 .marketing-draw-result { padding: 8px 12px; border-left: 2px solid var(--crm-brand); background: var(--crm-brand-soft); }
-.marketing-detail .semi-tabs-bar { max-width: 100%; overflow-x: auto; }
 .marketing-detail code, .marketing-redemption-surface code { overflow-wrap: anywhere; }
-.marketing-back-button { margin-bottom: 16px; }
-.marketing-record-header { margin-bottom: 24px; }
-.marketing-record-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; }
-.marketing-record-heading > div:first-child { min-width: 0; }
-.marketing-record-heading h1 { margin: 0; font-size: 24px; line-height: 32px; font-weight: 600; overflow-wrap: anywhere; }
-.marketing-record-heading p { margin: 4px 0 0; font-size: 12px; line-height: 18px; color: var(--crm-text-3); }
-.marketing-record-metadata { display: flex; gap: 8px 12px; flex-wrap: wrap; align-items: center; margin-top: 12px; font-size: 13px; line-height: 20px; color: var(--crm-text-2); }
-.marketing-record-metadata > .semi-button { margin-left: auto; }
+.marketing-record-metadata { width: 100%; display: flex; gap: 8px 12px; flex-wrap: wrap; align-items: center; margin-top: 4px; font-size: 12px; line-height: 20px; color: var(--crm-text-2); }
 .marketing-settings { max-width: 1040px; min-width: 0; }
 .marketing-settings > .marketing-panel, .marketing-settings > .marketing-panel:first-of-type { margin-top: 0; }
-.marketing-subnav { display: flex; gap: 24px; margin-bottom: 24px; overflow-x: auto; min-width: 0; }
+.marketing-subnav { display: flex; gap: 16px; margin-bottom: 16px; overflow-x: auto; min-width: 0; }
 .marketing-subnav a { flex-shrink: 0; padding: 4px 0 8px; border-bottom: 2px solid transparent; font-size: 13px; line-height: 20px; color: var(--crm-text-3); text-decoration: none; }
 .marketing-subnav a[aria-current="page"] { color: var(--crm-text); border-bottom-color: var(--crm-text-2); font-weight: 500; }
 .marketing-subnav a:hover { color: var(--crm-text); }
 .marketing-subnav a:focus-visible { outline: 2px solid var(--semi-color-focus-border); outline-offset: -2px; }
-.marketing-child-toolbar { display: flex; align-items: center; margin-bottom: 16px; }
-.marketing-detail .page-actions { flex-wrap: wrap; justify-content: flex-end; }
-.marketing-primary-tabs > .semi-tabs-bar { margin-bottom: 24px; }
-.marketing-section-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 0 0 16px; }
-.marketing-section-heading h2 { font-size: 16px; line-height: 24px; font-weight: 600; margin: 0; }
-.marketing-section-heading span { color: var(--crm-text-3); font-size: 12px; line-height: 18px; }
-.marketing-definition { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 24px; margin: 0; min-width: 0; }
+.marketing-definition { margin: 0; min-width: 0; }
 .marketing-definition > div { min-width: 0; }
-.marketing-definition dt { font-size: 13px; line-height: 20px; color: var(--crm-text-3); font-weight: 500; margin-bottom: 8px; }
-.marketing-definition dd { margin: 0; font-size: 14px; line-height: 22px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.marketing-definition dt { font-size: 10.5px; line-height: 20px; color: var(--crm-text-3); margin-bottom: 4px; }
+.marketing-definition dd { margin: 0; font-size: 11.5px; line-height: 20px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .marketing-definition-wide { grid-column: 1 / -1; }
-.marketing-time-plan { width: min(460px, calc(100vw - 40px)); padding: 20px; }
-.marketing-time-plan h3 { font-size: 16px; line-height: 24px; margin: 0 0 16px; }
-.marketing-row-actions { display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
-.marketing-detail .semi-table-row-cell, .marketing-page .semi-table-row-cell { padding-top: 12px; padding-bottom: 12px; font-size: 14px; line-height: 20px; }
-.marketing-detail .semi-table-empty, .marketing-page .semi-table-empty { height: 240px; }
-.marketing-detail .semi-empty, .marketing-page .semi-empty { padding: 24px 16px; }
-.marketing-configuration-editor .semi-sidesheet-body { padding: 24px; }
-.marketing-configuration-editor .semi-sidesheet-title { font-size: 20px; line-height: 28px; font-weight: 600; }
-.marketing-configuration-editor .semi-sidesheet-header { padding: 24px; }
-.marketing-configuration-editor .semi-sidesheet-footer { padding: 16px 24px; }
-.marketing-activity-modal .semi-modal-content, .marketing-prize-dialog .semi-modal-content { max-height: calc(100dvh - 48px); border-radius: var(--semi-border-radius-medium, 6px); }
-.marketing-activity-modal .semi-modal-header, .marketing-prize-dialog .semi-modal-header { margin: 0; padding: 24px 24px 0; flex-shrink: 0; }
-.marketing-activity-modal .semi-modal-title, .marketing-prize-dialog .semi-modal-title { font-size: 20px; line-height: 28px; font-weight: 600; }
-.marketing-activity-modal .semi-modal-body-wrapper, .marketing-prize-dialog .semi-modal-body-wrapper { margin: 0; min-height: 0; flex: 1; }
-.marketing-activity-modal .semi-modal-body, .marketing-prize-dialog .semi-modal-body { max-height: calc(100dvh - 200px); min-height: 0; padding: 24px; overflow-y: auto; box-sizing: border-box; }
-.marketing-activity-modal .semi-modal-footer, .marketing-prize-dialog .semi-modal-footer { margin: 0; padding: 16px 24px; flex-shrink: 0; border-top: 1px solid var(--crm-border); }
-.marketing-modal-footer { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
-.marketing-modal-footer > .semi-button { margin: 0; }
+.marketing-activity-modal .semi-modal-body, .marketing-prize-dialog .semi-modal-body { max-height: calc(100dvh - 200px); overflow-y: auto; }
+.marketing-rich-toolbar { flex-wrap: wrap; }
 .marketing-editor { min-width: 0; }
 .marketing-editor .semi-banner { margin-bottom: 20px; }
-.marketing-editor-footer { display: flex; justify-content: space-between; align-items: center; gap: 12px; width: 100%; }
-.marketing-footer-actions { display: flex; gap: 8px; }
-.marketing-config-table { min-width: 0; margin-top: 16px; }
-.marketing-config-table > .marketing-row-actions { margin-bottom: 16px; }
+.marketing-config-table { min-width: 0; }
+.marketing-config-table > .row-actions { margin-bottom: 12px; }
 .marketing-summary-cell { display: grid; gap: 4px; font-size: 14px; line-height: 22px; }
 .marketing-summary-cell small { color: var(--crm-text-3); }
 .marketing-code-summary { display: flex; flex-wrap: wrap; gap: 12px 20px; margin: 12px 0 20px; }
-.marketing-rich-editor { border: 1px solid var(--semi-color-border); border-radius: var(--semi-border-radius-small, 4px); background: var(--crm-surface); overflow: hidden; }
-.marketing-rich-editor:focus-within { border-color: var(--semi-color-focus-border); }
-.marketing-rich-toolbar { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px; border-bottom: 1px solid var(--crm-border); }
 .marketing-rich-toolbar .semi-button { min-width: 32px; }
 .marketing-rich-toolbar [aria-label="加粗"] { font-weight: 700; }
 .marketing-rich-toolbar [aria-label="斜体"] { font-style: italic; }
-.marketing-rich-editor .tiptap { min-height: 200px; max-height: 320px; overflow-y: auto; padding: 16px; color: var(--crm-text); font-size: 14px; line-height: 22px; outline: none; }
+.marketing-rich-editor .tiptap { min-height: 180px; max-height: 260px; overflow-y: auto; padding: 16px; color: var(--crm-text); font-size: 14px; line-height: 22px; font-weight: 400; outline: none; }
 .marketing-rule-content { white-space: normal; overflow-wrap: anywhere; font-size: 14px; line-height: 22px; }
 .marketing-rule-plain { white-space: pre-wrap; }
 .marketing-rule-content p, .marketing-rich-editor .tiptap p { margin: 0 0 12px; }
@@ -133,8 +76,8 @@
 .marketing-rule-content ul, .marketing-rule-content ol, .marketing-rich-editor .tiptap ul, .marketing-rich-editor .tiptap ol { margin: 12px 0; padding-left: 24px; }
 .marketing-rule-content a, .marketing-rich-editor .tiptap a { color: var(--semi-color-link); text-decoration: underline; }
 .marketing-rule summary { cursor: pointer; font-size: 14px; font-weight: 500; padding: 8px 0; }
-.marketing-prize-dialog .marketing-definition { margin-bottom: 24px; }
-.marketing-prize-dialog .marketing-field + .marketing-field { margin-top: 20px; }
+.marketing-prize-dialog .marketing-definition { margin-bottom: 16px; }
+.marketing-prize-dialog .marketing-field + .marketing-field { margin-top: 12px; }
 .marketing-prize-dialog .marketing-form-grid .marketing-field { margin-top: 0; }
 .marketing-code-cell { overflow-wrap: anywhere; white-space: normal; }
 .marketing-virtual-code { display: block; user-select: all; overflow-wrap: anywhere; padding: 12px; border: 1px solid var(--crm-border); }
@@ -145,12 +88,9 @@
 .marketing-redemption-surface > .page-scroll { flex: 1; min-height: 0; padding: 24px; }
 .marketing-redemption-surface .marketing-redemption { max-width: 860px; margin: 0 auto; }
 @media (max-width: 700px) {
-  .marketing-page, .marketing-detail { padding: 24px; }
   .marketing-form-grid, .marketing-definition, .marketing-credential { grid-template-columns: 1fr; }
   .marketing-summary-row { flex-wrap: wrap; gap: 20px 0; }
   .marketing-summary-row > button { flex-basis: 50%; padding-left: 16px; }
   .marketing-summary-row > button:nth-child(odd) { border-left: 0; padding-left: 0; }
-  .marketing-record-heading { flex-wrap: wrap; gap: 16px; }
   .marketing-preview .page-header { display: block; }
-  .marketing-toolbar .marketing-field { max-width: 100%; }
 }

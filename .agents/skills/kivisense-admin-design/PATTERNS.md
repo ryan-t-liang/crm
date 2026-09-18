@@ -18,6 +18,7 @@ Table
 Rules:
 
 - one primary create button;
+- reuse CRM `PageHeader` actions, `data-surface`, `table-toolbar` and Semi Table defaults;
 - filters on one row where space allows;
 - show only fields needed to identify, compare, and choose a record;
 - clicking the main record identifier/name opens detail;
@@ -33,7 +34,7 @@ Use when the record can exist after a small set of core fields is completed.
 Recommended size:
 
 - 640–800px wide;
-- 24px content padding;
+- existing CRM Semi Modal header, title, close, padding and footer;
 - 1–2 columns;
 - one primary action.
 
@@ -71,6 +72,12 @@ Footer:
 
 Use for a persistent business object.
 
+Canonical Kivisense CRM structure:
+
+`App Sidebar + Top Header + Page Header + Main Card + Optional Right Information Rail`
+
+Reuse the Lead / Deal / Customer / Member detail shell: `DetailWorkspace`, `SideSection`, `DataList`, `detail-grid`, `record-tabs`. The existing grid uses a 290px rail and shared responsive behavior; do not invent a module-specific layout or change the reference pages.
+
 Header:
 
 ```text
@@ -80,14 +87,17 @@ Record Name                                 [Primary] [Secondary] [...]
 Identifier · type · owner/brand
 Status · important time/location metadata
 
-Primary Tabs
+Main Card: Primary Tabs + current content     Right Rail: business information
 ```
 
 Rules:
 
 - keep the header compact;
 - status belongs near the record identity;
-- important metadata should not consume a dedicated sidebar card;
+- keep important time/location metadata compact in the header;
+- allow Right Rail Info Cards for real identity, relationships and capability-dependent business windows;
+- never use the rail for `后台职责` or architecture explanations;
+- keep primary Tabs inside the main Card, using existing CRM line Tabs styling;
 - advanced operations live in `…`;
 - detail page owns configuration and related records.
 
@@ -106,6 +116,8 @@ Keep major tabs to approximately 3–5 where practical.
 
 Secondary navigation can group subareas under a major tab, but must be visually lighter.
 
+Use the shared CRM `record-tabs` treatment. Do not write Marketing-specific primary Tabs border, color or selection CSS; secondary navigation stays text / small underline, not large filled buttons.
+
 ## Pattern F — Configuration Page
 
 Use for editable settings on an existing object.
@@ -122,7 +134,7 @@ fields / definition grid / compact actions
 Next section
 ```
 
-Do not place each section in a separate card by default.
+Allow one main information Card; when the record workspace already supplies it, do not add another decorative shell. Use flat groups inside that workspace. The rejection is fragmented Cards, not forms in Cards.
 
 For read-only summary fields, use a compact definition grid rather than an ERP-style horizontal-line table.
 
@@ -156,11 +168,13 @@ Table
 
 Empty state should be bounded to the table area, generally around 240–300px, not a full blank page.
 
+Reuse CRM `data-surface`, `table-toolbar`, Semi Table and `EmptyBlock`; preserve the same header, row, hover, action and empty-state styling rather than overriding it for a module.
+
 ## Pattern I — Dashboard / Summary
 
 Do not automatically convert a record overview into a BI dashboard.
 
-Use grouped business summaries rather than many same-sized KPI cards.
+Use compact grouped business Summary Cards rather than naked full-width numbers or many same-sized KPI cards. Reuse an existing CRM summary surface such as `chart-panel`; each Card groups related measures, not one Card per metric. Do not add nested Card layers inside a summary.
 
 Example:
 

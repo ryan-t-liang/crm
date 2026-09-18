@@ -45,10 +45,10 @@ export function TimeField({ label, value, onChange, placeholder, disabled }: { l
   return <div><TextField label={label} value={dateTime(value)} placeholder={placeholder} disabled={disabled} type="datetime-local" onChange={(value) => onChange(value ? `${value}:00+08:00` : "")} />{placeholder && !value && <small>{placeholder}</small>}</div>;
 }
 export function Panel({ title, children, note, actions }: { title: string; children: ReactNode; note?: string; actions?: ReactNode }) {
-  return <section className="marketing-panel"><header><div className="marketing-panel-heading"><h2>{title}</h2>{actions}</div>{note && <p>{note}</p>}</header><div>{children}</div></section>;
+  return <section className="marketing-panel"><header className="tab-panel-header"><div><h2>{title}</h2>{note && <p>{note}</p>}</div>{actions}</header><div>{children}</div></section>;
 }
 export function DefinitionGrid({ rows }: { rows: Array<[string, ReactNode]> }) {
-  return <dl className="marketing-definition">{rows.map(([label, value], index) => <div key={`${label}-${index}`} className={label === "活动规则" ? "marketing-definition-wide" : undefined}><dt>{label}</dt><dd>{value === "" ? "—" : value ?? "—"}</dd></div>)}</dl>;
+  return <dl className="form-grid marketing-definition">{rows.map(([label, value], index) => <div key={`${label}-${index}`} className={label === "活动规则" ? "marketing-definition-wide" : undefined}><dt>{label}</dt><dd>{value === "" ? "—" : value ?? "—"}</dd></div>)}</dl>;
 }
 export function ImageField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   const [error, setError] = useState("");
@@ -60,7 +60,7 @@ export function ImageField({ label, value, onChange }: { label: string; value: s
 }
 export function SlotFields({ slot, onChange }: { slot: MarketingSlot; onChange: (slot: MarketingSlot) => void }) {
   const update = <K extends keyof MarketingSlot>(key: K, value: MarketingSlot[K]) => onChange({ ...slot, [key]: value });
-  return <div className="marketing-form-grid"><TextField label="场次名称" value={slot.label} onChange={(value) => update("label", value)} /><TextField label="场地" value={slot.location} onChange={(value) => update("location", value)} /><NumberField label="场次容量" value={slot.capacity} onChange={(value) => update("capacity", value)} />{(["startAt", "endAt", "bookingClosesAt", "checkinStart", "checkinEnd"] as const).map((key, index) => <TimeField key={key} label={["场次开始", "场次结束", "预约截止", "签到开始", "签到截止"][index]} value={slot[key]} onChange={(value) => update(key, value)} />)}</div>;
+  return <div className="form-grid marketing-form-grid"><TextField label="场次名称" value={slot.label} onChange={(value) => update("label", value)} /><TextField label="场地" value={slot.location} onChange={(value) => update("location", value)} /><NumberField label="场次容量" value={slot.capacity} onChange={(value) => update("capacity", value)} />{(["startAt", "endAt", "bookingClosesAt", "checkinStart", "checkinEnd"] as const).map((key, index) => <TimeField key={key} label={["场次开始", "场次结束", "预约截止", "签到开始", "签到截止"][index]} value={slot[key]} onChange={(value) => update(key, value)} />)}</div>;
 }
 export function useAction() {
   const { act } = useMarketing(); const [message, setMessage] = useState("");

@@ -2,6 +2,8 @@
 
 This example shows how the generic skill applies to the Marketing Activity module. It is an example, not a special design system.
 
+Visual baseline: the current Lead / Deal / Customer / Member detail screens. Keep the shared AppShell and CRM background; reuse `DetailWorkspace`, main `record-tabs` Card, `SideSection` / `DataList` rail, `data-surface`, `table-toolbar` and Semi Table / Modal defaults. Do not invent a Marketing-specific primary Tabs, Table or Modal theme.
+
 ## Activity list
 
 Columns:
@@ -64,6 +66,8 @@ Primary navigation:
 
 Do not use `奖品履约` in Chinese UI.
 
+Put primary line Tabs inside the main Card. Keep the activity header compact, with edit / preview / more actions on the right. The optional information rail shows actual activity identity, brand, type, participation mode, status and capability-dependent time windows; no developer-duty explanation Card.
+
 Secondary navigation:
 
 ### 活动设置
@@ -90,6 +94,8 @@ Secondary navigation:
 Do not default to eight independent KPI cards.
 
 Group by business meaning:
+
+Each applicable group uses one compact existing CRM business Summary Card. Do not present naked full-width numbers, create a Card per number, or add more Card layers inside a summary. Settings stay in the main information workspace with flat field groups.
 
 ### 参与情况
 
@@ -134,7 +140,7 @@ Examples:
 - 实体奖品 + 直接领取
 - 实体奖品 + 预约领取
 - 虚拟奖品 + 直接发放
-- future virtual/service entitlement + 预约履约 if required
+- 虚拟奖品 + 预约使用（when reservation is configured）
 
 ## Participant identity
 
