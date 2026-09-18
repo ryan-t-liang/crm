@@ -312,6 +312,8 @@ export function drawBlock(state: MarketingState, activity: MarketingActivity, ro
   if (!row?.completedAt) return "尚未完成参与，不发放抽奖机会";
   if (participationIssue(row, ctx.members)) return "参与身份引用待核对";
   if (!inWindow(ctx.now, activity.lotteryStart, activity.lotteryEnd)) return "未到抽奖时间或抽奖已截止";
+  const probabilities = [activity.noWinProbability, ...activity.pool.map(item => item.probability)];
+  if (probabilities.some(value => !Number.isFinite(value) || value < 0 || value > 100) || Math.abs(probabilities.reduce((sum, value) => sum + value, 0) - 100) > 0.000001) return "请先调整奖品与未中奖概率，合计须为100%；未扣除抽奖次数";
   const balance = chances(state, row), attempts = state.draws.filter((item) => item.participationId === row.id), wins = state.awards.filter((item) => item.participationId === row.id);
   if (!balance.remaining) return "剩余机会为0";
   if (attempts.length >= activity.drawLimit) return "已达到活动累计抽奖上限";
@@ -391,6 +393,23 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     if (candidate.pool.some((item) => item.codes.some((code) => code.assignedAwardId && !existing?.pool.find((row) => row.id === item.id)?.codes.some((old) => JSON.stringify(old) === JSON.stringify(code))))) return reject("兑换码分配状态仅由抽奖动作修改");
     if (existing && !assignedCodesPreserved(existing.pool, candidate.pool)) return reject("已分配兑换码永久保留，不允许删除或修改分配状态");
     if (existing && (existing.publishedAt || hasActivityBusinessData(state, existing.id))) {
+      // Focused prototype editors change only their explicit field group, never stored history.
+      if (command.section) {
+        if (candidate.brand !== existing.brand) return reject("已有发布或业务历史的活动不能变更品牌归属");
+        if (!candidate.name.trim()) return reject("填写活动名称");
+        if (command.section === "booking") {
+          for (const old of existing.slots) {
+            const used = state.bookings.some(row => row.activityId === existing.id && row.kind === "ACTIVITY" && row.slotId === old.id);
+            if (!used) continue;
+            const slot = candidate.slots.find(row => row.id === old.id);
+            if (!slot) return reject("已有预约历史的场次不能删除");
+            if (slot.capacity < slotOccupancy(state, existing.id, "ACTIVITY", old.id)) return reject("场次容量不能低于已有有效预约人数");
+            if (JSON.stringify({ ...slot, capacity: old.capacity, label: old.label }) !== JSON.stringify(old)) return reject("已有预约的场次仅可改名称与安全容量；地点和时间不覆盖既有预约");
+          }
+        }
+        state.activities[state.activities.indexOf(existing)] = { ...candidate, activityCode: code };
+        return done(activityId, `更新活动${command.section === "basic" ? "信息" : command.section === "booking" ? "预约设置" : "抽奖设置"}；历史参与、预约、次数及中奖快照保留`);
+      }
       const descriptive = { ...existing, activityCode: code, name: candidate.name, description: candidate.description, cover: candidate.cover, ruleContent: readActivityRule(candidate), ruleContentFormat: candidate.ruleContentFormat };
       const { ruleContent: _newRule, ruleContentFormat: _newFormat, activityCode: _newCode, ...incomingBusiness } = { ...candidate, name: existing.name, description: existing.description, cover: existing.cover };
       const { ruleContent: _oldRule, ruleContentFormat: _oldFormat, activityCode: _oldCode, ...existingBusiness } = existing;
@@ -494,8 +513,8 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     const errors = prizeErrors(item, activity, Boolean(activity.publishedAt));
     if (errors.length) return reject([...new Set(errors)].join("；"));
     if (old && !assignedCodesPreserved([old], [item])) return reject("已分配兑换码永久保留，不允许删除或修改分配状态");
-    if (activity.publishedAt || hasActivityBusinessData(state, activity.id)) {
-      if (!old || JSON.stringify({ ...item, name: old.name, label: old.label, description: old.description, image: old.image, instructions: old.instructions }) !== JSON.stringify(old)) return reject("发布后奖品规则锁定；名称、图片、说明可更新，其他变化请复制活动");
+    if (old && (activity.publishedAt || hasActivityBusinessData(state, activity.id))) {
+      if (JSON.stringify({ ...item, name: old.name, label: old.label, description: old.description, image: old.image, instructions: old.instructions }) !== JSON.stringify(old)) return reject("既有奖品规则保留；名称、图片、说明可更新，其他变化请创建新奖品");
     }
     if (item.codes.some((code) => code.assignedAwardId && !old?.codes.some((row) => JSON.stringify(row) === JSON.stringify(code)))) return reject("不允许修改兑换码分配状态");
     const codes = state.activities.flatMap((row) => row.pool.filter((prize) => row.id !== activity.id || prize.id !== item.id).flatMap((prize) => prize.codes.map((code) => code.code))).concat(item.codes.map((code) => code.code));
@@ -529,7 +548,6 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     const slotId = command.type === "SAVE_ACTIVITY_SLOT" ? command.slot.id : command.slotId;
     const old = activity.slots.find((row) => row.id === slotId);
     const used = state.bookings.some((row) => row.activityId === activity.id && row.kind === "ACTIVITY" && row.slotId === slotId);
-    if (!activity.bookingEnabled || activity.status === "CANCELED") return reject("未开启预约或活动已取消，不能调整场次");
     if (command.type === "DELETE_ACTIVITY_SLOT") {
       if (used) return reject("已有预约历史的场次不能删除");
       activity.slots = activity.slots.filter((row) => row.id !== slotId); return done(slotId, "删除未使用的活动场次");

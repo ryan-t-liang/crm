@@ -29,8 +29,13 @@ describe("activity record workspace with real Semi components", () => {
     expect(container.querySelector(".marketing-overview")).toBeNull();
     const rail = container.querySelector(".detail-sidebar")!;
     for (const text of ["活动名称", "创建人", "创建时间", "活动规则", "参与方式", "启用抽奖", "预约设置", "抽奖设置"]) expect(rail.textContent).toContain(text);
+    expect(rail.querySelector("button")).toBeNull();
     expect(write).not.toHaveBeenCalled();
-    await act(async () => rail.querySelector<HTMLButtonElement>('button[aria-label="编辑活动"]')!.click());
+    await act(async () => container.querySelector<HTMLButtonElement>('button[aria-label="活动管理"]')!.click());
+    const menu = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')];
+    expect(menu.slice(0, 5).map(item => item.textContent)).toEqual(["创建奖品", "编辑活动信息", "编辑预约设置", "管理场次", "抽奖设置"]);
+    for (const name of ["创建奖品", "编辑活动信息", "编辑预约设置", "管理场次", "抽奖设置"]) expect(menu.find(item => item.textContent === name)?.getAttribute("aria-disabled")).not.toBe("true");
+    await act(async () => menu.find(item => item.textContent === "编辑活动信息")!.click());
     expect(document.querySelector(".semi-sidesheet")?.textContent).toContain("编辑活动");
     expect(document.querySelector(".semi-modal")).toBeNull(); expect(write).not.toHaveBeenCalled();
   });
@@ -39,7 +44,14 @@ describe("activity record workspace with real Semi components", () => {
     await act(async () => root.render(<MarketingDetail activity={activity} requestedTab="prizes" />));
     expect(container.querySelectorAll('[role="tab"]')).toHaveLength(3);
     expect(container.textContent).toContain("此活动未启用抽奖");
-    expect([...container.querySelectorAll<HTMLButtonElement>("button")].find(button => button.textContent === "创建奖品")?.disabled).toBe(true);
+    expect([...container.querySelectorAll<HTMLButtonElement>("button")].find(button => button.textContent === "创建奖品")).toBeUndefined();
+    await act(async () => container.querySelector<HTMLButtonElement>('button[aria-label="活动管理"]')!.click());
+    const create = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(item => item.textContent === "创建奖品")!;
+    expect(create.getAttribute("aria-disabled")).not.toBe("true");
+    await act(async () => create.click());
+    expect(document.querySelector(".semi-sidesheet")?.textContent).toContain("创建奖品");
+    expect(document.querySelector<HTMLInputElement>('input[aria-label="奖品名称"]')).not.toBeNull();
+    expect(document.querySelector(".semi-modal")).toBeNull(); expect(write).not.toHaveBeenCalled();
   });
   it("shows the requested activity booking fields, masked list identities and readonly complete detail", async () => {
     await act(async () => root.render(<ActivityBookingData activity={state.activities[0]} now={now} />));

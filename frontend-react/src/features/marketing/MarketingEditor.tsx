@@ -106,13 +106,13 @@ export function ActivityEditor({ initial, onClose }: { initial: MarketingActivit
       <section className="marketing-form-section"><h2>基本信息</h2><div className="form-grid marketing-form-grid">
         <div className="marketing-field-wide"><TextField label="活动名称" value={form.name} onChange={value => update("name", value)} /></div>
         <SelectField label="所属品牌" value={form.brand} disabled={locked} list={access.brands.map(brand => ({ value: brand, label: brandScopeLabels[brand] }))} onChange={value => update("brand", value as MarketingActivity["brand"])} />
-        <div className="marketing-field"><span>活动类型</span><RadioGroup aria-label="活动类型" value={form.mode} disabled={locked} onChange={event => setForm(old => ({ ...old, mode: event.target.value, completion: event.target.value === "ONLINE" ? "STAFF" : old.completion }))}><Radio value="ONLINE">线上活动</Radio><Radio value="OFFLINE">线下活动</Radio></RadioGroup></div>
-        {form.mode === "OFFLINE" && <div className="marketing-field-wide"><TextField label="场地" value={form.location} disabled={locked} onChange={value => update("location", value)} /></div>}
-        <TimeField label="活动开始时间" value={form.startAt} disabled={locked} onChange={value => update("startAt", value)} /><TimeField label="活动结束时间" value={form.endAt} disabled={locked} onChange={value => update("endAt", value)} />
-        <div className="marketing-field marketing-field-wide"><span>参与方式</span><RadioGroup className="marketing-mode-options" aria-label="参与方式" value={form.bookingEnabled ? "RESERVATION" : "DIRECT"} disabled={locked} onChange={event => update("bookingEnabled", event.target.value === "RESERVATION")}>
+        <div className="marketing-field"><span>活动类型</span><RadioGroup aria-label="活动类型" value={form.mode} onChange={event => setForm(old => ({ ...old, mode: event.target.value, completion: event.target.value === "ONLINE" ? "STAFF" : old.completion }))}><Radio value="ONLINE">线上活动</Radio><Radio value="OFFLINE">线下活动</Radio></RadioGroup></div>
+        {form.mode === "OFFLINE" && <div className="marketing-field-wide"><TextField label="场地" value={form.location} onChange={value => update("location", value)} /></div>}
+        <TimeField label="活动开始时间" value={form.startAt} onChange={value => update("startAt", value)} /><TimeField label="活动结束时间" value={form.endAt} onChange={value => update("endAt", value)} />
+        <div className="marketing-field marketing-field-wide"><span>参与方式</span><RadioGroup className="marketing-mode-options" aria-label="参与方式" value={form.bookingEnabled ? "RESERVATION" : "DIRECT"} onChange={event => update("bookingEnabled", event.target.value === "RESERVATION")}>
           <Radio value="RESERVATION"><span>预约参与<small>用户需要先预约活动场次。</small></span></Radio><Radio value="DIRECT"><span>直接参与<small>用户无需预约，可直接参加活动。</small></span></Radio>
         </RadioGroup></div>
-        <div className="marketing-field marketing-field-wide marketing-switch-field"><span>启用抽奖</span><Switch size="small" aria-label="启用抽奖" checked={form.lotteryEnabled} disabled={locked} onChange={value => update("lotteryEnabled", value)} /></div>
+        <div className="marketing-field marketing-field-wide marketing-switch-field"><span>启用抽奖</span><Switch size="small" aria-label="启用抽奖" checked={form.lotteryEnabled} onChange={value => update("lotteryEnabled", value)} /></div>
       </div></section>
       <section className="marketing-form-section"><MarketingRuleEditor value={form.ruleContent ?? ""} format={form.ruleContentFormat} onChange={html => setForm(old => ({ ...old, ruleContent: html, ruleContentFormat: "html" }))} /></section>
     </Form>
@@ -121,12 +121,11 @@ export function ActivityEditor({ initial, onClose }: { initial: MarketingActivit
 
 /** Created objects own their later configuration; these are independent forms, never steps. */
 export function ActivityConfigurationEditor({ initial, section, onClose }: { initial: MarketingActivity; section: "booking" | "lottery"; onClose: () => void }) {
-  const { state } = useMarketing(), { currentUser } = useCrm(), access = marketingPermissions(currentUser), { run, feedback } = useAction();
+  const { currentUser } = useCrm(), access = marketingPermissions(currentUser), { run, feedback } = useAction();
   const [form, setForm] = useState(initial);
-  const locked = Boolean(initial.publishedAt || hasActivityBusinessData(state, initial.id));
   const update = <K extends keyof MarketingActivity>(key: K, value: MarketingActivity[K]) => setForm(old => ({ ...old, [key]: value }));
   return <SideSheet visible closeOnEsc className="marketing-configuration-editor" width={Math.min(620, window.innerWidth - 24)} title={section === "booking" ? "预约设置" : "抽奖设置"} onCancel={onClose}
-    footer={<div className="sheet-footer"><Button onClick={onClose}>取消</Button><Button theme="solid" disabled={locked || !access.manage || !access.brands.includes(initial.brand)} onClick={() => { if (run({ type: "SAVE_ACTIVITY", activity: form, section }).ok) onClose(); }}>保存</Button></div>}>
+    footer={<div className="sheet-footer"><Button onClick={onClose}>取消</Button><Button theme="solid" disabled={!access.manage || !access.brands.includes(initial.brand)} onClick={() => { if (run({ type: "SAVE_ACTIVITY", activity: form, section }).ok) onClose(); }}>保存</Button></div>}>
     <div className="marketing-editor">{feedback}{section === "booking" ? <>
       <section className="marketing-form-section"><h2>预约规则</h2><div className="form-grid marketing-form-grid">
         <TimeField label="预约开放时间" value={form.bookingStart} onChange={value => update("bookingStart", value)} /><TimeField label="预约截止时间" value={form.bookingEnd} onChange={value => update("bookingEnd", value)} />

@@ -4,7 +4,7 @@
 
 ## 先创建对象，再配置业务
 
-List → Quick Create SideSheet → 创建Activity → Record Detail → 配置高级能力。创建 / 编辑共用680px右侧Semi SideSheet（FormSideSheet），宽度不超过视口，内容超高时仅Body滚动；Header / Title / Close / Padding / Footer / Button直接复用当前CRM的Semi侧边表单样式，不另造Marketing弹窗。核心字段为名称、品牌、线上 / 线下、线下场地、活动开始 / 结束、参与方式、抽奖开关、规则富文本。活动编号只读。编辑字段顺序相同；已有业务规则锁定继续生效。创建取消 / 创建活动，编辑取消 / 保存。
+List → Quick Create SideSheet → 创建Activity → Record Detail → 配置高级能力。创建 / 编辑共用680px右侧Semi SideSheet（FormSideSheet），宽度不超过视口，内容超高时仅Body滚动；Header / Title / Close / Padding / Footer / Button直接复用当前CRM的Semi侧边表单样式，不另造Marketing弹窗。核心字段为名称、品牌、线上 / 线下、线下场地、活动开始 / 结束、参与方式、抽奖开关、规则富文本。活动编号只读。编辑字段顺序相同；发布 / 历史活动允许定向编辑，既有品牌归属与历史业务保护保留。创建取消 / 创建活动，编辑取消 / 保存。
 
 不新增Steps、Wizard、说明 / 封面输入、发布检查页，不把预约窗口 / 场次 / 容量、次数 / 概率或奖品配置塞进创建。已创建对象的预约 / 抽奖配置继续使用单主题Focused Drawer，场次、奖品、配额、兑换码导入与链接编辑均使用右侧SideSheet。
 
@@ -20,7 +20,7 @@ List → Quick Create SideSheet → 创建Activity → Record Detail → 配置�
 
 本轮用户指定的信息架构取代V4四入口和概览Summary：一级Semi line Tabs固定为活动预约记录 / 奖品设置 / 抽奖记录。置于既有record-tabs主Card内，无概览、活动设置或同权重二级Tabs。三个入口一直存在；直接参与显示无需预约空态，未启用抽奖显示提示但不隐藏历史记录。
 
-左侧仅运营记录和奖品配置。右侧活动信息完整对应新建表单，包含名称、编号、创建人 / 时间、品牌、类型、地点、活动时间、参与方式、抽奖开关与规则；编辑活动仍使用同一680px侧边表单。预约 / 抽奖配置在右侧各有摘要和原Focused Edit入口，保留发布 / 已有业务记录锁定。管理场次是单主题SideSheet，不把场次配置堆回记录表。
+左侧仅运营记录和奖品配置。右侧活动信息完整对应新建表单，包含名称、编号、创建人 / 时间、品牌、类型、地点、活动时间、参与方式、抽奖开关与规则；预约 / 抽奖卡片只展示摘要，不放独立编辑入口。Header的“活动管理”菜单统一收纳创建奖品、编辑活动信息、编辑预约设置、管理场次、抽奖设置，后接原开始 / 暂停 / 结束操作。五个配置入口只按管理权限限制，不因发布、结束或取消置灰；每项仍打开单主题右侧SideSheet，活动编辑680px、奖品720px、场次管理720px。
 
 Header显示活动名称，状态 / 品牌 / 类型 / 参与方式 / 创建人 / 地点使用克制Tag，编号和活动时间独立成行。活动详情范围内文字块间距15px、模块20px、操作按钮15px；不改全局Token或Semi表格Cell / 一级Tabs主题，原detail-grid响应式规则保持。
 
@@ -36,12 +36,12 @@ Header显示活动名称，状态 / 品牌 / 类型 / 参与方式 / 创建人 /
 
 仅抽奖表的需预约权益在查看旁增加预约记录，按当前activity + participation + award过滤PRIZE历史，保留取消 / 改约记录和未预约空态；不混入ACTIVITY。按用户本轮要求使用只读Semi Modal展示该用户该奖品的预约；所有新建 / 编辑仍为SideSheet。活动预约表不重复放奖品预约入口，参与用户和独立核销记录按钮移除，核销状态与时间合并在抽奖表。旧participants / redemptions等leaf route仅适配到对应三个页签，不再打开单独记录集合，底层核销事实及独立Staff Surface不变。
 
-一级页签下不重复渲染同名标题，奖品设置直接展示表格与“创建奖品”侧栏入口；发布或业务记录锁定时说明限制、禁止新增提交。管理场次与字段块间距20px。按用户最新要求，活动范围内的页签和右侧卡片标题统一14px，右侧字段标签 / 值14px，不调整全局或其他模块。参与时段只显示时间范围，状态标签按内容宽度展示。两张记录表均直接显示30条独立命名空间的虚构示意；不要求点击加入示意或重置旧数据，不写实际Store / 库存 / Dashboard。具体夹具与原数据保留边界见MARKETING_RECORD_FIELDS.md。
+一级页签下不重复渲染同名标题，奖品设置直接展示表格，创建入口仅在统一“活动管理”菜单。按用户最新要求，活动范围内的页签和右侧卡片标题统一14px，右侧字段标签 / 值14px，不调整全局或其他模块。参与时段只显示时间范围，状态标签按内容宽度展示。两张记录表均直接显示30条独立命名空间的虚构示意；不要求点击加入示意或重置旧数据，不写实际Store / 库存 / Dashboard。具体夹具与原数据保留边界见MARKETING_RECORD_FIELDS.md。
 
 ## Style与保留边界
 
 成熟Lead / Deal / Customer / Member页面决定视觉：AppShell / Sidebar / Top Header保持不变，页面继承crm-canvas背景，Card使用crm-surface / crm-border / crm-radius。直接复用page / detail-page / record-tabs / side-section / data-surface / table-toolbar / form-grid / rich-editor等既有组件与Class。表格Header / Row / Border / Hover / Action与EmptyBlock沿用CRM，不保留Marketing专属Semi Table Cell覆盖。字段间距12–20px，Card信息密度以现有组件为准，不重复32–48px留白。规则编辑器默认180px高，沿用CRM富文本外壳。只修改既有marketing.css的必要组合样式，移除专属背景、一级Tabs及Modal Chrome覆盖，不改全局Token，不建立override / fix文件。
 
-规则编辑器沿用Tiptap基础和HTML白名单，旧未标记内容仍按纯文本展示。activityCode生成、品牌权限、规则锁定、机会 / 库存 / 代码分配、ACT / PRIZE容量、不可逆中奖权益、Staff核销与LocalStorage迁移均不变。Sales / Member Store、Dashboard、SQL、后端、数据库和依赖不改。
+规则编辑器沿用Tiptap基础和HTML白名单，旧未标记内容仍按纯文本展示。最新原型管理要求允许basic / booking / lottery字段组定向编辑和新奖品 / 场次追加；整对象保存与既有奖品规则保留旧保护。activityCode生成、品牌权限、历史机会 / 库存 / 代码分配、ACT / PRIZE容量、不可逆中奖权益、Staff核销与LocalStorage迁移均不变；配置变更不反写历史记录。概率未配平时不允许实际抽奖或扣次。Sales / Member Store、Dashboard、SQL、后端、数据库和依赖不改。
 
 前一轮CRM Style Revert的免测试 / 等待Review约束只适用于该轮。本轮按新增要求统一侧边表单、品牌显示与导航，移除用户流程预览；执行现有类型检查、回归测试与构建，按授权同步当前分支和发布，不改main。品牌名统一Kivisense，gp/un仅作为原始数据范围编码保留，不合并记录或权限。历史预览链接只展示活动后台详情，不再呈现用户报名 / 抽奖操作。

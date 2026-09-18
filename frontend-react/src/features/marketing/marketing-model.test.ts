@@ -27,6 +27,36 @@ function fixture(patch: Partial<MarketingActivity> = {}) {
 }
 
 describe("Marketing configuration and compatibility", () => {
+  it("focused management edits and creation work after cancellation without rewriting history", () => {
+    const f = fixture(); f.complete(); expect(f.draw().ok).toBe(true);
+    expect(f.run({ type: "STATUS", activityId: f.activity.id, status: "CANCELED" }).ok).toBe(true);
+    const before = structuredClone(f.state);
+    for (const [section, patch] of [["basic", { name: "更新活动", location: "新的活动地点" }], ["booking", { allowReschedule: false }], ["lottery", { grantCount: 1, drawLimit: 4 }]] as const) {
+      expect(f.run({ type: "SAVE_ACTIVITY", activity: { ...f.state.activities[0], ...patch }, section }).ok).toBe(true);
+    }
+    const activity = f.state.activities[0];
+    expect(activity).toMatchObject({ status: "CANCELED", publishedAt: before.activities[0].publishedAt, name: "更新活动", allowReschedule: false, grantCount: 1, drawLimit: 4 });
+    const prize = { ...activity.pool[0], id: "new-managed-prize", probability: 0, quota: 1, codes: [] };
+    expect(f.run({ type: "SAVE_ACTIVITY_PRIZE", activityId: activity.id, prize }).ok).toBe(true);
+    expect(f.run({ type: "SAVE_ACTIVITY_SLOT", activityId: activity.id, slot: { ...activity.slots[1], id: "new-managed-slot" } }).ok).toBe(true);
+    expect(f.state.activities[0].pool.some(item => item.id === prize.id)).toBe(true);
+    expect(f.state.activities[0].slots.some(item => item.id === "new-managed-slot")).toBe(true);
+    for (const key of ["participations", "bookings", "chances", "draws", "awards", "redemptions"] as const) expect(f.state[key]).toEqual(before[key]);
+    expect(f.register().ok).toBe(false); expect(f.draw("still-canceled").ok).toBe(false);
+    expect(decodeMarketing(JSON.stringify(f.state)).state?.activities[0].status).toBe("CANCELED");
+  });
+  it("focused configuration cannot change brand, erase used sessions or undercut occupied capacity", () => {
+    const f = fixture(); expect(f.register().ok).toBe(true);
+    const before = structuredClone(f.state), activity = f.state.activities[0], old = activity.slots[0];
+    expect(f.run({ type: "SAVE_ACTIVITY", activity: { ...activity, brand: "un" }, section: "basic" }).ok).toBe(false);
+    for (const slots of [activity.slots.filter(slot => slot.id !== old.id), activity.slots.map(slot => slot.id === old.id ? { ...slot, location: "覆盖历史" } : slot), activity.slots.map(slot => slot.id === old.id ? { ...slot, capacity: 0 } : slot)]) {
+      expect(f.run({ type: "SAVE_ACTIVITY", activity: { ...activity, slots }, section: "booking" }).ok).toBe(false);
+    }
+    expect(f.state.activities).toEqual(before.activities); expect(f.state.bookings).toEqual(before.bookings);
+    const denied = f.run({ type: "SAVE_ACTIVITY", activity: { ...activity, name: "越权" }, section: "basic" }, { access: { brands: ["gp"], view: true, manage: false, redeem: false, preview: false } });
+    expect(denied.ok).toBe(false);
+    expect(f.state.activities).toEqual(before.activities);
+  });
   it("saves incomplete draft, rejects invalid publish, edits, publishes, pauses, resumes and copies", () => {
     const f = fixture(); const draft = { ...f.activity, id: "new", pool: f.activity.pool.map((item) => ({ ...item, activityId: "new", codes: item.codes.map((code) => ({ code: `NEW-${code.code}` })) })), name: "草稿", description: "", status: "DRAFT" as const, publishedAt: undefined };
     expect(f.run({ type: "SAVE_ACTIVITY", activity: draft }).ok).toBe(true);
