@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { IconMore, IconPlus, IconSearch } from "@douyinfe/semi-icons";
 import { Banner, Button, Dropdown, Input, Modal, Select, SideSheet, Table, Tabs, TabPane, Tag } from "@douyinfe/semi-ui";
-import { DataList, DetailWorkspace, EmptyBlock, PageHeader, SideSection } from "@/components/CrmUi";
+import { FormSideSheet, DataList, DetailWorkspace, EmptyBlock, PageHeader, SideSection } from "@/components/CrmUi";
 import { useCrm } from "@/stores/crm-store";
 import { brandLabels, useMemberOperations } from "@/stores/member-operations-store";
 import { useMarketing } from "@/stores/marketing-store";
@@ -88,7 +88,7 @@ function BookingSettings({ activity, editAction }: { activity: MarketingActivity
         { title: "操作", width: 120, fixed: "right", render: (_: unknown, row: MarketingSlot) => <div className="row-actions"><Button theme="borderless" size="small" disabled={!access.manage || activity.status === "CANCELED"} onClick={() => setSlot(structuredClone(row))}>编辑</Button><Dropdown trigger="click" menu={[{ node: "item", name: "删除场次", type: "danger", disabled: !access.manage || activity.status === "CANCELED" || state.bookings.some(booking => booking.activityId === activity.id && booking.kind === "ACTIVITY" && booking.slotId === row.id), onClick: () => run({ type: "DELETE_ACTIVITY_SLOT", activityId: activity.id, slotId: row.id }) }]}><Button theme="borderless" size="small" icon={<IconMore />} aria-label={`更多操作 · ${row.label}`} /></Dropdown></div> },
       ]} />
     </Panel>
-    {slot && <Modal visible centered className="marketing-prize-dialog" title="活动场次" width={Math.min(640, window.innerWidth - 32)} okText="保存" cancelText="取消" onCancel={() => setSlot(null)} onOk={() => { if (run({ type: "SAVE_ACTIVITY_SLOT", activityId: activity.id, slot }).ok) setSlot(null); }}>{feedback}<SlotFields slot={slot} onChange={setSlot} /></Modal>}
+    {slot && <FormSideSheet visible className="marketing-prize-editor" title="活动场次" width={640} okText="保存" cancelText="取消" onCancel={() => setSlot(null)} onOk={() => { if (run({ type: "SAVE_ACTIVITY_SLOT", activityId: activity.id, slot }).ok) setSlot(null); }}>{feedback}<SlotFields slot={slot} onChange={setSlot} /></FormSideSheet>}
   </>;
 }
 
@@ -115,17 +115,17 @@ function PrizeSettings({ activity }: { activity: MarketingActivity }) {
         ]}><Button theme="borderless" size="small" icon={<IconMore />} aria-label={`更多奖品操作 · ${item.name}`} /></Dropdown></div> },
       ]} />
     </Panel>
-    {editing && <Modal visible centered className="marketing-prize-dialog" title={activity.pool.some(item => item.id === editing.id) ? "编辑奖品" : "添加奖品"} width={Math.min(720, window.innerWidth - 32)} okText="保存" cancelText="取消" onCancel={() => setEditing(null)} onOk={() => { if (run({ type: "SAVE_ACTIVITY_PRIZE", activityId: activity.id, prize: editing }).ok) setEditing(null); }}>{feedback}<DefinitionGrid rows={[
+    {editing && <FormSideSheet visible className="marketing-prize-editor" title={activity.pool.some(item => item.id === editing.id) ? "编辑奖品" : "添加奖品"} width={720} okText="保存" cancelText="取消" onCancel={() => setEditing(null)} onOk={() => { if (run({ type: "SAVE_ACTIVITY_PRIZE", activityId: activity.id, prize: editing }).ok) setEditing(null); }}>{feedback}<DefinitionGrid rows={[
       ["可继续中奖", winnable(state, activity.id, editing, now)], ["已领取 / 发放", quota(state, activity.id, editing).issued],
       ...(needsReservation(editing) ? [["待预约权益", fulfillmentCapacity(state, activity.id, editing, now).unreservedPromises], ["预约名额缺口", fulfillmentCapacity(state, activity.id, editing, now).shortfall]] as Array<[string, ReactNode]> : []),
       ...(editing.method === "REDEMPTION_CODE" ? [["兑换码：导入 / 分配 / 剩余", `${codeInventory(editing).imported} / ${codeInventory(editing).assigned} / ${codeInventory(editing).remaining}`]] as Array<[string, ReactNode]> : []),
-    ]} />{rulesLocked ? <><Banner title="奖品规则已锁定" description="文案修改不影响历史中奖记录；配额、兑换码和领奖时段可通过专用操作追加。" closeIcon={null} /><TextField label="奖品名称" value={editing.name} onChange={(name) => setEditing({ ...editing, name })} /><TextField label="奖项名称" value={editing.label} onChange={(label) => setEditing({ ...editing, label })} /><TextField label="奖品说明" value={editing.description} onChange={(description) => setEditing({ ...editing, description })} /><TextField label="使用 / 领取说明" value={editing.instructions} onChange={(instructions) => setEditing({ ...editing, instructions })} /><ImageField label="奖品图片" value={editing.image} onChange={(image) => setEditing({ ...editing, image })} /></> : <PrizeFields prize={editing} onChange={setEditing} />}</Modal>}
-    {importId && <Modal visible title="导入当前奖品兑换码" width={Math.min(650, window.innerWidth - 20)} footer={<Button onClick={() => setImportId("")}>完成</Button>} onCancel={() => setImportId("")}>
+    ]} />{rulesLocked ? <><Banner title="奖品规则已锁定" description="文案修改不影响历史中奖记录；配额、兑换码和领奖时段可通过专用操作追加。" closeIcon={null} /><TextField label="奖品名称" value={editing.name} onChange={(name) => setEditing({ ...editing, name })} /><TextField label="奖项名称" value={editing.label} onChange={(label) => setEditing({ ...editing, label })} /><TextField label="奖品说明" value={editing.description} onChange={(description) => setEditing({ ...editing, description })} /><TextField label="使用 / 领取说明" value={editing.instructions} onChange={(instructions) => setEditing({ ...editing, instructions })} /><ImageField label="奖品图片" value={editing.image} onChange={(image) => setEditing({ ...editing, image })} /></> : <PrizeFields prize={editing} onChange={setEditing} />}</FormSideSheet>}
+    {importId && <FormSideSheet visible title="导入当前奖品兑换码" width={650} footer={<Button onClick={() => setImportId("")}>完成</Button>} onCancel={() => setImportId("")}>
       {feedback}<CodeImporter onImport={(codes) => run({ type: "IMPORT_CODES", activityId: activity.id, poolItemId: importId, codes }).codeImport} />
-    </Modal>}
+    </FormSideSheet>}
     {codePrize && access.manage && <CodeManager prize={codePrize} published={Boolean(rulesLocked)} remainingQuota={quota(state, activity.id, codePrize).available} canManage={access.manage} onClose={() => setCodesId("")} onDelete={(codes) => run({ type: "DELETE_CODES", activityId: activity.id, poolItemId: codePrize.id, codes })} />}
-    <Modal visible={Boolean(extra.itemId)} title="增加活动奖品配额" onCancel={() => setExtra({ itemId: "", count: 1 })} onOk={() => { if (run({ type: "ADD_QUOTA", activityId: activity.id, poolItemId: extra.itemId, count: extra.count }).ok) setExtra({ itemId: "", count: 1 }); }}>{feedback}<NumberField label="追加配额" value={extra.count} onChange={(count) => setExtra({ ...extra, count })} /></Modal>
-    {addingSlot && <Modal visible title="追加领奖时段" width={Math.min(720, window.innerWidth - 20)} onCancel={() => setAddingSlot(null)} onOk={() => { if (run({ type: "ADD_PRIZE_SLOT", activityId: activity.id, poolItemId: addingSlot.itemId, slot: addingSlot.slot }).ok) setAddingSlot(null); }}>{feedback}<SlotFields slot={addingSlot.slot} onChange={(slot) => setAddingSlot({ ...addingSlot, slot })} /></Modal>}
+    <FormSideSheet visible={Boolean(extra.itemId)} title="增加活动奖品配额" onCancel={() => setExtra({ itemId: "", count: 1 })} onOk={() => { if (run({ type: "ADD_QUOTA", activityId: activity.id, poolItemId: extra.itemId, count: extra.count }).ok) setExtra({ itemId: "", count: 1 }); }}>{feedback}<NumberField label="追加配额" value={extra.count} onChange={(count) => setExtra({ ...extra, count })} /></FormSideSheet>
+    {addingSlot && <FormSideSheet visible title="追加领奖时段" width={720} onCancel={() => setAddingSlot(null)} onOk={() => { if (run({ type: "ADD_PRIZE_SLOT", activityId: activity.id, poolItemId: addingSlot.itemId, slot: addingSlot.slot }).ok) setAddingSlot(null); }}>{feedback}<SlotFields slot={addingSlot.slot} onChange={(slot) => setAddingSlot({ ...addingSlot, slot })} /></FormSideSheet>}
   </>;
 }
 
@@ -172,7 +172,7 @@ export function MarketingDetail({ activity, requestedTab }: { activity: Marketin
       <span className="marketing-record-metadata"><span>{displayDateRange(activity.startAt, activity.endAt).compact}</span>{activity.mode === "OFFLINE" && <span>{activity.location || "—"}</span>}</span>
     </>}
     actions={<>
-        <Button theme="solid" disabled={!access.manage} onClick={() => setEditing(true)}>编辑活动</Button><Button disabled={!access.preview} onClick={() => navigate(`marketing/preview/${activity.id}`)}>用户流程预览</Button>
+        <Button theme="solid" disabled={!access.manage} onClick={() => setEditing(true)}>编辑活动</Button>
         <Dropdown trigger="click" position="bottomRight" menu={activityMenu(activity, access.manage, now, run)}><Button theme="borderless" icon={<IconMore />} aria-label="更多操作" /></Dropdown>
     </>}
     sidebar={<>

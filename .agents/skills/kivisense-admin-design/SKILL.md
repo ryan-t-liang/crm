@@ -29,7 +29,7 @@ Kivisense borrows interaction principles, not source code, from mature products 
 Key principles validated from those references:
 
 - Create the core record quickly; configure deeper behavior after creation.
-- Use a modal/dialog for normal record creation rather than a multi-step wizard.
+- Use a compact right-side Semi SideSheet for all new/edit forms, preserving quick create rather than a multi-step wizard.
 - Use record detail pages for ongoing configuration and related records.
 - Use side panels/drawers for quick inspection or focused editing, not as an entire application shell.
 - Keep list pages scan-friendly and action-light.
@@ -58,7 +58,7 @@ For Marketing Activity work, also read:
 
 Default creation flow:
 
-`List → Create modal → Create record → Record detail → Configure advanced settings`
+`List → Create SideSheet → Create record → Record detail → Configure advanced settings`
 
 Do not use a wizard/stepper just because an object has many downstream capabilities.
 
@@ -75,8 +75,8 @@ If any condition is false, use quick create + detail configuration.
 
 Use existing Semi Design components before introducing custom equivalents:
 
-- `Modal` for normal create/edit forms and confirmations;
-- `SideSheet`/drawer for focused side editing or quick inspection;
+- `SideSheet` for all create/edit forms, focused editing and quick inspection; reuse `FormSideSheet` for shared form actions;
+- `Modal` for confirmations, not data-entry forms;
 - `Table` for record collections;
 - `Tabs` type `line` for primary record navigation;
 - `Form` for data entry;
@@ -89,7 +89,7 @@ Do not introduce a competing design system.
 Before coding, classify the task as one of:
 
 - List Page
-- Quick Create Modal
+- Quick Create SideSheet
 - Record Detail Page
 - Settings/Configuration Page
 - Focused Edit Drawer
@@ -101,7 +101,7 @@ Then use the matching pattern in `PATTERNS.md`.
 
 ### 4. Creation form rule
 
-A normal record with roughly 3–12 core fields should use a single modal. It must not become a full-screen drawer, multi-step stepper, or nested-card flow.
+A normal record with roughly 3–12 core fields uses a single right-side SideSheet, typically 520–720px wide and capped at the viewport. Keep the shared CRM header, scrollable body and footer with cancel/save. Do not use centered create/edit Modals, full-screen workflows, steppers or nested-card forms.
 
 Advanced business configuration belongs after creation.
 
@@ -109,6 +109,7 @@ Advanced business configuration belongs after creation.
 
 Drawers/SideSheets are for:
 
+- all new/edit forms, including related sessions, prizes, calls and tasks;
 - quick record inspection,
 - focused edit of one coherent subject,
 - secondary details without losing page context.

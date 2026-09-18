@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Banner, Button, Dropdown, Form, TextArea, Modal, Radio, RadioGroup, SideSheet, Switch, Table } from "@douyinfe/semi-ui";
 import { IconMore, IconPlus } from "@douyinfe/semi-icons";
-import { EmptyBlock } from "@/components/CrmUi";
+import { FormSideSheet, EmptyBlock } from "@/components/CrmUi";
 import { useCrm } from "@/stores/crm-store";
-import { brandLabels } from "@/stores/member-operations-store";
+import { brandScopeLabels } from "@/utils/brand-display";
 import { useMarketing } from "@/stores/marketing-store";
 import { createMarketingSlot } from "@/mock/marketing-demo-data";
 import type { ActivityPrize, MarketingActivity, MarketingSlot } from "@/types/marketing";
@@ -42,7 +42,7 @@ export function SlotConfigurationTable({ slots, onChange, parentStart, activityI
       { title: "签到窗口", width: 180, render: (_: unknown, row: MarketingSlot) => `${displayDate(row.checkinStart)} — ${displayDate(row.checkinEnd)}` },
       { title: "操作", width: 100, fixed: "right", render: (_: unknown, row: MarketingSlot) => <div className="row-actions"><Button size="small" theme="borderless" onClick={() => edit(row)}>编辑</Button><Dropdown trigger="click" position="bottomRight" render={<Dropdown.Menu><Dropdown.Item type="danger" onClick={() => Modal.confirm({ title: `删除${prizeId ? "领奖时段" : "活动场次"}？`, content: `将移除「${row.label}」。`, onOk: () => onChange(slots.filter((slot) => slot.id !== row.id)) })}>删除</Dropdown.Item></Dropdown.Menu>}><Button size="small" theme="borderless" icon={<IconMore />} aria-label={`更多操作 · ${row.label}`} /></Dropdown></div> },
     ]} /> : <EmptyBlock title={`暂无${prizeId ? "领奖时段" : "活动场次"}`} description={prizeId ? "添加可预约的领奖时段与容量。" : "添加活动时间、地点与可预约名额。"} />}
-    {editing && <Modal visible centered className="marketing-prize-dialog" title={`${isNew ? "添加" : "编辑"}${prizeId ? "领奖时段" : "活动场次"}`} width={Math.min(640, window.innerWidth - 32)} okText="保存场次" cancelText="取消" onCancel={() => setEditing(null)} onOk={save}><SlotFields slot={editing} onChange={setEditing} /></Modal>}
+    {editing && <FormSideSheet visible className="marketing-prize-editor" title={`${isNew ? "添加" : "编辑"}${prizeId ? "领奖时段" : "活动场次"}`} width={640} okText="保存场次" cancelText="取消" onCancel={() => setEditing(null)} onOk={save}><SlotFields slot={editing} onChange={setEditing} /></FormSideSheet>}
   </div></Panel>;
 }
 
@@ -100,23 +100,23 @@ export function ActivityEditor({ initial, onClose }: { initial: MarketingActivit
     onClose();
     if (!existing) navigate(`marketing/activity/${form.id}`);
   };
-  return <Modal visible centered closeOnEsc maskClosable={false} className="marketing-activity-modal" width={Math.min(760, window.innerWidth - 32)} title={existing ? "编辑活动" : "新建活动"} onCancel={onClose}
+  return <FormSideSheet visible closeOnEsc maskClosable={false} className="marketing-activity-editor" width={680} title={existing ? "编辑活动" : "新建活动"} onCancel={onClose}
     okText={existing ? "保存" : "创建活动"} cancelText="取消" onOk={save} okButtonProps={{ disabled: !access.manage || !access.brands.includes(initial.brand) }}>
     <Form className="marketing-editor" onSubmit={save}>{feedback}{error && <Banner type="warning" title={error} closeIcon={null} />}
       <section className="marketing-form-section"><h2>基本信息</h2><div className="form-grid marketing-form-grid">
         <div className="marketing-field-wide"><TextField label="活动名称" value={form.name} onChange={value => update("name", value)} /></div>
-        <SelectField label="所属品牌" value={form.brand} disabled={locked} list={access.brands.map(brand => ({ value: brand, label: brandLabels[brand] }))} onChange={value => update("brand", value as MarketingActivity["brand"])} />
+        <SelectField label="所属品牌" value={form.brand} disabled={locked} list={access.brands.map(brand => ({ value: brand, label: brandScopeLabels[brand] }))} onChange={value => update("brand", value as MarketingActivity["brand"])} />
         <div className="marketing-field"><span>活动类型</span><RadioGroup aria-label="活动类型" value={form.mode} disabled={locked} onChange={event => setForm(old => ({ ...old, mode: event.target.value, completion: event.target.value === "ONLINE" ? "STAFF" : old.completion }))}><Radio value="ONLINE">线上活动</Radio><Radio value="OFFLINE">线下活动</Radio></RadioGroup></div>
         {form.mode === "OFFLINE" && <div className="marketing-field-wide"><TextField label="场地" value={form.location} disabled={locked} onChange={value => update("location", value)} /></div>}
         <TimeField label="活动开始时间" value={form.startAt} disabled={locked} onChange={value => update("startAt", value)} /><TimeField label="活动结束时间" value={form.endAt} disabled={locked} onChange={value => update("endAt", value)} />
         <div className="marketing-field marketing-field-wide"><span>参与方式</span><RadioGroup className="marketing-mode-options" aria-label="参与方式" value={form.bookingEnabled ? "RESERVATION" : "DIRECT"} disabled={locked} onChange={event => update("bookingEnabled", event.target.value === "RESERVATION")}>
           <Radio value="RESERVATION"><span>预约参与<small>用户需要先预约活动场次。</small></span></Radio><Radio value="DIRECT"><span>直接参与<small>用户无需预约，可直接参加活动。</small></span></Radio>
         </RadioGroup></div>
-        <div className="marketing-field marketing-field-wide marketing-switch-field"><span>启用抽奖</span><Switch aria-label="启用抽奖" checked={form.lotteryEnabled} disabled={locked} onChange={value => update("lotteryEnabled", value)} /></div>
+        <div className="marketing-field marketing-field-wide marketing-switch-field"><span>启用抽奖</span><Switch size="small" aria-label="启用抽奖" checked={form.lotteryEnabled} disabled={locked} onChange={value => update("lotteryEnabled", value)} /></div>
       </div></section>
       <section className="marketing-form-section"><MarketingRuleEditor value={form.ruleContent ?? ""} format={form.ruleContentFormat} onChange={html => setForm(old => ({ ...old, ruleContent: html, ruleContentFormat: "html" }))} /></section>
     </Form>
-  </Modal>;
+  </FormSideSheet>;
 }
 
 /** Created objects own their later configuration; these are independent forms, never steps. */
@@ -131,13 +131,13 @@ export function ActivityConfigurationEditor({ initial, section, onClose }: { ini
       <section className="marketing-form-section"><h2>预约规则</h2><div className="form-grid marketing-form-grid">
         <TimeField label="预约开放时间" value={form.bookingStart} onChange={value => update("bookingStart", value)} /><TimeField label="预约截止时间" value={form.bookingEnd} onChange={value => update("bookingEnd", value)} />
         <SelectField label="完成条件" value={form.completion} list={[{ value: "STAFF", label: "工作人员确认完成" }, ...(form.mode === "OFFLINE" ? [{ value: "CHECKIN", label: "签到即完成" }] : [])]} onChange={value => update("completion", value as MarketingActivity["completion"])} />
-        {(["allowCancel", "allowReschedule", "allowWalkIn"] as const).map((key, index) => <div className="marketing-field marketing-switch-field" key={key}><span>{["允许取消", "允许改约", "允许现场报名"][index]}</span><Switch aria-label={["允许取消", "允许改约", "允许现场报名"][index]} checked={form[key]} onChange={value => update(key, value)} /></div>)}
+        {(["allowCancel", "allowReschedule", "allowWalkIn"] as const).map((key, index) => <div className="marketing-field marketing-switch-field" key={key}><span>{["允许取消", "允许改约", "允许现场报名"][index]}</span><Switch size="small" aria-label={["允许取消", "允许改约", "允许现场报名"][index]} checked={form[key]} onChange={value => update(key, value)} /></div>)}
       </div></section>
       <SlotConfigurationTable slots={form.slots} parentStart={form.startAt} activityId={form.id} onChange={slots => update("slots", slots)} />
     </> : <section className="marketing-form-section"><h2>抽奖规则</h2><div className="form-grid marketing-form-grid">
       <TimeField label="抽奖开始时间" value={form.lotteryStart} onChange={value => update("lotteryStart", value)} /><TimeField label="抽奖截止时间" value={form.lotteryEnd} onChange={value => update("lotteryEnd", value)} />
       {(["grantCount", "drawLimit", "winLimit", "noWinProbability"] as const).map((key, index) => <NumberField key={key} label={["完成后发放次数", "累计抽奖上限", "累计中奖上限", "未中奖概率（%）"][index]} value={form[key]} onChange={value => update(key, value)} />)}
-      <div className="marketing-field marketing-switch-field"><span>启用每日上限</span><Switch aria-label="启用每日抽奖上限" checked={form.dailyLimit !== null} onChange={value => update("dailyLimit", value ? 1 : null)} /></div>
+      <div className="marketing-field marketing-switch-field"><span>启用每日上限</span><Switch size="small" aria-label="启用每日抽奖上限" checked={form.dailyLimit !== null} onChange={value => update("dailyLimit", value ? 1 : null)} /></div>
       {form.dailyLimit !== null && <NumberField label="每日抽奖上限" value={form.dailyLimit} onChange={value => update("dailyLimit", value)} />}
     </div></section>}</div>
   </SideSheet>;

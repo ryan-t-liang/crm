@@ -28,7 +28,7 @@ Row actions:
 
 ## New Activity
 
-Use one Quick Create Modal, not a wizard or SideSheet.
+Use one compact right-side Quick Create SideSheet, not a centered Modal or wizard. Reuse `FormSideSheet`; only the body scrolls, while shared cancel/save actions remain in the footer.
 
 Core fields:
 

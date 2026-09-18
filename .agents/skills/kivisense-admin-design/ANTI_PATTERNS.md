@@ -12,7 +12,7 @@ for a record that could have been created after Basic information.
 
 Fix:
 
-Quick Create Modal → Record Detail → configure advanced modules.
+Quick Create SideSheet → Record Detail → configure advanced modules.
 
 ## 2. Whole product inside a drawer
 
@@ -26,7 +26,7 @@ Bad:
 
 Fix:
 
-Use a normal modal for creation or a real detail page for complex work.
+Use a compact right-side SideSheet for creation, or a real detail page for complex work. Do not embed an application inside the form drawer.
 
 ## 3. Nested cards
 

@@ -25,7 +25,7 @@ Rules:
 - row actions: `编辑` + `…` when edit is common;
 - no KPI dashboard above a normal operational list unless explicitly required.
 
-## Pattern B — Quick Create Modal
+## Pattern B — Quick Create SideSheet
 
 Default for normal record creation.
 
@@ -33,8 +33,8 @@ Use when the record can exist after a small set of core fields is completed.
 
 Recommended size:
 
-- 640–800px wide;
-- existing CRM Semi Modal header, title, close, padding and footer;
+- 520–720px wide, capped at the viewport;
+- right-side Semi SideSheet with existing CRM header, close, body scrolling and `sheet-footer` actions; reuse `FormSideSheet`;
 - 1–2 columns;
 - one primary action.
 
@@ -58,9 +58,9 @@ Rules:
 - no advanced configuration that can be done after record creation;
 - create first, configure later.
 
-## Pattern C — Edit Modal
+## Pattern C — Edit SideSheet
 
-Use the same form and field order as Quick Create whenever possible.
+Use the same right-side SideSheet, form and field order as Quick Create whenever possible. Centered Modals are reserved for confirmations, not new/edit forms.
 
 Do not maintain two unrelated forms for create and edit.
 

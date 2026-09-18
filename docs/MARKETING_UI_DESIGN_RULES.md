@@ -4,15 +4,15 @@
 
 ## 先创建对象，再配置业务
 
-List → Quick Create Modal → 创建Activity → Record Detail → 配置高级能力。创建 / 编辑共用760px居中Semi Modal，内容超高时仅Body滚动；Header / Title / Close / Padding / Footer / Button直接复用当前CRM的Semi默认样式，不另造Marketing Modal。核心字段为名称、品牌、线上 / 线下、线下场地、活动开始 / 结束、参与方式、抽奖开关、规则富文本。活动编号只读。编辑字段顺序相同；已有业务规则锁定继续生效。创建取消 / 创建活动，编辑取消 / 保存。
+List → Quick Create SideSheet → 创建Activity → Record Detail → 配置高级能力。创建 / 编辑共用680px右侧Semi SideSheet（FormSideSheet），宽度不超过视口，内容超高时仅Body滚动；Header / Title / Close / Padding / Footer / Button直接复用当前CRM的Semi侧边表单样式，不另造Marketing弹窗。核心字段为名称、品牌、线上 / 线下、线下场地、活动开始 / 结束、参与方式、抽奖开关、规则富文本。活动编号只读。编辑字段顺序相同；已有业务规则锁定继续生效。创建取消 / 创建活动，编辑取消 / 保存。
 
-不恢复创建SideSheet、Steps、Wizard、说明 / 封面输入、发布检查页，不把预约窗口 / 场次 / 容量、次数 / 概率或奖品配置塞进创建。已创建对象的预约 / 抽奖配置继续使用单主题Focused Drawer，场次和奖品使用小型 / 中型Modal。
+不新增Steps、Wizard、说明 / 封面输入、发布检查页，不把预约窗口 / 场次 / 容量、次数 / 概率或奖品配置塞进创建。已创建对象的预约 / 抽奖配置继续使用单主题Focused Drawer，场次、奖品、配额、兑换码导入与链接编辑均使用右侧SideSheet。
 
 ## 列表与Header
 
 八列：活动编号、名称、类型、场地、活动时间、状态、参与方式、操作。名称进入详情，编辑 + 图标更多，无列表KPI。更多仅开始 / 暂停 / 结束，原时间与启用校验不变，不自行改写业务窗口。
 
-三生命周期标签保持待开始 / 进行中 / 已结束，暂停只作为运营控制。线上场地为“—”，同日时间压缩，跨日保留两端日期。列表直接复用CRM PageHeader右侧新建操作及data-surface / table-toolbar / Semi Table。详情Header由DetailWorkspace提供，紧凑呈现编号 / 品牌、状态 / 类型 / 参与方式与活动时间 / 场地；编辑主操作、用户预览次操作、图标更多。原时间Popover改为右侧真实时间信息，不增加新业务字段。
+三生命周期标签保持待开始 / 进行中 / 已结束，暂停只作为运营控制。线上场地为“—”，同日时间压缩，跨日保留两端日期。列表直接复用CRM PageHeader右侧新建操作及data-surface / table-toolbar / Semi Table。详情Header由DetailWorkspace提供，紧凑呈现编号 / 品牌、状态 / 类型 / 参与方式与活动时间 / 场地；编辑主操作、图标更多；不再提供用户流程预览。原时间Popover改为右侧真实时间信息，不增加新业务字段。
 
 详情使用Lead / Deal相同的detail-grid：主内容Card + 默认290px右侧信息栏，响应式行为沿用现有CRM。右侧复用SideSection / DataList展示活动信息、按能力显示的活动 / 预约 / 抽奖时间及奖品领奖时间，不展示后台职责等研发说明。
 
@@ -54,4 +54,4 @@ List → Quick Create Modal → 创建Activity → Record Detail → 配置高�
 
 规则编辑器沿用Tiptap基础和HTML白名单，旧未标记内容仍按纯文本展示。activityCode生成、品牌权限、规则锁定、机会 / 库存 / 代码分配、ACT / PRIZE容量、不可逆中奖权益、Staff核销与LocalStorage迁移均不变。Sales / Member Store、Dashboard、SQL、后端、数据库和依赖不改。
 
-本轮CRM Style Revert按用户要求不运行测试、浏览器QA、截图或UI Gate，不增改测试 / QA脚本，不生成QA artifact。仅正常静态类型与Skill格式检查；历史验收不作为本轮验收。提交并普通推送当前产品原型分支，不改main / 部署 / Release，等待人工Review。
+前一轮CRM Style Revert的免测试 / 等待Review约束只适用于该轮。本轮按新增要求统一侧边表单、品牌显示与导航，移除用户流程预览；执行现有类型检查、回归测试与构建，按授权同步当前分支和发布，不改main。品牌名统一Kivisense，gp/un仅作为原始数据范围编码保留，不合并记录或权限。历史预览链接只展示活动后台详情，不再呈现用户报名 / 抽奖操作。

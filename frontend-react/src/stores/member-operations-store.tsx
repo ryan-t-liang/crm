@@ -96,4 +96,4 @@ export function useMemberOperations() {
   return value;
 }
 
-export const brandLabels = { gp: "Girard-Perregaux", un: "Ulysse Nardin" } as const;
+export { brandLabels } from "@/utils/brand-display";

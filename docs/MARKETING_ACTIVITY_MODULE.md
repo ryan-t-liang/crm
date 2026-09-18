@@ -24,13 +24,13 @@ CRM 唯一营销主入口 `#marketing` 是活动列表，不再有顶层奖品�
 | 中奖与核销 | 领奖预约：仅PRIZE领取 / 使用预约及历史 | prize-bookings（新增只读leaf） |
 | 中奖与核销 | 核销记录：Redemption业务事实，不用Audit代替 | redemptions |
 
-V4的CRM Style Revert以现有Lead / Deal / Customer / Member为视觉母版，不更改业务信息架构。新建 / 编辑共享760px居中Semi Modal，直接复用CRM的Header / Title / Padding / Footer，Body超高时内部滚动，只展示九个基础字段；创建后进入详情。新建取消 / 创建活动，编辑取消 / 保存。说明和封面不进入表单，旧字段保留读取，不删除用户资料。详情直接使用DetailWorkspace、detail-grid、record-tabs主Card和SideSection / DataList右侧栏。Header紧凑显示编号 / 品牌、状态、活动类型、参与方式、活动时间与场地；真实活动 / 预约 / 抽奖 / 领奖时间在右侧信息栏按能力展示，不保留独立时间Popover或后台职责Card。四个一级line Tabs仍为概览 / 活动设置 / 参与管理 / 中奖与核销，置于主Card内；二级为低权重文字导航。概览采用按活动表现 / 抽奖 / 领奖分组的紧凑CRM Summary Card，不为每个数字建立Card。设置在主信息Card内采用平面字段分组、左对齐有界Definition Grid；预约 / 抽奖仍为Focused Drawer，场次 / 奖品为独立Modal，无步骤或发布检查页。列表和相关表格复用data-surface / table-toolbar / EmptyBlock及Semi Table默认样式，不另写Marketing Table或一级Tabs视觉。允许有意义的主Card / Summary Card / Right Rail Card，禁止碎片化及重复嵌套装饰，具体规则见MARKETING_UI_DESIGN_RULES.md。
+V4的CRM Style Revert以现有Lead / Deal / Customer / Member为视觉母版，不更改业务信息架构。新建 / 编辑共享680px右侧Semi SideSheet，直接复用CRM的Header / Title / Padding / Footer，Body超高时内部滚动，只展示九个基础字段；创建后进入详情。新建取消 / 创建活动，编辑取消 / 保存。说明和封面不进入表单，旧字段保留读取，不删除用户资料。详情直接使用DetailWorkspace、detail-grid、record-tabs主Card和SideSection / DataList右侧栏。Header紧凑显示编号 / 品牌、状态、活动类型、参与方式、活动时间与场地；真实活动 / 预约 / 抽奖 / 领奖时间在右侧信息栏按能力展示，不保留独立时间Popover或后台职责Card。四个一级line Tabs仍为概览 / 活动设置 / 参与管理 / 中奖与核销，置于主Card内；二级为低权重文字导航。概览采用按活动表现 / 抽奖 / 领奖分组的紧凑CRM Summary Card，不为每个数字建立Card。设置在主信息Card内采用平面字段分组、左对齐有界Definition Grid；预约 / 抽奖仍为Focused Drawer，场次 / 奖品同样使用右侧SideSheet，无步骤或发布检查页。列表和相关表格复用data-surface / table-toolbar / EmptyBlock及Semi Table默认样式，不另写Marketing Table或一级Tabs视觉。允许有意义的主Card / Summary Card / Right Rail Card，禁止碎片化及重复嵌套装饰，具体规则见MARKETING_UI_DESIGN_RULES.md。
 
 直接参与不显示ACT预约场次、取消 / 改约或预约人数；无抽奖活动不显示抽奖 / 奖品指标和不适用配置。参与管理的预约记录按ACTIVITY查询，中奖与核销的领奖预约按PRIZE查询；直接参与且无历史活动预约可隐藏前者，但不能由参与方式隐藏后者。已有记录不删除、不合并；旧直接参与bookings链接在只有领奖预约时适配到新入口。负库存、非法整数或概率即使保存草稿也拒绝。产品页面移除研发 / 演示边界长文；这些边界仍在本文及验收记录中明确保留。
 
-旧 `#marketing/prizes`、`#marketing/bookings` 显示活动列表和入口迁移说明，不保留全局模块。会员原营销 Tab 保持只读引用。用户预览 `#marketing/preview/<activityId>/<userId>` 复用报名、预约、抽奖和奖品查看。
+旧 `#marketing/prizes`、`#marketing/bookings` 显示活动列表和入口迁移说明，不保留全局模块。会员原营销 Tab 保持只读引用。用户流程预览UI已移除；旧 `#marketing/preview/<activityId>/<userId>` 只展示授权活动的后台详情。会员营销记录链接进入后台参与记录，不提供报名 / 抽奖预览。
 
-`#redemption/<credential>` 是独立 Staff / 核销端，没有 CRM AppShell / 侧栏 / 后台导航，不管理活动配置。兼容原 `#marketing/redemption/<credential>`，同样渲染独立页面。现场报名只在此页面，选择授权品牌内已存在、未删除的 user；仅允许已发布、allowWalkIn 的活动，集中动作检查活动期、场次窗口 / 容量和既有身份 / 预约，不创建会员、不猜手机号 / UnionID / 姓名。已有有效参与身份与预约幂等复用，报名不发抽奖机会。Staff 能力不依赖用户预览权限。用户流程预览只包含用户预约 / 改约 / 取消 / 凭证 / 抽奖 / 奖品预约，不再放工作人员报名。ACT / WIN 随机标识使用实际二维码编码，不包含姓名、手机号或后台权限。CRM 核销数据页只读。
+`#redemption/<credential>` 是独立 Staff / 核销端，没有 CRM AppShell / 侧栏 / 后台导航，不管理活动配置。兼容原 `#marketing/redemption/<credential>`，同样渲染独立页面。现场报名只在此页面，选择授权品牌内已存在、未删除的 user；仅允许已发布、allowWalkIn 的活动，集中动作检查活动期、场次窗口 / 容量和既有身份 / 预约，不创建会员、不猜手机号 / UnionID / 姓名。已有有效参与身份与预约幂等复用，报名不发抽奖机会。Staff 能力不依赖用户预览权限。用户流程预览不再作为页面提供；既有ACT / WIN凭证与历史记录仍保留，不改Staff核验动作。CRM 核销数据页只读。
 
 ## 活动创建与配置校验
 
@@ -62,7 +62,7 @@ V4的CRM Style Revert以现有Lead / Deal / Customer / Member为视觉母版，�
 
 ## 规则、参与方式及可选身份
 
-`ruleContent?: string` 是活动展示规则，V3用简单富文本编辑并在详情 / 用户预览展示。`ruleContentFormat?: "html"`显式标记富文本，缺省仍按旧纯文本安全展示；不会猜测旧文本中的标签是HTML或自动改写LocalStorage。只允许段落、加粗、斜体、有序 / 无序列表、换行与安全HTTP(S)链接，渲染时重建HTML白名单，不提供HTML源码 / 媒体 / CMS。旧description保留存储但不再展示或编辑。规则仍不解析成grantCount、drawLimit、winLimit、probability或预约约束。
+`ruleContent?: string` 是活动展示规则，V3用简单富文本编辑并在活动详情展示。`ruleContentFormat?: "html"`显式标记富文本，缺省仍按旧纯文本安全展示；不会猜测旧文本中的标签是HTML或自动改写LocalStorage。只允许段落、加粗、斜体、有序 / 无序列表、换行与安全HTTP(S)链接，渲染时重建HTML白名单，不提供HTML源码 / 媒体 / CMS。旧description保留存储但不再展示或编辑。规则仍不解析成grantCount、drawLimit、winLimit、probability或预约约束。
 
 `activityCode?: string`由保存动作自动分配，形式ACT+上海日期+至少四位流水，检查整个营销命名空间（不是品牌筛选后的列表），不可手工更改；复制模型生成新编号。旧缺编号活动只读生成可扫描的业务编号，内部UUID不直接展示；只有显式保存该活动时才固化编号，不批量回填或覆盖其他活动。唯一性是本地前端命名空间约束，不声称有跨设备真实后端全局编号服务。新基础 / 预约 / 抽奖表单各自只保存对应字段，并保留当前其他配置，避免用过期表单快照覆盖奖品或另一份配置。
 
@@ -134,7 +134,7 @@ DIRECT / PICKUP 旧枚举是有意兼容，不是恢复全局奖品库。
 
 已发布或已有业务记录时，类型、概率、领取方式、地点、有效期、虚拟发放内容等实质规则锁定；不引入新版本引擎。奖品名称、奖项、图片、说明和使用说明可调整，但仅影响未来中奖，旧Award保留全部中奖时快照。UI明确该边界，不从当前可变配置重建历史承诺。
 
-实体直接领取：待领取 → 已领取。预约型权益：待预约 → 已预约 / 待领取 → 已领取；体验完成标“已履约（体验完成）”，过期权益保留占用与历史。直接虚拟码标“兑换码已分配”、凭证标“权益已生成”、链接标“领取链接已生成”，均指平台本地发放，无现场Redemption；预约型虚拟内容保留独立预约 / 核验后发放时机。未发放的预约型内容不提前展示码 / 链接。任何类型都不虚构外部兑换 / 已使用 / 已查看。概览、库存、中奖表、用户预览、Staff识别和会员只读记录复用同一履约判定。
+实体直接领取：待领取 → 已领取。预约型权益：待预约 → 已预约 / 待领取 → 已领取；体验完成标“已履约（体验完成）”，过期权益保留占用与历史。直接虚拟码标“兑换码已分配”、凭证标“权益已生成”、链接标“领取链接已生成”，均指平台本地发放，无现场Redemption；预约型虚拟内容保留独立预约 / 核验后发放时机。未发放的预约型内容不提前展示码 / 链接。任何类型都不虚构外部兑换 / 已使用 / 已查看。概览、库存、中奖表、Staff识别和会员只读记录复用同一履约判定。
 
 ## 预约、时间、暂停与取消
 

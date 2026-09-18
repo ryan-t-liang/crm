@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from "react";
-import { Banner, Button, Input, Modal, Select, TabPane, Table, Tabs, Tag, Toast } from "@douyinfe/semi-ui";
+import { Banner, Button, Input, Select, TabPane, Table, Tabs, Tag, Toast } from "@douyinfe/semi-ui";
 import { IconSearch } from "@douyinfe/semi-icons";
-import { DataList, DetailWorkspace, EmptyBlock, PageHeader, SideSection, TableEntity } from "@/components/CrmUi";
+import { FormSideSheet, DataList, DetailWorkspace, EmptyBlock, PageHeader, SideSection, TableEntity } from "@/components/CrmUi";
 import { describeSowindPhoneMatch } from "@/features/member-operations/member-model";
 import { readBrandPhone, readIntentPhone } from "@/features/member-operations/sowind-read";
 import { brandLabels, useMemberOperations } from "@/stores/member-operations-store";
@@ -9,17 +9,18 @@ import { useCrm } from "@/stores/crm-store";
 import type { MemberBrandScope, SowindBrandCode, SowindBrandUser, SowindIntentChoice, SowindPurchaseIntent, SowindPurchaseIntentInput, SowindUserProfile } from "@/types/member-operations";
 import { navigate } from "@/utils/format";
 import { MemberMarketingRecords } from "@/features/marketing/MarketingPages";
+import { brandScopeLabels } from "@/utils/brand-display";
 
 const brandOptions = [
   { value: "ALL", label: "全部品牌" },
-  { value: "gp", label: "Girard-Perregaux" },
-  { value: "un", label: "Ulysse Nardin" },
+  { value: "gp", label: brandScopeLabels.gp },
+  { value: "un", label: brandScopeLabels.un },
 ];
 const profileWatchOptions = [{ value: "0", label: "0 · 否" }, { value: "1", label: "1 · 是" }, { value: "NULL", label: "NULL · 未提供" }];
 const intentWatchOptions = [{ value: "0", label: "0 · 未选择" }, { value: "1", label: "1 · 是" }, { value: "2", label: "2 · 否" }, { value: "NULL", label: "NULL · 旧数据未知（只读）", disabled: true }];
 
 function BrandTag({ brand }: { brand: SowindBrandCode }) {
-  return <Tag color={brand === "gp" ? "green" : "blue"} size="small">{brand}</Tag>;
+  return <Tag color={brand === "gp" ? "green" : "blue"} size="small">{brandScopeLabels[brand]}</Tag>;
 }
 
 function BrandScopeSelect() {
@@ -83,7 +84,7 @@ function MemberCustomerList() {
   ];
   const scopedUsers = state.brandUsers.filter((item) => state.brandScope === "ALL" || item.brand === state.brandScope);
   return <div className="page member-workspace"><PageHeader title="集团客户" description="customer 集团主档；已核对 SQL，仅含主键与时间字段，不新增姓名、等级、积分或会员编码。" actions={<BrandScopeSelect />} />
-    <div className="metric-strip"><div><span>customer</span><strong>{rows.length}</strong></div><div><span>user</span><strong>{scopedUsers.length}</strong></div><div><span>跨 GP / UN</span><strong>{state.customers.filter((customer) => new Set(state.brandUsers.filter((user) => user.customer_id === customer.id).map((user) => user.brand)).size > 1).length}</strong></div><div><span>未关联 customer</span><strong>{scopedUsers.filter((item) => item.customer_id === null).length}</strong></div></div>
+    <div className="metric-strip"><div><span>customer</span><strong>{rows.length}</strong></div><div><span>user</span><strong>{scopedUsers.length}</strong></div><div><span>跨品牌范围</span><strong>{state.customers.filter((customer) => new Set(state.brandUsers.filter((user) => user.customer_id === customer.id).map((user) => user.brand)).size > 1).length}</strong></div><div><span>未关联 customer</span><strong>{scopedUsers.filter((item) => item.customer_id === null).length}</strong></div></div>
     <section className="data-surface"><div className="table-toolbar"><Input prefix={<IconSearch />} value={keyword} onChange={setKeyword} showClear placeholder="搜索 customer.id 或 user.id" /></div>{rows.length ? <Table rowKey="id" columns={columns} dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: 980 }} /> : <EmptyBlock title="没有匹配的集团客户" description="调整搜索或品牌范围。" />}</section>
   </div>;
 }
@@ -180,7 +181,7 @@ function CreatePurchaseIntentModal({ visible, onClose, onCreated }: { visible: b
     onCreated();
   };
   const choices = intentWatchOptions.filter((option) => option.value !== "NULL");
-  return <Modal visible={visible} title="新建购买意向" width={680} okText="创建购买意向" cancelText="取消" onCancel={onClose} onOk={save}>
+  return <FormSideSheet visible={visible} title="新建购买意向" width={680} okText="创建购买意向" cancelText="取消" onCancel={onClose} onOk={save}>
     {error && <Banner type="danger" description={error} />}
     <p>按同品牌国家码和手机号匹配会员；无匹配或多候选时保留空关联。以下资料是此意向的独立快照。</p>
     <div className="form-grid">
@@ -197,7 +198,7 @@ function CreatePurchaseIntentModal({ visible, onClose, onCreated }: { visible: b
       <label>个人数据处理同意<Select aria-label="新建意向 personal_data_consent" value={String(form.personal_data_consent)} onChange={(value) => setForm((current) => ({ ...current, personal_data_consent: Number(value) as 0 | 1 }))} optionList={[{ value: "0", label: "0 · 否" }, { value: "1", label: "1 · 是" }]} /></label>
       <label>region 原始编码<Input aria-label="新建意向 region" maxLength={10} value={form.region ?? ""} onChange={(value) => text("region", value)} /></label>
     </div>
-  </Modal>;
+  </FormSideSheet>;
 }
 
 function PurchaseIntentDetail({ id }: { id: string }) {

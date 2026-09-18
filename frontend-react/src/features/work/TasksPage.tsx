@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { Button, Input, Modal, Select, Table, TextArea, Toast } from "@douyinfe/semi-ui";
+import { Button, Input, Select, Table, TextArea, Toast } from "@douyinfe/semi-ui";
 import { IconEdit, IconPlus } from "@douyinfe/semi-icons";
-import { PageHeader, StatusTag, TableEntity } from "@/components/CrmUi";
+import { FormSideSheet, PageHeader, StatusTag, TableEntity } from "@/components/CrmUi";
 import { useCrm } from "@/stores/crm-store";
 import { getAssignableOwnersForDistributor } from "@/stores/crm-model";
 import type { Contact, CrmTask, Deal, Lead, Organization } from "@/types/crm";
@@ -40,7 +40,7 @@ export function TasksPage() {
   ];
   return <div className="page"><PageHeader title="Tasks" description="跨 Lead、Deal、Contact 与 Organization 的下一步行动。" actions={canWrite && <Button theme="solid" icon={<IconPlus />} onClick={() => start()}>Create Task</Button>} />
     <section className="data-surface"><div className="table-toolbar"><Select value={status} onChange={(value) => setStatus(String(value))} optionList={[{ value: "all", label: "All Status" }, { value: "OPEN", label: "Open" }, { value: "DONE", label: "Completed" }, { value: "CANCELED", label: "Canceled" }]} /></div><Table rowKey="id" columns={columns} dataSource={tasks} pagination={{ pageSize: 10 }} scroll={{ x: 1050 }} /></section>
-    <Modal visible={open} title={editing ? "Edit Task" : "Create Task"} onCancel={() => setOpen(false)} onOk={save}><div className="form-stack">
+    <FormSideSheet visible={open} title={editing ? "Edit Task" : "Create Task"} onCancel={() => setOpen(false)} onOk={save}><div className="form-stack">
       <label>Title<Input aria-label="Task Title" value={form.title} onChange={(value) => setForm((current) => ({ ...current, title: value }))} /></label>
       <label>Relation Type<Select aria-label="Task Relation Type" value={form.relationType} onChange={(value) => setForm((current) => ({ ...current, relationType: String(value) as CrmTask["relationType"], relationId: "", ownerId: editing ? current.ownerId : "" }))} optionList={["LEAD", "DEAL", "CONTACT", "ORGANIZATION"].map((value) => ({ value, label: value }))} /></label>
       <label>Relation<Select aria-label="Task Relation" filter value={form.relationId} onChange={(value) => { const selected = relationOptions.find((item) => item.id === String(value)); setForm((current) => ({ ...current, relationId: String(value), ownerId: selected ? getAssignableOwnersForDistributor(state.users, editing?.distributorId || selected.distributorId)[0]?.id || "" : "" })); }} optionList={relationOptions.map((item) => ({ value: item.id, label: item.name }))} /></label>
@@ -49,6 +49,6 @@ export function TasksPage() {
       <label>Priority<Select aria-label="Task Priority" value={form.priority} onChange={(value) => setForm((current) => ({ ...current, priority: String(value) as CrmTask["priority"] }))} optionList={["LOW", "MEDIUM", "HIGH"].map((value) => ({ value, label: value }))} /></label>
       <label>Description<TextArea value={form.description} onChange={(value) => setForm((current) => ({ ...current, description: value }))} /></label>
       <p className="form-hint">Task Distributor follows the relation when created and remains fixed when edited. Owner must match that Distributor.</p>
-    </div></Modal>
+    </div></FormSideSheet>
   </div>;
 }

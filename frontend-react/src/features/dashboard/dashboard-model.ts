@@ -3,6 +3,8 @@ import type { MemberOperationsState, MemberBrandScope, SowindBrandCode, SowindBr
 import { authorizedSales, confirmedConversions, dealOutcome, openStages, ratio, winRate } from "@/features/shared/sales-metrics";
 export { authorizedSales, confirmedConversions, dealOutcome, openStages, ratio, winRate } from "@/features/shared/sales-metrics";
 
+import { brandScopeLabels } from "@/utils/brand-display";
+
 export const DAY = 86_400_000;
 const OFFSET = 8 * 3_600_000;
 export type PeriodPreset = "today" | "7" | "30" | "month" | "quarter" | "custom";
@@ -139,7 +141,7 @@ export function buildDashboard(sales: CrmState, members: MemberOperationsState, 
   const groupRelationships: RowGroup<SowindCustomer>[] = showGroupRelationship ? partition(visibleCustomers, ["gp", "un", "both", "none"], (customer) => {
     const brands = new Set(authorizedUsers.filter((user) => user.is_deleted === 0 && notFuture(user.created_at) && user.customer_id === customer.id).map((user) => user.brand));
     return brands.size === 2 ? "both" : brands.has("gp") ? "gp" : brands.has("un") ? "un" : "none";
-  }, { gp: "仅 GP", un: "仅 UN", both: "GP + UN", none: "暂无有效品牌关联" }) : [];
+  }, { gp: `仅 ${brandScopeLabels.gp}`, un: `仅 ${brandScopeLabels.un}`, both: "Kivisense · 两个品牌范围", none: "暂无有效品牌关联" }) : [];
   const brandComparison = access.brands.filter((brand) => query.brand === "ALL" || brand === query.brand).map((brand) => {
     const current = effectiveUsers.filter((row) => row.brand === brand), currentIntents = intents.filter((row) => row.brand === brand);
     const brandUsers = users.filter((row) => row.brand === brand);
@@ -152,7 +154,7 @@ export function buildDashboard(sales: CrmState, members: MemberOperationsState, 
   intentCohort.rows.forEach((row) => {
     const sku = row.product_sku?.trim(), model = row.model?.trim();
     const key = JSON.stringify([row.brand, sku ? "sku" : model ? "model" : "empty", sku || model || ""]);
-    const label = `${row.brand.toUpperCase()} · ${sku || model || "未填写商品"}${sku ? "（SKU）" : model ? "（型号）" : ""}`;
+    const label = `${brandScopeLabels[row.brand]} · ${sku || model || "未填写商品"}${sku ? "（SKU）" : model ? "（型号）" : ""}`;
     merchandise.set(key, { key, label, rows: [...(merchandise.get(key)?.rows ?? []), row] });
   });
   const trend = dateBuckets(range).map((bucket) => ({ ...bucket,

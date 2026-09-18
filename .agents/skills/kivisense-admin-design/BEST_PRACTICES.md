@@ -67,7 +67,7 @@ A full-width page may span the viewport, but text and configuration content shou
 Recommended defaults:
 
 - record/configuration text content: 960–1100px max when possible;
-- quick-create modal: 640–800px;
+- quick-create SideSheet: 520–720px, capped at the viewport;
 - focused edit drawer: 520–720px;
 - wide data tables: full available width;
 - dashboard summary grids: full available width with consistent columns.
@@ -79,7 +79,7 @@ Do not place two short definition fields at opposite edges of a 1600px screen.
 - Prefer 1–2 columns.
 - Two columns only when fields are semantically equal and short enough.
 - Full-width fields for rich text, rules, descriptions, large selectors, and complex editors.
-- Reuse the existing CRM Semi Modal chrome for create/edit; no module-specific header/footer/title redesign.
+- All new/edit forms use right-side Semi SideSheet / shared `FormSideSheet` and `sheet-footer`, with body scrolling; no module-specific header/footer/title redesign. Modals remain for confirmations only.
 - Keep ordinary rich text around 160–200px high initially, using the existing CRM `rich-editor` / `rich-editor-toolbar` surface rather than a CMS-sized editor.
 - Keep labels above controls unless an existing Kivisense pattern clearly requires otherwise.
 - Use help text only when it changes user behavior.

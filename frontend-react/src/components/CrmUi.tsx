@@ -1,10 +1,25 @@
-import type { ReactNode } from "react";
-import { Avatar, Button, Empty, Skeleton, Tag, Typography } from "@douyinfe/semi-ui";
+import type { ComponentProps, ReactNode } from "react";
+import { Avatar, Button, Empty, SideSheet, Skeleton, Tag, Typography } from "@douyinfe/semi-ui";
 import { IconArrowLeft, IconPlus } from "@douyinfe/semi-icons";
 import { initials, navigate } from "@/utils/format";
 
 export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
   return <header className="page-header"><div><h1>{title}</h1>{description && <p>{description}</p>}</div><div className="page-actions">{actions}</div></header>;
+}
+
+type FormSideSheetProps = Omit<ComponentProps<typeof SideSheet>, "width" | "onCancel"> & {
+  width?: number;
+  onCancel: () => void;
+  onOk?: () => void;
+  okText?: string;
+  cancelText?: string;
+  okButtonProps?: ComponentProps<typeof Button>;
+};
+
+/** Shared create/edit surface; field validation and persistence remain with each caller. */
+export function FormSideSheet({ width = 640, onCancel, onOk, okText = "保存", cancelText = "取消", okButtonProps, footer, ...props }: FormSideSheetProps) {
+  return <SideSheet closeOnEsc maskClosable={false} {...props} placement="right" width={Math.min(width, typeof window === "undefined" ? width : window.innerWidth)} onCancel={onCancel}
+    footer={<div className="sheet-footer">{footer !== undefined ? footer : <><Button onClick={onCancel}>{cancelText}</Button><Button theme="solid" {...okButtonProps} onClick={onOk}>{okText}</Button></>}</div>} />;
 }
 
 export function TableEntity({ name, detail, route }: { name: string; detail?: string; route?: string }) {

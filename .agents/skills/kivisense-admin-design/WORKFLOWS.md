@@ -17,13 +17,13 @@ If the task does not fit a pattern, do not invent one immediately. First determi
 Default:
 
 1. List page primary action `新建...`.
-2. Open Quick Create Modal.
+2. Open the right-side Quick Create SideSheet using the shared CRM form surface.
 3. Capture only the core fields required to create a valid record.
 4. Submit.
 5. Navigate/open the new record detail page.
 6. Let the user configure optional/advanced modules there.
 
-Do not add downstream business modules into the create modal simply because the record may use them later.
+Do not add downstream business modules into the create SideSheet simply because the record may use them later.
 
 ## Workflow 3 — Edit core record information
 
@@ -41,7 +41,7 @@ For each advanced domain:
 
 - show a compact summary;
 - provide one focused edit action;
-- edit in-page for simple settings or use a focused drawer/modal for complex settings;
+- edit in-page for simple settings or use a focused right-side SideSheet for complex settings;
 - keep unrelated domains separate.
 
 Examples:
@@ -56,7 +56,7 @@ Examples:
 
 Examples: session, prize, task, address, note.
 
-Use a focused Modal or Drawer depending on complexity.
+Use a focused right-side SideSheet for all related-object new/edit forms. Reserve Modals for confirmations.
 
 Do not launch a full-record wizard.
 

@@ -30,6 +30,8 @@ describe("Marketing configuration and compatibility", () => {
   it("saves incomplete draft, rejects invalid publish, edits, publishes, pauses, resumes and copies", () => {
     const f = fixture(); const draft = { ...f.activity, id: "new", pool: f.activity.pool.map((item) => ({ ...item, activityId: "new", codes: item.codes.map((code) => ({ code: `NEW-${code.code}` })) })), name: "草稿", description: "", status: "DRAFT" as const, publishedAt: undefined };
     expect(f.run({ type: "SAVE_ACTIVITY", activity: draft }).ok).toBe(true);
+    // Description is optional; reservation drafts without sessions still cannot be published.
+    expect(f.run({ type: "SAVE_ACTIVITY", activity: { ...draft, slots: [] } }).ok).toBe(true);
     expect(f.run({ type: "STATUS", activityId: "new", status: "PUBLISHED" }).ok).toBe(false);
     expect(f.run({ type: "SAVE_ACTIVITY", activity: { ...draft, description: "完整配置" } }).ok).toBe(true);
     expect(f.run({ type: "STATUS", activityId: "new", status: "PUBLISHED" }).ok).toBe(true);

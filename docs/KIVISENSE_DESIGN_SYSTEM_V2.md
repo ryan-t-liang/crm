@@ -46,13 +46,13 @@ Chinese UI must sound like an operations product, not source code or architectur
 
 | Need | Kivisense pattern |
 |---|---|
-| create normal record | Quick Create Modal |
-| edit core record fields | same Modal pattern |
+| create normal record | Quick Create SideSheet |
+| edit core record fields | same right-side SideSheet pattern |
 | inspect a row quickly | Side Panel / Drawer |
 | work deeply with a record | Full Record Detail Page |
-| edit one complex settings group | Focused Drawer / Modal |
+| edit one complex settings group | Focused SideSheet |
 | configure advanced modules | Record Detail → Settings |
-| create related child record | small Modal / focused Drawer |
+| create related child record | compact right-side SideSheet |
 | destructive action | compact confirm |
 | switch major detail domains | line Tabs |
 | switch sub-areas within one domain | lighter subnav |
@@ -73,7 +73,7 @@ Chinese UI must sound like an operations product, not source code or architectur
 
 Use Semi Design components and existing Kivisense theme tokens. Extend styling only where needed to enforce Kivisense spacing, density, content width, and hierarchy.
 
-Existing `app.css` / `components.css` spacing and typography take precedence over generic new-page recommendations. Keep record fields around 12–20px apart and information Card padding compact (around 16–20px when appropriate); do not repeat 32–48px blank gaps. Create/edit use the existing CRM Semi Modal chrome, with quick-create core fields and a compact 160–200px rich-text editor rather than a wizard or CMS-sized form.
+Existing `app.css` / `components.css` spacing and typography take precedence over generic new-page recommendations. Keep record fields around 12–20px apart and information Card padding compact (around 16–20px when appropriate); do not repeat 32–48px blank gaps. All create/edit forms use the shared CRM right-side `FormSideSheet`, typically 520–720px wide and capped at the viewport, with cancel/save in `sheet-footer` and a scrollable body. Modals remain for confirmations only. Use quick-create core fields and a compact 160–200px rich-text editor rather than a wizard or CMS-sized form.
 
 Do not replace Semi Design with another component library for isolated screens.
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Banner, Button, Input, Modal } from "@douyinfe/semi-ui";
+import { Banner, Button, Input } from "@douyinfe/semi-ui";
+import { FormSideSheet } from "@/components/CrmUi";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import type { MarketingActivity } from "@/types/marketing";
@@ -61,12 +62,12 @@ export function MarketingRuleEditor({ value, format, onChange }: { value: string
       {action("换行", "↵", () => editor?.chain().focus().setHardBreak().run())}
       {action("链接", "链接", () => { setHref(editor?.getAttributes("link").href ?? ""); setError(""); setLinkOpen(true); }, editor?.isActive("link"))}
     </div><EditorContent editor={editor} />
-  </div><Modal visible={linkOpen} title="设置链接" width={420} okText="保存" cancelText="取消" onCancel={() => setLinkOpen(false)} onOk={() => {
+  </div><FormSideSheet visible={linkOpen} title="设置链接" width={420} okText="保存" cancelText="取消" onCancel={() => setLinkOpen(false)} onOk={() => {
     const url = href.trim();
     if (url && !validMarketingLink(url)) { setError("请输入有效的 http 或 https 链接。"); return; }
     if (url && editor?.state.selection.empty && !editor.isActive("link")) editor.chain().focus().insertContent({ type: "text", text: url, marks: [{ type: "link", attrs: { href: url } }] }).run();
     else if (url) editor?.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
     else editor?.chain().focus().extendMarkRange("link").unsetLink().run();
     setLinkOpen(false);
-  }}><Input aria-label="链接地址" placeholder="https://" value={href} onChange={setHref} />{error && <Banner type="warning" title={error} closeIcon={null} />}</Modal></div>;
+  }}><Input aria-label="链接地址" placeholder="https://" value={href} onChange={setHref} />{error && <Banner type="warning" title={error} closeIcon={null} />}</FormSideSheet></div>;
 }

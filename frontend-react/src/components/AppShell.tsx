@@ -6,6 +6,7 @@ import {
 } from "@douyinfe/semi-icons";
 import { useCrm } from "@/stores/crm-store";
 import { useMemberOperations } from "@/stores/member-operations-store";
+import { brandScopeLabels } from "@/utils/brand-display";
 import { initials, navigate } from "@/utils/format";
 
 type NavItem = { label: string; route: string; icon: ReactNode; count?: number; hqOnly?: boolean };
@@ -23,6 +24,7 @@ export function AppShell({ route, children }: { route: string; children: ReactNo
       { label: "Deals", route: "deals", icon: <IconBriefcase />, count: knownSalesCount(scoped(state.deals).length) },
       { label: "联系人", route: "contacts", icon: <IconUserGroup />, count: knownSalesCount(scoped(state.contacts).length) },
       { label: "组织", route: "organizations", icon: <IconApartment />, count: knownSalesCount(scoped(state.organizations).length) },
+      { label: "产品", route: "products", icon: <IconGridView />, count: state.products.filter((item) => item.status === "ACTIVE").length },
     ] },
     { label: "MEMBER & BRAND", items: [
       { label: "集团客户", route: "member-customers", icon: <IconUserGroup />, count: knownMemberCount(memberState.customers.length), hqOnly: true },
@@ -30,7 +32,6 @@ export function AppShell({ route, children }: { route: string; children: ReactNo
       { label: "购买意向", route: "purchase-intents", icon: <IconLayers />, count: knownMemberCount(memberState.purchaseIntents.length), hqOnly: true },
       { label: "营销活动", route: "marketing", icon: <IconApps />, hqOnly: true },
     ] },
-    { label: "CATALOG", items: [{ label: "产品", route: "products", icon: <IconGridView />, count: state.products.filter((item) => item.status === "ACTIVE").length }] },
     { label: "WORK", items: [{ label: "任务", route: "tasks", icon: <IconCheckList />, count: knownSalesCount(scoped(state.tasks).filter((item) => item.status === "OPEN").length) }] },
     { label: "MANAGEMENT", items: [
       { label: "分销商", route: "distributors", icon: <IconApps />, count: state.distributors.length, hqOnly: true },
@@ -72,7 +73,7 @@ export function AppShell({ route, children }: { route: string; children: ReactNo
             <span className="breadcrumb">Kivisense CRM <b>/</b> {groups.flatMap((group) => group.items).find((item) => item.route === activeTop)?.label || "详情"}</span>
           </div>
           <div className="topbar-actions">
-            {isHq && <span className="scope-pill">{isMemberWorkspace ? `会员运营 · ${memberState.brandScope === "ALL" ? "全品牌" : memberState.brandScope}` : "HQ · 全局视图"}</span>}
+            {isHq && <span className="scope-pill">{isMemberWorkspace ? `会员运营 · ${memberState.brandScope === "ALL" ? "全品牌" : brandScopeLabels[memberState.brandScope]}` : "HQ · 全局视图"}</span>}
             <Select
               className="demo-user-select"
               value={currentUser.id}
