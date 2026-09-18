@@ -38,7 +38,7 @@ describe("Marketing configuration and compatibility", () => {
     expect(activity).toMatchObject({ status: "CANCELED", publishedAt: before.activities[0].publishedAt, name: "更新活动", allowReschedule: false, grantCount: 1, drawLimit: 4 });
     const prize = { ...activity.pool[0], id: "new-managed-prize", probability: 0, quota: 1, codes: [] };
     expect(f.run({ type: "SAVE_ACTIVITY_PRIZE", activityId: activity.id, prize }).ok).toBe(true);
-    expect(f.run({ type: "SAVE_ACTIVITY_SLOT", activityId: activity.id, slot: { ...activity.slots[1], id: "new-managed-slot" } }).ok).toBe(true);
+    expect(f.run({ type: "SAVE_ACTIVITY_SLOT", activityId: activity.id, slot: { ...activity.slots[0], id: "new-managed-slot" } }).ok).toBe(true);
     expect(f.state.activities[0].pool.some(item => item.id === prize.id)).toBe(true);
     expect(f.state.activities[0].slots.some(item => item.id === "new-managed-slot")).toBe(true);
     for (const key of ["participations", "bookings", "chances", "draws", "awards", "redemptions"] as const) expect(f.state[key]).toEqual(before[key]);
