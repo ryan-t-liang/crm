@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Banner, Button, Dropdown, Empty, TextArea, Modal, Radio, RadioGroup, SideSheet, Switch, Table } from "@douyinfe/semi-ui";
+import { Banner, Button, Dropdown, Empty, Form, TextArea, Modal, Radio, RadioGroup, SideSheet, Switch, Table } from "@douyinfe/semi-ui";
 import { IconMore, IconPlus } from "@douyinfe/semi-icons";
 import { useCrm } from "@/stores/crm-store";
 import { brandLabels } from "@/stores/member-operations-store";
@@ -33,15 +33,15 @@ export function SlotConfigurationTable({ slots, onChange, parentStart, activityI
   const save = () => { if (!editing) return; onChange(isNew ? [...slots, editing] : slots.map((row) => row.id === editing.id ? editing : row)); setEditing(null); };
   const bookings = (slot: MarketingSlot) => state.bookings.filter((row) => row.activityId === activityId && row.slotId === slot.id && row.kind === (prizeId ? "PRIZE" : "ACTIVITY") && (!prizeId || row.poolItemId === prizeId) && ["BOOKED", "CHECKED_IN", "FULFILLED"].includes(row.status)).length;
   return <Panel title={title}><div className="marketing-config-table">
-    <div className="marketing-row-actions"><Button size="small" icon={<IconPlus />} onClick={() => edit()}>添加{prizeId ? "履约时段" : "活动场次"}</Button></div>
+    <div className="marketing-row-actions"><Button size="small" icon={<IconPlus />} onClick={() => edit()}>添加{prizeId ? "领奖时段" : "活动场次"}</Button></div>
     {slots.length ? <Table size="small" rowKey="id" dataSource={slots} pagination={false} scroll={{ x: 720 }} columns={[
       { title: "日期 / 时间", width: 175, render: (_: unknown, row: MarketingSlot) => <div className="marketing-summary-cell"><strong>{row.label}</strong><span>{displayDate(row.startAt)} — {displayDate(row.endAt)}</span></div> },
-      { title: "地点", dataIndex: "location", width: 110 }, { title: "已预约 / 容量", width: 100, render: (_: unknown, row: MarketingSlot) => `${bookings(row)} / ${row.capacity}` },
+      { title: "场地", dataIndex: "location", width: 110 }, { title: "已预约 / 容量", width: 100, render: (_: unknown, row: MarketingSlot) => `${bookings(row)} / ${row.capacity}` },
       { title: "预约截止", width: 145, render: (_: unknown, row: MarketingSlot) => displayDate(row.bookingClosesAt) },
       { title: "签到窗口", width: 180, render: (_: unknown, row: MarketingSlot) => `${displayDate(row.checkinStart)} — ${displayDate(row.checkinEnd)}` },
-      { title: "操作", width: 100, fixed: "right", render: (_: unknown, row: MarketingSlot) => <div className="marketing-row-actions"><Button size="small" theme="borderless" onClick={() => edit(row)}>编辑</Button><Dropdown trigger="click" position="bottomRight" render={<Dropdown.Menu><Dropdown.Item type="danger" onClick={() => Modal.confirm({ title: `删除${prizeId ? "履约时段" : "活动场次"}？`, content: `将移除「${row.label}」。`, onOk: () => onChange(slots.filter((slot) => slot.id !== row.id)) })}>删除</Dropdown.Item></Dropdown.Menu>}><Button size="small" theme="borderless" icon={<IconMore />} aria-label={`更多操作 · ${row.label}`} /></Dropdown></div> },
-    ]} /> : <Empty title={`暂无${prizeId ? "履约时段" : "活动场次"}`} description={prizeId ? "添加可预约的领奖时段与容量。" : "添加活动时间、地点与可预约名额。"} />}
-    {editing && <Modal visible className="marketing-prize-dialog" title={`${isNew ? "添加" : "编辑"}${prizeId ? "履约时段" : "活动场次"}`} width={Math.min(700, window.innerWidth - 20)} okText="保存场次" cancelText="取消" onCancel={() => setEditing(null)} onOk={save}><SlotFields slot={editing} onChange={setEditing} /></Modal>}
+      { title: "操作", width: 100, fixed: "right", render: (_: unknown, row: MarketingSlot) => <div className="marketing-row-actions"><Button size="small" theme="borderless" onClick={() => edit(row)}>编辑</Button><Dropdown trigger="click" position="bottomRight" render={<Dropdown.Menu><Dropdown.Item type="danger" onClick={() => Modal.confirm({ title: `删除${prizeId ? "领奖时段" : "活动场次"}？`, content: `将移除「${row.label}」。`, onOk: () => onChange(slots.filter((slot) => slot.id !== row.id)) })}>删除</Dropdown.Item></Dropdown.Menu>}><Button size="small" theme="borderless" icon={<IconMore />} aria-label={`更多操作 · ${row.label}`} /></Dropdown></div> },
+    ]} /> : <Empty title={`暂无${prizeId ? "领奖时段" : "活动场次"}`} description={prizeId ? "添加可预约的领奖时段与容量。" : "添加活动时间、地点与可预约名额。"} />}
+    {editing && <Modal visible centered className="marketing-prize-dialog" title={`${isNew ? "添加" : "编辑"}${prizeId ? "领奖时段" : "活动场次"}`} width={Math.min(640, window.innerWidth - 32)} okText="保存场次" cancelText="取消" onCancel={() => setEditing(null)} onOk={save}><SlotFields slot={editing} onChange={setEditing} /></Modal>}
   </div></Panel>;
 }
 
@@ -64,15 +64,15 @@ export function PrizeFields({ prize, onChange }: { prize: ActivityPrize; onChang
       <TextField label="奖品名称" value={prize.name} onChange={(value) => update("name", value)} /><TextField label="奖项名称" value={prize.label} onChange={(value) => update("label", value)} />
       <TextField label="奖品说明" value={prize.description} onChange={(value) => update("description", value)} /><ImageField label="奖品图片" value={prize.image} onChange={(value) => update("image", value)} />
       <SelectField label="奖品类型" value={prize.prizeType} list={options({ ...(prize.prizeType === "UNKNOWN" ? { UNKNOWN: "类型待确认" } : {}), PHYSICAL: prizeTypeLabels.PHYSICAL, VIRTUAL: prizeTypeLabels.VIRTUAL })} onChange={changeType} />
-      <SelectField label="领取方式" value={fulfillment} list={options(prize.prizeType === "VIRTUAL" ? { DIRECT: "直接发放", RESERVATION: "预约履约" } : { DIRECT: "直接领取", RESERVATION: "预约领取" })} onChange={changeFulfillment} />
+      <SelectField label="领取方式" value={fulfillment} list={options(prize.prizeType === "VIRTUAL" ? { DIRECT: "直接发放", RESERVATION: "预约使用" } : { DIRECT: "直接领取", RESERVATION: "预约领取" })} onChange={changeFulfillment} />
       <NumberField label="奖品配置数量" value={prize.quota} onChange={(value) => update("quota", value)} /><NumberField label="中奖概率（%）" value={prize.probability} onChange={(value) => update("probability", value)} />
       <NumberField label="每人该奖品最多获得" value={prize.perPersonLimit} onChange={(value) => update("perPersonLimit", value)} />
       {prize.prizeType === "VIRTUAL" && <SelectField label="虚拟奖品内容" value={prize.method} list={options({ REDEMPTION_CODE: "兑换码", VIRTUAL_VOUCHER: "虚拟权益", LINK: "领取链接" })} onChange={(value) => update("method", value as ActivityPrize["method"])} />}
-      {prize.prizeType === "PHYSICAL" && fulfillment === "RESERVATION" && <SelectField label="预约履约类型" value={prize.method} list={options({ PICKUP: "预约领取", EXPERIENCE: "预约体验" })} onChange={(value) => update("method", value as ActivityPrize["method"])} />}
+      {prize.prizeType === "PHYSICAL" && fulfillment === "RESERVATION" && <SelectField label="预约类型" value={prize.method} list={options({ PICKUP: "预约领取", EXPERIENCE: "预约使用" })} onChange={(value) => update("method", value as ActivityPrize["method"])} />}
       {(prize.prizeType === "PHYSICAL" || fulfillment === "RESERVATION") && <TextField label="奖品领取地点" value={prize.location} onChange={(value) => update("location", value)} />}
       <TextField label="使用 / 领取说明" value={prize.instructions} onChange={(value) => update("instructions", value)} /><TimeField label="奖品有效开始" value={prize.claimStart} onChange={(value) => update("claimStart", value)} /><TimeField label="奖品有效截止" value={prize.claimEnd} onChange={(value) => update("claimEnd", value)} />
     </div>
-    <p className="marketing-field-help">{fulfillment === "RESERVATION" ? "中奖后需先选择领取时间，再办理履约。" : prize.prizeType === "VIRTUAL" ? "中奖后直接发放所配置的虚拟权益。" : "中奖后直接生成领奖核销凭证。"}</p>
+    <p className="marketing-field-help">{fulfillment === "RESERVATION" ? "中奖后需先选择领取时间，再领取或使用奖品。" : prize.prizeType === "VIRTUAL" ? "中奖后直接发放所配置的虚拟权益。" : "中奖后直接生成领奖核销凭证。"}</p>
     {needsReservation(prize) && <SlotConfigurationTable title="领奖时段" slots={prize.slots} parentStart={prize.claimStart} activityId={prize.activityId} prizeId={prize.id} onChange={(slots) => update("slots", slots)} />}
     {prize.prizeType === "VIRTUAL" && prize.method === "REDEMPTION_CODE" && <>
       <p>配置数量 {prize.quota} · 已导入 {inventory.imported} · 已分配 {inventory.assigned} · 剩余 {inventory.remaining}</p><Button size="small" onClick={() => setViewCodes(true)}>查看兑换码</Button>
@@ -99,23 +99,23 @@ export function ActivityEditor({ initial, onClose }: { initial: MarketingActivit
     onClose();
     if (!existing) navigate(`marketing/activity/${form.id}`);
   };
-  return <SideSheet visible closeOnEsc className="marketing-activity-editor" width={Math.min(720, window.innerWidth - 24)} title={existing ? "编辑活动" : "新建活动"} onCancel={onClose}
-    footer={<div className="marketing-editor-footer"><Button onClick={onClose}>取消</Button><Button theme="solid" disabled={!access.manage || !access.brands.includes(initial.brand)} onClick={save}>{existing ? "保存" : "创建活动"}</Button></div>}>
-    <div className="marketing-editor">{feedback}{error && <Banner type="warning" title={error} closeIcon={null} />}
+  return <Modal visible centered closeOnEsc maskClosable={false} className="marketing-activity-modal" width={Math.min(760, window.innerWidth - 32)} title={existing ? "编辑活动" : "新建活动"} onCancel={onClose}
+    footer={<div className="marketing-modal-footer"><Button onClick={onClose}>取消</Button><Button theme="solid" disabled={!access.manage || !access.brands.includes(initial.brand)} onClick={save}>{existing ? "保存" : "创建活动"}</Button></div>}>
+    <Form className="marketing-editor" onSubmit={save}>{feedback}{error && <Banner type="warning" title={error} closeIcon={null} />}
       <section className="marketing-form-section"><h2>基本信息</h2><div className="marketing-form-grid">
         <div className="marketing-field-wide"><TextField label="活动名称" value={form.name} onChange={value => update("name", value)} /></div>
         <SelectField label="所属品牌" value={form.brand} disabled={locked} list={access.brands.map(brand => ({ value: brand, label: brandLabels[brand] }))} onChange={value => update("brand", value as MarketingActivity["brand"])} />
         <div className="marketing-field"><span>活动类型</span><RadioGroup aria-label="活动类型" value={form.mode} disabled={locked} onChange={event => setForm(old => ({ ...old, mode: event.target.value, completion: event.target.value === "ONLINE" ? "STAFF" : old.completion }))}><Radio value="ONLINE">线上活动</Radio><Radio value="OFFLINE">线下活动</Radio></RadioGroup></div>
-        {form.mode === "OFFLINE" && <div className="marketing-field-wide"><TextField label="活动场地" value={form.location} disabled={locked} onChange={value => update("location", value)} /></div>}
-        <TimeField label="开始时间" value={form.startAt} disabled={locked} onChange={value => update("startAt", value)} /><TimeField label="结束时间" value={form.endAt} disabled={locked} onChange={value => update("endAt", value)} />
+        {form.mode === "OFFLINE" && <div className="marketing-field-wide"><TextField label="场地" value={form.location} disabled={locked} onChange={value => update("location", value)} /></div>}
+        <TimeField label="活动开始时间" value={form.startAt} disabled={locked} onChange={value => update("startAt", value)} /><TimeField label="活动结束时间" value={form.endAt} disabled={locked} onChange={value => update("endAt", value)} />
         <div className="marketing-field marketing-field-wide"><span>参与方式</span><RadioGroup className="marketing-mode-options" aria-label="参与方式" value={form.bookingEnabled ? "RESERVATION" : "DIRECT"} disabled={locked} onChange={event => update("bookingEnabled", event.target.value === "RESERVATION")}>
           <Radio value="RESERVATION"><span>预约参与<small>用户需要先预约活动场次。</small></span></Radio><Radio value="DIRECT"><span>直接参与<small>用户无需预约，可直接参加活动。</small></span></Radio>
         </RadioGroup></div>
         <div className="marketing-field marketing-field-wide marketing-switch-field"><span>启用抽奖</span><Switch aria-label="启用抽奖" checked={form.lotteryEnabled} disabled={locked} onChange={value => update("lotteryEnabled", value)} /></div>
       </div></section>
       <section className="marketing-form-section"><MarketingRuleEditor value={form.ruleContent ?? ""} format={form.ruleContentFormat} onChange={html => setForm(old => ({ ...old, ruleContent: html, ruleContentFormat: "html" }))} /></section>
-    </div>
-  </SideSheet>;
+    </Form>
+  </Modal>;
 }
 
 /** Created objects own their later configuration; these are independent forms, never steps. */

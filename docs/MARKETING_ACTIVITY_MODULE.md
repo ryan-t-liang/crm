@@ -1,4 +1,4 @@
-# 营销活动模块（Marketing UI Refinement V3）
+# 营销活动模块（Marketing UI Rebuild V4）
 
 现有 GP / UN 纯前端原型的活动管理、用户流程预览与数据管理模块，使用现有 React、Semi Design / Icons、Kivisense 主题及 LocalStorage。不新增后端、数据库、SQL 表、登录系统、微信服务或部署架构。营销合同明确为前端原型扩展，不混入 Sowind 四表。
 
@@ -6,26 +6,27 @@
 
 ## Activity 中心与页面职责
 
-CRM 唯一营销主入口 `#marketing` 是活动列表，不再有顶层奖品库、预约记录、核销工作台。V3列表只显示活动编号、名称、类型、场地、活动时间、状态、参与方式、操作；不包含运营KPI。名称进入详情，行操作只有编辑与更多；活动更多菜单只有开始 / 暂停 / 结束。筛选为名称或编号、活动类型、生命周期状态、参与方式及授权品牌，先权限后筛选。线上场地显示“—”。
+CRM 唯一营销主入口 `#marketing` 是活动列表，不再有顶层奖品库、预约记录、核销工作台。V4列表只显示活动编号、名称、类型、场地、活动时间、状态、参与方式、操作；不包含运营KPI。名称进入详情，行操作只有编辑与更多；活动更多菜单只有开始 / 暂停 / 结束。筛选为名称或编号、活动类型、生命周期状态、参与方式及授权品牌，先权限后筛选。线上场地显示“—”。
 
 `#marketing/activity/<activityId>/<tab>` 拥有全部配置及业务数据：
 
 | 一级入口 | 二级入口 / 职责 | 兼容旧 leaf route |
 | --- | --- | --- |
 | 概览 | 核心指标与抽奖 / 履约指标，同源只读明细 | 默认 / overview |
-| 活动配置 | 基本信息：编号、规则、品牌、参与方式、时间 | basic |
-| 活动配置 | 预约设置：仅预约参与显示；规则、完成条件、ACT场次与容量 | booking-settings |
-| 活动配置 | 抽奖设置：仅启用抽奖显示；时间、次数、上限、未中奖概率 | lottery |
-| 活动配置 | 奖品设置：仅启用抽奖显示；独立类型 / 履约、库存、概率、代码管理 | prizes（新增配置leaf） |
-| 参与记录 | 参与用户：身份、渠道、状态、抽奖次数及详情 | participants |
-| 参与记录 | 预约记录：ACT / PRIZE独立预约及历史 | bookings |
-| 参与记录 | 抽奖记录：每次draw，包括NONE | draws |
-| 奖品履约 | 中奖记录：每份award及冻结权益内容 | awards |
-| 奖品履约 | 核销记录：Redemption业务事实，不用Audit代替 | redemptions |
+| 活动设置 | 基本信息：编号、规则、品牌、参与方式、时间 | basic |
+| 活动设置 | 预约设置：仅预约参与显示；规则、完成条件、ACT场次与容量 | booking-settings |
+| 活动设置 | 抽奖设置：仅启用抽奖显示；时间、次数、上限、未中奖概率 | lottery |
+| 活动设置 | 奖品设置：仅启用抽奖显示；独立类型 / 履约、库存、概率、代码管理 | prizes（新增配置leaf） |
+| 参与管理 | 参与用户：身份、渠道、状态、抽奖次数及详情 | participants |
+| 参与管理 | 预约记录：仅ACTIVITY活动预约及历史 | bookings |
+| 参与管理 | 抽奖记录：每次draw，包括NONE | draws |
+| 中奖与核销 | 中奖记录：每份award及冻结权益内容 | awards |
+| 中奖与核销 | 领奖预约：仅PRIZE领取 / 使用预约及历史 | prize-bookings（新增只读leaf） |
+| 中奖与核销 | 核销记录：Redemption业务事实，不用Audit代替 | redemptions |
 
-详情是全宽工作区，不再有后台职责卡片、固定时间侧栏、规则版本说明或创建Wizard。新建 / 编辑共享一个720px Semi SideSheet，只展示九个基础字段；创建后进入详情。新建底部为取消 / 创建活动，编辑为取消 / 保存。活动说明和封面不再进入基础表单，旧字段保留读取，不删除旧用户内容。详情四个一级入口继续保留，配置分为基本信息 / 预约设置 / 抽奖设置 / 奖品设置，能力不适用时隐藏对应配置；旧能力不适用的配置leaf回到基本信息。预约与抽奖设置是独立表单，不是步骤；奖品沿用独立编辑。普通表单 / 表格不套Card，间距与Surface详见MARKETING_UI_DESIGN_RULES.md。
+V4按绑定的Kivisense Admin Design Skill实现对象式页面。新建 / 编辑共享760px居中Semi Modal，Body超高时内部滚动，只展示九个基础字段；创建后进入详情。新建取消 / 创建活动，编辑取消 / 保存。说明和封面不进入表单，旧字段保留读取，不删除用户资料。Header直接显示活动时间、场地、状态与参与方式，时间安排只在元信息同行以小型Popover查看。四个一级line Tabs固定概览 / 活动设置 / 参与管理 / 中奖与核销，二级采用低权重文字导航。设置左对齐max-width1040px，预约 / 抽奖继续Focused Drawer，场次和奖品独立Modal，无步骤或发布检查页。普通Section / Table不套Card，具体规则见MARKETING_UI_DESIGN_RULES.md。
 
-直接参与不显示ACT预约场次、取消 / 改约或预约人数；无抽奖活动不显示抽奖 / 奖品指标和不适用配置。是否显示预约记录同时考虑独立的PRIZE履约预约，不能由活动参与方式错误隐藏奖品预约。负库存、非法整数或概率即使保存草稿也拒绝。产品页面移除研发 / 演示边界长文；这些边界仍在本文及验收记录中明确保留。
+直接参与不显示ACT预约场次、取消 / 改约或预约人数；无抽奖活动不显示抽奖 / 奖品指标和不适用配置。参与管理的预约记录按ACTIVITY查询，中奖与核销的领奖预约按PRIZE查询；直接参与且无历史活动预约可隐藏前者，但不能由参与方式隐藏后者。已有记录不删除、不合并；旧直接参与bookings链接在只有领奖预约时适配到新入口。负库存、非法整数或概率即使保存草稿也拒绝。产品页面移除研发 / 演示边界长文；这些边界仍在本文及验收记录中明确保留。
 
 旧 `#marketing/prizes`、`#marketing/bookings` 显示活动列表和入口迁移说明，不保留全局模块。会员原营销 Tab 保持只读引用。用户预览 `#marketing/preview/<activityId>/<userId>` 复用报名、预约、抽奖和奖品查看。
 
@@ -159,7 +160,7 @@ PRIZE预约引用具体获奖权益与该活动奖品slots，不重报名、不�
 
 仍用 `kivisense-marketing-prototype-v1`，内部 schema2；仅缺键初始化，刷新不移动时间、不重播种、不覆盖修改。升级先将完整原始字符串备份到 `kivisense-marketing-prototype-v1:backup-v1`，再写 V2。
 
-Refinement V2 / V3不改存储键 / schema2、不清空LocalStorage、不回填日期、代码或会员。旧活动缺ruleContent、ruleContentFormat或activityCode，旧Participation缺新身份 / 渠道字段、旧奖品缺fulfillmentMode都以只读适配解释，已有用户修改不被演示种子覆盖。缺省场次标记解释为未禁用 / 未删除；历史正概率空库存与不足履约配置不强行重写。新建与demo工厂分离仍保留。
+Refinement V2 / V3 / V4不改存储键 / schema2、不清空LocalStorage、不回填日期、代码或会员。旧活动缺ruleContent、ruleContentFormat或activityCode，旧Participation缺新身份 / 渠道字段、旧奖品缺fulfillmentMode都以只读适配解释，已有用户修改不被演示种子覆盖。缺省场次标记解释为未禁用 / 未删除；历史正概率空库存与不足履约配置不强行重写。新建与demo工厂分离仍保留。
 
 旧全局定义复制为各活动自己的 ActivityPrize，保留 pool / award / participation / booking / chance / draw ID、履约承诺，prizeId 留 legacyPrizeId 可追溯。DIRECT / PICKUP / EXPERIENCE → PHYSICAL，不能判断 → UNKNOWN。历史缺图片 / 说明不拿今天可变定义伪造快照。仅从有对象 / 演员 / 动作且成功时间匹配的旧 CHECKIN / COMPLETE / CLAIM Audit 转可信核销，标 LEGACY_AUDIT；孤立时间不造事实，配置 Audit 不混入。虚构演示事实标 DEMO_SEED。
 
