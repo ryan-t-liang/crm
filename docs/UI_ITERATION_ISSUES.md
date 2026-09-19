@@ -1,5 +1,7 @@
 # 功能与视觉问题 / 重测
 
+> 文档角色：历史问题与重测记录。这里的截图、尺寸和局部修正不构成新的视觉规范。
+
 ## Marketing Final Acceptance（2026-09-17）
 
 来源：Final Acceptance附件五重点 /33边界，当前47bea37基线。使用automated-test-engineer先复现、局部修复、规则 /页面 /持久结果分层重测；范围与最新五套本地证据见MARKETING_ACTIVITY_ACCEPTANCE的Final Acceptance章节。

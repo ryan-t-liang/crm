@@ -54,4 +54,6 @@ npm run build
 
 For current browser QA, build first and keep `npm --workspace frontend-react run preview -- --host 127.0.0.1 --port 4174` running. Execute `npm run qa:browser`, `npm run qa:dashboard`, and `npm run qa:marketing` (the V2 runner) against that build; override the URL with `PROTOTYPE_BASE_URL` when needed. These tests use isolated mock-data browser contexts, not the user's browser storage.
 
-Marketing opens at `#marketing`; per-activity tabs own configuration and business data. The separate staff surface is `#redemption/<credential>`. V1 marketing data upgrades in the existing namespace only after an exact raw backup; there is no automatic clearing. See `docs/MARKETING_ACTIVITY_MODULE.md` and `docs/MARKETING_ACTIVITY_ACCEPTANCE.md` for the current rules, evidence and limits. Older V1 QA scripts/artifacts remain historical, not V2 acceptance.
+Marketing opens at `#marketing`; per-activity tabs own configuration and business data. The separate staff surface is `#redemption/<credential>`. V1 marketing data upgrades in the existing namespace only after an exact raw backup; there is no automatic clearing. See `docs/MARKETING_ACTIVITY_MODULE.md` for the business contract and `docs/MARKETING_ACTIVITY_ACCEPTANCE.md` for historical evidence and limits.
+
+`docs/DESIGN_SYSTEM.md` is the only normative visual and interaction document. Module specifications, acceptance records and QA artifacts do not define a separate Design System.

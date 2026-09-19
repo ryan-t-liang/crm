@@ -2,9 +2,9 @@
 
 This repository is a frontend-only, high-fidelity CRM product prototype. It must not add a backend, database, server authentication, mail server, queue, migration, or deployment architecture.
 
-Before frontend UI or UX changes, read `docs/DESIGN_SYSTEM.md` and `docs/PROTOTYPE_ARCHITECTURE.md`.
+Before frontend UI or UX changes, read `docs/DESIGN_SYSTEM.md`, inspect the closest mature Lead, Deal, Customer or Member page, and read `docs/PROTOTYPE_ARCHITECTURE.md` for product boundaries.
 
-For admin UI work, read `.agents/skills/kivisense-admin-design/SKILL.md` and its required references. It is the binding Kivisense UI contract; follow the documented patterns rather than inventing new create, edit, navigation, card or drawer patterns.
+For admin UI work, use `.agents/skills/kivisense-admin-design/SKILL.md`. `docs/DESIGN_SYSTEM.md` is the only normative design document; module specifications, acceptance reports, QA evidence and historical UI notes are not visual standards. Read the skill's `REFERENCES.md` only when an external product is explicitly requested or no local interaction precedent exists.
 
 Semi Design, Semi Icons, the Kivisense Semi theme, React, and Recharts are the approved foundation. Do not introduce a competing component library. Product data belongs in `frontend-react/src/mock/`; user changes belong in the frontend store and LocalStorage.
 

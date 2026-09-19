@@ -1,62 +1,86 @@
 # Kivisense CRM prototype architecture
 
-The repository is intentionally frontend-only. `frontend-react/` contains the application; the root package delegates development, test, lint, and build commands to that workspace.
+This repository is intentionally frontend-only. `frontend-react/` contains the application; the root package delegates development, test, lint, and build commands to that workspace.
 
-## Boundaries
+This document defines technical and product boundaries. It is not a UI specification. Visual and interaction decisions belong only to [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md).
 
-- `src/mock/`: canonical demo dataset.
-- `src/stores/`: React state, scoped selectors, LocalStorage persistence, and reset behavior.
+## Source boundaries
+
+- `src/mock/`: canonical demo datasets and explicitly identified presentation fixtures.
+- `src/stores/`: React state, scoped selectors, LocalStorage persistence, reset and recovery behavior.
 - `src/types/`: product model contracts.
-- `src/features/`: Lead, Deal, communication, customer, channel, catalog, work, and dashboard UI.
-- `src/components/`: reusable CRM shell, tables, timelines, and detail workspace.
+- `src/features/`: product modules and their UI composition.
+- `src/components/`: shared CRM shell and reusable application components.
 - `src/styles/`: Kivisense presentation on top of Semi Design.
 
-The prototype must not contain a backend, database, server authentication, SMTP/IMAP integration, server-side RBAC, queues, migrations, or deployment infrastructure. Role and distributor isolation are product simulations enforced by scoped frontend selectors.
+The prototype must not add a backend, database, server authentication, SMTP/IMAP integration, server-side RBAC, queues, migrations, or deployment infrastructure. Role, distributor and brand isolation are frontend product simulations enforced by scoped stores and actions.
 
-The member and brand operations workspace is an additive bounded module under `src/features/member-operations/`. It uses `src/types/member-operations.ts`, `src/mock/member-demo-data.ts`, and `src/stores/member-operations-store.tsx`; it does not extend or replace the sales contracts.
+## Sales
 
-## Product model
+The canonical sales lifecycle is:
 
-The sales lifecycle is `Lead → Qualified → Deal → Won/Lost`. Deals reference a Product and optional Add-ons. Monetary data is intentionally absent. Activity is the shared history for leads, deals, contacts, and organizations.
+`Lead → Qualified → Convert to Deal → Won/Lost`
 
-Member operations mirrors the requested Sowind object boundary as four independent frontend collections: `customer`, brand identity `user`, `user_profile`, and `user_purchase_intent`. The UI composes `user + user_profile` for a brand-member detail instead of creating a Membership entity. A `user.customer_id` or `user_purchase_intent.user_id` may remain `null`. Purchase-intent contact fields stay as their own historical snapshot and are not derived live from `user_profile`. Member Purchase Intents are not Sales Leads and never enter Deal conversion or sales analytics automatically.
+Deals reference a Product and optional Add-ons. Monetary data is intentionally absent. Activity is the shared history for Leads, Deals, Contacts and Organizations.
 
-The Dashboard V1 attachment supplies `docs/reference/sowind-schema.sql`. It has now been read and copied unchanged to the local reference directory (ignored by Git). Dashboard types expose SQL timestamps, `user.is_deleted`, intent merchandise fields and JSON `hq_ref` without rewriting existing data. Legacy aliases/extensions remain explicitly identified in `docs/SOWIND_MEMBER_FIELD_MAPPING.md`; these partial frontend display contracts do not claim complete database integration.
+Sales uses the `kivisense-crm-prototype-v1` LocalStorage namespace. Valid existing records are not seed-merged or date-backfilled.
 
-## Dashboard V1
+## Member and brand operations
 
-One navigation entry retains `#dashboard` (business summary), with `#dashboard/sales` and `#dashboard/members` as secondary tabs. `features/dashboard/dashboard-model.ts` is the shared read-only query layer: authority first, independent business filters second, one fixed Shanghai-time snapshot for KPIs, buckets and drilldown records. Read-only Semi SideSheets consume the same selected record arrays; no unfiltered list redirection. Date presets/custom selection stay mounted across dashboard tabs, and closing a drawer preserves filters. Role/query/data changes dismiss existing drawers.
+Member operations is an additive bounded module under `src/features/member-operations/`. It uses:
 
-Current stock, created-in-period cohorts and those cohorts' current results are separate. No historical funnel or actual-close event metrics are inferred. The App route adds read-only distributor checks for direct Lead/Deal/Contact/Organization detail URLs. Business mutations and both store loaders/storage keys/reset implementations are unchanged. See `DASHBOARD_METRICS.md` and `DASHBOARD_V1_ACCEPTANCE.md`.
+- `src/types/member-operations.ts`;
+- `src/mock/member-demo-data.ts`;
+- `src/stores/member-operations-store.tsx`.
 
-## Marketing activities — V5 activity record workspace
+It mirrors four Sowind collections: `customer`, brand identity `user`, `user_profile`, and `user_purchase_intent`. The UI composes `user + user_profile`; it does not create a Membership entity.
 
-Latest prototype management correction (2026-09-18, based on 82e85ab): a single activity-header Dropdown owns create prize / edit activity information / edit booking settings / manage sessions / lottery settings, followed by the unchanged lifecycle commands. Duplicated rail edit icons, session-management and table-create buttons are removed. Configuration capabilities no longer depend on published/canceled/ended state or feature enablement; actual participation/draw lifecycle gates stay unchanged. SAVE_ACTIVITY permits focused basic/booking/lottery allowlisted edits after publication while preserving lifecycle/creator metadata, brand identity, existing business collections and used-session time/location/capacity protections. Undeclared whole-object saves and existing prize substantive rules retain their old protections. Independent new prizes and valid activity sessions can be added even after cancellation; nothing reopens registration or rewrites saved awards/codes/chances. Runtime probability validation stops inconsistent configurations before charging a draw. Sales/member stores, schema, storage/reset keys and existing persisted user changes are unchanged. This latest contract supersedes the prior create/submit restrictions described in the historical presentation correction below.
+`user.customer_id` and `user_purchase_intent.user_id` may remain `null`. Purchase-intent contact fields are independent historical snapshots and are not derived live from `user_profile`. Purchase Intents are not Sales Leads and never enter Deal conversion or sales analytics automatically.
 
-Record presentation correction (2026-09-18, based on 02e28d6): the primary tabs no longer repeat their titles in a second panel header; participant and separate redemption inspection buttons/drawers are removed. Legacy record links resolve to the appropriate primary tab. Draw and redemption status/time share the draw table, with only reservation-based award rows offering a scoped, read-only Semi Modal of prize bookings. Operational redemption facts and the staff surface are unchanged. The latest typography request sets activity-only tab/rail headings to 14px, rail labels/body 14px; text/module/button gaps remain 15/20/15px, with 20px before the session-management action. Activity booking periods display time only; grid composition keeps status tags content-sized. A visible create-prize action reuses the existing right-side FormSideSheet and validated save command; published/business-history locks still prevent creating prizes, with an explicit banner and disabled submit rather than hidden entry.
+Member operations uses the independent `kivisense-member-operations-v1` namespace. Its reset does not touch sales or marketing data.
 
-src/mock/marketing-record-illustrations.ts supplies 30 fictional ACTIVITY booking rows and 30 draw-phase rows directly inside every authorized activity detail, also for existing LocalStorage. Its stable, separate IDs and fixed-on-open timestamps are presentation fixtures, not user history or automatic seed-merge. Only the two read-only tables and their scoped inspect/modal components receive the composed dataState; business actions, quota, actual prize settings, statistics, sales/member stores and persisted records still use the unmodified provider state. Existing records (including prior saved demo records) remain visible, so the full table can exceed 30. No extra demonstration activity, join-sample action, reset or storage write is required.
+## Dashboard
 
-One member-and-brand navigation entry uses `#marketing`, now an activity list rather than four top-level work areas. Activity details own configuration, prizes, reservations and readonly participation/draw/award/redemption data. Existing `activity.pool` contains owned `ActivityPrize` records with independent PHYSICAL/VIRTUAL types, fulfillment rules and optional code allocations; there is no global prize master collection. `src/types/marketing.ts`, `src/mock/marketing-demo-data.ts`, `src/features/marketing/` and `src/stores/marketing-store.tsx` remain an independent frontend bounded context, not SQL tables or a replacement sales/member model. The provider references existing members; all writes use one validated marketing action and one persistence commit. Explicitly CRM-linked participations preserve the reliable customer or brand-user boundary; optional external/anonymous observations use stable internal IDs without inventing CRM associations. ACT/PRIZE bookings, chances, draws (including NONE), immutable award contents, quota, separate redemption business facts and audit records remain explicitly linked. Copy creates fresh configurations without business records or codes. Reservation-based winning is capped by remaining seats minus outstanding unreserved promises, not quota alone.
+`#dashboard`, `#dashboard/sales`, and `#dashboard/members` share the read-only query layer in `features/dashboard/dashboard-model.ts`.
 
-Activity details now have exactly three primary record-tabs: 活动预约记录 / 奖品设置 / 抽奖记录, with no Overview. Mature Lead / Deal / Customer / Member screens still supply DetailWorkspace, the existing responsive detail-grid, Semi tables and SideSection / DataList rail. Core create/edit fields and rules are displayed and edited from the right rail; booking/lottery summaries retain focused editors and rule locking. Sessions use one focused SideSheet. The header uses restrained activity identity/creator/status/location tags. Spacing is scoped to this detail: text blocks 15px, modules 20px, buttons 15px; no global tokens change. marketing-records.ts is a readonly projection of pending participations, every draw (including NONE), immutable awards and PRIZE bookings. Phases 1/2/3/4/5 preserve direct and reserved redemption as distinct values with the same Chinese redeemed label. Direct virtual issuance is not redemption. Activity tables remain ACTIVITY-only; award history drawers are PRIZE-only and filter by activity/participation/award. Legacy leaf links resolve to the new primary tabs or readonly record drawers, not unfiltered collections. Operational actions, chances/quotas/code allocation and existing locks are unchanged; optional createdBy is assigned only on new/copy creation, optional identity.gender is an activity-form snapshot, and old missing metadata is never backfilled. See MARKETING_RECORD_FIELDS.md.
+The query order is:
 
-Optional `activityCode` is allocated by the central save action across the entire marketing namespace, not per brand; old missing codes have a read-only display fallback and are stored only when that activity is explicitly saved. The business list has eight columns and only three lifecycle labels; its Start/Pause/End controls reuse existing internal PUBLISHED/PAUSED/CANCELED actions and configured time windows. No additional state machine or backend uniqueness service is introduced. Optional `ruleContent` remains display-only; explicit `ruleContentFormat=html` identifies the limited rich-text content. Legacy text remains escaped text, HTML rendering uses a strict allowlist, and no rule content controls chances/probability/booking. Older missing fields are interpreted without automatic storage writes. See MARKETING_UI_DESIGN_RULES.md.
+1. authority scope;
+2. business-specific filters;
+3. a fixed Shanghai-time snapshot;
+4. metrics, buckets and drilldown records from the same selected data.
 
-Activity participation uses existing `bookingEnabled` as RESERVATION/DIRECT compatibility mapping. Prize `fulfillmentMode` is independently DIRECT/RESERVATION, including virtual reservation-based fulfillment; legacy methods remain readable. All four activity/prize combinations retain ACT/PRIZE booking separation, completion-issued chances, immutable award/code allocation and reservation promises. Virtual DIRECT issuance does not create a staff claim; virtual RESERVATION preserves its allocated content but issues only after a valid prize booking and claim.
+Current stock, created-in-period cohorts and the current results of those cohorts remain separate. The Dashboard does not infer a historical funnel or actual-close events that the data does not contain.
 
-New participations have stable internal participant IDs and optional external observations (member, UnionID, OpenID+AppID, phone+country code, external/anonymous/session identifiers). No external identifier or name is globally required or treated as a natural-person uniqueness key. OpenID needs its app context; ambiguous or weak matching never automatically merges participations/customers. Later explicit member association retains the participation and its history. Channels are WECHAT_MINIPROGRAM/WECHAT_H5/WEB_H5/QR_H5/STAFF/OTHER; missing legacy channels display OTHER. Ordinary lists mask identities, while scoped readonly detail can show the saved identity.
+## Marketing activities
 
-The user-flow preview UI has been removed. Legacy preview URLs resolve to the authorized activity detail without participation actions. The independent `#redemption/<credential>` staff surface still shares the same marketing state and renders outside the CRM AppShell, including the compatible legacy redemption URL. CRM contains no staff workbench or verification writes; the member marketing tab remains readonly. Existing sales/member store implementations, resets and Dashboard queries are unchanged.
+Marketing is an independent frontend bounded context implemented by:
 
-Marketing retains `kivisense-marketing-prototype-v1` but upgrades the schema to 2. Safe V1 conversion first preserves the exact raw string at `kivisense-marketing-prototype-v1:backup-v1`; conflicting backups or intervening edits block overwrite. Only a missing namespace initializes, unknown/corrupt contents are preserved, and confirmed marketing reset changes only the primary marketing key, never backups/sales/members. Browser quota failure commits no result/cost/stock. Frontend role/randomness/capacity checks and synchronous local commits are demonstrations, not production concurrency/security or backend migrations. See `MARKETING_ACTIVITY_MODULE.md` and `MARKETING_ACTIVITY_ACCEPTANCE.md`.
+- `src/types/marketing.ts`;
+- `src/mock/marketing-demo-data.ts`;
+- `src/features/marketing/`;
+- `src/stores/marketing-store.tsx`.
 
-## Existing persistence
+It does not add SQL tables and does not replace sales or member models. Marketing may reference existing member identities, but participation, bookings, chances, draws, awards, redemptions and audits remain marketing-owned records.
 
-The initial state is generated from `src/mock/demo-data.ts`. Mutations are written to browser LocalStorage. “Reset Demo Data” restores the canonical dataset.
+All writes pass through validated marketing actions and one persistence commit. Activity and prize bookings remain distinct. Award contents and assigned codes are immutable historical facts. Copying an activity creates fresh configuration identities without copying business records or allocated codes.
 
-Sales remains under `kivisense-crm-prototype-v1` with schema version1. Member operations uses the independent `kivisense-member-operations-v1` key with schema version2. Core Integrity V1 preserves damaged/unknown-version data and blocks automatic overwrite, persists before publishing successful state, and limits confirmed resets to HQ administrators. Each reset replaces only its own workspace key; it never deletes another workspace or performs backend migration. Valid old records are not seed-merged or date-backfilled. Store actions enforce lightweight live actor/distributor/brand checks independently of UI visibility. See `CRM_CORE_INTEGRITY.md` for invariants and known frontend-only limitations.
+The marketing store retains `kivisense-marketing-prototype-v1` with schema version 2. Safe V1 conversion preserves the exact source string at `kivisense-marketing-prototype-v1:backup-v1`; unknown, corrupt or conflicting data is preserved rather than silently replaced. Marketing reset changes only the primary marketing namespace.
 
-## Current display and navigation conventions
+Frontend role, randomness, capacity and persistence checks demonstrate product behavior. They are not production concurrency, security or backend guarantees.
 
-Products belongs to SALES, after Organizations; it keeps the same product routes and HQ-only write permissions. All brand display names are Kivisense. Scope labels include the original gp/un code only where needed to distinguish selectors or analytics; SQL fields, dictionary codes, stored records and permissions are not merged or renamed. `utils/brand-display.ts` owns this display-only mapping.
+Detailed marketing field and business contracts remain in `MARKETING_ACTIVITY_MODULE.md` and `MARKETING_RECORD_FIELDS.md`. Their page descriptions and historical acceptance notes do not define the Design System.
+
+## Routing and display-only compatibility
+
+Products belongs to SALES after Organizations and retains its existing routes and HQ-only write permissions.
+
+All brand display names are Kivisense. The raw `gp` / `un` codes remain in stored data, permissions and scope logic. `utils/brand-display.ts` owns display-only mapping.
+
+Direct detail routes apply the same visible authority boundaries as their parent lists. Legacy marketing routes may resolve to current records, but compatibility routing does not create new business objects or rewrite stored history.
+
+## Persistence and reset invariants
+
+Each workspace owns its LocalStorage namespace and resets only that namespace. Loaders preserve unknown or damaged data and surface recovery errors rather than manufacturing empty state.
+
+Successful actions persist before publishing new React state. Store actions enforce actor and scope checks independently of whether a UI control is visible.
