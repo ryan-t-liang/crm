@@ -40,7 +40,7 @@ export function MarketingProvider({ children }: { children: ReactNode }) {
     const result = executeMarketing(stateRef.current, command, { actor: getCurrentActor(), members: membersRef.current, now: Date.now() });
     if (result.state !== stateRef.current) {
       try { saveMarketing(localStorage, result.state, migrationRef.current); migrationRef.current = undefined; }
-      catch { return { state: stateRef.current, ok: false, error: "本地保存失败，未提交扣次或库存变化；请检查浏览器存储空间。" }; }
+      catch { return { state: stateRef.current, ok: false, error: "本地保存失败，未提交抽奖次数或奖品数量变化；请检查浏览器存储空间。" }; }
       stateRef.current = result.state; setState(result.state);
     }
     return result;

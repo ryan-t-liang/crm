@@ -12,12 +12,16 @@ const physicalType = (method: string): ActivityPrize["prizeType"] => ["DIRECT", 
 function migrateV1(parsed: StoredShape): MarketingState {
   const activities = parsed.activities.map((activity) => ({
     ...activity, allowCancel: activity.allowCancel ?? true, allowReschedule: activity.allowReschedule ?? true,
+    sessionPrizes: activity.sessionPrizes ?? [], sessionPrizeConfigVersion: activity.sessionPrizeConfigVersion ?? 1,
     pool: activity.pool.map((item: ActivityPrize & { prizeId?: string }) => {
       const definition = parsed.prizes?.find((row) => row.id === item.prizeId);
       const { prizeId, ...retained } = item;
+      const quantityMode = item.quantityMode ?? "LIMITED";
       return { ...retained, activityId: activity.id, legacyPrizeId: prizeId,
         name: item.name ?? definition?.name ?? item.label, description: item.description ?? definition?.description ?? "",
         image: item.image ?? definition?.image ?? "", prizeType: item.prizeType ?? physicalType(item.method),
+        quantityMode, quantityLimit: quantityMode === "UNLIMITED" ? null : item.quantityLimit ?? item.quota,
+        defaultProbability: item.defaultProbability ?? item.probability,
         codes: item.codes ?? [], voucherName: item.voucherName ?? "", voucherDescription: item.voucherDescription ?? "", link: item.link ?? "" };
     }),
   }));
@@ -59,7 +63,12 @@ export function decodeMarketing(value: string): DecodedMarketing {
       [row.bookingEnabled, row.allowWalkIn, row.lotteryEnabled].every((field) => typeof field === "boolean") &&
       [row.grantCount, row.drawLimit, row.winLimit, row.noWinProbability].every((field) => typeof field === "number" && Number.isFinite(field) || row.status === "DRAFT" && field === null) &&
       (row.dailyLimit === null || typeof row.dailyLimit === "number" && Number.isFinite(row.dailyLimit)) &&
-      Array.isArray(row.slots) && Array.isArray(row.pool) && row.pool.every((item) => typeof item.label === "string" && Array.isArray(item.slots))) &&
+      Array.isArray(row.slots) && Array.isArray(row.pool) && row.pool.every((item) => typeof item.label === "string" && Array.isArray(item.slots)) &&
+      (row.sessionPrizeConfigVersion === undefined || Number.isInteger(row.sessionPrizeConfigVersion) && row.sessionPrizeConfigVersion > 0) &&
+      (row.sessionPrizes === undefined || Array.isArray(row.sessionPrizes) && row.sessionPrizes.every((item) =>
+        typeof item.sessionId === "string" && typeof item.prizeId === "string" && typeof item.enabled === "boolean" &&
+        typeof item.probability === "number" && Number.isFinite(item.probability) && item.probability >= 0 && item.probability <= 100 &&
+        (item.allocatedQuantity === undefined || Number.isInteger(item.allocatedQuantity) && item.allocatedQuantity >= 0)))) &&
       parsed.participations.every((row) => typeof row.activityId === "string" && typeof row.subjectKey === "string" && typeof row.credential === "string" && Array.isArray(row.identities) && row.identities.every((ref) => typeof ref.userId === "string" && typeof ref.brand === "string") &&
         (row.participantId === undefined || typeof row.participantId === "string" && Boolean(row.participantId)) &&
         (row.participationChannel === undefined || ["WECHAT_MINIPROGRAM", "WECHAT_H5", "WEB_H5", "QR_H5", "STAFF", "OTHER"].includes(row.participationChannel)) &&
@@ -68,17 +77,77 @@ export function decodeMarketing(value: string): DecodedMarketing {
         }) && (row.identity.gender === undefined || row.identity.gender === null || ["MALE", "FEMALE", "UNDISCLOSED"].includes(row.identity.gender)))) &&
       parsed.bookings.every((row) => typeof row.participationId === "string" && typeof row.slotId === "string" && ["ACTIVITY", "PRIZE"].includes(row.kind) && typeof row.status === "string") &&
       parsed.chances.every((row) => Number.isInteger(row.count) && row.count > 0) &&
-      parsed.draws.every((row) => typeof row.operationId === "string" && typeof row.participationId === "string") &&
+      parsed.draws.every((row) => typeof row.operationId === "string" && typeof row.participationId === "string" &&
+        (row.sessionId === undefined || typeof row.sessionId === "string" && Boolean(row.sessionId)) &&
+        (row.drawConfigVersion === undefined || Number.isInteger(row.drawConfigVersion) && row.drawConfigVersion > 0) &&
+        (row.probabilitySnapshot === undefined || Array.isArray(row.probabilitySnapshot) && row.probabilitySnapshot.every((item) =>
+          typeof item.prizeId === "string" && [item.configuredProbability, item.effectiveProbability].every((value) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 100) &&
+          ["LIMITED", "UNLIMITED"].includes(item.quantityMode) && (item.sessionRemaining === undefined || Number.isInteger(item.sessionRemaining) && item.sessionRemaining >= 0)))) &&
       parsed.awards.every((row) => [row.credential, row.prizeName, row.location, row.instructions, row.claimStart, row.claimEnd].every((field) => typeof field === "string"));
     if (shapes && parsed.version === 1) return { state: migrateV1(parsed), originalV1: value };
     const owned = shapes && parsed.activities.every((row) => typeof row.allowCancel === "boolean" && typeof row.allowReschedule === "boolean" && row.pool.every((item) =>
       item.activityId === row.id && ["PHYSICAL", "VIRTUAL", "UNKNOWN"].includes(item.prizeType) &&
       (item.fulfillmentMode === undefined || ["DIRECT", "RESERVATION"].includes(item.fulfillmentMode)) &&
+      (item.quantityMode === undefined
+        ? item.quantityLimit === undefined || item.quantityLimit === null || Number.isInteger(item.quantityLimit) && item.quantityLimit >= 0
+        : item.quantityMode === "UNLIMITED"
+          ? item.quantityLimit === undefined || item.quantityLimit === null
+          : item.quantityMode === "LIMITED" && typeof item.quantityLimit === "number" && Number.isInteger(item.quantityLimit) && item.quantityLimit >= 0) &&
+      (item.defaultProbability === undefined || typeof item.defaultProbability === "number" && Number.isFinite(item.defaultProbability) && item.defaultProbability >= 0 && item.defaultProbability <= 100) &&
       [item.name, item.description, item.image, item.voucherName, item.voucherDescription, item.link].every((field) => typeof field === "string") && Array.isArray(item.codes) && item.codes.every((code) => typeof code.code === "string")));
     const records = owned && parsed.bookings.every((row) => ["USER", "WALK_IN", "UNKNOWN"].includes(row.source)) && parsed.awards.every((row) => ["PHYSICAL", "VIRTUAL", "UNKNOWN"].includes(row.prizeType) && (row.fulfillmentMode === undefined || ["DIRECT", "RESERVATION"].includes(row.fulfillmentMode))) && parsed.redemptions.every((row) =>
       [row.activityId, row.participationId, row.credential, row.actorId, row.occurredAt].every((field) => typeof field === "string") && ["CHECKIN", "COMPLETE", "PRIZE_CLAIM", "EXPERIENCE_CLAIM"].includes(row.type));
     const codes = owned ? parsed.activities.flatMap((activity) => activity.pool.flatMap((item) => item.codes.map((code) => ({ ...code, activityId: activity.id, prizeId: item.id })))) : [];
-    const validAllocations = records && new Set(codes.map((row) => row.code)).size === codes.length && codes.every((code) => !code.assignedAwardId || parsed.awards.some((award) => award.id === code.assignedAwardId && award.activityId === code.activityId && award.poolItemId === code.prizeId && award.virtualContent?.code === code.code)) && parsed.awards.every((award) => award.prizeType !== "VIRTUAL" || award.method !== "REDEMPTION_CODE" || codes.some((code) => code.assignedAwardId === award.id && code.code === award.virtualContent?.code));
+    const validSessionPrizes = owned && parsed.activities.every((activity) => {
+      const rows = activity.sessionPrizes ?? [];
+      const unique = new Set(rows.map((row) => `${row.sessionId}:${row.prizeId}`)).size === rows.length;
+      const references = rows.every((row) => activity.slots.some((slot) => slot.id === row.sessionId && !slot.deleted) && activity.pool.some((prize) => prize.id === row.prizeId));
+      const sessions = [...new Set(rows.map((row) => row.sessionId))];
+      const probabilities = sessions.every((sessionId) => rows.filter((row) => row.sessionId === sessionId && row.enabled).reduce((sum, row) => sum + row.probability, 0) <= 100);
+      const quantities = rows.every((row) => {
+        const prize = activity.pool.find((item) => item.id === row.prizeId);
+        if (!prize) return false;
+        const drawIds = new Set(parsed.draws.filter((draw) => draw.activityId === activity.id && draw.sessionId === row.sessionId).map((draw) => draw.id));
+        const won = parsed.awards.filter((award) => award.activityId === activity.id && award.poolItemId === row.prizeId && drawIds.has(award.drawId)).length;
+        if (!row.enabled && row.probability !== 0) return false;
+        if (prize.quantityMode === "UNLIMITED") return row.allocatedQuantity === undefined;
+        if (!Number.isInteger(row.allocatedQuantity) || row.allocatedQuantity! < 0) return false;
+        const allocated = row.allocatedQuantity!;
+        return allocated >= won && (row.enabled || allocated === won);
+      });
+      const totals = activity.pool.every((prize) => prize.quantityMode === "UNLIMITED" || rows.filter((row) => row.prizeId === prize.id).reduce((sum, row) => sum + (row.allocatedQuantity ?? 0), 0) <= (prize.quantityLimit !== undefined && prize.quantityLimit !== null ? prize.quantityLimit : prize.quota));
+      return unique && references && probabilities && quantities && totals && (!rows.length || Number.isInteger(activity.sessionPrizeConfigVersion) && activity.sessionPrizeConfigVersion! > 0);
+    });
+    const validDrawSnapshots = owned && parsed.draws.every((draw) => {
+      const usesSessionPrizeContract = draw.sessionId !== undefined || draw.drawConfigVersion !== undefined || draw.probabilitySnapshot !== undefined;
+      // Historical V2 draws predate the session-prize contract. Keep their
+      // previous read compatibility and show missing relations as "待核对".
+      if (!usesSessionPrizeContract) return true;
+      const activity = parsed.activities.find((row) => row.id === draw.activityId);
+      const participation = parsed.participations.find((row) => row.id === draw.participationId && row.activityId === draw.activityId);
+      if (!activity || !participation || draw.poolItemId !== null && !activity.pool.some((prize) => prize.id === draw.poolItemId)) return false;
+      const hasVersion = Number.isInteger(draw.drawConfigVersion) && draw.drawConfigVersion! > 0;
+      const hasSnapshot = Array.isArray(draw.probabilitySnapshot);
+      if (draw.sessionId !== undefined && (!activity.slots.some((slot) => slot.id === draw.sessionId && !slot.deleted) || !hasVersion || !hasSnapshot)) return false;
+      if (draw.drawConfigVersion !== undefined || draw.probabilitySnapshot !== undefined) {
+        if (!hasVersion || !hasSnapshot) return false;
+        const snapshot = draw.probabilitySnapshot!;
+        if (!snapshot.length || new Set(snapshot.map((row) => row.prizeId)).size !== snapshot.length || snapshot.reduce((sum, row) => sum + row.configuredProbability, 0) > 100 || snapshot.reduce((sum, row) => sum + row.effectiveProbability, 0) > 100) return false;
+        if (!snapshot.every((row) => {
+          const prize = activity.pool.find((item) => item.id === row.prizeId);
+          if (!prize || row.effectiveProbability > row.configuredProbability) return false;
+          return draw.sessionId === undefined || row.quantityMode === "UNLIMITED" ? row.sessionRemaining === undefined : Number.isInteger(row.sessionRemaining) && row.sessionRemaining! >= 0;
+        })) return false;
+        if (draw.poolItemId !== null && !snapshot.some((row) => row.prizeId === draw.poolItemId && row.effectiveProbability > 0)) return false;
+      }
+      return true;
+    });
+    const validNewAwardDrawLinks = records && parsed.awards.every((award) => {
+      const draw = parsed.draws.find((row) => row.id === award.drawId);
+      if (!draw || draw.sessionId === undefined && draw.drawConfigVersion === undefined && draw.probabilitySnapshot === undefined) return true;
+      return draw.activityId === award.activityId && draw.participationId === award.participationId && draw.poolItemId === award.poolItemId;
+    });
+    const validAllocations = records && validSessionPrizes && validDrawSnapshots && validNewAwardDrawLinks && new Set(codes.map((row) => row.code)).size === codes.length && codes.every((code) => !code.assignedAwardId || parsed.awards.some((award) => award.id === code.assignedAwardId && award.activityId === code.activityId && award.poolItemId === code.prizeId && award.virtualContent?.code === code.code)) && parsed.awards.every((award) => award.prizeType !== "VIRTUAL" || award.method !== "REDEMPTION_CODE" || codes.some((code) => code.assignedAwardId === award.id && code.code === award.virtualContent?.code));
     const activityCodes = parsed.activities?.flatMap(row => row.activityCode ? [row.activityCode] : []) ?? [];
     if (parsed.version === 2 && validAllocations && new Set(activityCodes).size === activityCodes.length) return { state: { ...parsed, version: 2, revision: parsed.revision ?? 0 } };
     return { issue: "营销数据版本 / 集合 / 字段不兼容，原数据已保留；请备份或明确重置营销数据。" };

@@ -27,8 +27,9 @@ function useDataFilters() {
 }
 const dateMatches = (value: string, date: string) => !date || Number.isFinite(parseCreatedAt(value)) && shanghaiDate(parseCreatedAt(value)) === date;
 
-export function ParticipantTable({ activity }: { activity: MarketingActivity }) {
-  const { state } = useMarketing(), { state: members } = useMemberOperations(), { currentUser } = useCrm(), filters = useDataFilters();
+export function ParticipantTable({ activity, dataState }: { activity: MarketingActivity; dataState?: MarketingState }) {
+  const { state: stored } = useMarketing(), { state: members } = useMemberOperations(), { currentUser } = useCrm(), filters = useDataFilters();
+  const state = dataState ?? stored;
   const [selectedId, setSelectedId] = useState("");
   const rows = state.participations.filter((row) => row.activityId === activity.id && `${participantDisplayName(row, members)} ${row.id} ${row.identities.map((ref) => ref.userId).join(" ")}`.toLowerCase().includes(filters.search.toLowerCase()) && (filters.status === "ALL" || participationStatus(state, row, Date.now()) === filters.status) && dateMatches(row.registeredAt, filters.date));
   const selected = rows.find((row) => row.id === selectedId), identity = selected && participantIdentity(selected, members), fullIdentity = marketingPermissions(currentUser).manage;
@@ -46,7 +47,7 @@ export function ParticipantTable({ activity }: { activity: MarketingActivity }) 
       { title: "签到 / 完成", width: 200, render: (_: unknown, row: MarketingParticipation) => <div className="marketing-summary-cell"><span>签到：{displayDate(row.checkedInAt)}</span><span>完成：{displayDate(row.completedAt)}</span></div> },
       { title: "创建时间", width: 180, render: (_: unknown, row: MarketingParticipation) => displayDate(row.registeredAt) },
     ]} />
-    <SideSheet visible={Boolean(selected)} closeOnEsc title="参与用户详情" width={Math.min(620, innerWidth - 20)} onCancel={() => setSelectedId("")}>
+    <SideSheet visible={Boolean(selected)} closeOnEsc title="参与用户详情" width={Math.min(620, window.innerWidth - 20)} onCancel={() => setSelectedId("")}>
       {selected && identity && <DefinitionGrid rows={[["参与用户", participantDisplayName(selected, members)], ["参与渠道", channelLabels[participantChannel(selected)]], ["CRM 会员", identity.memberId || "—"], ["会员状态", participationIssue(selected, members) || participantIdentityReview(selected, members, activity.brand) === "UNVERIFIED" ? "身份待核验" : identity.memberId ? "已关联会员" : "未关联会员"], ["手机号", fullIdentity ? identity.phone || "—" : maskedPhone(identity.phone)], ["国家码", identity.phoneCountryCode || "—"], ["UnionID", fullIdentity ? identity.unionId || "—" : identity.unionId ? "权限受限" : "—"], ["OpenID", fullIdentity ? identity.openId || selected.identities[0]?.openid || "—" : identity.openId || selected.identities[0]?.openid ? "权限受限" : "—"], ["微信应用", identity.wechatAppId || "—"], ["品牌", brandLabels[activity.brand]], ["参与状态", participantLabels[participationStatus(state, selected, Date.now())]], ["参与时间", displayDate(selected.registeredAt)], ["参与编号", selected.id], ["匿名标识", fullIdentity ? identity.anonymousId || "—" : identity.anonymousId ? "权限受限" : "—"], ["Session ID", fullIdentity ? identity.sessionId || "—" : identity.sessionId ? "权限受限" : "—"], ["外部用户标识", fullIdentity ? identity.externalUserId || "—" : identity.externalUserId ? "权限受限" : "—"], ["签到时间", displayDate(selected.checkedInAt)], ["完成时间", displayDate(selected.completedAt)], ["获得 / 已用次数", `${chances(state, selected).earned} / ${chances(state, selected).used}`], ["是否中奖", state.awards.some(award => award.participationId === selected.id) ? "是" : "否"], ["参与凭证", selected.credential]]} />}
     </SideSheet>
   </>;
@@ -84,8 +85,9 @@ export function VirtualAwardContent({ award, dataState }: { award: MarketingAwar
     {award.method === "LINK" && (award.virtualContent?.link && /^https?:\/\//i.test(award.virtualContent.link) ? <a target="_blank" rel="noopener noreferrer" href={award.virtualContent.link}>查看领取链接</a> : <p>领取链接未提供或无效，待核对</p>)}
   </>;
 }
-export function AwardData({ activity }: { activity: MarketingActivity }) {
-  const { state } = useMarketing(), { state: members } = useMemberOperations(); const [selectedId, setSelectedId] = useState("");
+export function AwardData({ activity, dataState }: { activity: MarketingActivity; dataState?: MarketingState }) {
+  const { state: stored } = useMarketing(), { state: members } = useMemberOperations(); const [selectedId, setSelectedId] = useState("");
+  const state = dataState ?? stored;
   const rows = state.awards.filter((row) => row.activityId === activity.id), selected = rows.find((row) => row.id === selectedId);
   const currentBooking = (award: MarketingAward) => state.bookings.find((row) => row.awardId === award.id && ["BOOKED", "FULFILLED"].includes(row.status));
   return <><Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: 1120 }} empty={<EmptyBlock title="暂无中奖记录" description="用户中奖后，奖品和领取状态将在这里展示。" />} columns={[
@@ -97,11 +99,12 @@ export function AwardData({ activity }: { activity: MarketingActivity }) {
     { title: "当前状态", width: 140, render: (_: unknown, row: MarketingAward) => awardFulfillmentLabel(state, row, Date.now()) },
     { title: "操作", width: 100, fixed: "right", render: (_: unknown, row: MarketingAward) => <Button theme="borderless" size="small" onClick={() => setSelectedId(row.id)}>查看权益</Button> },
   ]} /><SideSheet visible={Boolean(selected)} closeOnEsc title="中奖权益详情" width={Math.min(600, window.innerWidth - 24)} onCancel={() => setSelectedId("")}>
-    {selected && <><DataList rows={[["奖品", selected.prizeName], ["奖项", selected.awardLabel], ["奖品类型", prizeTypeLabels[selected.prizeType]], ["领取方式", prizeReceivingLabel(selected)], ["领奖凭证", <code>{selected.credential}</code>], ["中奖时间", displayDate(selected.wonAt)], ["核销时间", displayDate(selected.fulfilledAt)], ["发放时间", displayDate(selected.issuedAt)], ["预约状态", currentBooking(selected) ? bookingLabels[bookingStatus(currentBooking(selected)!, slotFor(state, currentBooking(selected)!), Date.now())] : needsReservation(selected) ? "未预约" : "无需预约"]]} />{selected.prizeType === "VIRTUAL" ? <VirtualAwardContent award={selected} /> : <DataList rows={[["领取地点（快照）", selected.location], ["领取说明（快照）", selected.instructions], ["有效期", `${displayDate(selected.claimStart)} 至 ${displayDate(selected.claimEnd)}`]]} />}</>}
+    {selected && <><DataList rows={[["奖品", selected.prizeName], ["奖项", selected.awardLabel], ["奖品类型", prizeTypeLabels[selected.prizeType]], ["领取方式", prizeReceivingLabel(selected)], ["领奖凭证", <code>{selected.credential}</code>], ["中奖时间", displayDate(selected.wonAt)], ["核销时间", displayDate(selected.fulfilledAt)], ["发放时间", displayDate(selected.issuedAt)], ["预约状态", currentBooking(selected) ? bookingLabels[bookingStatus(currentBooking(selected)!, slotFor(state, currentBooking(selected)!), Date.now())] : needsReservation(selected) ? "未预约" : "无需预约"]]} />{selected.prizeType === "VIRTUAL" ? <VirtualAwardContent award={selected} dataState={state} /> : <DataList rows={[["领取地点（快照）", selected.location], ["领取说明（快照）", selected.instructions], ["有效期", `${displayDate(selected.claimStart)} 至 ${displayDate(selected.claimEnd)}`]]} />}</>}
   </SideSheet></>;
 }
-export function RedemptionData({ activity }: { activity: MarketingActivity }) {
-  const { state } = useMarketing(), { state: members } = useMemberOperations(), { state: sales } = useCrm(); const [type, setType] = useState("ALL");
+export function RedemptionData({ activity, dataState }: { activity: MarketingActivity; dataState?: MarketingState }) {
+  const { state: stored } = useMarketing(), { state: members } = useMemberOperations(), { state: sales } = useCrm(); const [type, setType] = useState("ALL");
+  const state = dataState ?? stored;
   const rows = state.redemptions.filter((row) => row.activityId === activity.id && (type === "ALL" || row.type === type)).slice().reverse();
   return <><div className="table-toolbar"><Select aria-label="核销业务类型" value={type} onChange={value => setType(String(value))} optionList={[{ value: "ALL", label: "全部核销类型" }, ...Object.entries(redemptionLabels).map(([value, label]) => ({ value, label }))]} /></div>
     <Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: 1040 }} empty={<EmptyBlock title="暂无核销记录" description="完成签到、参与确认或领奖核销后，相关记录将在这里展示。" />} columns={[

@@ -28,7 +28,7 @@ export function inspectMarketingCodes(rows: string[], existing: Iterable<string>
     if (!code) { report.ignored++; return; }
     let reason = "";
     if (!validMarketingCode(code)) { report.invalid++; reason = "长度须为1–128，不能含空白、控制字符或明显非法字符"; }
-    else if (seen.has(code)) { report.duplicate++; reason = "批次内或已有库存中重复"; }
+    else if (seen.has(code)) { report.duplicate++; reason = "批次内或已有兑换码中重复"; }
     else { codes.push(code); seen.add(code); }
     if (reason) report.failures.push({ line: index + 1, code, reason });
   });

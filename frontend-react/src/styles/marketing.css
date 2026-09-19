@@ -69,6 +69,21 @@
 .marketing-config-table > .row-actions { margin-bottom: 12px; }
 .marketing-summary-cell { display: grid; justify-items: start; gap: 4px; font-size: 14px; line-height: 22px; }
 .marketing-summary-cell small { color: var(--crm-text-3); }
+.marketing-overview { display: grid; gap: 20px; min-width: 0; }
+.marketing-overview .marketing-panel { margin-bottom: 0; }
+.marketing-metric-strip { margin-bottom: 0; }
+.marketing-metric-strip.is-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.marketing-subtabs { min-width: 0; }
+.marketing-subtabs > .semi-tabs-bar { padding-inline: 0; }
+.marketing-subtabs > .semi-tabs-content { padding: 20px 0 0; }
+.marketing-subtabs .marketing-panel:last-child { margin-bottom: 0; }
+.marketing-session-context { display: flex; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; padding: 12px 15px; border: 1px solid var(--crm-border); border-radius: var(--crm-radius); background: var(--crm-subtle); font-size: 14px; line-height: 22px; }
+.marketing-session-context > span { color: var(--crm-text-2); }
+.marketing-copy-session { display: flex; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
+.marketing-copy-session > .semi-select { min-width: 260px; flex: 1; }
+.marketing-probability-summary { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 15px; margin-top: 20px; font-size: 14px; line-height: 22px; }
+.marketing-adjust-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(160px, 0.45fr); gap: 20px; margin: 20px 0; }
+.marketing-session-prize-drawer .semi-table-wrapper { min-width: 0; }
 .marketing-code-summary { display: flex; flex-wrap: wrap; gap: 12px 20px; margin: 12px 0 20px; }
 .marketing-rich-toolbar .semi-button { min-width: 32px; }
 .marketing-rich-toolbar [aria-label="加粗"] { font-weight: 700; }
@@ -93,5 +108,8 @@
 .marketing-redemption-surface > .page-scroll { flex: 1; min-height: 0; padding: 24px; }
 .marketing-redemption-surface .marketing-redemption { max-width: 860px; margin: 0 auto; }
 @media (max-width: 700px) {
-  .marketing-form-grid, .marketing-definition { grid-template-columns: 1fr; }
+  .marketing-form-grid, .marketing-definition, .marketing-adjust-form { grid-template-columns: 1fr; }
+  .marketing-metric-strip.is-three { grid-template-columns: 1fr; }
+  .marketing-metric-strip.is-three > div { border-right: 0; border-bottom: 1px solid var(--crm-border); }
+  .marketing-metric-strip.is-three > div:last-child { border-bottom: 0; }
 }

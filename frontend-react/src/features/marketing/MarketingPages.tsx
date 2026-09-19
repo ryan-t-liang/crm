@@ -22,7 +22,7 @@ export function MarketingPage({ path }: { path: string[] }) {
   if (path[0] === "activity" || path[0] === "preview") {
     const activity = state.activities.find((row) => row.id === path[1] && access.brands.includes(row.brand));
     if (!activity) return <div className="page"><Empty title="活动不存在或无权访问" /></div>;
-    return <MarketingDetail key={activity.id} activity={activity} requestedTab={path[0] === "activity" ? path[2] : undefined} />;
+    return <MarketingDetail key={activity.id} activity={activity} requestedTab={path[0] === "activity" ? path[2] : undefined} requestedSecondaryTab={path[0] === "activity" ? path[3] : undefined} />;
   }
   return <div className="page marketing-page"><MarketingList migratedEntry={path[0]} /></div>;
 }

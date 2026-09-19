@@ -8,6 +8,7 @@ export type ClaimMethod = "DIRECT" | "PICKUP" | "EXPERIENCE" | "REDEMPTION_CODE"
 export type MarketingPrizeType = "PHYSICAL" | "VIRTUAL" | "UNKNOWN";
 export type MarketingParticipationMode = "RESERVATION" | "DIRECT";
 export type MarketingFulfillmentMode = "RESERVATION" | "DIRECT";
+export type MarketingPrizeQuantityMode = "LIMITED" | "UNLIMITED";
 export type MarketingParticipationChannel = "WECHAT_MINIPROGRAM" | "WECHAT_H5" | "WEB_H5" | "QR_H5" | "STAFF" | "OTHER";
 /** Optional external observations, never natural-person uniqueness keys. */
 export interface MarketingParticipantIdentity {
@@ -22,11 +23,22 @@ export interface MarketingCode { code: string; assignedAwardId?: string; assigne
 export interface ActivityPrize {
   id: string; activityId: string; name: string; description: string; image: string;
   label: string; prizeType: MarketingPrizeType; quota: number; probability: number;
+  /** New quantity contract. quota / probability remain readable legacy mirrors. */
+  quantityMode?: MarketingPrizeQuantityMode; quantityLimit?: number | null; defaultProbability?: number;
   perPersonLimit: number; method: ClaimMethod; location: string; claimStart: string;
   fulfillmentMode?: MarketingFulfillmentMode;
   claimEnd: string; instructions: string; slots: MarketingSlot[]; codes: MarketingCode[];
   voucherName: string; voucherDescription: string; link: string;
   legacyPrizeId?: string;
+}
+export interface SessionPrize {
+  sessionId: string; prizeId: string; enabled: boolean; probability: number;
+  /** Omitted for unlimited prizes. Won / remaining are derived from Draw + Award. */
+  allocatedQuantity?: number;
+}
+export interface MarketingDrawProbabilitySnapshot {
+  prizeId: string; configuredProbability: number; effectiveProbability: number;
+  quantityMode: MarketingPrizeQuantityMode; sessionRemaining?: number;
 }
 // The existing activity.pool collection is retained, now containing owned prizes.
 export type MarketingPoolItem = ActivityPrize;
@@ -41,7 +53,8 @@ export interface MarketingActivity {
   bookingStart: string; bookingEnd: string; completion: "CHECKIN" | "STAFF"; slots: MarketingSlot[];
   lotteryEnabled: boolean; lotteryStart: string; lotteryEnd: string; grantCount: number;
   drawLimit: number; dailyLimit: number | null; winLimit: number; noWinProbability: number;
-  pool: MarketingPoolItem[]; createdAt: string; publishedAt?: string;
+  pool: MarketingPoolItem[]; sessionPrizes?: SessionPrize[]; sessionPrizeConfigVersion?: number;
+  createdAt: string; publishedAt?: string;
   /** New prototype records only; legacy creator remains unknown. */
   createdBy?: string;
 }
@@ -58,7 +71,12 @@ export interface MarketingBooking {
   createdAt: string; canceledAt?: string; source: "USER" | "WALK_IN" | "UNKNOWN";
 }
 export interface MarketingChance { id: string; participationId: string; activityId: string; count: number; grantedAt: string; ruleVersion: number }
-export interface MarketingDraw { id: string; operationId: string; participationId: string; activityId: string; occurredAt: string; poolItemId: string | null; ruleVersion: number; randomValue: number }
+export interface MarketingDraw {
+  id: string; operationId: string; participationId: string; activityId: string; occurredAt: string;
+  poolItemId: string | null; ruleVersion: number; randomValue: number;
+  /** Reservation activities freeze the session and effective rules used by this draw. */
+  sessionId?: string; drawConfigVersion?: number; probabilitySnapshot?: MarketingDrawProbabilitySnapshot[];
+}
 export interface MarketingAward {
   id: string; drawId: string; participationId: string; activityId: string; poolItemId: string; credential: string;
   prizeName: string; method: ClaimMethod; location: string; instructions: string; claimStart: string; claimEnd: string;

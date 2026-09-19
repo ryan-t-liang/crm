@@ -2,7 +2,7 @@ import type { MarketingActivity } from "@/types/marketing";
 import { needsReservation, type MarketingPublishCheck } from "./marketing-model";
 
 export const activityEditorSteps = ["基本信息", "参与设置", "抽奖规则", "奖品设置", "发布检查"] as const;
-const checkTitles: Record<string, string> = { basic: "基本信息", booking: "参与设置", lottery: "抽奖规则", inventory: "实体奖品", fulfillment: "领奖安排", virtual: "虚拟奖品", codes: "兑换码库存" };
+const checkTitles: Record<string, string> = { basic: "基本信息", booking: "参与设置", lottery: "抽奖规则", inventory: "实体奖品", fulfillment: "领奖安排", virtual: "虚拟奖品", codes: "兑换码" };
 function completedSummary(check: MarketingPublishCheck, activity?: MarketingActivity) {
   if (!activity) return "已完成";
   if (check.key === "basic") return "活动内容、品牌与时间已填写";
@@ -12,7 +12,7 @@ function completedSummary(check: MarketingPublishCheck, activity?: MarketingActi
   if (check.key === "inventory") return `已配置 ${activity.pool.filter((prize) => prize.prizeType === "PHYSICAL").length} 个实体奖品`;
   if (check.key === "fulfillment") return activity.pool.some(needsReservation) ? "预约领奖时段与容量已配置" : "奖品直接领取，无需预约安排";
   if (check.key === "virtual") return `已配置 ${activity.pool.filter((prize) => prize.prizeType === "VIRTUAL").length} 个虚拟奖品`;
-  if (check.key === "codes") return activity.pool.some((prize) => prize.method === "REDEMPTION_CODE") ? "兑换码数量满足奖品配额" : "本活动无需兑换码库存";
+  if (check.key === "codes") return activity.pool.some((prize) => prize.method === "REDEMPTION_CODE") ? "可用兑换码数量满足可发放数量" : "本活动无需兑换码";
   return "已完成";
 }
 // This is presentation only: original validation errors and their authoritative

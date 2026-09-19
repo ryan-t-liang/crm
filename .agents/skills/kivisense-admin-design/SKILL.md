@@ -27,7 +27,6 @@ Rendered accepted pages and their current shared implementation outrank written 
 2. Find the closest mature Kivisense page.
 3. Reuse its shared component, class, density, action hierarchy and responsive behavior.
 4. Add only the business-specific composition that the local pattern cannot express.
-5. Verify normal, empty, loading, error, disabled, hover, focus, selected, overflow and narrow-desktop behavior as relevant to the task.
 
 If no local pattern fits, propose the smallest shared extension. Do not derive a new visual language from an external product or a one-off module.
 
@@ -35,7 +34,8 @@ If no local pattern fits, propose the smallest shared extension. Do not derive a
 
 - Semi Design, Semi Icons and the current Kivisense Semi Theme remain the component foundation.
 - Use existing CRM tokens and shared styles; do not duplicate approximate values in module CSS.
-- Preserve the established AppShell, list surface, detail workspace, SideSheet form, table and feedback patterns.
+- Preserve the established AppShell, list surface, detail workspace, table and feedback patterns.
+- Use a Modal for simple record creation or editing, a Drawer / SideSheet for contextual complex work, and a full page for the complete record detail. Use a Wizard only for a genuinely ordered, dependent process.
 - Keep enterprise density compact and readable.
 - Preserve useful surface boundaries while avoiding decorative, nested or fragmented Cards.
 - Use one clear primary action and move low-frequency operations into an existing secondary pattern.

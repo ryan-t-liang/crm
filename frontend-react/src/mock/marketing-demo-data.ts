@@ -2,7 +2,7 @@ import type { MemberOperationsState, SowindBrandCode } from "@/types/member-oper
 import type { ActivityPrize, MarketingActivity, MarketingSlot, MarketingState } from "@/types/marketing";
 
 const marketingDemoPrizes = [
-  { id: "prize-demo-direct", name: "工坊纪念礼（演示）", description: "演示现场礼品，不是真实库存。", image: "", method: "DIRECT" },
+  { id: "prize-demo-direct", name: "工坊纪念礼（演示）", description: "演示现场礼品，不是真实发放数据。", image: "", method: "DIRECT" },
   { id: "prize-demo-pickup", name: "定制礼领取（演示）", description: "预约到店领取演示。", image: "", method: "PICKUP" },
   { id: "prize-demo-experience", name: "工坊体验（演示）", description: "独立时段容量的预约体验。", image: "", method: "EXPERIENCE" },
   { id: "prize-demo-code", name: "品牌兑换码（演示）", description: "仅保存演示兑换码，不调用外部发券系统。", image: "", method: "REDEMPTION_CODE" },
@@ -21,24 +21,26 @@ export function createMarketingSlot(id: string, parentStart: string, capacity = 
 export function createMarketingActivity(brand: SowindBrandCode, now: number): MarketingActivity {
   return { id: crypto.randomUUID(), name: "新活动", brand, description: "", ruleContent: "", cover: "", mode: "OFFLINE", location: "", status: "DRAFT", ruleVersion: 1,
     startAt: "", endAt: "", bookingEnabled: true, allowWalkIn: true, allowCancel: true, allowReschedule: true, bookingStart: "", bookingEnd: "", completion: "STAFF", slots: [],
-    lotteryEnabled: true, lotteryStart: "", lotteryEnd: "", grantCount: 2, drawLimit: 2, dailyLimit: null, winLimit: 1, noWinProbability: 100, pool: [], createdAt: new Date(now).toISOString() };
+    lotteryEnabled: true, lotteryStart: "", lotteryEnd: "", grantCount: 2, drawLimit: 2, dailyLimit: null, winLimit: 1, noWinProbability: 100, pool: [], sessionPrizes: [], sessionPrizeConfigVersion: 1, createdAt: new Date(now).toISOString() };
 }
 /** Dynamic dates and virtual stock belong only to demo seeding / isolated QA fixtures. */
 export function createDemoMarketingActivity(brand: SowindBrandCode, now: number, prizes = marketingDemoPrizes): MarketingActivity {
   const at = (minutes: number) => new Date(now + minutes * 60_000).toISOString();
   const activityId = crypto.randomUUID();
+  const slot = createDemoMarketingSlot(crypto.randomUUID(), now, 10);
+  const pool = prizes.map((prize, index) => ({ ...createActivityPrize(activityId, now), name: prize.name, image: prize.image, description: prize.description, label: ["一等奖", "二等奖", "体验奖", "虚拟奖"][index] ?? "奖项", quota: 10, quantityLimit: 10, probability: [20, 25, 15, 20][index] ?? 0, defaultProbability: [20, 25, 15, 20][index] ?? 0, method: prize.method,
+    prizeType: prize.method === "REDEMPTION_CODE" ? "VIRTUAL" as const : "PHYSICAL" as const,
+    location: prize.method === "REDEMPTION_CODE" ? "" : "演示工作室",
+    codes: prize.method === "REDEMPTION_CODE" ? Array.from({ length: 10 }, (_, number) => ({ code: `DEMO-${activityId}-${number + 1}` })) : [],
+    slots: ["PICKUP", "EXPERIENCE"].includes(prize.method) ? [createDemoMarketingSlot(crypto.randomUUID(), now, 20)] : [] }));
   return { id: activityId, name: "新活动", brand, description: "参与品牌体验，完成互动后可参与抽奖。", ruleContent: "完成活动后获得抽奖机会；中奖后按奖品领取方式在有效期内领取。", cover: "", mode: "OFFLINE", location: "演示工作室", status: "DRAFT", ruleVersion: 1,
-    startAt: at(-60), endAt: at(360), bookingEnabled: true, allowWalkIn: true, allowCancel: true, allowReschedule: true, bookingStart: at(-1440), bookingEnd: at(180), completion: "STAFF", slots: [createDemoMarketingSlot(crypto.randomUUID(), now, 10)],
+    startAt: at(-60), endAt: at(360), bookingEnabled: true, allowWalkIn: true, allowCancel: true, allowReschedule: true, bookingStart: at(-1440), bookingEnd: at(180), completion: "STAFF", slots: [slot],
     lotteryEnabled: true, lotteryStart: at(-60), lotteryEnd: at(480), grantCount: 2, drawLimit: 2, dailyLimit: null, winLimit: 1, noWinProbability: 20,
-    pool: prizes.map((prize, index) => ({ ...createActivityPrize(activityId, now), name: prize.name, image: prize.image, description: prize.description, label: ["一等奖", "二等奖", "体验奖", "虚拟奖"][index] ?? "奖项", quota: 10, probability: [20, 25, 15, 20][index] ?? 0, method: prize.method,
-      prizeType: prize.method === "REDEMPTION_CODE" ? "VIRTUAL" : "PHYSICAL",
-      location: prize.method === "REDEMPTION_CODE" ? "" : "演示工作室",
-      codes: prize.method === "REDEMPTION_CODE" ? Array.from({ length: 10 }, (_, number) => ({ code: `DEMO-${activityId}-${number + 1}` })) : [],
-      slots: ["PICKUP", "EXPERIENCE"].includes(prize.method) ? [createDemoMarketingSlot(crypto.randomUUID(), now, 20)] : [] })), createdAt: at(0) };
+    pool, sessionPrizes: pool.map((prize) => ({ sessionId: slot.id, prizeId: prize.id, enabled: true, probability: prize.defaultProbability ?? prize.probability, allocatedQuantity: 10 })), sessionPrizeConfigVersion: 1, createdAt: at(0) };
 }
 export function createActivityPrize(activityId: string, now: number): ActivityPrize {
   return { id: crypto.randomUUID(), activityId, name: "新奖品", label: "奖项", description: "演示奖品说明", image: "", prizeType: "PHYSICAL",
-    quota: 1, probability: 0, perPersonLimit: 1, method: "DIRECT", location: "演示工作室", instructions: "请在领取有效期内出示中奖凭证。",
+    quota: 1, quantityMode: "LIMITED", quantityLimit: 1, probability: 0, defaultProbability: 0, perPersonLimit: 1, method: "DIRECT", location: "演示工作室", instructions: "请在领取有效期内出示中奖凭证。",
     claimStart: new Date(now - 3_600_000).toISOString(), claimEnd: new Date(now + 8 * 86_400_000).toISOString(), slots: [], codes: [], voucherName: "", voucherDescription: "", link: "" };
 }
 /** Called ONLY when the marketing namespace is absent or the user explicitly resets it. */
@@ -51,15 +53,21 @@ export function createMarketingDemoState(members: MemberOperationsState, now: nu
     const activity = createDemoMarketingActivity(brands[index % brands.length], now);
     activity.id = `activity-demo-${index + 1}`; activity.name = name; activity.status = "PUBLISHED"; activity.publishedAt = activity.createdAt;
     activity.pool.forEach((item) => { item.activityId = activity.id; });
-    if (index === 0) activity.slots.push({ ...activity.slots[0], id: "slot-demo-full", label: "满额场（演示）", capacity: 1 });
-    if (index === 1) { activity.bookingEnabled = false; activity.completion = "CHECKIN"; }
-    if (index === 2) { activity.lotteryEnabled = false; activity.completion = "CHECKIN"; }
+    if (index === 0) {
+      activity.slots.push({ ...activity.slots[0], id: "slot-demo-full", label: "满额场（演示）", capacity: 1 });
+      activity.sessionPrizes = activity.pool.flatMap((prize) => [
+        { sessionId: activity.slots[0].id, prizeId: prize.id, enabled: true, probability: prize.defaultProbability ?? prize.probability, allocatedQuantity: 8 },
+        { sessionId: "slot-demo-full", prizeId: prize.id, enabled: true, probability: prize.defaultProbability ?? prize.probability, allocatedQuantity: 2 },
+      ]);
+    }
+    if (index === 1) { activity.bookingEnabled = false; activity.completion = "CHECKIN"; activity.sessionPrizes = []; }
+    if (index === 2) { activity.lotteryEnabled = false; activity.completion = "CHECKIN"; activity.sessionPrizes = []; }
     if (index === 3) {
       const at = (days: number) => new Date(now + days * 86_400_000).toISOString();
       activity.startAt = at(-3); activity.endAt = at(-2); activity.bookingStart = at(-5); activity.bookingEnd = at(-3); activity.lotteryStart = at(-3); activity.lotteryEnd = at(-1); activity.slots = [];
       activity.createdAt = at(-5); activity.publishedAt = at(-4);
-      activity.bookingEnabled = false; activity.grantCount = 5; activity.drawLimit = 5; activity.winLimit = 4;
-      activity.pool.forEach((item) => { item.quota = 1; item.claimStart = at(-3); if (item.method === "EXPERIENCE") { item.claimEnd = new Date(now - 3_600_000).toISOString(); item.slots = []; } });
+      activity.bookingEnabled = false; activity.sessionPrizes = []; activity.grantCount = 5; activity.drawLimit = 5; activity.winLimit = 4;
+      activity.pool.forEach((item) => { item.quota = 1; item.quantityLimit = 1; item.claimStart = at(-3); if (item.method === "EXPERIENCE") { item.claimEnd = new Date(now - 3_600_000).toISOString(); item.slots = []; } });
     }
     return activity;
   });

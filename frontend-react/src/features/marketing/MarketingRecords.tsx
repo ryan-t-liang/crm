@@ -42,7 +42,6 @@ export function ActivityBookingData({ activity, now, dataState }: { activity: Ma
     <Input prefix={<IconSearch />} aria-label="搜索活动预约" placeholder="姓名、手机号或 OpenID" value={search} onChange={setSearch} showClear />
     <Select aria-label="活动预约状态" value={status} onChange={value => setStatus(String(value))} optionList={[{ value: "ALL", label: "全部状态" }, ...Object.entries(activityBookingLabels).map(([value, label]) => ({ value, label }))]} />
     <Input aria-label="活动预约创建日期" type="date" value={date} onChange={setDate} />
-    {dataState && <Tag size="small">含 30 条虚构示意</Tag>}
   </div><Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: 1525 }} empty={<EmptyBlock title="暂无活动预约记录" description={activity.bookingEnabled ? "用户提交活动预约后，将在这里展示。" : "此活动直接参与，无需预约。"} />} columns={[
     { title: "OpenID", width: 155, render: (_: unknown, row: MarketingBooking) => { const participant = participantFor(row); return maskedOpenId(participant && participantIdentity(participant, members).openId); } },
     { title: "姓名", width: 150, render: (_: unknown, row: MarketingBooking) => { const participant = participantFor(row); return participant ? participantDisplayName(participant, members) : "身份待核对"; } },
@@ -79,7 +78,6 @@ export function DrawData({ activity, now, dataState }: { activity: MarketingActi
     <Input prefix={<IconSearch />} aria-label="搜索抽奖记录" placeholder="姓名、手机号或 OpenID" value={search} onChange={setSearch} showClear />
     <Select aria-label="抽奖记录状态" value={status} onChange={value => setStatus(String(value))} optionList={[{ value: "ALL", label: "全部状态" }, ...drawPhaseOptions]} />
     <Input aria-label="抽奖记录日期" type="date" value={date} onChange={setDate} />
-    {dataState && <Tag size="small">含 30 条虚构示意</Tag>}
   </div><Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: 1760 }} empty={<EmptyBlock title="暂无抽奖记录" description="参与用户与每次抽奖结果将在这里展示。" />} columns={[
     { title: "OpenID", width: 155, render: (_: unknown, row: ActivityDrawRecord) => maskedOpenId(identityFor(row)?.openId) },
     { title: "姓名", width: 150, render: (_: unknown, row: ActivityDrawRecord) => row.participant ? participantDisplayName(row.participant, members) : "身份待核对" },
