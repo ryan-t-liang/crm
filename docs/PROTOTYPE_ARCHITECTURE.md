@@ -15,6 +15,8 @@ This document defines technical and product boundaries. It is not a UI specifica
 
 The prototype must not add a backend, database, server authentication, SMTP/IMAP integration, server-side RBAC, queues, migrations, or deployment infrastructure. Role, distributor and brand isolation are frontend product simulations enforced by scoped stores and actions.
 
+The standalone login page is a frontend Demo session only. It validates the bundled fictional accounts and a shared Demo password in the browser, stores only the selected user id in its own LocalStorage key, and does not claim production authentication or security.
+
 ## Sales
 
 The canonical sales lifecycle is:
@@ -62,6 +64,8 @@ Marketing is an independent frontend bounded context implemented by:
 - `src/stores/marketing-store.tsx`.
 
 It does not add SQL tables and does not replace sales or member models. Marketing may reference existing member identities, but participation, bookings, chances, draws, awards, redemptions and audits remain marketing-owned records.
+
+Participant task progress is an optional four-clue snapshot on the marketing participation. Its displayed overall status is derived from all four clues: only four completed clues produce “已完成”. It does not change activity booking, check-in, draw or prize-redemption status.
 
 All writes pass through validated marketing actions and one persistence commit. Activity and prize bookings remain distinct. Award contents and assigned codes are immutable historical facts. Copying an activity creates fresh configuration identities without copying business records or allocated codes.
 

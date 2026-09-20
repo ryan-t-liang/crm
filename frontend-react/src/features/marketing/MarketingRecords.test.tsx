@@ -7,7 +7,7 @@ import { createMemberOperationsDemoState } from "@/mock/member-demo-data";
 import { createMarketingDemoState } from "@/mock/marketing-demo-data";
 import { brandLabels } from "@/utils/brand-display";
 import { MarketingDetail } from "./MarketingAdmin";
-import { ActivityBookingData, DrawData } from "./MarketingRecords";
+import { ActivityBookingData, DrawData, ParticipantTaskData } from "./MarketingRecords";
 import { PickupScheduleSection } from "./MarketingPickup";
 
 vi.hoisted(() => Object.defineProperty(HTMLCanvasElement.prototype, "getContext", { configurable: true, value: () => ({ fillRect: () => {}, fillStyle: "" }) }));
@@ -27,26 +27,26 @@ beforeEach(() => { state = createMarketingDemoState(members, now); write.mockCle
 afterEach(async () => { await act(async () => root.unmount()); container.remove(); });
 
 describe("activity record workspace with real Semi components", () => {
-  it("has exactly the three requested tabs and core edit information in the right rail", async () => {
+  it("has exactly the four requested tabs and core edit information in the right rail", async () => {
     await act(async () => root.render(<MarketingDetail activity={state.activities[0]} />));
-    expect([...container.querySelectorAll('[role="tab"]')].map(tab => tab.textContent)).toEqual(["活动预约记录", "奖品设置", "抽奖记录"]);
+    expect([...container.querySelectorAll('[role="tab"]')].map(tab => tab.textContent)).toEqual(["活动预约记录", "参与用户", "奖品设置", "抽奖记录"]);
     expect(container.querySelector(".marketing-overview")).toBeNull();
     const rail = container.querySelector(".detail-sidebar")!;
-    for (const text of ["活动名称", "创建人", "创建时间", "活动规则", "参与方式", "启用抽奖", "预约设置", "抽奖设置"]) expect(rail.textContent).toContain(text);
-    expect([...rail.querySelectorAll("button[aria-label]")].map(button => button.getAttribute("aria-label"))).toEqual(["编辑活动信息", "编辑活动预约设置", "编辑抽奖设置"]);
+    for (const text of ["活动名称", "创建人", "创建时间", "活动规则", "参与方式", "启用抽奖", "活动预约", "抽奖设置"]) expect(rail.textContent).toContain(text);
+    expect([...rail.querySelectorAll("button[aria-label]")].map(button => button.getAttribute("aria-label"))).toEqual(["编辑活动信息", "编辑抽奖设置"]);
     expect(write).not.toHaveBeenCalled();
     await act(async () => container.querySelector<HTMLButtonElement>('button[aria-label="活动状态操作"]')!.click());
     const menu = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')];
-    expect(menu.map(item => item.textContent)).toEqual(["开始", "暂停", "结束"]);
+    expect(menu.map(item => item.textContent)).toEqual(["恢复活动", "暂停", "结束"]);
     await act(async () => container.querySelector<HTMLButtonElement>('button[aria-label="活动状态操作"]')!.click());
     await act(async () => rail.querySelector<HTMLButtonElement>('button[aria-label="编辑活动信息"]')!.click());
-    expect(document.querySelector(".semi-modal")?.textContent).toContain("编辑活动");
-    expect(document.querySelector(".semi-sidesheet")).toBeNull(); expect(write).not.toHaveBeenCalled();
+    expect(document.querySelector(".semi-sidesheet")?.textContent).toContain("活动信息设置");
+    expect(write).not.toHaveBeenCalled();
   });
-  it("retains all three tabs when booking/draw capabilities are disabled", async () => {
+  it("retains all four tabs when booking/draw capabilities are disabled", async () => {
     const activity = { ...state.activities[2], bookingEnabled: false, status: "DRAFT" as const, publishedAt: undefined, pool: [] };
     await act(async () => root.render(<MarketingDetail activity={activity} requestedTab="prizes" />));
-    expect(container.querySelectorAll('[role="tab"]')).toHaveLength(3);
+    expect(container.querySelectorAll('[role="tab"]')).toHaveLength(4);
     expect(container.textContent).toContain("此活动未启用抽奖");
     const create = [...container.querySelectorAll<HTMLButtonElement>("button")].find(button => button.textContent === "创建奖品")!;
     expect(create.disabled).toBe(false);
@@ -74,8 +74,8 @@ describe("activity record workspace with real Semi components", () => {
   it("shows the requested activity booking fields, masked list identities and readonly complete detail", async () => {
     await act(async () => root.render(<ActivityBookingData activity={state.activities[0]} now={now} />));
     const headers = [...container.querySelectorAll("th")].map(cell => cell.textContent);
-    for (const text of ["OpenID", "姓名", "手机号", "性别", "活动名称", "参与时段", "创建时间", "状态"]) expect(headers).toContain(text);
-    expect(container.textContent).toContain("待核销"); expect(container.textContent).toContain("未记录");
+    for (const text of ["用户", "手机号", "参与时段", "预约时间", "状态", "签到 / 完成"]) expect(headers).toContain(text);
+    expect(container.textContent).toContain("待核销"); expect(container.textContent).toContain("已核销");
     const openid = state.participations.find(row => row.id === state.bookings[0].participationId)!.identities[0].openid!;
     expect(container.textContent).not.toContain(openid);
     await act(async () => [...container.querySelectorAll<HTMLButtonElement>("button")].find(button => button.textContent === "查看")!.click());
@@ -92,7 +92,18 @@ describe("activity record workspace with real Semi components", () => {
     await act(async () => [...row.querySelectorAll<HTMLButtonElement>("button")].find(button => button.textContent === "预约记录")!.click());
     const sheet = document.querySelector(".semi-modal")!;
     expect(sheet.textContent).toContain("奖品预约记录"); expect(sheet.querySelectorAll("tbody tr")).toHaveLength(1);
-    expect(sheet.textContent).toContain("领奖预约"); expect(sheet.textContent).not.toContain("活动预约");
+    expect(sheet.textContent).toContain("兑奖时段"); expect(sheet.textContent).not.toContain("活动预约");
+    expect(write).not.toHaveBeenCalled();
+  });
+  it("shows participant identity, four clue states and the aggregate completion state", async () => {
+    await act(async () => root.render(<ParticipantTaskData activity={state.activities[0]} />));
+    const headers = [...container.querySelectorAll("th")].map(cell => cell.textContent);
+    for (const text of ["用户", "OpenID", "手机号", "线索完成情况", "状态", "操作"]) expect(headers).toContain(text);
+    expect(container.textContent).toContain("线索一"); expect(container.textContent).toContain("线索四");
+    expect(container.textContent).toContain("未完成");
+    await act(async () => [...container.querySelectorAll<HTMLButtonElement>("button")].find(button => button.textContent === "查看")!.click());
+    const sheet = document.querySelector(".semi-sidesheet")!;
+    expect(sheet.textContent).toContain("活动任务"); expect(sheet.textContent).toContain("整体状态");
     expect(write).not.toHaveBeenCalled();
   });
 });

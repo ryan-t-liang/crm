@@ -26,6 +26,7 @@ export function appendMarketingIllustrations(state: MarketingState, activity: Ma
     return { prizeId: item.id, prizeName: item.name, configuredProbability: probability, effectiveProbability: remaining === undefined || remaining > 0 ? probability : 0,
       quantityMode: item.quantityMode ?? "LIMITED", sessionRemaining: remaining };
   });
+  const clueLabels = ["线索一", "线索二", "线索三", "线索四"];
   for (let index = 0; index < 30; index++) {
     const number = String(index + 1).padStart(2, "0"), prefix = `${key}:${number}`, completed = index >= 6;
     const participant: MarketingParticipation = {
@@ -33,6 +34,7 @@ export function appendMarketingIllustrations(state: MarketingState, activity: Ma
       identity: { displayName: `示意用户 ${number}`, openId: `demo-openid-${activity.brand}-${number}`, wechatAppId: "demo-app", phoneCountryCode: "86", phone: `138000000${number}`, gender: genders[index % genders.length] },
       participationChannel: channels[index % channels.length], credential: `ACT-DEMO-${prefix}`, registeredAt: at(-50 - index),
       checkedInAt: completed ? at(-25) : undefined, completedAt: completed ? at(-20) : undefined, completionActorId: completed ? "prototype" : undefined, ruleVersion: activity.ruleVersion,
+      taskClues: clueLabels.map((label, clueIndex) => ({ id: `${prefix}:clue-${clueIndex + 1}`, label, completed: completed || clueIndex !== 2, ...(completed ? { completedAt: at(-20) } : {}) })),
     };
     state.participations.push(participant);
     if (usesSession) state.bookings.push({ id: `${prefix}:booking`, activityId: activity.id, participationId: participant.id, kind: "ACTIVITY", slotId: slot.id,

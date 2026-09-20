@@ -11,7 +11,7 @@ import { initials, navigate } from "@/utils/format";
 
 type NavItem = { label: string; route: string; icon: ReactNode; count?: number; hqOnly?: boolean };
 
-export function AppShell({ route, children }: { route: string; children: ReactNode }) {
+export function AppShell({ route, children, onLogout }: { route: string; children: ReactNode; onLogout: () => void }) {
   const { state, currentUser, isHq, setCurrentUser, scoped, reset, recoveryIssue: salesIssue } = useCrm();
   const { state: memberState, resetMemberData, recoveryIssue: memberIssue } = useMemberOperations();
   const knownSalesCount = (size: number) => salesIssue ? undefined : size;
@@ -83,7 +83,7 @@ export function AppShell({ route, children }: { route: string; children: ReactNo
             />
             <Dropdown
               trigger="click"
-              render={<Dropdown.Menu><Dropdown.Item onClick={() => navigate("settings")}>Prototype 设置</Dropdown.Item>{isHq && <><Dropdown.Item onClick={() => Modal.confirm({ title: "Reset Sales Demo Data?", content: "此操作会清除当前浏览器中的 Sales Demo 数据并恢复初始数据。会员和营销数据不会受影响。", onOk: () => { reset(); } })}>Reset Sales Demo Data</Dropdown.Item><Dropdown.Item onClick={() => Modal.confirm({ title: "Reset Member Demo Data?", content: "此操作会清除当前浏览器中的 Member Demo 数据并恢复初始数据。销售和营销数据不会受影响。", onOk: () => { resetMemberData(); } })}>Reset Member Demo Data</Dropdown.Item></>}</Dropdown.Menu>}
+              render={<Dropdown.Menu><Dropdown.Item onClick={() => navigate("settings")}>Prototype 设置</Dropdown.Item>{isHq && <><Dropdown.Item onClick={() => Modal.confirm({ title: "Reset Sales Demo Data?", content: "此操作会清除当前浏览器中的 Sales Demo 数据并恢复初始数据。会员和营销数据不会受影响。", onOk: () => { reset(); } })}>Reset Sales Demo Data</Dropdown.Item><Dropdown.Item onClick={() => Modal.confirm({ title: "Reset Member Demo Data?", content: "此操作会清除当前浏览器中的 Member Demo 数据并恢复初始数据。销售和营销数据不会受影响。", onOk: () => { resetMemberData(); } })}>Reset Member Demo Data</Dropdown.Item></>}<Dropdown.Item onClick={onLogout}>退出登录</Dropdown.Item></Dropdown.Menu>}
             >
               <Button theme="borderless" className="user-menu"><Avatar size="small" color={currentUser.avatarColor as "green"}>{initials(currentUser.name)}</Avatar><span className="user-menu-copy"><Typography.Text strong>{currentUser.name}</Typography.Text><small>{roleLabel}</small></span><IconChevronDown /></Button>
             </Dropdown>

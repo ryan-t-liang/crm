@@ -53,10 +53,10 @@ export const activityBookingLabels = { PENDING: "待核销", REDEEMED: "已核�
 export function activityBookingPhase(booking: MarketingBooking): keyof typeof activityBookingLabels {
   return booking.status === "CANCELED" ? "CANCELED" : ["CHECKED_IN", "FULFILLED"].includes(booking.status) ? "REDEEMED" : "PENDING";
 }
-/** Three-tab activity workspace with compatibility for the superseded nested routes. */
-export function activityDetailTab(requested?: string, requestedSecondary?: string): "bookings" | "prizes" | "draws" {
+/** Four-tab activity workspace with compatibility for the superseded nested routes. */
+export function activityDetailTab(requested?: string, requestedSecondary?: string): "bookings" | "participants" | "prizes" | "draws" {
   if (requested === "settings") return requestedSecondary === "prizes" ? "prizes" : requestedSecondary === "lottery" ? "draws" : "bookings";
-  if (requested === "participants") return requestedSecondary === "draws" ? "draws" : "bookings";
+  if (requested === "participants") return requestedSecondary === "draws" ? "draws" : "participants";
   if (requested === "awards") return "draws";
   return requested === "prizes" ? "prizes" : ["draws", "awards", "prize-bookings", "redemptions", "lottery"].includes(requested ?? "") ? "draws" : "bookings";
 }

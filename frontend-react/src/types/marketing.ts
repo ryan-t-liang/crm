@@ -69,11 +69,14 @@ export interface MarketingActivity {
   createdBy?: string;
 }
 export interface MarketingIdentity { userId: string; brand: SowindBrandCode; openid: string | null; unionid: string | null }
+export interface MarketingParticipantClue {
+  id: string; label: string; completed: boolean; completedAt?: string;
+}
 export interface MarketingParticipation {
   id: string; activityId: string; subjectKey: string; identities: MarketingIdentity[];
   participantId?: string; identity?: MarketingParticipantIdentity; participationChannel?: MarketingParticipationChannel;
   credential: string; registeredAt: string; checkedInAt?: string; completedAt?: string;
-  completionActorId?: string; ruleVersion: number;
+  completionActorId?: string; ruleVersion: number; taskClues?: MarketingParticipantClue[];
 }
 export interface MarketingBooking {
   id: string; activityId: string; participationId: string; kind: "ACTIVITY" | "PRIZE";

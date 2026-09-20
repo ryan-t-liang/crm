@@ -16,7 +16,7 @@ import { activityCodes, activityLifecycle, lifecycleLabels } from "./marketing-a
 import { ActivityEditor, ActivityConfigurationEditor, CodeImporter, PrizeFields } from "./MarketingEditor";
 import { ActivityRuleContent } from "./MarketingRuleEditor";
 import { CodeManager } from "./MarketingCodes";
-import { ActivityBookingData, DrawData } from "./MarketingRecords";
+import { ActivityBookingData, DrawData, ParticipantTaskData } from "./MarketingRecords";
 import { activityDetailTab } from "./marketing-records";
 import { DateRange, DefinitionGrid, displayDate, displayDateRange, MarketingMenu, NumberField, options, Panel, prizeReceivingLabel, useAction } from "./MarketingUi";
 import { SessionPrizeDrawer, sessionPrizeSummary } from "./MarketingSessionPrizes";
@@ -181,6 +181,7 @@ export function MarketingDetail({ activity, requestedTab, requestedSecondaryTab 
     </>}
     tabs={<>{feedback}<Tabs type="line" className="record-tabs" activeKey={tab} onChange={go}>
       <TabPane itemKey="bookings" tab="活动预约记录"><section className="marketing-record-content"><ActivityBookingData key={`${activity.id}:${currentUser.id}`} activity={activity} now={now} dataState={state} /></section></TabPane>
+      <TabPane itemKey="participants" tab="参与用户"><section className="marketing-record-content"><ParticipantTaskData key={`${activity.id}:${currentUser.id}`} activity={activity} dataState={state} /></section></TabPane>
       <TabPane itemKey="prizes" tab="奖品设置">{!activity.lotteryEnabled && <Banner type="info" title="此活动未启用抽奖" closeIcon={null} />}<PrizeSettings key={`${activity.id}:${currentUser.id}`} activity={activity} onCreate={() => { setNewSchedule(undefined); setNewPrize({ ...createActivityPrize(activity.id, Date.now()), fulfillmentMode: "DIRECT" }); }} /></TabPane>
       <TabPane itemKey="draws" tab="抽奖记录"><section className="marketing-record-content">{!activity.lotteryEnabled && <Banner type="info" title="此活动未启用抽奖" closeIcon={null} />}<DrawData key={`${activity.id}:${currentUser.id}`} activity={activity} now={now} dataState={state} /></section></TabPane>
     </Tabs></>}

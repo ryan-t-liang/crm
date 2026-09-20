@@ -35,12 +35,14 @@ export function appendMarketingShowcase(source: MarketingState, brand: SowindBra
   // an explicit whole-pool override and reserves only 20 per prize.
   activity.sessionPrizes = [];
   state.activities.unshift(activity);
+  const clueLabels = ["线索一", "线索二", "线索三", "线索四"];
   for (let index = 0; index < 200; index++) {
     const prefix = `${id}:${index + 1}`, completed = index >= 40;
     const participant = { id: `${prefix}:participant`, activityId: id, participantId: `${prefix}:identity`, subjectKey: `participant:${prefix}:identity`, identities: [],
       identity: { displayName: `演示用户${String(index + 1).padStart(3, "0")}`, openId: `${prefix}:openid`, phoneCountryCode: "86", phone: `1380000${String(index + 1).padStart(4, "0")}`, gender: index % 2 ? "FEMALE" as const : "MALE" as const },
       participationChannel: "WECHAT_MINIPROGRAM" as const, credential: `ACT-${prefix}`, registeredAt: at(-500 + index), ruleVersion: 1,
-      checkedInAt: completed ? at(-60) : undefined, completedAt: completed ? at(-55) : undefined };
+      checkedInAt: completed ? at(-60) : undefined, completedAt: completed ? at(-55) : undefined,
+      taskClues: clueLabels.map((label, clueIndex) => ({ id: `${prefix}:clue-${clueIndex + 1}`, label, completed: completed || clueIndex !== 2, ...(completed ? { completedAt: at(-55) } : {}) })) };
     state.participations.push(participant);
     state.bookings.push({ id: `${prefix}:booking`, activityId: id, participationId: participant.id, kind: "ACTIVITY", slotId: session.id,
       status: completed ? "CHECKED_IN" : index < 20 ? "BOOKED" : "CANCELED", createdAt: participant.registeredAt, source: "USER", canceledAt: !completed && index >= 20 ? at(-200) : undefined });

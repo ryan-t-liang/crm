@@ -13,12 +13,15 @@ import { TasksPage } from "@/features/work/TasksPage";
 import { MarketingPage, MarketingRedemptionSurface } from "@/features/marketing/MarketingPages";
 import { useCrm } from "@/stores/crm-store";
 import { useMemberOperations } from "@/stores/member-operations-store";
+import { LoginPage } from "@/features/auth/LoginPage";
+import { clearDemoAuthSession, readDemoAuthSession, saveDemoAuthSession, type DemoAuthSession } from "@/features/auth/auth-session";
 
 const readRoute = () => window.location.hash.replace(/^#\/?/, "") || "dashboard";
 
 export function App() {
   const [route, setRoute] = useState(readRoute);
-  const { state, currentUser, isHq, recoveryIssue: salesIssue } = useCrm();
+  const [authSession, setAuthSession] = useState<DemoAuthSession | null>(readDemoAuthSession);
+  const { state, currentUser, isHq, setCurrentUser, recoveryIssue: salesIssue } = useCrm();
   const { recoveryIssue: memberIssue } = useMemberOperations();
   useEffect(() => {
     const change = () => setRoute(readRoute());
@@ -26,6 +29,13 @@ export function App() {
     return () => window.removeEventListener("hashchange", change);
   }, []);
   const [section, id] = route.split("/");
+  const login = (userId: string) => {
+    setCurrentUser(userId);
+    setAuthSession(saveDemoAuthSession(userId));
+    if (section === "login") window.location.hash = "dashboard";
+  };
+  const logout = () => { clearDemoAuthSession(); setAuthSession(null); window.location.hash = "login"; };
+  if (!authSession || section === "login") return <LoginPage users={state.users} initialUserId={authSession?.userId ?? currentUser.id} onLogin={login} />;
   // A separate existing staff surface, never rendered inside CRM navigation.
   if (section === "redemption" || section === "marketing" && id === "redemption") return <MarketingRedemptionSurface code={route.split("/").slice(section === "redemption" ? 1 : 2).join("/")} />;
   const scopedDetailRows = section === "leads" ? state.leads : section === "deals" ? state.deals : section === "contacts" ? state.contacts : section === "organizations" ? state.organizations : null;
@@ -49,5 +59,5 @@ export function App() {
   else if (section === "settings") page = <SettingsPage />;
   else if (["member-customers", "brand-members", "purchase-intents", "distributors", "users"].includes(section) && !isHq) page = <div className="page"><Banner type="warning" title="当前 Demo User 无权访问 HQ 工作区" description="会员与品牌运营不会复用分销商销售数据范围；请切换为 Kivisense Super Admin。" closeIcon={null} /></div>;
   else page = <DashboardPage view={section === "dashboard" ? id : undefined} />;
-  return <AppShell route={route}>{section === "settings" && <>{salesIssue && <Banner type="danger" title={salesIssue} closeIcon={null} />}{isHq && memberIssue && <Banner type="danger" title={memberIssue} closeIcon={null} />}</>}{page}</AppShell>;
+  return <AppShell route={route} onLogout={logout}>{section === "settings" && <>{salesIssue && <Banner type="danger" title={salesIssue} closeIcon={null} />}{isHq && memberIssue && <Banner type="danger" title={memberIssue} closeIcon={null} />}</>}{page}</AppShell>;
 }
