@@ -11,6 +11,7 @@ import { codeInventory, hasActivityBusinessData, lotteryScope, marketingPermissi
 import { inspectMarketingCodes, parseMarketingCodeRows, type MarketingCodeImportReport } from "./marketing-code-import";
 import { parseCreatedAt } from "@/features/dashboard/dashboard-model";
 import { MarketingRuleEditor } from "./MarketingRuleEditor";
+import { isCoachPrototype } from "@/utils/prototype-variant";
 import { pickupBookings, pickupScheduleForPrize, pickupSchedules, pickupScheduleSummary } from "./marketing-pickup";
 import { DefinitionGrid, ImageField, NumberField, options, Panel, SelectField, SlotFields, TextField, TimeField, useAction } from "./MarketingUi";
 
@@ -107,6 +108,7 @@ export function ActivityEditor({ initial, onClose }: { initial: MarketingActivit
   const { state } = useMarketing(), { currentUser } = useCrm(), access = marketingPermissions(currentUser), { run, feedback } = useAction();
   const [form, setForm] = useState(initial), [error, setError] = useState("");
   const existing = state.activities.some(activity => activity.id === initial.id);
+  const simpleCreate = isCoachPrototype() && !existing;
   const locked = Boolean(initial.publishedAt || hasActivityBusinessData(state, initial.id));
   const update = <K extends keyof MarketingActivity>(key: K, value: MarketingActivity[K]) => setForm(old => ({ ...old, [key]: value }));
   const save = () => {
@@ -123,7 +125,7 @@ export function ActivityEditor({ initial, onClose }: { initial: MarketingActivit
     if (!existing) navigate(`marketing/activity/${form.id}/${form.lotteryEnabled ? "prizes" : "bookings"}`);
   };
   return <FormSideSheet visible className="marketing-activity-editor" width={820} title={existing ? "活动信息设置" : "新建活动"} onCancel={onClose}
-    okText={existing ? "保存" : form.lotteryEnabled ? "创建并设置奖品" : "创建活动"} cancelText="取消" onOk={save} okButtonProps={{ disabled: !access.manage || !access.brands.includes(initial.brand) }}>
+    okText={existing ? "保存" : simpleCreate ? "创建活动" : form.lotteryEnabled ? "创建并设置奖品" : "创建活动"} cancelText="取消" onOk={save} okButtonProps={{ disabled: !access.manage || !access.brands.includes(initial.brand) }}>
     <Form className="marketing-editor" onSubmit={save}>{feedback}{error && <Banner type="warning" title={error} closeIcon={null} />}
       <section className="marketing-form-section"><h2>基本信息</h2><div className="form-grid marketing-form-grid">
         <div className="marketing-field-wide"><TextField label="活动名称" value={form.name} onChange={value => update("name", value)} /></div>
@@ -131,11 +133,11 @@ export function ActivityEditor({ initial, onClose }: { initial: MarketingActivit
         <div className="marketing-field"><span>活动类型</span><RadioGroup aria-label="活动类型" value={form.mode} onChange={event => setForm(old => ({ ...old, mode: event.target.value, completion: event.target.value === "ONLINE" ? "STAFF" : old.completion }))}><Radio value="ONLINE">线上活动</Radio><Radio value="OFFLINE">线下活动</Radio></RadioGroup></div>
         {form.mode === "OFFLINE" && <div className="marketing-field-wide"><TextField label="场地" value={form.location} onChange={value => update("location", value)} /></div>}
         <TimeField label="活动开始时间" value={form.startAt} onChange={value => setForm(old => ({ ...old, startAt: value, ...(!existing && (!old.lotteryStart || old.lotteryStart === old.startAt) ? { lotteryStart: value } : {}) }))} /><TimeField label="活动结束时间" value={form.endAt} onChange={value => setForm(old => ({ ...old, endAt: value, ...(!existing && (!old.lotteryEnd || old.lotteryEnd === old.endAt) ? { lotteryEnd: value } : {}) }))} />
-        <div className="marketing-field marketing-field-wide"><span>参与方式</span><RadioGroup disabled={hasActivityBusinessData(state, initial.id)} className="marketing-mode-options" aria-label="参与方式" value={form.bookingEnabled ? "RESERVATION" : "DIRECT"} onChange={event => setForm(old => ({ ...old, bookingEnabled: event.target.value === "RESERVATION", ...(!existing && event.target.value === "DIRECT" ? { lotteryScope: "ACTIVITY" as const } : {}) }))}>
+        {!simpleCreate && <div className="marketing-field marketing-field-wide"><span>参与方式</span><RadioGroup disabled={hasActivityBusinessData(state, initial.id)} className="marketing-mode-options" aria-label="参与方式" value={form.bookingEnabled ? "RESERVATION" : "DIRECT"} onChange={event => setForm(old => ({ ...old, bookingEnabled: event.target.value === "RESERVATION", ...(!existing && event.target.value === "DIRECT" ? { lotteryScope: "ACTIVITY" as const } : {}) }))}>
           <Radio value="RESERVATION"><span>预约参与<small>用户需要先预约活动场次。</small></span></Radio><Radio value="DIRECT"><span>直接参与<small>用户无需预约，可直接参加活动。</small></span></Radio>
-        </RadioGroup></div>
+        </RadioGroup></div>}
       </div></section>
-      {form.bookingEnabled && <>
+      {!simpleCreate && form.bookingEnabled && <>
         <section className="marketing-form-section"><h2>活动预约</h2><BookingFields form={form} onChange={setForm} /></section>
         <section className="marketing-form-section"><h2>活动场次</h2>
           {form.slots.map((slot, index) => <details key={slot.id} className="marketing-form-section" open={form.slots.length === 1 || undefined}><summary>{slot.label || `场次 ${index + 1}`}</summary><SlotFields slot={slot} onChange={value => update("slots", form.slots.map(row => row.id === slot.id ? value : row))} />
@@ -144,11 +146,11 @@ export function ActivityEditor({ initial, onClose }: { initial: MarketingActivit
           <Button onClick={() => update("slots", [...form.slots, { ...createMarketingSlot(crypto.randomUUID(), form.startAt, 10), label: `场次 ${form.slots.length + 1}`, location: form.location }])}>添加活动场次</Button>
         </section>
       </>}
-      <section className="marketing-form-section"><h2>抽奖</h2><div className="marketing-field marketing-switch-field"><span>启用抽奖</span><Switch size="small" aria-label="启用抽奖" checked={form.lotteryEnabled} onChange={value => update("lotteryEnabled", value)} /></div>
+      {!simpleCreate && <><section className="marketing-form-section"><h2>抽奖</h2><div className="marketing-field marketing-switch-field"><span>启用抽奖</span><Switch size="small" aria-label="启用抽奖" checked={form.lotteryEnabled} onChange={value => update("lotteryEnabled", value)} /></div>
         {form.lotteryEnabled && <><div className="marketing-field"><span>抽奖方式</span><RadioGroup disabled={existing} aria-label="抽奖方式" value={lotteryScope(form)} onChange={event => update("lotteryScope", event.target.value)}><Radio value="ACTIVITY">按活动抽奖</Radio><Radio value="SESSION" disabled={!form.bookingEnabled}>按场次抽奖</Radio></RadioGroup></div>
           {!existing && <LotteryFields form={form} onChange={setForm} />}</>}
       </section>
-      <section className="marketing-form-section"><MarketingRuleEditor value={form.ruleContent ?? ""} format={form.ruleContentFormat} onChange={html => setForm(old => ({ ...old, ruleContent: html, ruleContentFormat: "html" }))} /></section>
+      <section className="marketing-form-section"><MarketingRuleEditor value={form.ruleContent ?? ""} format={form.ruleContentFormat} onChange={html => setForm(old => ({ ...old, ruleContent: html, ruleContentFormat: "html" }))} /></section></>}
     </Form>
   </FormSideSheet>;
 }

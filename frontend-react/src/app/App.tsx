@@ -15,12 +15,14 @@ import { useCrm } from "@/stores/crm-store";
 import { useMemberOperations } from "@/stores/member-operations-store";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { clearDemoAuthSession, readDemoAuthSession, saveDemoAuthSession, type DemoAuthSession } from "@/features/auth/auth-session";
+import { isCoachPrototype } from "@/utils/prototype-variant";
 
-const readRoute = () => window.location.hash.replace(/^#\/?/, "") || "dashboard";
+const readRoute = () => window.location.hash.replace(/^#\/?/, "") || (isCoachPrototype() ? "marketing" : "dashboard");
 
 export function App() {
   const [route, setRoute] = useState(readRoute);
   const [authSession, setAuthSession] = useState<DemoAuthSession | null>(readDemoAuthSession);
+  const coachMode = isCoachPrototype();
   const { state, currentUser, isHq, setCurrentUser, recoveryIssue: salesIssue } = useCrm();
   const { recoveryIssue: memberIssue } = useMemberOperations();
   useEffect(() => {
@@ -28,11 +30,12 @@ export function App() {
     window.addEventListener("hashchange", change);
     return () => window.removeEventListener("hashchange", change);
   }, []);
-  const [section, id] = route.split("/");
+  const requestedRoute = coachMode && !["marketing", "login", "redemption"].includes(route.split("/")[0]) ? "marketing" : route;
+  const [section, id] = requestedRoute.split("/");
   const login = (userId: string) => {
     setCurrentUser(userId);
     setAuthSession(saveDemoAuthSession(userId));
-    if (section === "login") window.location.hash = "dashboard";
+    if (section === "login") window.location.hash = coachMode ? "marketing" : "dashboard";
   };
   const logout = () => { clearDemoAuthSession(); setAuthSession(null); window.location.hash = "login"; };
   if (!authSession || section === "login") return <LoginPage users={state.users} initialUserId={authSession?.userId ?? currentUser.id} onLogin={login} />;
@@ -50,7 +53,7 @@ export function App() {
   else if (section === "organizations") page = <OrganizationsPage id={id} />;
   else if (section === "products") page = <ProductsPage id={id} />;
   else if (section === "tasks") page = <TasksPage />;
-  else if (section === "marketing") page = <MarketingPage path={route.split("/").slice(1)} />;
+  else if (section === "marketing") page = <MarketingPage path={requestedRoute.split("/").slice(1)} />;
   else if (section === "member-customers" && isHq) page = <MemberCustomersPage id={id} />;
   else if (section === "brand-members" && isHq) page = <BrandMembersPage id={id} />;
   else if (section === "purchase-intents" && isHq) page = <PurchaseIntentsPage id={id} />;
@@ -59,5 +62,5 @@ export function App() {
   else if (section === "settings") page = <SettingsPage />;
   else if (["member-customers", "brand-members", "purchase-intents", "distributors", "users"].includes(section) && !isHq) page = <div className="page"><Banner type="warning" title="当前 Demo User 无权访问 HQ 工作区" description="会员与品牌运营不会复用分销商销售数据范围；请切换为 Kivisense Super Admin。" closeIcon={null} /></div>;
   else page = <DashboardPage view={section === "dashboard" ? id : undefined} />;
-  return <AppShell route={route} onLogout={logout}>{section === "settings" && <>{salesIssue && <Banner type="danger" title={salesIssue} closeIcon={null} />}{isHq && memberIssue && <Banner type="danger" title={memberIssue} closeIcon={null} />}</>}{page}</AppShell>;
+  return <AppShell route={requestedRoute} onLogout={logout} coachMode={coachMode}>{section === "settings" && <>{salesIssue && <Banner type="danger" title={salesIssue} closeIcon={null} />}{isHq && memberIssue && <Banner type="danger" title={memberIssue} closeIcon={null} />}</>}{page}</AppShell>;
 }

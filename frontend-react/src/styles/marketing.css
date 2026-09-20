@@ -47,6 +47,7 @@
 .marketing-clue-progress { display: flex; flex-wrap: wrap; gap: 4px 14px; min-width: 0; font-size: 12px; line-height: 18px; }
 .marketing-clue-progress span, .marketing-clue-detail strong { color: var(--crm-text-3); font-weight: 500; }
 .marketing-clue-progress [data-complete="true"], .marketing-clue-detail [data-complete="true"] { color: var(--crm-brand); }
+.coach-clue-progress { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 6px; column-gap: 20px; font-size: 13px; line-height: 20px; }
 .marketing-clue-detail { display: grid; margin-bottom: 20px; border-top: 1px solid var(--crm-border); }
 .marketing-clue-detail > div { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 12px 0; border-bottom: 1px solid var(--crm-border); font-size: 14px; line-height: 20px; }
 .marketing-session-context { display: flex; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; padding: 12px 15px; border: 1px solid var(--crm-border); border-radius: var(--crm-radius); background: var(--crm-subtle); font-size: 14px; line-height: 22px; }
