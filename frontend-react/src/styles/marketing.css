@@ -45,6 +45,10 @@
   font-size: 14px;
   line-height: 22px;
 }
+.coach-pickup-schedule-sheet :is(.semi-tabs-tab, .data-list dt, .data-list dd, .semi-table, .semi-table-row-head, .semi-table-row-cell, .semi-button-content, .marketing-summary-cell, small) {
+  font-size: 16px;
+  line-height: 24px;
+}
 .coach-marketing-detail .detail-sidebar .side-section > header h6,
 .coach-marketing-detail .detail-sidebar .data-list dt,
 .coach-marketing-detail .detail-sidebar .data-list dd { font-size: 14px; line-height: 22px; }

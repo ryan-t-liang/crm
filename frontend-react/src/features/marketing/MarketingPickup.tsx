@@ -103,7 +103,7 @@ export function PickupScheduleDrawer({ activity, scheduleId, onClose }: { activi
   const summary = pickupScheduleSummary(state, activity, schedule, Date.now());
   const adjustingSlot = schedule.slots.find(row => row.id === adjust?.id), booked = adjustingSlot ? pickupBookedCount(state, activity, schedule.id, adjustingSlot.id) : 0;
   return <>
-    <SideSheet visible={!edit && !batch && !slot && !adjust} closeOnEsc className={isCoachPrototype() ? "coach-marketing-sheet" : undefined} title={schedule.name} width={Math.min(820, window.innerWidth - 24)} onCancel={onClose} footer={<Button onClick={onClose}>关闭</Button>}>
+    <SideSheet visible={!edit && !batch && !slot && !adjust} closeOnEsc className={isCoachPrototype() ? "coach-marketing-sheet coach-pickup-schedule-sheet" : undefined} title={schedule.name} width={Math.min(820, window.innerWidth - 24)} onCancel={onClose} footer={<Button onClick={onClose}>关闭</Button>}>
       {feedback}<Tabs type="line" activeKey={activeTab} onChange={setActiveTab}>
         <TabPane itemKey="schedule" tab="兑奖预约"><Panel actions={<Button size="small" theme="borderless" icon={<IconEdit />} aria-label="编辑兑奖预约" disabled={!manage} onClick={() => setEdit(true)} />}>
           <DataList rows={[["地点", prototypeLocationLabel(schedule.location)], ["有效日期", displayDateRange(schedule.startAt, schedule.endAt).compact], ["关联奖品", summary.prizes.map(prize => prize.name).join("、") || "未关联"], ["可预约数量 / 已预约 / 剩余", `${summary.total} / ${summary.booked} / ${summary.remaining}`]]} />
