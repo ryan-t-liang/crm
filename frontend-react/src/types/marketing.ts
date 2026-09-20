@@ -19,6 +19,11 @@ export interface MarketingParticipantIdentity {
   gender?: "MALE" | "FEMALE" | "UNDISCLOSED" | null;
 }
 export interface MarketingSlot { id: string; label: string; startAt: string; endAt: string; location: string; capacity: number; bookingClosesAt: string; checkinStart: string; checkinEnd: string; disabled?: boolean; deleted?: boolean }
+/** Activity-owned shared collection points. Slots reuse the existing time contract. */
+export interface MarketingPickupSchedule {
+  id: string; activityId: string; name: string; location: string;
+  startAt: string; endAt: string; slots: MarketingSlot[];
+}
 export interface MarketingCode { code: string; assignedAwardId?: string; assignedAt?: string }
 export interface ActivityPrize {
   id: string; activityId: string; name: string; description: string; image: string;
@@ -30,6 +35,7 @@ export interface ActivityPrize {
   claimEnd: string; instructions: string; slots: MarketingSlot[]; codes: MarketingCode[];
   voucherName: string; voucherDescription: string; link: string;
   legacyPrizeId?: string;
+  pickupScheduleId?: string;
 }
 export interface SessionPrize {
   sessionId: string; prizeId: string; enabled: boolean; probability: number;
@@ -37,6 +43,7 @@ export interface SessionPrize {
   allocatedQuantity?: number;
 }
 export interface MarketingDrawProbabilitySnapshot {
+  prizeName?: string;
   prizeId: string; configuredProbability: number; effectiveProbability: number;
   quantityMode: MarketingPrizeQuantityMode; sessionRemaining?: number;
 }
@@ -54,6 +61,7 @@ export interface MarketingActivity {
   lotteryEnabled: boolean; lotteryStart: string; lotteryEnd: string; grantCount: number;
   drawLimit: number; dailyLimit: number | null; winLimit: number; noWinProbability: number;
   pool: MarketingPoolItem[]; sessionPrizes?: SessionPrize[]; sessionPrizeConfigVersion?: number;
+  pickupSchedules?: MarketingPickupSchedule[];
   createdAt: string; publishedAt?: string;
   /** New prototype records only; legacy creator remains unknown. */
   createdBy?: string;
@@ -69,6 +77,8 @@ export interface MarketingBooking {
   id: string; activityId: string; participationId: string; kind: "ACTIVITY" | "PRIZE";
   awardId?: string; poolItemId?: string; slotId: string; status: "BOOKED" | "CHECKED_IN" | "CANCELED" | "NO_SHOW" | "FULFILLED";
   createdAt: string; canceledAt?: string; source: "USER" | "WALK_IN" | "UNKNOWN";
+  /** PRIZE bookings only. Legacy records resolve through their original prize/slot. */
+  scheduleId?: string;
 }
 export interface MarketingChance { id: string; participationId: string; activityId: string; count: number; grantedAt: string; ruleVersion: number }
 export interface MarketingDraw {

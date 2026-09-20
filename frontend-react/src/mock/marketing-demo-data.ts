@@ -1,5 +1,6 @@
 import type { MemberOperationsState, SowindBrandCode } from "@/types/member-operations";
 import type { ActivityPrize, MarketingActivity, MarketingSlot, MarketingState } from "@/types/marketing";
+import { appendMarketingIllustrations } from "./marketing-illustration-data";
 
 const marketingDemoPrizes = [
   { id: "prize-demo-direct", name: "工坊纪念礼（演示）", description: "演示现场礼品，不是真实发放数据。", image: "", method: "DIRECT" },
@@ -94,6 +95,34 @@ export function createMarketingDemoState(members: MemberOperationsState, now: nu
     });
     state.draws.push({ id: "draw-demo-no-win", operationId: "operation-demo-no-win", participationId: participant.id, activityId: ended.id, occurredAt: participant.completedAt!, poolItemId: null, ruleVersion: 1, randomValue: 0.95 });
   }
-  state.audits.push({ id: "audit-demo-seed", action: "DEMO_SEED", targetId: "", actorId: "prototype", occurredAt: state.seededAt, result: "SUCCESS", detail: "初始化一次：全部虚构演示，历史结果为明确种子，不是生产抽奖。" });
+  // Persist examples only on first initialization / explicit reset. Never inject
+  // records in page selectors, and never merge this into an existing workspace.
+  first.pool.forEach(prize => { prize.quota = 50; prize.quantityLimit = 50; });
+  const future = first.slots[0], endedSession = { ...future, id: "slot-demo-ended", label: "已结束场次", startAt: new Date(now - 55 * 60_000).toISOString(), endAt: new Date(now - 35 * 60_000).toISOString(), bookingClosesAt: new Date(now - 60 * 60_000).toISOString(), checkinStart: new Date(now - 60 * 60_000).toISOString(), checkinEnd: new Date(now - 34 * 60_000).toISOString() };
+  first.slots.push(endedSession);
+  first.pool[1].name = "皮牌（演示）"; first.pool[2].name = "礼盒（演示）";
+  const unlimited = first.pool.find(prize => prize.method === "REDEMPTION_CODE")!;
+  unlimited.quantityMode = "UNLIMITED"; unlimited.quantityLimit = null; unlimited.quota = 0;
+  first.sessionPrizes?.forEach(row => { if (row.prizeId === unlimited.id) row.allocatedQuantity = undefined; });
+  appendMarketingIllustrations(state, first, now);
+  const sampleSession = first.slots.find(slot => slot.id.endsWith(":illustration:slot"))!;
+  first.sessionPrizes?.forEach(row => { if (row.sessionId === sampleSession.id && row.prizeId !== unlimited.id) row.allocatedQuantity = 30; });
+  first.sessionPrizes?.push(...first.pool.map(prize => ({ sessionId: endedSession.id, prizeId: prize.id, enabled: true, probability: prize.defaultProbability ?? prize.probability, allocatedQuantity: prize.quantityMode === "UNLIMITED" ? undefined : 10 })));
+  const scheduleId = "pickup-demo-shared", at = (minutes: number) => new Date(now + minutes * 60_000).toISOString();
+  const sharedSlot: MarketingSlot = { id: "pickup-demo-shared-slot", label: "领取时段", location: "Kivisense 演示门店", startAt: at(-10), endAt: at(50), bookingClosesAt: at(50), checkinStart: at(-10), checkinEnd: at(50), capacity: 10 };
+  first.pickupSchedules = [{ id: scheduleId, activityId: first.id, name: "门店领奖（演示）", location: sharedSlot.location, startAt: at(-60), endAt: at(7 * 1440), slots: [sharedSlot, { ...sharedSlot, id: "pickup-demo-next-slot", startAt: at(60), endAt: at(120), bookingClosesAt: at(120), checkinStart: at(60), checkinEnd: at(120), capacity: 10 }] }];
+  for (const prize of first.pool.filter(prize => ["PICKUP", "EXPERIENCE"].includes(prize.method))) {
+    prize.pickupScheduleId = scheduleId; prize.slots = []; prize.location = sharedSlot.location;
+    state.awards.filter(award => award.activityId === first.id && award.poolItemId === prize.id).forEach(award => { award.location = sharedSlot.location; });
+    const bookings = state.bookings.filter(booking => booking.activityId === first.id && booking.poolItemId === prize.id && booking.kind === "PRIZE");
+    bookings.forEach((booking, index) => {
+      booking.scheduleId = scheduleId; booking.slotId = sharedSlot.id;
+      if (prize.method === "EXPERIENCE" && index < 2) { booking.status = "CANCELED"; booking.canceledAt = at(-8); }
+    });
+  }
+  const empty = createMarketingActivity(brands[0], now);
+  empty.id = "activity-demo-empty"; empty.name = "空活动（演示）"; empty.location = "Kivisense 演示门店"; empty.startAt = at(1440); empty.endAt = at(1800);
+  state.activities.push(empty);
+  state.audits.push({ id: "audit-demo-seed", action: "DEMO_SEED", targetId: "", actorId: "prototype", occurredAt: state.seededAt, result: "SUCCESS", detail: "初始化一次：全部虚构演示；30条活动预约、30条实际抽奖种子；共享领取时段5+3人；另有真正空活动。不是生产抽奖。" });
   return state;
 }

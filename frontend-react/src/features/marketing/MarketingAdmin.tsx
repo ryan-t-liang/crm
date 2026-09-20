@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { IconChevronDown, IconMore, IconPlus, IconSearch } from "@douyinfe/semi-icons";
-import { Banner, Button, Dropdown, Input, Modal, Select, SideSheet, Table, Tabs, TabPane, Tag } from "@douyinfe/semi-ui";
+import { Banner, Button, Input, Modal, Select, SideSheet, Table, Tabs, TabPane, Tag, Typography } from "@douyinfe/semi-ui";
 import { FormSideSheet, DataList, DetailWorkspace, EmptyBlock, PageHeader, SideSection } from "@/components/CrmUi";
 import { useCrm } from "@/stores/crm-store";
 import { brandLabels } from "@/stores/member-operations-store";
 import { useMarketing } from "@/stores/marketing-store";
 import { createActivityPrize, createMarketingActivity, createMarketingSlot } from "@/mock/marketing-demo-data";
-import { createMarketingRecordIllustrations, withMarketingRecordIllustrations } from "@/mock/marketing-record-illustrations";
+import { PickupScheduleSection } from "./MarketingPickup";
+import { pickupScheduleForPrize } from "./marketing-pickup";
 import type { ActivityPrize, MarketingActivity, MarketingSlot, MarketingState } from "@/types/marketing";
 import { parseCreatedAt } from "@/features/dashboard/dashboard-model";
 import { navigate } from "@/utils/format";
@@ -17,7 +18,7 @@ import { ActivityRuleContent } from "./MarketingRuleEditor";
 import { CodeManager } from "./MarketingCodes";
 import { ActivityBookingData, DrawData } from "./MarketingRecords";
 import { activityDetailTab } from "./marketing-records";
-import { DateRange, DefinitionGrid, displayDate, displayDateRange, ImageField, NumberField, options, Panel, prizeReceivingLabel, SlotFields, TextField, useAction } from "./MarketingUi";
+import { DateRange, DefinitionGrid, displayDate, displayDateRange, MarketingMenu, NumberField, options, Panel, prizeReceivingLabel, SlotFields, useAction } from "./MarketingUi";
 import { marketingSessionLifecycle, marketingSessionLifecycleLabels, SessionPrizeDrawer, sessionPrizeSummary } from "./MarketingSessionPrizes";
 
 function useClock() { const [now, setNow] = useState(Date.now); useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 30_000); return () => clearInterval(timer); }, []); return now; }
@@ -73,45 +74,44 @@ export function MarketingList({ migratedEntry }: { migratedEntry?: string }) {
       { title: "活动时间", width: 210, render: (_: unknown, row: MarketingActivity) => <DateRange start={row.startAt} end={row.endAt} /> },
       { title: "状态", width: 100, render: (_: unknown, row: MarketingActivity) => <LifecycleTag activity={row} now={now} /> },
       { title: "参与方式", width: 120, render: (_: unknown, row: MarketingActivity) => row.bookingEnabled ? "预约参与" : "直接参与" },
-      { title: "操作", width: 120, fixed: "right", render: (_: unknown, row: MarketingActivity) => <div className="row-actions"><Button theme="borderless" size="small" disabled={!access.manage} onClick={() => setEditing(structuredClone(row))}>编辑</Button><Dropdown trigger="click" position="bottomRight" menu={activityMenu(state, row, access.manage, now, run, () => navigate(`marketing/activity/${row.id}/prizes`))}><Button theme="borderless" size="small" icon={<IconMore />} aria-label="更多" /></Dropdown></div> },
+      { title: "操作", width: 120, fixed: "right", render: (_: unknown, row: MarketingActivity) => <div className="row-actions"><Button theme="borderless" size="small" disabled={!access.manage} onClick={() => setEditing(structuredClone(row))}>编辑</Button><MarketingMenu menu={activityMenu(state, row, access.manage, now, run, () => navigate(`marketing/activity/${row.id}/prizes`))}><Button theme="borderless" size="small" icon={<IconMore />} aria-label="更多" /></MarketingMenu></div> },
     ]} />
     </section>
     {editing && <ActivityEditor key={editing.id} initial={editing} onClose={() => setEditing(null)} />}
   </>;
 }
 
-function ActivitySessions({ activity }: { activity: MarketingActivity }) {
+function ActivitySessions({ activity, onClose }: { activity: MarketingActivity; onClose: () => void }) {
   const { state } = useMarketing(), { currentUser } = useCrm(), access = marketingPermissions(currentUser), { run, feedback } = useAction();
   const [slot, setSlot] = useState<MarketingSlot | null>(null), [prizeSession, setPrizeSession] = useState<MarketingSlot | null>(null); const now = useClock();
-  return <>{feedback}<Panel title="活动场次" actions={<Button size="small" icon={<IconPlus />} disabled={!access.manage} onClick={() => setSlot({ ...createMarketingSlot(crypto.randomUUID(), activity.startAt, 10, Date.parse(activity.startAt) - 30 * 60_000), location: activity.location })}>添加场次</Button>}>
-      <Table rowKey="id" dataSource={activity.slots} pagination={false} scroll={{ x: 1120 }} empty={<EmptyBlock title="暂无活动场次" description="添加场次后，用户可选择时间预约。" />} columns={[
-        { title: "日期 / 场次", width: 150, render: (_: unknown, row: MarketingSlot) => <div className="marketing-summary-cell"><span>{displayDate(row.startAt).slice(0, 10)}</span><span>{row.label}</span></div> },
-        { title: "时间", width: 170, render: (_: unknown, row: MarketingSlot) => displayDateRange(row.startAt, row.endAt).time },
-        { title: "场地", dataIndex: "location", width: 150 },
-        { title: "预约人数 / 容量", width: 140, render: (_: unknown, row: MarketingSlot) => `${slotOccupancy(state, activity.id, "ACTIVITY", row.id)} / ${row.capacity}` },
-        ...(activity.lotteryEnabled ? [{ title: "奖品配置", width: 190, render: (_: unknown, row: MarketingSlot) => <Button theme="borderless" size="small" onClick={() => setPrizeSession(row)}>{sessionPrizeSummary(state, activity, row.id)}</Button> }] : []),
+  return <><SideSheet visible={!slot && !prizeSession} closeOnEsc title="活动场次" width={Math.min(820, window.innerWidth - 24)} onCancel={onClose}>{feedback}<Panel actions={<Button size="small" icon={<IconPlus />} disabled={!access.manage} onClick={() => setSlot({ ...createMarketingSlot(crypto.randomUUID(), activity.startAt, 10, Date.parse(activity.startAt) - 30 * 60_000), location: activity.location })}>添加场次</Button>}>
+      <Table rowKey="id" dataSource={activity.slots} pagination={false} scroll={{ x: 760 }} empty={<EmptyBlock title="暂无活动场次" description="添加场次后，用户可选择时间预约。" />} columns={[
+        { title: "日期 / 时间", width: 160, render: (_: unknown, row: MarketingSlot) => <DateRange start={row.startAt} end={row.endAt} /> },
+        { title: "场地", dataIndex: "location", width: 110 },
+        { title: "预约 / 容量", width: 100, render: (_: unknown, row: MarketingSlot) => `${slotOccupancy(state, activity.id, "ACTIVITY", row.id)} / ${row.capacity}` },
+        ...(activity.lotteryEnabled ? [{ title: "奖品配置", width: 160, render: (_: unknown, row: MarketingSlot) => <Button theme="borderless" size="small" onClick={() => setPrizeSession(row)}>{sessionPrizeSummary(state, activity, row.id)}</Button> }] : []),
         { title: "状态", width: 100, render: (_: unknown, row: MarketingSlot) => { const lifecycle = marketingSessionLifecycle(activity, row, now); return <Tag size="small" color={lifecycle === "ONGOING" ? "green" : "grey"}>{marketingSessionLifecycleLabels[lifecycle]}</Tag>; } },
-        { title: "操作", width: 130, fixed: "right", render: (_: unknown, row: MarketingSlot) => <div className="row-actions"><Button theme="borderless" size="small" disabled={!access.manage} onClick={() => setSlot(structuredClone(row))}>编辑</Button><Dropdown trigger="click" position="bottomRight" menu={[
+        { title: "操作", width: 130, fixed: "right", render: (_: unknown, row: MarketingSlot) => <div className="row-actions"><Button theme="borderless" size="small" disabled={!access.manage} onClick={() => setSlot(structuredClone(row))}>编辑</Button><MarketingMenu menu={[
           ...(activity.lotteryEnabled ? [{ node: "item" as const, name: "管理奖品", onClick: () => setPrizeSession(row) }] : []),
           { node: "item" as const, name: "删除场次", type: "danger" as const, disabled: !access.manage || state.bookings.some(booking => booking.activityId === activity.id && booking.kind === "ACTIVITY" && booking.slotId === row.id), onClick: () => run({ type: "DELETE_ACTIVITY_SLOT", activityId: activity.id, slotId: row.id }) },
-        ]}><Button theme="borderless" size="small" icon={<IconMore />} aria-label={`更多操作 · ${row.label}`} /></Dropdown></div> },
+        ]}><Button theme="borderless" size="small" icon={<IconMore />} aria-label={`更多操作 · ${row.label}`} /></MarketingMenu></div> },
       ]} />
-    </Panel>
+    </Panel></SideSheet>
     {slot && <FormSideSheet visible className="marketing-prize-editor" title="活动场次" width={640} okText="保存" cancelText="取消" onCancel={() => setSlot(null)} onOk={() => { if (run({ type: "SAVE_ACTIVITY_SLOT", activityId: activity.id, slot }).ok) setSlot(null); }}>{feedback}<SlotFields slot={slot} onChange={setSlot} /></FormSideSheet>}
     {prizeSession && <SessionPrizeDrawer activity={activity} session={prizeSession} onClose={() => setPrizeSession(null)} />}
   </>;
 }
 
-function PrizeSettings({ activity, onManageSessions }: { activity: MarketingActivity; onManageSessions: () => void }) {
+function PrizeSettings({ activity, onManageSessions, onCreate }: { activity: MarketingActivity; onManageSessions: () => void; onCreate: () => void }) {
   const { state } = useMarketing(), { currentUser } = useCrm(), access = marketingPermissions(currentUser), { run, feedback } = useAction(); const now = useClock();
-  const [editing, setEditing] = useState<ActivityPrize | null>(null), [importId, setImportId] = useState(""), [codesId, setCodesId] = useState(""), [extra, setExtra] = useState({ itemId: "", count: 1 }), [addingSlot, setAddingSlot] = useState<{ itemId: string; slot: MarketingSlot } | null>(null);
+  const [editing, setEditing] = useState<ActivityPrize | null>(null), [importId, setImportId] = useState(""), [codesId, setCodesId] = useState(""), [extra, setExtra] = useState({ itemId: "", count: 1 }), [scheduleId, setScheduleId] = useState("");
   const rulesLocked = Boolean(activity.publishedAt || hasActivityBusinessData(state, activity.id));
   const codePrize = activity.pool.find((item) => item.id === codesId);
   return <>{feedback}
-    <Panel>
-      <Table rowKey="id" dataSource={activity.pool} pagination={{ pageSize: 10 }} scroll={{ x: 1040 }} empty={<EmptyBlock title="暂无奖品" description="添加奖品后，可分别配置领取方式、可发放数量和中奖概率。" />} columns={[
-        { title: "奖品", width: 210, render: (_: unknown, item: ActivityPrize) => <div className="marketing-summary-cell"><strong>{item.name}</strong><span>{item.label}</span></div> },
-        { title: "类型 / 领取方式", width: 155, render: (_: unknown, item: ActivityPrize) => <div className="marketing-summary-cell"><span>{prizeTypeLabels[item.prizeType]}</span><small>{prizeReceivingLabel(item)}</small></div> },
+    <Panel title="奖品" actions={<Button size="small" icon={<IconPlus />} disabled={!access.manage} onClick={onCreate}>创建奖品</Button>}>
+      <Table rowKey="id" dataSource={activity.pool} pagination={{ pageSize: 10 }} scroll={{ x: 990 }} empty={<EmptyBlock title="暂无奖品" description="添加奖品后，可分别配置领取方式、可发放数量和中奖概率。" />} columns={[
+        { title: "奖品", width: 160, render: (_: unknown, item: ActivityPrize) => <div className="marketing-summary-cell"><strong>{item.name}</strong><span>{item.label}</span></div> },
+        { title: "类型 / 领取方式", width: 130, render: (_: unknown, item: ActivityPrize) => <div className="marketing-summary-cell"><span>{prizeTypeLabels[item.prizeType]}</span><small>{prizeReceivingLabel(item)}</small></div> },
         { title: "数量", width: 155, render: (_: unknown, item: ActivityPrize) => {
           if (prizeQuantityMode(item) === "UNLIMITED") return <div className="marketing-summary-cell"><span>不限量</span>{item.method === "REDEMPTION_CODE" && <small>可用码 {codeInventory(item).remaining}</small>}</div>;
           const allocation = activityPrizeAllocation(state, activity, item, now);
@@ -120,16 +120,19 @@ function PrizeSettings({ activity, onManageSessions }: { activity: MarketingActi
         { title: "概率 / 场次配置", width: 165, render: (_: unknown, item: ActivityPrize) => {
           if (!activity.bookingEnabled) return <div className="marketing-summary-cell"><span>中奖概率 {prizeDefaultProbability(item)}%</span></div>;
           const slots = activity.slots.filter((slot) => !slot.disabled && !slot.deleted);
-          const configured = slots.filter((slot) => (activity.sessionPrizes ?? []).some((row) => row.sessionId === slot.id && row.enabled)).length;
+          const configured = slots.filter((slot) => (activity.sessionPrizes ?? []).some((row) => row.sessionId === slot.id && row.prizeId === item.id && row.enabled)).length;
           return <div className="marketing-summary-cell"><span>新场次默认 {prizeDefaultProbability(item)}%</span><Button theme="borderless" size="small" onClick={onManageSessions}>{configured} / {slots.length} 场已配置</Button></div>;
         } },
-        { title: "领取有效期", width: 210, render: (_: unknown, item: ActivityPrize) => <DateRange start={item.claimStart} end={item.claimEnd} /> },
-        { title: "操作", width: 170, fixed: "right", render: (_: unknown, item: ActivityPrize) => <div className="row-actions"><Button theme="borderless" size="small" disabled={!access.manage} onClick={() => setEditing(structuredClone(item))}>编辑奖品</Button><Dropdown trigger="click" menu={[
+        { title: "领取安排 / 有效期", width: 210, render: (_: unknown, item: ActivityPrize) => {
+          const schedule = pickupScheduleForPrize(activity, item);
+          return <div className="marketing-summary-cell">{needsReservation(item) && (schedule ? <Button theme="borderless" size="small" onClick={() => setScheduleId(schedule.id)}>{schedule.name}</Button> : <span>领取安排待配置</span>)}<DateRange start={item.claimStart} end={item.claimEnd} /></div>;
+        } },
+        { title: "操作", width: 130, fixed: "right", render: (_: unknown, item: ActivityPrize) => <div className="row-actions"><Button theme="borderless" size="small" disabled={!access.manage} onClick={() => setEditing(structuredClone(item))}>编辑</Button><MarketingMenu menu={[
           ...(item.method === "REDEMPTION_CODE" ? [{ node: "item" as const, name: "导入兑换码", disabled: !access.manage, onClick: () => setImportId(item.id) }, { node: "item" as const, name: "查看兑换码", disabled: !access.manage, onClick: () => setCodesId(item.id) }] : []),
           ...(rulesLocked && prizeQuantityMode(item) === "LIMITED" ? [{ node: "item" as const, name: "增加可发放数量", disabled: !access.manage, onClick: () => setExtra({ itemId: item.id, count: 1 }) }] : []),
-          ...(needsReservation(item) && rulesLocked ? [{ node: "item" as const, name: "追加领奖时段", disabled: !access.manage, onClick: () => setAddingSlot({ itemId: item.id, slot: createMarketingSlot(crypto.randomUUID(), item.claimStart) }) }] : []),
+          ...(needsReservation(item) && pickupScheduleForPrize(activity, item) ? [{ node: "item" as const, name: "管理领取安排", onClick: () => setScheduleId(pickupScheduleForPrize(activity, item)!.id) }] : []),
           ...(!rulesLocked ? [{ node: "item" as const, name: "删除奖品", type: "danger" as const, disabled: !access.manage, onClick: () => run({ type: "DELETE_ACTIVITY_PRIZE", activityId: activity.id, poolItemId: item.id }) }] : []),
-        ]}><Button theme="borderless" size="small" icon={<IconMore />} aria-label={`更多奖品操作 · ${item.name}`} /></Dropdown></div> },
+        ]}><Button theme="borderless" size="small" icon={<IconMore />} aria-label={`更多奖品操作 · ${item.name}`} /></MarketingMenu></div> },
       ]} />
     </Panel>
     {editing && <FormSideSheet visible className="marketing-prize-editor" title="编辑奖品" width={720} okText="保存" cancelText="取消" okButtonProps={{ disabled: !access.manage }} onCancel={() => setEditing(null)} onOk={() => { if (!access.manage) return; if (run({ type: "SAVE_ACTIVITY_PRIZE", activityId: activity.id, prize: editing }).ok) setEditing(null); }}>{feedback}
@@ -137,13 +140,13 @@ function PrizeSettings({ activity, onManageSessions }: { activity: MarketingActi
       ["可继续中奖", winnable(state, activity.id, editing, now)], ["已领取 / 发放", quota(state, activity.id, editing).issued],
       ...(needsReservation(editing) ? [["待预约权益", fulfillmentCapacity(state, activity.id, editing, now).unreservedPromises], ["预约名额缺口", fulfillmentCapacity(state, activity.id, editing, now).shortfall]] as Array<[string, ReactNode]> : []),
       ...(editing.method === "REDEMPTION_CODE" ? [["兑换码：导入 / 分配 / 剩余", `${codeInventory(editing).imported} / ${codeInventory(editing).assigned} / ${codeInventory(editing).remaining}`]] as Array<[string, ReactNode]> : []),
-      ]} />{rulesLocked ? <><Banner title="既有奖品规则保留" description="文案修改不影响历史中奖记录；可发放数量、兑换码和领奖时段通过专用操作追加，新的领取规则请创建新奖品。" closeIcon={null} /><TextField label="奖品名称" value={editing.name} onChange={(name) => setEditing({ ...editing, name })} /><TextField label="奖项名称" value={editing.label} onChange={(label) => setEditing({ ...editing, label })} /><TextField label="奖品说明" value={editing.description} onChange={(description) => setEditing({ ...editing, description })} /><TextField label="使用 / 领取说明" value={editing.instructions} onChange={(instructions) => setEditing({ ...editing, instructions })} /><ImageField label="奖品图片" value={editing.image} onChange={(image) => setEditing({ ...editing, image })} /></> : <PrizeFields prize={editing} onChange={setEditing} />}</FormSideSheet>}
+      ]} /><PrizeFields prize={editing} onChange={setEditing} quantityLocked={rulesLocked} locked={state.awards.some(row => row.activityId === activity.id && row.poolItemId === editing.id)} /></FormSideSheet>}
     {importId && <FormSideSheet visible title="导入当前奖品兑换码" width={650} footer={<Button onClick={() => setImportId("")}>完成</Button>} onCancel={() => setImportId("")}>
       {feedback}<CodeImporter onImport={(codes) => run({ type: "IMPORT_CODES", activityId: activity.id, poolItemId: importId, codes }).codeImport} />
     </FormSideSheet>}
     {codePrize && access.manage && <CodeManager prize={codePrize} published={Boolean(rulesLocked)} remainingQuota={quota(state, activity.id, codePrize).available} canManage={access.manage} onClose={() => setCodesId("")} onDelete={(codes) => run({ type: "DELETE_CODES", activityId: activity.id, poolItemId: codePrize.id, codes })} />}
-    <FormSideSheet visible={Boolean(extra.itemId)} title="增加活动奖品可发放数量" onCancel={() => setExtra({ itemId: "", count: 1 })} onOk={() => { if (run({ type: "ADD_QUOTA", activityId: activity.id, poolItemId: extra.itemId, count: extra.count }).ok) setExtra({ itemId: "", count: 1 }); }}>{feedback}<NumberField label="增加数量" value={extra.count} onChange={(count) => setExtra({ ...extra, count })} /></FormSideSheet>
-    {addingSlot && <FormSideSheet visible title="追加领奖时段" width={720} onCancel={() => setAddingSlot(null)} onOk={() => { if (run({ type: "ADD_PRIZE_SLOT", activityId: activity.id, poolItemId: addingSlot.itemId, slot: addingSlot.slot }).ok) setAddingSlot(null); }}>{feedback}<SlotFields slot={addingSlot.slot} onChange={(slot) => setAddingSlot({ ...addingSlot, slot })} /></FormSideSheet>}
+    <Modal visible={Boolean(extra.itemId)} maskClosable={false} width={520} title="增加活动奖品可发放数量" onCancel={() => setExtra({ itemId: "", count: 1 })} onOk={() => { if (run({ type: "ADD_QUOTA", activityId: activity.id, poolItemId: extra.itemId, count: extra.count }).ok) setExtra({ itemId: "", count: 1 }); }}>{feedback}<NumberField label="增加数量" value={extra.count} onChange={(count) => setExtra({ ...extra, count })} /></Modal>
+    <PickupScheduleSection activity={activity} openId={scheduleId} onOpen={setScheduleId} onClose={() => setScheduleId("")} />
   </>;
 }
 
@@ -151,14 +154,11 @@ export function MarketingDetail({ activity, requestedTab, requestedSecondaryTab 
   const { state } = useMarketing(), { state: sales, currentUser } = useCrm(), access = marketingPermissions(currentUser), { run, feedback } = useAction(), now = useClock();
   const [editing, setEditing] = useState(false), [configuration, setConfiguration] = useState<"booking" | "lottery" | null>(null), [newPrize, setNewPrize] = useState<ActivityPrize | null>(null), [sessions, setSessions] = useState(false);
   useEffect(() => { setEditing(false); setConfiguration(null); setNewPrize(null); setSessions(false); }, [activity.id, currentUser.id]);
-  const illustrationAt = useMemo(() => Date.now(), [activity.id]);
-  const illustrations = useMemo(() => createMarketingRecordIllustrations(activity, illustrationAt), [activity, illustrationAt]);
-  const recordState = useMemo(() => withMarketingRecordIllustrations(state, illustrations), [state, illustrations]);
   const code = activityCodes(state).get(activity.id), tab = activityDetailTab(requestedTab, requestedSecondaryTab);
   const creator = activity.createdBy ? sales.users.find(user => user.id === activity.createdBy)?.name || "历史人员待核对" : "未记录";
   const go = (key: string) => navigate(`marketing/activity/${activity.id}/${key}`);
   const coreInfo: Array<[string, ReactNode]> = [
-    ["活动名称", activity.name], ["活动编号", code], ["所属品牌", brandLabels[activity.brand]],
+    ["活动名称", activity.name], ["活动编号", <Typography.Text ellipsis={{ showTooltip: true }} copyable>{code}</Typography.Text>], ["所属品牌", brandLabels[activity.brand]],
     ["创建人", creator], ["创建时间", displayDate(activity.createdAt)],
     ["活动类型", activity.mode === "OFFLINE" ? "线下活动" : "线上活动"],
     ["场地", activity.mode === "OFFLINE" ? activity.location || "—" : "—"],
@@ -172,14 +172,14 @@ export function MarketingDetail({ activity, requestedTab, requestedSecondaryTab 
       <Tag size="small">{activity.bookingEnabled ? "预约参与" : "直接参与"}</Tag><Tag size="small">创建人：{creator}</Tag>{activity.mode === "OFFLINE" && <Tag size="small">地点：{activity.location || "未设置"}</Tag>}
       <span className="marketing-record-metadata"><span>{code}</span><span>{displayDateRange(activity.startAt, activity.endAt).compact}</span></span>
     </>}
-    actions={<Dropdown trigger="click" position="bottomRight" menu={[
+    actions={<MarketingMenu menu={[
       { node: "item" as const, name: "创建奖品", disabled: !access.manage, onClick: () => setNewPrize({ ...createActivityPrize(activity.id, Date.now()), fulfillmentMode: "DIRECT" }) },
       { node: "item" as const, name: "编辑活动信息", disabled: !access.manage, onClick: () => setEditing(true) },
-      { node: "item" as const, name: "编辑预约设置", disabled: !access.manage, onClick: () => setConfiguration("booking") },
-      { node: "item" as const, name: "管理场次", disabled: !access.manage, onClick: () => setSessions(true) },
+      { node: "item" as const, name: "编辑预约设置", disabled: !access.manage || !activity.bookingEnabled, onClick: () => setConfiguration("booking") },
+      { node: "item" as const, name: "管理场次", disabled: !access.manage || !activity.bookingEnabled, onClick: () => setSessions(true) },
       { node: "item" as const, name: "抽奖设置", disabled: !access.manage, onClick: () => setConfiguration("lottery") },
       { node: "divider" as const }, ...activityMenu(state, activity, access.manage, now, run, () => setSessions(true)),
-    ]}><Button size="small" theme="solid" icon={<IconChevronDown />} iconPosition="right" aria-label="活动管理">活动管理</Button></Dropdown>}
+    ]}><Button size="small" theme="solid" icon={<IconChevronDown />} iconPosition="right" aria-label="活动管理">活动管理</Button></MarketingMenu>}
     sidebar={<>
       <SideSection title="活动信息"><DataList rows={coreInfo} /><div className="marketing-rail-rule"><h3>活动规则</h3><ActivityRuleContent activity={activity} /></div></SideSection>
       {activity.bookingEnabled && <SideSection title="预约设置"><DataList rows={[
@@ -197,14 +197,14 @@ export function MarketingDetail({ activity, requestedTab, requestedSecondaryTab 
       ]} /></SideSection>}
     </>}
     tabs={<>{feedback}<Tabs type="line" className="record-tabs" activeKey={tab} onChange={go}>
-      <TabPane itemKey="bookings" tab="活动预约记录"><section className="marketing-record-content"><ActivityBookingData key={`${activity.id}:${currentUser.id}`} activity={activity} now={now} dataState={recordState} /></section></TabPane>
-      <TabPane itemKey="prizes" tab="奖品设置">{!activity.lotteryEnabled && <Banner type="info" title="此活动未启用抽奖" closeIcon={null} />}<PrizeSettings key={`${activity.id}:${currentUser.id}`} activity={activity} onManageSessions={() => setSessions(true)} /></TabPane>
-      <TabPane itemKey="draws" tab="抽奖记录"><section className="marketing-record-content">{!activity.lotteryEnabled && <Banner type="info" title="此活动未启用抽奖" closeIcon={null} />}<DrawData key={`${activity.id}:${currentUser.id}`} activity={activity} now={now} dataState={recordState} /></section></TabPane>
+      <TabPane itemKey="bookings" tab="活动预约记录"><section className="marketing-record-content"><ActivityBookingData key={`${activity.id}:${currentUser.id}`} activity={activity} now={now} dataState={state} /></section></TabPane>
+      <TabPane itemKey="prizes" tab="奖品设置">{!activity.lotteryEnabled && <Banner type="info" title="此活动未启用抽奖" closeIcon={null} />}<PrizeSettings key={`${activity.id}:${currentUser.id}`} activity={activity} onManageSessions={() => setSessions(true)} onCreate={() => setNewPrize({ ...createActivityPrize(activity.id, Date.now()), fulfillmentMode: "DIRECT" })} /></TabPane>
+      <TabPane itemKey="draws" tab="抽奖记录"><section className="marketing-record-content">{!activity.lotteryEnabled && <Banner type="info" title="此活动未启用抽奖" closeIcon={null} />}<DrawData key={`${activity.id}:${currentUser.id}`} activity={activity} now={now} dataState={state} /></section></TabPane>
     </Tabs></>}
   /></div>
     {editing && <ActivityEditor initial={structuredClone(activity)} onClose={() => setEditing(false)} />}
     {configuration && <ActivityConfigurationEditor key={configuration} initial={structuredClone(activity)} section={configuration} onClose={() => setConfiguration(null)} />}
     {newPrize && <FormSideSheet visible className="marketing-prize-editor" title="创建奖品" width={720} okText="创建奖品" cancelText="取消" okButtonProps={{ disabled: !access.manage }} onCancel={() => setNewPrize(null)} onOk={() => { if (!access.manage) return; if (run({ type: "SAVE_ACTIVITY_PRIZE", activityId: activity.id, prize: newPrize }).ok) { setNewPrize(null); go("prizes"); } }}>{feedback}<PrizeFields prize={newPrize} onChange={setNewPrize} /></FormSideSheet>}
-    <SideSheet visible={sessions} closeOnEsc title="活动场次" width={Math.min(980, window.innerWidth - 24)} onCancel={() => setSessions(false)}>{sessions && <ActivitySessions activity={activity} />}</SideSheet>
+    {sessions && <ActivitySessions activity={activity} onClose={() => setSessions(false)} />}
   </>;
 }

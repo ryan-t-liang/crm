@@ -45,14 +45,8 @@ export function activityDrawRecords(state: MarketingState, activity: MarketingAc
     return matches.length ? matches.map(award => ({ id: `award:${award.id}`, participant, draw, award, ...awardPhase(state, award, now) }))
       : [{ id: `draw:${draw.id}`, participant, draw, phase: 2 as const, reservation: false, note: draw.poolItemId ? "中奖权益待核对" : "未中奖" }];
   });
-  // Preserve disconnected historic awards instead of silently hiding them.
-  for (const award of awards.filter(row => !draws.some(draw => draw.id === row.drawId && draw.participationId === row.participationId))) {
-    const status = awardPhase(state, award, now);
-    records.push({ id: `award:${award.id}`, participant: participants.find(row => row.id === award.participationId), award, ...status, note: ["抽奖来源待核对", status.note].filter(Boolean).join(" · ") });
-  }
-  for (const participant of participants.filter(row => !draws.some(draw => draw.participationId === row.id) && !awards.some(award => award.participationId === row.id))) {
-    records.push({ id: `pending:${participant.id}`, participant, phase: 1, reservation: false, note: participant.completedAt ? "" : "待完成活动" });
-  }
+  // Only persisted draws are table records. Orphan awards and participants stay
+  // in their original collections; never synthesize pending draw rows.
   return records.reverse();
 }
 export const activityBookingLabels = { PENDING: "待核销", REDEEMED: "已核销", CANCELED: "已取消" };

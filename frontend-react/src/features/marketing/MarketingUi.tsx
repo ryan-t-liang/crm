@@ -1,5 +1,6 @@
 import { useId, useState, type ReactNode } from "react";
-import { Banner, Input, InputNumber, Select, Tag } from "@douyinfe/semi-ui";
+import { Banner, Dropdown, Input, InputNumber, Select, Tag } from "@douyinfe/semi-ui";
+import type { DropDownMenuItem } from "@douyinfe/semi-ui/lib/es/dropdown";
 import { useMarketing } from "@/stores/marketing-store";
 import { parseCreatedAt } from "@/features/dashboard/dashboard-model";
 import type { ActivityPrize, MarketingActivity, MarketingAward, MarketingSlot, MarketingState } from "@/types/marketing";
@@ -38,8 +39,16 @@ export function SelectField({ label, value, list, onChange, disabled }: { label:
 export function TextField({ label, value, onChange, type = "text", disabled, placeholder }: { label: string; value: string; onChange: (value: string) => void; type?: string; disabled?: boolean; placeholder?: string }) {
   return <label className="marketing-field"><span>{label}</span><Input aria-label={label} type={type} value={value} onChange={onChange} disabled={disabled} placeholder={placeholder} /></label>;
 }
-export function NumberField({ label, value, onChange }: { label: string; value: number; onChange: (value: number) => void }) {
-  return <label className="marketing-field"><span>{label}</span><InputNumber aria-label={label} value={Number.isFinite(value) ? value : undefined} onChange={(next) => onChange(typeof next === "number" ? next : NaN)} /></label>;
+export function NumberField({ label, value, onChange, disabled }: { label: string; value: number; onChange: (value: number) => void; disabled?: boolean }) {
+  return <label className="marketing-field"><span>{label}</span><InputNumber disabled={disabled} aria-label={label} value={Number.isFinite(value) ? value : undefined} onChange={(next) => onChange(typeof next === "number" ? next : NaN)} /></label>;
+}
+/** Close the existing Semi menu before opening a form or confirmation. */
+export function MarketingMenu({ menu, children }: { menu: DropDownMenuItem[]; children: ReactNode }) {
+  const [visible, setVisible] = useState(false);
+  return <Dropdown trigger="click" visible={visible} onVisibleChange={setVisible} clickToHide position="bottomRight"
+    menu={menu.map(item => item.node === "item" ? { ...item, onClick: (...args) => { setVisible(false); window.requestAnimationFrame(() => item.onClick?.(...args)); } } : item)}>
+    {children}
+  </Dropdown>;
 }
 export function TimeField({ label, value, onChange, placeholder, disabled }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string; disabled?: boolean }) {
   return <div><TextField label={label} value={dateTime(value)} placeholder={placeholder} disabled={disabled} type="datetime-local" onChange={(value) => onChange(value ? `${value}:00+08:00` : "")} />{placeholder && !value && <small>{placeholder}</small>}</div>;

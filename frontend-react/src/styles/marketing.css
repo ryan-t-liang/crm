@@ -10,7 +10,7 @@
 .marketing-field .semi-select, .marketing-field .semi-input-number { width: 100%; min-width: 0; }
 .marketing-activity-name { font-weight: 500; }
 .marketing-activity-code { font-size: 12px; font-variant-numeric: tabular-nums; color: var(--crm-text-3); }
-.marketing-date-range { font-size: 13px; line-height: 20px; font-variant-numeric: tabular-nums; }
+.marketing-date-range { line-height: 1.5; font-variant-numeric: tabular-nums; }
 .marketing-field-wide { grid-column: 1 / -1; min-width: 0; }
 .marketing-form-section > h2 { margin-bottom: 12px; }
 .marketing-form-section + .marketing-form-section { margin-top: 20px; }
@@ -24,42 +24,15 @@
 .marketing-redemption .data-list dd { overflow-wrap: anywhere; }
 .marketing-detail code, .marketing-redemption-surface code { overflow-wrap: anywhere; }
 .marketing-record-metadata { width: 100%; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; font-size: 12px; line-height: 20px; color: var(--crm-text-2); }
-/* Activity-specific composition; keep the CRM grid breakpoints and Semi theme intact. */
-.marketing-detail .detail-grid, .marketing-detail .detail-sidebar { gap: 20px; }
-.marketing-detail .detail-header { margin-bottom: 20px; }
-.marketing-detail .detail-title { display: flex; flex-direction: column; gap: 15px; }
-.marketing-detail .detail-title > * { margin: 0; }
-.marketing-detail .detail-tags, .marketing-detail .detail-actions,
-.marketing-detail .row-actions, .marketing-detail .tab-panel-header,
-.marketing-detail .side-section > header { gap: 15px; }
 .marketing-detail .detail-tags > .semi-tag { max-width: 100%; height: auto; white-space: normal; overflow-wrap: anywhere; }
-.marketing-detail .data-list { display: grid; gap: 15px; }
-.marketing-detail .data-list > div { padding: 0; border-bottom: 0; }
-.marketing-detail .marketing-definition { gap: 15px; }
-.marketing-detail .marketing-summary-cell { gap: 15px; }
 .marketing-rail-rule { margin-top: 20px; }
 .marketing-rail-rule h3 { margin: 0 0 15px; font-size: 12px; font-weight: 600; }
 .marketing-rail-rule .marketing-rule-content p { margin-bottom: 15px; }
 .marketing-detail .marketing-record-metadata { margin: 0; }
-/* Explicit activity-page typography: readable body copy and equal-weight rail/tab titles. */
-.marketing-detail .record-tabs > .semi-tabs-bar .semi-tabs-tab,
-.marketing-detail .side-section > header h6 { font-size: 14px; line-height: 24px; }
-.marketing-detail .data-list dt, .marketing-prize-booking-modal .data-list dt { font-size: 12px; line-height: 18px; font-weight: 500; }
-.marketing-detail .data-list dd, .marketing-prize-booking-modal .data-list dd { font-size: 14px; line-height: 22px; }
-.marketing-detail .data-list > div { column-gap: 15px; }
-.marketing-detail .marketing-record-metadata { font-size: 14px; line-height: 22px; }
-.marketing-detail .marketing-rail-rule h3 { font-size: 14px; line-height: 22px; }
-.marketing-detail .semi-table-tbody > .semi-table-row > .semi-table-row-cell { font-size: 14px; line-height: 22px; }
-.marketing-detail .semi-table-thead > .semi-table-row > .semi-table-row-head { font-size: 12px; line-height: 18px; }
-.marketing-session-actions { margin-top: 20px; }
 .marketing-panel-actions { justify-content: flex-end; margin-bottom: 20px; }
 .marketing-record-content { min-width: 0; margin-bottom: 20px; }
-.marketing-detail .table-toolbar { gap: 12px; }
 .marketing-record-content > .semi-banner { margin-bottom: 20px; }
 .marketing-prize-booking-history { min-width: 0; margin-top: 20px; }
-.marketing-prize-booking-history .table-toolbar { gap: 15px; }
-.marketing-prize-booking-modal .data-list { display: grid; gap: 15px; }
-.marketing-prize-booking-modal .data-list > div { padding: 0; border-bottom: 0; }
 .marketing-definition { margin: 0; min-width: 0; }
 .marketing-definition > div { min-width: 0; }
 .marketing-definition dt { font-size: 12px; line-height: 18px; font-weight: 500; color: var(--crm-text-3); margin-bottom: 6px; }
@@ -68,18 +41,8 @@
 .marketing-rich-toolbar { flex-wrap: wrap; }
 .marketing-editor { min-width: 0; }
 .marketing-editor .semi-banner { margin-bottom: 20px; }
-.marketing-config-table { min-width: 0; }
-.marketing-config-table > .row-actions { margin-bottom: 12px; }
-.marketing-summary-cell { display: grid; justify-items: start; gap: 4px; font-size: 14px; line-height: 22px; }
+.marketing-summary-cell { display: grid; justify-items: start; gap: 4px; min-width: 0; line-height: 1.5; }
 .marketing-summary-cell small { color: var(--crm-text-3); }
-.marketing-overview { display: grid; gap: 20px; min-width: 0; }
-.marketing-overview .marketing-panel { margin-bottom: 0; }
-.marketing-metric-strip { margin-bottom: 0; }
-.marketing-metric-strip.is-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.marketing-subtabs { min-width: 0; }
-.marketing-subtabs > .semi-tabs-bar { padding-inline: 0; }
-.marketing-subtabs > .semi-tabs-content { padding: 20px 0 0; }
-.marketing-subtabs .marketing-panel:last-child { margin-bottom: 0; }
 .marketing-session-context { display: flex; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; padding: 12px 15px; border: 1px solid var(--crm-border); border-radius: var(--crm-radius); background: var(--crm-subtle); font-size: 14px; line-height: 22px; }
 .marketing-session-context > span { color: var(--crm-text-2); }
 .marketing-session-toolbar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
@@ -111,7 +74,4 @@
 .marketing-redemption-surface .marketing-redemption { max-width: 860px; margin: 0 auto; }
 @media (max-width: 700px) {
   .marketing-form-grid, .marketing-definition, .marketing-adjust-form { grid-template-columns: 1fr; }
-  .marketing-metric-strip.is-three { grid-template-columns: 1fr; }
-  .marketing-metric-strip.is-three > div { border-right: 0; border-bottom: 1px solid var(--crm-border); }
-  .marketing-metric-strip.is-three > div:last-child { border-bottom: 0; }
 }

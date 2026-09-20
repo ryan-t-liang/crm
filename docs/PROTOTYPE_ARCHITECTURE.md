@@ -65,6 +65,10 @@ It does not add SQL tables and does not replace sales or member models. Marketin
 
 All writes pass through validated marketing actions and one persistence commit. Activity and prize bookings remain distinct. Award contents and assigned codes are immutable historical facts. Copying an activity creates fresh configuration identities without copying business records or allocated codes.
 
+Activity-owned PickupSchedule configurations share pickup-slot capacity across explicitly linked prizes. They reuse MarketingSlot and PRIZE bookings; they are not a cross-activity scheduling service. Pickup actions validate changes on the same cloned marketing state before its single persistence commit. Legacy private prize slots are exposed through deterministic read-only schedule IDs, materialized only on an explicit configuration write. Historical bookings, awards and draw snapshots are not migrated in place.
+
+Demonstration records are created only by the initial/reset seed. Activity detail selectors never inject fictional bookings or draws into an existing activity; a new empty activity remains empty.
+
 The marketing store retains `kivisense-marketing-prototype-v1` with schema version 2. Safe V1 conversion preserves the exact source string at `kivisense-marketing-prototype-v1:backup-v1`; unknown, corrupt or conflicting data is preserved rather than silently replaced. Marketing reset changes only the primary marketing namespace.
 
 Frontend role, randomness, capacity and persistence checks demonstrate product behavior. They are not production concurrency, security or backend guarantees.

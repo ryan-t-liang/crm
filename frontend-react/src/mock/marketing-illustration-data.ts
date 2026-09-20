@@ -1,6 +1,6 @@
 import type { MarketingActivity, MarketingAward, MarketingDrawProbabilitySnapshot, MarketingParticipation, MarketingParticipationChannel, MarketingState } from "@/types/marketing";
 
-/** Fictional records for presentation only. Call on a freshly created activity/seed,
+/** Fictional persisted DEMO_SEED records. Call on a freshly created activity/seed,
  * never automatically merge these into a user's existing LocalStorage activity. */
 export function appendMarketingIllustrations(state: MarketingState, activity: MarketingActivity, now: number) {
   const at = (minutes: number) => new Date(now + minutes * 60_000).toISOString();
@@ -23,7 +23,7 @@ export function appendMarketingIllustrations(state: MarketingState, activity: Ma
     const probability = config?.probability ?? item.defaultProbability ?? item.probability;
     const won = usesSession ? state.awards.filter((award) => award.activityId === activity.id && award.poolItemId === item.id && state.draws.find((draw) => draw.id === award.drawId)?.sessionId === slot.id).length : 0;
     const remaining = usesSession && item.quantityMode !== "UNLIMITED" ? Math.max(0, (config?.allocatedQuantity ?? 0) - won) : undefined;
-    return { prizeId: item.id, configuredProbability: probability, effectiveProbability: remaining === undefined || remaining > 0 ? probability : 0,
+    return { prizeId: item.id, prizeName: item.name, configuredProbability: probability, effectiveProbability: remaining === undefined || remaining > 0 ? probability : 0,
       quantityMode: item.quantityMode ?? "LIMITED", sessionRemaining: remaining };
   });
   for (let index = 0; index < 30; index++) {

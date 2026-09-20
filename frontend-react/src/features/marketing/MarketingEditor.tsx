@@ -1,19 +1,16 @@
 import { useState } from "react";
-import { Banner, Button, Dropdown, Form, TextArea, Modal, Radio, RadioGroup, SideSheet, Switch, Table } from "@douyinfe/semi-ui";
-import { IconMore, IconPlus } from "@douyinfe/semi-icons";
-import { FormSideSheet, EmptyBlock } from "@/components/CrmUi";
+import { Banner, Button, Form, TextArea, Modal, Radio, RadioGroup, SideSheet, Switch, Table } from "@douyinfe/semi-ui";
 import { useCrm } from "@/stores/crm-store";
 import { brandScopeLabels } from "@/utils/brand-display";
 import { useMarketing } from "@/stores/marketing-store";
-import { createMarketingSlot } from "@/mock/marketing-demo-data";
-import type { ActivityPrize, MarketingActivity, MarketingSlot } from "@/types/marketing";
+import type { ActivityPrize, MarketingActivity } from "@/types/marketing";
 import { navigate } from "@/utils/format";
 import { codeInventory, hasActivityBusinessData, marketingPermissions, needsReservation, prizeDefaultProbability, prizeQuantityLimit, prizeQuantityMode, prizeTypeLabels } from "./marketing-model";
 import { inspectMarketingCodes, parseMarketingCodeRows, type MarketingCodeImportReport } from "./marketing-code-import";
 import { parseCreatedAt } from "@/features/dashboard/dashboard-model";
 import { MarketingRuleEditor } from "./MarketingRuleEditor";
-import { CodeManager } from "./MarketingCodes";
-import { DefinitionGrid, displayDate, ImageField, NumberField, options, Panel, SelectField, SlotFields, TextField, TimeField, useAction } from "./MarketingUi";
+import { pickupBookings, pickupScheduleForPrize, pickupSchedules, pickupScheduleSummary } from "./marketing-pickup";
+import { DefinitionGrid, ImageField, NumberField, options, Panel, SelectField, TextField, TimeField, useAction } from "./MarketingUi";
 
 export function CodeImporter({ onImport }: { onImport: (codes: string[]) => MarketingCodeImportReport | undefined }) {
   const [text, setText] = useState(""), [error, setError] = useState(""), [report, setReport] = useState<MarketingCodeImportReport | null>(null);
@@ -25,31 +22,14 @@ export function CodeImporter({ onImport }: { onImport: (codes: string[]) => Mark
   </Panel>;
 }
 
-export function SlotConfigurationTable({ slots, onChange, parentStart, activityId, prizeId, title = "活动场次" }: {
-  slots: MarketingSlot[]; onChange: (slots: MarketingSlot[]) => void; parentStart: string; activityId: string; prizeId?: string; title?: string;
-}) {
-  const { state } = useMarketing(); const [editing, setEditing] = useState<MarketingSlot | null>(null);
-  const [isNew, setIsNew] = useState(false);
-  const edit = (slot?: MarketingSlot) => { setIsNew(!slot); setEditing(slot ? structuredClone(slot) : createMarketingSlot(crypto.randomUUID(), parentStart)); };
-  const save = () => { if (!editing) return; onChange(isNew ? [...slots, editing] : slots.map((row) => row.id === editing.id ? editing : row)); setEditing(null); };
-  const bookings = (slot: MarketingSlot) => state.bookings.filter((row) => row.activityId === activityId && row.slotId === slot.id && row.kind === (prizeId ? "PRIZE" : "ACTIVITY") && (!prizeId || row.poolItemId === prizeId) && ["BOOKED", "CHECKED_IN", "FULFILLED"].includes(row.status)).length;
-  return <Panel title={title}><div className="marketing-config-table">
-    <div className="row-actions"><Button size="small" icon={<IconPlus />} onClick={() => edit()}>添加{prizeId ? "领奖时段" : "活动场次"}</Button></div>
-    {slots.length ? <Table size="small" rowKey="id" dataSource={slots} pagination={false} scroll={{ x: 720 }} columns={[
-      { title: "日期 / 时间", width: 175, render: (_: unknown, row: MarketingSlot) => <div className="marketing-summary-cell"><strong>{row.label}</strong><span>{displayDate(row.startAt)} — {displayDate(row.endAt)}</span></div> },
-      { title: "场地", dataIndex: "location", width: 110 }, { title: "已预约 / 容量", width: 100, render: (_: unknown, row: MarketingSlot) => `${bookings(row)} / ${row.capacity}` },
-      { title: "预约截止", width: 145, render: (_: unknown, row: MarketingSlot) => displayDate(row.bookingClosesAt) },
-      { title: "签到窗口", width: 180, render: (_: unknown, row: MarketingSlot) => `${displayDate(row.checkinStart)} — ${displayDate(row.checkinEnd)}` },
-      { title: "操作", width: 100, fixed: "right", render: (_: unknown, row: MarketingSlot) => <div className="row-actions"><Button size="small" theme="borderless" onClick={() => edit(row)}>编辑</Button><Dropdown trigger="click" position="bottomRight" render={<Dropdown.Menu><Dropdown.Item type="danger" onClick={() => Modal.confirm({ title: `删除${prizeId ? "领奖时段" : "活动场次"}？`, content: `将移除「${row.label}」。`, onOk: () => onChange(slots.filter((slot) => slot.id !== row.id)) })}>删除</Dropdown.Item></Dropdown.Menu>}><Button size="small" theme="borderless" icon={<IconMore />} aria-label={`更多操作 · ${row.label}`} /></Dropdown></div> },
-    ]} /> : <EmptyBlock title={`暂无${prizeId ? "领奖时段" : "活动场次"}`} description={prizeId ? "添加可预约的领奖时段与容量。" : "添加活动时间、地点与可预约名额。"} />}
-    {editing && <FormSideSheet visible className="marketing-prize-editor" title={`${isNew ? "添加" : "编辑"}${prizeId ? "领奖时段" : "活动场次"}`} width={640} okText="保存场次" cancelText="取消" onCancel={() => setEditing(null)} onOk={save}><SlotFields slot={editing} onChange={setEditing} /></FormSideSheet>}
-  </div></Panel>;
-}
-
-export function PrizeFields({ prize, onChange }: { prize: ActivityPrize; onChange: (prize: ActivityPrize) => void }) {
-  const { state } = useMarketing(); const [viewCodes, setViewCodes] = useState(false);
+export function PrizeFields({ prize, onChange, locked = false, quantityLocked = false }: { prize: ActivityPrize; onChange: (prize: ActivityPrize) => void; locked?: boolean; quantityLocked?: boolean }) {
+  const { state } = useMarketing();
   const activity = state.activities.find((row) => row.id === prize.activityId);
   const update = <K extends keyof ActivityPrize>(key: K, value: ActivityPrize[K]) => onChange({ ...prize, [key]: value });
+  const saved = activity?.pool.find(item => item.id === prize.id);
+  const schedules = activity ? pickupSchedules(activity) : [];
+  const selectedSchedule = activity && pickupScheduleForPrize(activity, prize);
+  const scheduleLocked = Boolean(activity && saved && state.bookings.some(row => row.activityId === activity.id && row.kind === "PRIZE" && row.poolItemId === prize.id));
   const inventory = codeInventory(prize), fulfillment = needsReservation(prize) ? "RESERVATION" : "DIRECT";
   const changeType = (type: string) => {
     const virtual = type === "VIRTUAL";
@@ -59,7 +39,7 @@ export function PrizeFields({ prize, onChange }: { prize: ActivityPrize; onChang
   const changeFulfillment = (value: string) => {
     const mode = value as "DIRECT" | "RESERVATION";
     const method = prize.prizeType === "PHYSICAL" ? mode === "DIRECT" ? "DIRECT" : prize.method === "EXPERIENCE" ? "EXPERIENCE" : "PICKUP" : prize.method;
-    onChange({ ...prize, method, fulfillmentMode: mode, slots: mode === "RESERVATION" ? prize.slots.length ? prize.slots : [createMarketingSlot(crypto.randomUUID(), prize.claimStart, Math.max(1, prize.quota))] : [] });
+    onChange({ ...prize, method, fulfillmentMode: mode, ...(mode === "RESERVATION" ? { quantityMode: "LIMITED", quantityLimit: prizeQuantityLimit(prize) ?? prize.quota, quota: prizeQuantityLimit(prize) ?? prize.quota } : {}) });
   };
   const changeQuantityMode = (value: string) => {
     const quantityMode = value as "LIMITED" | "UNLIMITED";
@@ -72,26 +52,35 @@ export function PrizeFields({ prize, onChange }: { prize: ActivityPrize; onChang
     <div className="form-grid marketing-form-grid">
       <TextField label="奖品名称" value={prize.name} onChange={(value) => update("name", value)} /><TextField label="奖项名称" value={prize.label} onChange={(value) => update("label", value)} />
       <TextField label="奖品说明" value={prize.description} onChange={(value) => update("description", value)} /><ImageField label="奖品图片" value={prize.image} onChange={(value) => update("image", value)} />
-      <SelectField label="奖品类型" value={prize.prizeType} list={options({ ...(prize.prizeType === "UNKNOWN" ? { UNKNOWN: "类型待确认" } : {}), PHYSICAL: prizeTypeLabels.PHYSICAL, VIRTUAL: prizeTypeLabels.VIRTUAL })} onChange={changeType} />
-      <SelectField label="领取方式" value={fulfillment} list={options(prize.prizeType === "VIRTUAL" ? { DIRECT: "直接发放", RESERVATION: "预约使用" } : { DIRECT: "直接领取", RESERVATION: "预约领取" })} onChange={changeFulfillment} />
-      <SelectField label="数量模式" value={prizeQuantityMode(prize)} list={options({ LIMITED: "限量", UNLIMITED: "不限量" })} onChange={changeQuantityMode} />
-      {prizeQuantityMode(prize) === "LIMITED" && <NumberField label="可发放数量" value={prizeQuantityLimit(prize) ?? 0} onChange={changeQuantityLimit} />}
+      <SelectField disabled={locked} label="奖品类型" value={prize.prizeType} list={options({ ...(prize.prizeType === "UNKNOWN" ? { UNKNOWN: "类型待确认" } : {}), PHYSICAL: prizeTypeLabels.PHYSICAL, VIRTUAL: prizeTypeLabels.VIRTUAL })} onChange={changeType} />
+      <SelectField disabled={locked || scheduleLocked} label="领取方式" value={fulfillment} list={options(prize.prizeType === "VIRTUAL" ? { DIRECT: "直接发放", RESERVATION: "预约使用" } : { DIRECT: "直接领取", RESERVATION: "预约领取" })} onChange={changeFulfillment} />
+      <SelectField disabled={locked || quantityLocked} label="数量模式" value={prizeQuantityMode(prize)} list={options(fulfillment === "RESERVATION" ? { LIMITED: "限量" } : { LIMITED: "限量", UNLIMITED: "不限量" })} onChange={changeQuantityMode} />
+      {prizeQuantityMode(prize) === "LIMITED" && <NumberField disabled={locked || quantityLocked} label="可发放数量" value={prizeQuantityLimit(prize) ?? 0} onChange={changeQuantityLimit} />}
       <NumberField label={activity?.bookingEnabled ? "新场次默认概率（%）" : "中奖概率（%）"} value={prizeDefaultProbability(prize)} onChange={changeDefaultProbability} />
       <NumberField label="每人该奖品最多获得" value={prize.perPersonLimit} onChange={(value) => update("perPersonLimit", value)} />
-      {prize.prizeType === "VIRTUAL" && <SelectField label="虚拟奖品内容" value={prize.method} list={options({ REDEMPTION_CODE: "兑换码", VIRTUAL_VOUCHER: "虚拟权益", LINK: "领取链接" })} onChange={(value) => update("method", value as ActivityPrize["method"])} />}
-      {prize.prizeType === "PHYSICAL" && fulfillment === "RESERVATION" && <SelectField label="预约类型" value={prize.method} list={options({ PICKUP: "预约领取", EXPERIENCE: "预约使用" })} onChange={(value) => update("method", value as ActivityPrize["method"])} />}
-      {(prize.prizeType === "PHYSICAL" || fulfillment === "RESERVATION") && <TextField label="奖品领取地点" value={prize.location} onChange={(value) => update("location", value)} />}
-      <TextField label="使用 / 领取说明" value={prize.instructions} onChange={(value) => update("instructions", value)} /><TimeField label="奖品有效开始" value={prize.claimStart} onChange={(value) => update("claimStart", value)} /><TimeField label="奖品有效截止" value={prize.claimEnd} onChange={(value) => update("claimEnd", value)} />
+      {prize.prizeType === "VIRTUAL" && <SelectField disabled={locked} label="虚拟奖品内容" value={prize.method} list={options({ REDEMPTION_CODE: "兑换码", VIRTUAL_VOUCHER: "虚拟权益", LINK: "领取链接" })} onChange={(value) => update("method", value as ActivityPrize["method"])} />}
+      {prize.prizeType === "PHYSICAL" && fulfillment === "RESERVATION" && <SelectField disabled={locked} label="预约类型" value={prize.method} list={options({ PICKUP: "预约领取", EXPERIENCE: "预约使用" })} onChange={(value) => update("method", value as ActivityPrize["method"])} />}
+      {(prize.prizeType === "PHYSICAL" || fulfillment === "RESERVATION") && <TextField disabled={locked} label="奖品领取地点" value={prize.location} onChange={(value) => update("location", value)} />}
+      <TextField label="使用 / 领取说明" value={prize.instructions} onChange={(value) => update("instructions", value)} /><TimeField disabled={locked} label="奖品有效开始" value={prize.claimStart} onChange={(value) => update("claimStart", value)} /><TimeField disabled={locked} label="奖品有效截止" value={prize.claimEnd} onChange={(value) => update("claimEnd", value)} />
     </div>
     <p className="marketing-field-help">{fulfillment === "RESERVATION" ? "中奖后需先选择领取时间，再领取或使用奖品。" : prize.prizeType === "VIRTUAL" ? "中奖后直接发放所配置的虚拟权益。" : "中奖后直接生成领奖核销凭证。"}</p>
-    {needsReservation(prize) && <SlotConfigurationTable title="领奖时段" slots={prize.slots} parentStart={prize.claimStart} activityId={prize.activityId} prizeId={prize.id} onChange={(slots) => update("slots", slots)} />}
+    {needsReservation(prize) && <Panel title="领取安排">
+      <SelectField label="选择当前活动的领取安排" disabled={scheduleLocked} value={selectedSchedule?.id ?? ""} list={schedules.map(row => ({ value: row.id, label: row.name }))} onChange={pickupScheduleId => {
+        const schedule = schedules.find(row => row.id === pickupScheduleId);
+        onChange({ ...prize, pickupScheduleId, location: schedule?.location ?? prize.location });
+      }} />
+      {!schedules.length && <p className="marketing-field-help">当前活动没有领取安排，请先在奖品设置中“新建领取安排”，再选择预约领取。</p>}
+      {scheduleLocked && <p className="marketing-field-help">已有领奖预约记录，不能更换领取安排。</p>}
+      {selectedSchedule && activity && <><DefinitionGrid rows={[["地点", selectedSchedule.location], ["时段数量", selectedSchedule.slots.length], ["已预约", pickupBookings(state, activity, selectedSchedule.id).filter(row => row.status !== "CANCELED").length]]} />
+        {pickupScheduleSummary(state, { ...activity, pool: [...activity.pool.filter(item => item.id !== prize.id), prize] }, selectedSchedule, Date.now()).warning && <Banner type="warning" title={pickupScheduleSummary(state, { ...activity, pool: [...activity.pool.filter(item => item.id !== prize.id), prize] }, selectedSchedule, Date.now()).warning} closeIcon={null} />}
+      </>}
+    </Panel>}
     {prize.prizeType === "VIRTUAL" && prize.method === "REDEMPTION_CODE" && <>
-      <p>{prizeQuantityMode(prize) === "LIMITED" ? `可发放数量 ${prizeQuantityLimit(prize) ?? 0}` : "数量模式 不限量"} · 已导入 {inventory.imported} · 已分配 {inventory.assigned} · 剩余 {inventory.remaining}</p><Button size="small" onClick={() => setViewCodes(true)}>查看兑换码</Button>
+      <p>{prizeQuantityMode(prize) === "LIMITED" ? `可发放数量 ${prizeQuantityLimit(prize) ?? 0}` : "数量模式 不限量"} · 已导入 {inventory.imported} · 已分配 {inventory.assigned} · 剩余 {inventory.remaining}</p><details><summary>查看兑换码</summary><Table rowKey="code" dataSource={prize.codes} size="small" pagination={{ pageSize: 5 }} columns={[{ title: "兑换码", dataIndex: "code" }, { title: "状态", render: (_: unknown, row: ActivityPrize["codes"][number]) => row.assignedAwardId ? "已分配" : "未分配" }]} /></details>
       <CodeImporter onImport={(rows) => { const existing = state.activities.flatMap((activity) => activity.pool.flatMap((item) => item.codes.map((row) => row.code))).concat(prize.codes.map((row) => row.code)); const { codes, report } = inspectMarketingCodes(rows, existing); if (codes.length) update("codes", [...prize.codes, ...codes.map((code) => ({ code }))]); return report; }} />
-      {viewCodes && <CodeManager prize={prize} published={false} remainingQuota={prizeQuantityLimit(prize) ?? prize.codes.length} canManage onClose={() => setViewCodes(false)} onDelete={(codes) => { if (prize.codes.some((code) => codes.includes(code.code) && code.assignedAwardId)) return { ok: false, error: "已分配兑换码不能删除或重新分配。" }; update("codes", prize.codes.filter((code) => !codes.includes(code.code))); return { ok: true }; }} />}
     </>}
-    {prize.prizeType === "VIRTUAL" && prize.method === "VIRTUAL_VOUCHER" && <div className="form-grid marketing-form-grid"><TextField label="虚拟凭证名称" value={prize.voucherName} onChange={(value) => update("voucherName", value)} /><TextField label="虚拟凭证描述" value={prize.voucherDescription} onChange={(value) => update("voucherDescription", value)} /></div>}
-    {prize.prizeType === "VIRTUAL" && prize.method === "LINK" && <TextField label="领取链接" value={prize.link} onChange={(value) => update("link", value)} />}
+    {prize.prizeType === "VIRTUAL" && prize.method === "VIRTUAL_VOUCHER" && <div className="form-grid marketing-form-grid"><TextField disabled={locked} label="虚拟凭证名称" value={prize.voucherName} onChange={(value) => update("voucherName", value)} /><TextField disabled={locked} label="虚拟凭证描述" value={prize.voucherDescription} onChange={(value) => update("voucherDescription", value)} /></div>}
+    {prize.prizeType === "VIRTUAL" && prize.method === "LINK" && <TextField disabled={locked} label="领取链接" value={prize.link} onChange={(value) => update("link", value)} />}
   </>;
 }
 

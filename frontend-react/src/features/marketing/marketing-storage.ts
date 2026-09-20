@@ -60,6 +60,10 @@ export function decodeMarketing(value: string): DecodedMarketing {
       (row.ruleContentFormat === undefined || row.ruleContentFormat === "html") &&
       (row.activityCode === undefined || typeof row.activityCode === "string" && /^ACT[A-Z0-9-]+$/.test(row.activityCode)) &&
       (row.createdBy === undefined || typeof row.createdBy === "string") &&
+      (row.pickupSchedules === undefined || Array.isArray(row.pickupSchedules) && new Set(row.pickupSchedules.map(schedule => schedule.id)).size === row.pickupSchedules.length && row.pickupSchedules.every(schedule =>
+        schedule.activityId === row.id && [schedule.id, schedule.name, schedule.location, schedule.startAt, schedule.endAt].every(value => typeof value === "string") &&
+        Array.isArray(schedule.slots) && new Set(schedule.slots.map(slot => slot.id)).size === schedule.slots.length &&
+        schedule.slots.every(slot => [slot.id, slot.label, slot.location, slot.startAt, slot.endAt, slot.bookingClosesAt, slot.checkinStart, slot.checkinEnd].every(value => typeof value === "string") && Number.isSafeInteger(slot.capacity) && slot.capacity >= 0))) &&
       [row.bookingEnabled, row.allowWalkIn, row.lotteryEnabled].every((field) => typeof field === "boolean") &&
       [row.grantCount, row.drawLimit, row.winLimit, row.noWinProbability].every((field) => typeof field === "number" && Number.isFinite(field) || row.status === "DRAFT" && field === null) &&
       (row.dailyLimit === null || typeof row.dailyLimit === "number" && Number.isFinite(row.dailyLimit)) &&
@@ -75,19 +79,20 @@ export function decodeMarketing(value: string): DecodedMarketing {
         (row.identity === undefined || row.identity && typeof row.identity === "object" && !Array.isArray(row.identity) && ["memberId", "unionId", "openId", "wechatAppId", "phone", "phoneCountryCode", "externalUserId", "anonymousId", "sessionId", "displayName"].every((key) => {
           const value = row.identity?.[key as keyof NonNullable<typeof row.identity>]; return value === undefined || value === null || typeof value === "string";
         }) && (row.identity.gender === undefined || row.identity.gender === null || ["MALE", "FEMALE", "UNDISCLOSED"].includes(row.identity.gender)))) &&
-      parsed.bookings.every((row) => typeof row.participationId === "string" && typeof row.slotId === "string" && ["ACTIVITY", "PRIZE"].includes(row.kind) && typeof row.status === "string") &&
+      parsed.bookings.every((row) => typeof row.participationId === "string" && typeof row.slotId === "string" && (row.scheduleId === undefined || typeof row.scheduleId === "string") && ["ACTIVITY", "PRIZE"].includes(row.kind) && typeof row.status === "string") &&
       parsed.chances.every((row) => Number.isInteger(row.count) && row.count > 0) &&
       parsed.draws.every((row) => typeof row.operationId === "string" && typeof row.participationId === "string" &&
         (row.sessionId === undefined || typeof row.sessionId === "string" && Boolean(row.sessionId)) &&
         (row.drawConfigVersion === undefined || Number.isInteger(row.drawConfigVersion) && row.drawConfigVersion > 0) &&
         (row.probabilitySnapshot === undefined || Array.isArray(row.probabilitySnapshot) && row.probabilitySnapshot.every((item) =>
-          typeof item.prizeId === "string" && [item.configuredProbability, item.effectiveProbability].every((value) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 100) &&
+          typeof item.prizeId === "string" && (item.prizeName === undefined || typeof item.prizeName === "string") && [item.configuredProbability, item.effectiveProbability].every((value) => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 100) &&
           ["LIMITED", "UNLIMITED"].includes(item.quantityMode) && (item.sessionRemaining === undefined || Number.isInteger(item.sessionRemaining) && item.sessionRemaining >= 0)))) &&
       parsed.awards.every((row) => [row.credential, row.prizeName, row.location, row.instructions, row.claimStart, row.claimEnd].every((field) => typeof field === "string"));
     if (shapes && parsed.version === 1) return { state: migrateV1(parsed), originalV1: value };
     const owned = shapes && parsed.activities.every((row) => typeof row.allowCancel === "boolean" && typeof row.allowReschedule === "boolean" && row.pool.every((item) =>
       item.activityId === row.id && ["PHYSICAL", "VIRTUAL", "UNKNOWN"].includes(item.prizeType) &&
       (item.fulfillmentMode === undefined || ["DIRECT", "RESERVATION"].includes(item.fulfillmentMode)) &&
+      (item.pickupScheduleId === undefined || typeof item.pickupScheduleId === "string") &&
       (item.quantityMode === undefined
         ? item.quantityLimit === undefined || item.quantityLimit === null || Number.isInteger(item.quantityLimit) && item.quantityLimit >= 0
         : item.quantityMode === "UNLIMITED"

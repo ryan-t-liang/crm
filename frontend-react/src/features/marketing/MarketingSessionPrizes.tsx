@@ -43,7 +43,7 @@ export function sessionPrizeSummary(state: ReturnType<typeof useMarketing>["stat
     const codeRemaining = item.method === "REDEMPTION_CODE" ? codeInventory(item).remaining : Number.POSITIVE_INFINITY;
     if (prizeQuantityMode(item) === "UNLIMITED") return sum + (Number.isFinite(codeRemaining) ? codeRemaining : 0);
     const sessionRemaining = Math.max(0, (row.allocatedQuantity ?? 0) - sessionWonCount(state, activity.id, sessionId, row.prizeId));
-    return sum + Math.min(sessionRemaining, codeRemaining);
+    return sum + (ended ? sessionRemaining : Math.min(sessionRemaining, codeRemaining));
   }, 0);
   const hasTrulyUnlimited = configured.some((row) => {
     const item = activity.pool.find((prize) => prize.id === row.prizeId);
@@ -155,12 +155,12 @@ export function SessionPrizeDrawer({ activity, session, onClose }: { activity: M
   };
 
   return <>
-    <FormSideSheet visible className="marketing-session-prize-drawer" width={760} title={`${titleRange.time} · 场次奖品`} onCancel={onClose} onOk={save}
+    <FormSideSheet visible={!copyOpen && !adjustedPrize} className="marketing-session-prize-drawer" width={820} title={`${titleRange.compact} · 场次奖品`} onCancel={onClose} onOk={save}
       okText="保存" cancelText="取消" okButtonProps={{ disabled: readOnly || probabilityTotal > 100 }} footer={readOnly ? <Button onClick={onClose}>关闭</Button> : undefined}>
       {feedback}{localError && <Banner type="warning" title={localError} closeIcon={null} />}
       {readOnly && <Banner type="info" title={lifecycle === "ENDED" ? "活动或场次已结束，奖品配置只读。" : "当前账号没有活动管理权限。"} closeIcon={null} />}
       <div className="marketing-session-context">
-        <strong>{currentSession.label}</strong>
+        <strong>{titleRange.compact}</strong>
         <span>{currentSession.location || "—"}</span>
         <span>预约 {slotOccupancy(state, currentActivity.id, "ACTIVITY", currentSession.id)} / {currentSession.capacity}</span>
       </div>
@@ -175,7 +175,7 @@ export function SessionPrizeDrawer({ activity, session, onClose }: { activity: M
           if (prizeQuantityMode(item) === "UNLIMITED") return <div className="marketing-summary-cell"><span>{item.method === "REDEMPTION_CODE" ? `可用码 ${codeRemaining}` : "不限量"}</span>{codeRemaining === 0 && <Tag size="small">已发完</Tag>}</div>;
           const won = sessionWonCount(state, currentActivity.id, currentSession.id, item.id), allocated = row?.allocatedQuantity ?? 0;
           const remaining = Math.min(Math.max(0, allocated - won), codeRemaining);
-          if (lifecycle === "ENDED") return <div className="marketing-summary-cell"><span>历史分配 {allocated}</span><small>已中奖 {won}</small><small>未使用 {remaining} · 已释放</small></div>;
+          if (lifecycle === "ENDED") return <div className="marketing-summary-cell"><span>历史分配 {allocated}</span><small>已中奖 {won}</small><small>未使用 {Math.max(0, allocated - won)} · 已释放</small></div>;
           const requiresAdjustment = sessionHasDraws || now >= parseCreatedAt(currentSession.startAt);
           return <div className="marketing-summary-cell">{requiresAdjustment ? <span>分配 {allocated}</span> : <InputNumber min={0} precision={0} value={allocated} disabled={readOnly || !row?.enabled} onChange={(value) => update(item.id, { allocatedQuantity: numberValue(value) })} aria-label={`${item.name}本场分配`} />}<small>已中 {won} · 剩余 {remaining}</small></div>;
         } },
@@ -199,7 +199,7 @@ export function SessionPrizeDrawer({ activity, session, onClose }: { activity: M
       {probabilityTotal > 100 && <Banner type="warning" title={`当前中奖概率合计为${probabilityTotal}%，请调整至100%以内。`} closeIcon={null} />}
     </FormSideSheet>
     <Modal visible={copyOpen} maskClosable={false} title="从其他场次复制" width={460} okText="复制配置" cancelText="取消" okButtonProps={{ disabled: !sourceSessionId }} onCancel={() => { setCopyOpen(false); setSourceSessionId(""); setLocalError(""); }} onOk={copy}>
-      {localError && <Banner type="warning" title={localError} closeIcon={null} />}
+      {feedback}{localError && <Banner type="warning" title={localError} closeIcon={null} />}
       <label className="marketing-field"><span>选择来源场次</span><Select aria-label="复制场次配置" placeholder="选择其它场次" value={sourceSessionId || undefined} optionList={copySources.map((row) => ({ value: row.id, label: `${row.label} · ${displayDateRange(row.startAt, row.endAt).compact}` }))} onChange={(value) => { setSourceSessionId(String(value)); setLocalError(""); }} /></label>
     </Modal>
     {adjustedPrize && <SessionPrizeQuantityModal activity={currentActivity} session={currentSession} prize={adjustedPrize} visible onClose={() => setAdjustPrizeId("")} />}

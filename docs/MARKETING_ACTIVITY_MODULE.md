@@ -1,4 +1,4 @@
-# 营销活动模块（V6 场次级奖品控制）
+# 营销活动模块（V7 场次奖品与共享领取安排）
 
 > 文档角色：营销业务、数据和兼容合同。页面描述仅记录模块当前或历史行为，不是 Kivisense 视觉规范；如有冲突，以 `DESIGN_SYSTEM.md` 和成熟 CRM 页面为准。
 
@@ -23,7 +23,7 @@ Activity Detail 固定使用三个业务入口，不再增加概览或二级导�
 | 入口 | 职责 |
 | --- | --- |
 | 活动预约记录 | ACTIVITY预约事实、状态、时间与只读详情 |
-| 奖品设置 | ActivityPrize、可发放数量、默认概率、领取能力与兑换码管理 |
+| 奖品设置 | 上段奖品、下段领取安排；数量、默认概率、场次配置、共享领取容量与兑换码管理 |
 | 抽奖记录 | 每次Draw、Award、PRIZE预约与核销阶段的统一只读投影 |
 
 详情复用成熟 Lead / Deal 的 `DetailWorkspace`、`record-tabs` 主工作表面、Semi Table 和 `SideSection` / `DataList` 信息栏。右侧集中展示活动信息、活动规则、预约设置和抽奖设置；顶部“活动管理”下拉统一承载创建奖品、编辑活动信息、编辑预约设置、管理场次和抽奖设置。布局、字号、间距、Tag、Card、Tabs、Modal与Drawer外观全部沿用当前 `DESIGN_SYSTEM.md` 和共享实现，本模块不另设视觉规则。
@@ -44,7 +44,7 @@ Activity Detail 固定使用三个业务入口，不再增加概览或二级导�
 
 新建使用独立 `createMarketingActivity`：活动表单未填写的值保持空，场次、SessionPrize与奖品为空；不自动生成日期，不复用演示种子的相对时间，也不升级存储命名空间。创建与编辑通过同一字段白名单保存，已有其他配置不因过期表单快照被覆盖。
 
-创建表单要求名称、有效授权品牌、合法活动开始 / 结束时间，以及线下活动场地；不要求预约、抽奖和奖品已配置。创建只是保存内部DRAFT，不等于开始。集中动作仍拒绝非法数量、概率和反向时间；开始动作在写入状态前校验实际需要的预约、抽奖、可发放数量、领取能力和虚拟内容，但业务页面不建立发布检查页、Checklist或步骤跳转。旧 `description` 保留兼容但不再展示、编辑或作为必填项。
+创建表单要求名称、有效授权品牌、合法活动开始 / 结束时间，以及线下活动场地；不要求预约、抽奖和奖品已配置。创建只是保存内部DRAFT，不等于开始。集中动作仍拒绝非法数量、概率和反向时间；开始与恢复动作都在写入 PUBLISHED 前校验实际需要的预约、抽奖、可发放数量、领取能力和虚拟内容，但业务页面不建立发布检查页、Checklist或步骤跳转。旧 `description` 保留兼容但不再展示、编辑或作为必填项。
 
 列表生命周期只有待开始 / 进行中 / 已结束：未启用或尚未到活动开始时间是待开始；有效举行期内的PUBLISHED/PAUSED均是进行中；CANCELED或活动结束时间已到是已结束。暂停不生成第四状态；暂停后“开始”调用原恢复动作。开始不改写设定时间，未到开始时间或已结束时不可用；举行期内已正常运行时不可重复开始。结束二次确认后调用原CANCELED语义，取消未到场ACT预约，保留已有中奖权益、PRIZE预约及履约历史。未重写底层业务状态机。
 
@@ -55,7 +55,7 @@ Activity Detail 固定使用三个业务入口，不再增加概览或二级导�
 | 集合 | 字段 / 关联 |
 | --- | --- |
 | activities | 原品牌、管理状态、独立时间、预约 / 抽奖规则；可选activityCode、ruleContent及ruleContentFormat；旧 `pool` 名仅作持久化兼容，业务对象是独立 ActivityPrize |
-| ActivityPrize | id + activityId；名称、奖品类型、领取方式、quantityMode、quantityLimit、defaultProbability、个人上限、有效期、instructions、领取 slots、codes与虚拟内容；旧quota / probability只读兼容 |
+| ActivityPrize | id + activityId；名称、奖品类型、领取方式、quantityMode、quantityLimit、defaultProbability、个人上限、有效期、instructions、pickupScheduleId、codes与虚拟内容；旧 slots 为兼容读取；旧quota / probability只读兼容 |
 | SessionPrize | sessionId + prizeId；enabled、probability及限量奖品的allocatedQuantity；不持久化可由Award派生的已中奖 / 剩余 |
 | participations | activityId、稳定内部participantId / participation.id、可选身份观察和渠道、兼容旧subjectKey / identities、ACT码、报名 / 签到 / 完成 |
 | bookings | activityId + participationId；ACTIVITY 或 PRIZE（awardId / poolItemId）；场次、状态、历史时间、USER / WALK_IN / UNKNOWN 来源 |
@@ -65,7 +65,7 @@ Activity Detail 固定使用三个业务入口，不再增加概览或二级导�
 | redemptions | 实际签到 / 完成 / 实体领取 / 体验核销事实及来源，与配置 Audit 独立 |
 | audits | 开始、编辑、场次数量 / 概率调整、追加可发放数量、导入与拒绝的操作审计，不作为核销列表 |
 
-没有全局奖品主数据集合，也没有业务 UI 可见的“奖池”。同名 A / B 奖品仍是不同 ID、可发放数量、兑换码及领取 slots。复制活动只复制配置结构并产生新活动 / 奖品 / 场次 ID，不复制参与、预约、机会、Draw、Award、Redemption、原审计或已分配兑换码；新副本单独记录复制操作。所有活动 / 预约 / 抽奖 / 领奖窗口及场次日期清空，运营重新填写，不继承过去完整日期；场次名称、地点、容量等结构保留。
+没有全局奖品主数据集合，也没有业务 UI 可见的“奖池”。同名 A / B 奖品仍是不同 ID、可发放数量、兑换码；只有明确绑定同一 PickupSchedule 的奖品才共享领取容量。复制活动只复制配置结构并产生新活动 / 奖品 / 场次 ID，不复制参与、预约、机会、Draw、Award、Redemption、原审计或已分配兑换码；新副本单独记录复制操作。所有活动 / 预约 / 抽奖 / 领奖窗口及场次日期清空，运营重新填写，不继承过去完整日期；场次名称、地点、容量等结构保留。
 
 ## 活动规则、参与方式与 Flexible Participant Identity
 
@@ -194,11 +194,28 @@ ActivityPrize 的 `defaultProbability` 只用于直接参与活动的实际抽�
 
 “从其他场次复制”是场次奖品抽屉顶部的次级动作，选择来源场次后只复制参与状态、中奖概率和本场分配；Draw、Award、已中奖和历史剩余不复制。复制仍按当前有效占用校验活动可分配数量。
 
+## 共享领取安排（PickupSchedule）
+
+PickupSchedule 属于 Activity，字段为 id、activityId、name、location、startAt、endAt、slots。Slot 复用现有 MarketingSlot：id、起止时间、地点、capacity、bookingClosesAt、checkinStart / checkinEnd、disabled / deleted。它不是跨活动资源中心。ActivityPrize.pickupScheduleId 是显式关联；原 Booking 的 kind=PRIZE 不变，新增可选 scheduleId。ACTIVITY 场次容量完全独立。
+
+每个时段的已预约 = 当前 Activity / Schedule / Slot 下所有 status != CANCELED 的 PRIZE Booking（包括已领取及已记录未到场）；剩余 = max(capacity - 已预约, 0)。不按奖品各算一遍，不把 Award 当 Booking。皮牌5人 + 礼盒3人共享10人时段，已预约8、剩余2；再预约2人后已满，下一人拒绝。取消一条释放1个名额，但 Award、中奖占用与已分配兑换码不释放。
+
+`BOOK_PRIZE` 检查有效未领取 Award、预约领取方式、安排归属、时段窗口 / 停止状态 / 容量，以及每个 Award 唯一非取消预约。`RESCHEDULE` 先检查新时段全部约束，再在同一个候选 state 中取消旧行、添加新行；校验或保存失败不改变原预约。原预约取消历史仍可查看。暂停活动不允许新领奖预约和改约，但已有预约仍按窗口核销。
+
+- `ADJUST_PICKUP_CAPACITY` 必须是非负安全整数且不低于非取消预约人数；Audit 记录调整前后容量。
+- `SET_PICKUP_SLOT_OPEN` 仅停止 / 恢复新预约，不能使历史预约失效；已结束时段不能恢复。
+- 有任何预约历史（包括取消）不能删除时段或更改时间 / 地点，已有奖品预约不能切换 Schedule；核销仍引用原时段。
+- 预约型奖品必须 LIMITED；已中奖奖品锁定类型、领取规则、有效期及虚拟内容，默认概率只影响未来规则；已有发布 / 中奖的数量变更使用显式操作。
+
+新建领取安排先保存名称、地点、有效日期；在安排 SideSheet 中批量生成时段。输入日期范围、每日开始 / 结束、时段分钟数及容量，先预览天数 / 新时段 / 跳过数量，再确认提交。Action 重新生成和校验：完全相同起止跳过，同一安排任何其他重叠拒绝；范围须可完整划分、位于安排有效日期内。单次最多366天 / 10000时段是前端性能边界，不是后端业务约束。生成后支持单时段编辑、调整容量、停止预约和查看该时段预约名单。
+
+旧奖品私有 slots 以稳定的 `pickup-legacy:<prizeId>` 在读侧映射为独立安排；不依据同名、同地点或同时间自动合并。单纯加载不写回，首次显式编辑该安排时才将原配置保存到 activity.pickupSchedules 并关联对应 Prize。旧 Booking 未填写 scheduleId 时沿其原 Prize 查询此稳定映射；不重写历史 Draw / Award / Booking。缺失关系明确待核对，不自动补建预约。
+
 ## 领取能力与历史承诺
 
 开始活动前，每个正概率奖品必须至少有一个真实可发单位，不能由别的奖品掩盖空奖品：实体直接领取要有剩余可发放数量与合法领取窗口；预约领取还要有有效履约能力；兑换码要有未分配有效码；Voucher要有名称、使用说明和有效期；Link要有合法HTTP(S)地址及有效期。0数量 + 0概率可以保存为暂不抽取配置。预约 ≠ 签到 ≠ 完成 ≠ 获奖；首次完成仅发一次grantCount，累计 / 每日次数、累计中奖和单奖个人上限继续独立。
 
-所有预约型履约继续满足 `有效履约总容量 ≥ 奖品可发放数量`。有效领取 slots 必须有名称 / 地点、非负整数容量、合法起止 / 截止 / 签到窗口且在领取期内，并且未禁用 / 删除。运行时剩余能力扣除现有预约和未预约赢家承诺；取消PRIZE预约释放座位，但不取消Award或可发放数量占用。旧配置不足不重写历史，只限制未来中奖。
+预约领取奖品必须限量并绑定本 Activity 的 PickupSchedule。领取安排容量不足以覆盖全部奖品数量是高优先级 Warning，不阻止保存奖品或追加可发放数量。开始 / 恢复与未来 Draw 前，必须有有效且可预约的领取时段，不能依靠已经结束、停止或满额的时段。运行时可发放能力扣除共享安排的已预约人数及未预约赢家承诺，不向未来中奖重复承诺名额。
 
 ActivityPrize 的类型、领取方式、有效期和虚拟发放内容等实质规则，在已有业务记录后继续受历史保护；直接参与活动的默认概率也不覆盖已发生 Draw。SessionPrize 的未来概率和分配按本节明确规则允许调整，并由Draw快照和Audit保留可解释性。奖品名称、奖项、图片、说明和使用说明只影响未来中奖，旧Award始终保留中奖时快照。
 
@@ -218,7 +235,7 @@ PRIZE预约引用具体获奖权益与该活动奖品slots，不重报名、不�
 
 独立核销端识别 ACT / WIN 后明确选择 CHECKIN / COMPLETE / CLAIM、位置及必要场次，不把活动凭证当领奖码、领奖当完成。Redemption 保存 CHECKIN / COMPLETE / PRIZE_CLAIM / EXPERIENCE_CLAIM、activityId、participationId、适用 awardId、targetId、occurredAt、actorId、result、credential、detail、source。有效业务对象的拒绝也留事实；无权限 / 不明码不伪造对象。重复成功核销不二领、不重复事实；签到即完成一次产生两种事实，不是两次到场。
 
-八指标：当前有效活动预约人数、到场人数、完成人数、抽奖人数、抽奖次数、中奖人数、中奖份数、已履约份数（实体领取 / 虚拟平台侧发放，非外部兑换）。列表对应有效预约、已签到、已完成、中奖人数，去掉模糊“参与人数”。人数按本活动 participation 去重，次数按 draw（含 NONE），份数按 award；当前预约排除取消、爽约和失效。未到场的BOOKED超过checkinEnd派生NO_SHOW；缺失 / 禁用 / 删除 / 非法窗口的未履约预约派生INVALID（不增加存储状态枚举），保留历史并提示场次待核对，不伪造签到。签到 / 完成仍依据真实 checkedInAt / completedAt 事实，不因后续场次变动抹掉历史。点击消费相同活动 / 品牌 / 授权与固定查看时间的原始 ID 数组；明细冻结打开时间，数据 / 角色 / 活动 / Tab 变化关闭。营销参与不加进集团总人数，不改 Dashboard 口径。
+八指标：当前有效活动预约人数、到场人数、完成人数、抽奖人数、抽奖次数、中奖人数、中奖份数、已履约份数（实体领取 / 虚拟平台侧发放，非外部兑换）。列表对应有效预约、已签到、已完成、中奖人数，去掉模糊“参与人数”。人数按本活动 participation 去重，次数按 draw（含 NONE），份数按 award；当前预约排除取消、爽约和失效。未到场的BOOKED超过checkinEnd派生NO_SHOW；缺失 / 删除 / 非法窗口的未领取预约派生INVALID；仅ACTIVITY预约会因场次禁用而失效，停止PRIZE新预约不使既有预约失效（不增加存储状态枚举），保留历史并提示场次待核对，不伪造签到。签到 / 完成仍依据真实 checkedInAt / completedAt 事实，不因后续场次变动抹掉历史。点击消费相同活动 / 品牌 / 授权与固定查看时间的原始 ID 数组；明细冻结打开时间，数据 / 角色 / 活动 / Tab 变化关闭。营销参与不加进集团总人数，不改 Dashboard 口径。
 
 能力映射：`marketing.activity.view → view`（活动 / 指标 / 全部业务数据，只读）；`marketing.activity.manage → manage`（创建 / 编辑 / 开始 / 暂停 / 奖品 / 场次 / 代码配置）；`marketing.redemption.execute → redeem`（现场报名 / 签到 / 完成 / 实体领取 / 体验核销）。旧 `preview` 只保留兼容授权，不恢复用户流程预览 UI。redeem 不蕴含 manage，manage 不蕴含 redeem；view-only 不写任何业务 / 配置 / Audit。命令分组在动作最前检查能力，页面按钮与列表 / 详情 / 兼容路由 / Staff URL也检查能力和品牌，不能由直达URL绕过。旧权限夹具未提供view时保留兼容解释；真实角色映射显式提供所有能力。
 
@@ -243,3 +260,13 @@ Refinement V2至V6不改存储键 / schema2、不清空LocalStorage、不回填�
 未实现真实微信 / 摄像头 / 小程序 / 消息 / HQ、外部发券 / 兑换 / viewed、生产随机、防作弊、多设备锁、库存事务、统一开奖、全局仓库、物流、候补、积分、支付或 ROI。没有新增生产角色 / 地点范围，也没有全局 Audit 模块；现有活动 Audit 单独保留。
 
 本地同步提交与幂等不是生产事务或服务器安全。真实接入需后端权威身份 / 品牌权限、事务库存 / 预约 / 代码、可信随机、不可变历史与恢复策略；本轮不搭建。Safari / Firefox / 真机 / 扫描硬件及多用户压力未验；单品牌 / 只读授权以规则夹具验证，不假称已有页面账号。V2.1的27项修正与V2历史31项场景的实际层级见 `MARKETING_ACTIVITY_ACCEPTANCE.md`。
+
+## 本轮实现与人工 Review（2026-09-20）
+
+保留三入口及右侧信息栏。奖品区增加创建入口，领取安排区可查看共享安排；活动管理 → 管理场次 → 管理奖品配置单场概率 / 数量。场次和领取安排使用约820px上下文抽屉；复制、数量 / 容量调整和批量生成使用Modal。More菜单先关闭再打开操作面板，子操作打开时隐藏上一层抽屉；返回保留上下文。
+
+删除 `marketing-record-illustrations.ts` 的页面动态数据拼接。首次 Seed 的预约工坊包含多场次、30条虚构预约和30条真实持久化Draw样本（另保留原有满额场预约），以及真实Award、Chance、PRIZE Booking、Redemption关联。共享时段示例已预约5+3人，另有后续时段；含不限量兑换码奖品和已结束场次释放示例。另建无Participation / Booking / Draw的空活动。每个数据源都属于DEMO_SEED；现有LocalStorage不合并种子、不清空、不补时间。
+
+废弃五步向导展示文件及其专属旧测试文件删除；validateActivity、publishChecks、sessionPrizeReadiness与业务保护保留。
+
+本轮仅使用TypeScript静态诊断与代码审阅。按需求未执行自动化测试、浏览器QA、截图、视觉Diff或Acceptance Gate，未新增 / 重写测试。旧测试断言尚未按本轮新合同重新验收；业务场景与视觉效果等待人工Review。未部署、未发布、未修改main。LocalStorage仍是纯前端原型，跨窗口同时操作不等于生产数据库事务保证。
