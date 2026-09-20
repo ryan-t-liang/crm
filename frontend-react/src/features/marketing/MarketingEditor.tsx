@@ -125,7 +125,7 @@ export function ActivityEditor({ initial, onClose }: { initial: MarketingActivit
   const existing = state.activities.some(activity => activity.id === initial.id);
   const coachMode = isCoachPrototype();
   const simpleCreate = coachMode && !existing;
-  const activityCode = activityCodes(state).get(initial.id) ?? initial.activityCode ?? "";
+  const activityCode = coachMode ? String(state.activities.findIndex(activity => activity.id === initial.id) + 1) : activityCodes(state).get(initial.id) ?? initial.activityCode ?? "";
   const locked = Boolean(initial.publishedAt || hasActivityBusinessData(state, initial.id));
   const update = <K extends keyof MarketingActivity>(key: K, value: MarketingActivity[K]) => setForm(old => ({ ...old, [key]: value }));
   const save = () => {
@@ -137,7 +137,7 @@ export function ActivityEditor({ initial, onClose }: { initial: MarketingActivit
       const setupErrors = publishChecks(candidate, state, access.brands).filter(check => check.key === "basic" || (!simpleCreate && check.key === "booking")).flatMap(check => check.errors);
       if (setupErrors.length) { setError(setupErrors.join("；")); return; }
     }
-    const result = run({ type: "SAVE_ACTIVITY", activity: candidate, section: "information" });
+    const result = run({ type: "SAVE_ACTIVITY", activity: candidate, section: "information", publishOnCreate: simpleCreate });
     if (!result.ok) return;
     onClose();
     if (!existing) navigate(`marketing/activity/${form.id}/${simpleCreate ? "sessions" : form.lotteryEnabled ? "prizes" : "bookings"}`);
@@ -147,8 +147,8 @@ export function ActivityEditor({ initial, onClose }: { initial: MarketingActivit
     <Form className="marketing-editor" onSubmit={save}>{feedback}{error && <Banner type="warning" title={error} closeIcon={null} />}
       <section className="marketing-form-section"><h2>基本信息</h2><div className="form-grid marketing-form-grid">
         <div className="marketing-field-wide"><TextField label="活动名称" value={coachMode ? prototypeMarketingCopy(form.name) : form.name} onChange={value => update("name", value)} /></div>
-        {coachMode && existing && <><TextField label="活动编号" value={activityCode} onChange={() => undefined} disabled /><SelectField label="活动状态" value={activityLifecycle(form, Date.now())} list={options(lifecycleLabels)} onChange={() => undefined} disabled /></>}
-        <SelectField label="所属品牌" value={form.brand} disabled={locked} list={access.brands.map(brand => ({ value: brand, label: prototypeBrandLabel(brandScopeLabels[brand]) }))} onChange={value => update("brand", value as MarketingActivity["brand"])} />
+        {coachMode && existing && <><TextField label="活动ID" value={activityCode} onChange={() => undefined} disabled /><SelectField label="活动状态" value={form.status === "CANCELED" ? "ENDED" : "ONGOING"} list={options({ ONGOING: lifecycleLabels.ONGOING, ENDED: lifecycleLabels.ENDED })} onChange={() => undefined} disabled /></>}
+        {!coachMode && <SelectField label="所属品牌" value={form.brand} disabled={locked} list={access.brands.map(brand => ({ value: brand, label: prototypeBrandLabel(brandScopeLabels[brand]) }))} onChange={value => update("brand", value as MarketingActivity["brand"])} />}
         <div className="marketing-field"><span>活动类型</span><RadioGroup aria-label="活动类型" value={form.mode} onChange={event => setForm(old => ({ ...old, mode: event.target.value, completion: event.target.value === "ONLINE" ? "STAFF" : old.completion }))}><Radio value="ONLINE">线上活动</Radio><Radio value="OFFLINE">线下活动</Radio></RadioGroup></div>
         {form.mode === "OFFLINE" && <div className="marketing-field-wide"><TextField label="场地" disabled={coachMode} value={coachMode ? COACH_EVENT_LOCATION : form.location} onChange={value => update("location", value)} /></div>}
         <TimeField label="活动开始时间" value={form.startAt} onChange={value => setForm(old => ({ ...old, startAt: value, ...(!existing && (!old.lotteryStart || old.lotteryStart === old.startAt) ? { lotteryStart: value } : {}) }))} /><TimeField label="活动结束时间" value={form.endAt} onChange={value => setForm(old => ({ ...old, endAt: value, ...(!existing && (!old.lotteryEnd || old.lotteryEnd === old.endAt) ? { lotteryEnd: value } : {}) }))} />

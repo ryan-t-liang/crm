@@ -16,8 +16,8 @@ export function activityCreationIssue(access: MarketingPermissions) { return !ac
 export interface MarketingContext { actor: DemoUser; members: MemberOperationsState; now: number; random?: () => number; id?: () => string; access?: MarketingPermissions }
 export type MarketingCommand =
   | PickupCommand
-  | { type: "SAVE_ACTIVITY"; activity: MarketingActivity; section?: "basic" | "information" | "booking" | "lottery" }
-  | { type: "STATUS"; activityId: string; status: MarketingStatus }
+  | { type: "SAVE_ACTIVITY"; activity: MarketingActivity; section?: "basic" | "information" | "booking" | "lottery"; publishOnCreate?: boolean }
+  | { type: "STATUS"; activityId: string; status: MarketingStatus; allowRestart?: boolean }
   | { type: "COPY_ACTIVITY"; activityId: string }
   | { type: "DELETE_ACTIVITY"; activityId: string }
   | { type: "SAVE_ACTIVITY_PRIZE"; activityId: string; prize: ActivityPrize; newPickupSchedule?: MarketingPickupSchedule }
@@ -607,7 +607,18 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
       const { ruleContent: _oldRule, ruleContentFormat: _oldFormat, activityCode: _oldCode, ...existingBusiness } = existing;
       if (JSON.stringify(incomingBusiness) !== JSON.stringify(existingBusiness)) return reject("发布后业务规则锁定；只可改名称、说明、活动规则文案和封面。实质变化请复制活动");
       state.activities[state.activities.indexOf(existing)] = descriptive;
-    } else { const draft = { ...candidate, activityCode: code, status: "DRAFT" as const, publishedAt: undefined, ruleVersion: 1 }; if (!draft.name.trim()) return reject("填写活动名称"); const index = state.activities.findIndex((row) => row.id === draft.id); if (index < 0) state.activities.push(draft); else state.activities[index] = draft; }
+    } else {
+      const draft = {
+        ...candidate,
+        activityCode: code,
+        status: existing ? candidate.status : command.publishOnCreate ? "PUBLISHED" as const : "DRAFT" as const,
+        publishedAt: existing ? candidate.publishedAt : undefined,
+        ruleVersion: 1,
+      };
+      if (!draft.name.trim()) return reject("填写活动名称");
+      const index = state.activities.findIndex((row) => row.id === draft.id);
+      if (index < 0) state.activities.push(draft); else state.activities[index] = draft;
+    }
     return done(activityId);
   }
   if (command.type === "CANCEL_BOOKING" || command.type === "RESCHEDULE") {
@@ -704,7 +715,15 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     return result.error ? reject(result.error) : done(result.id, result.detail);
   }
   if (command.type === "STATUS") {
-    if (command.status === "PUBLISHED") { if (activity.status === "CANCELED") return reject("取消后不能恢复，请复制为新活动"); const errors = validateActivity(activity, state, access.brands, ctx.now); if (ctx.now >= time(activity.endAt)) errors.push("活动已结束，不能开始或恢复"); if (errors.length) return reject(errors.join("；")); activity.publishedAt ??= stamp; }
+    if (command.status === "PUBLISHED") {
+      if (activity.status === "CANCELED" && !command.allowRestart) return reject("取消后不能恢复，请复制为新活动");
+      if (!command.allowRestart) {
+        const errors = validateActivity(activity, state, access.brands, ctx.now);
+        if (ctx.now >= time(activity.endAt)) errors.push("活动已结束，不能开始或恢复");
+        if (errors.length) return reject(errors.join("；"));
+      }
+      activity.publishedAt ??= stamp;
+    }
     if (command.status === "PAUSED" && activity.status !== "PUBLISHED") return reject("只有已发布活动可暂停");
     if (command.status === "DRAFT") return reject("发布状态不能退回草稿");
     activity.status = command.status;
