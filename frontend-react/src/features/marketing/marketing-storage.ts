@@ -65,6 +65,7 @@ export function decodeMarketing(value: string): DecodedMarketing {
         Array.isArray(schedule.slots) && new Set(schedule.slots.map(slot => slot.id)).size === schedule.slots.length &&
         schedule.slots.every(slot => [slot.id, slot.label, slot.location, slot.startAt, slot.endAt, slot.bookingClosesAt, slot.checkinStart, slot.checkinEnd].every(value => typeof value === "string") && Number.isSafeInteger(slot.capacity) && slot.capacity >= 0))) &&
       [row.bookingEnabled, row.allowWalkIn, row.lotteryEnabled].every((field) => typeof field === "boolean") &&
+      (row.lotteryScope === undefined || row.lotteryScope === "ACTIVITY" || row.lotteryScope === "SESSION") &&
       [row.grantCount, row.drawLimit, row.winLimit, row.noWinProbability].every((field) => typeof field === "number" && Number.isFinite(field) || row.status === "DRAFT" && field === null) &&
       (row.dailyLimit === null || typeof row.dailyLimit === "number" && Number.isFinite(row.dailyLimit)) &&
       Array.isArray(row.slots) && Array.isArray(row.pool) && row.pool.every((item) => typeof item.label === "string" && Array.isArray(item.slots)) &&

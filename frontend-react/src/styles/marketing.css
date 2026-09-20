@@ -23,7 +23,8 @@
 .marketing-phases { display: flex; flex-wrap: wrap; gap: 4px 8px; margin: 4px 0; }
 .marketing-redemption .data-list dd { overflow-wrap: anywhere; }
 .marketing-detail code, .marketing-redemption-surface code { overflow-wrap: anywhere; }
-.marketing-record-metadata { width: 100%; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; font-size: 12px; line-height: 20px; color: var(--crm-text-2); }
+.marketing-record-metadata { width: 100%; display: flex; gap: 15px; flex-wrap: wrap; align-items: center; font-size: 14px; line-height: 20px; color: var(--crm-text-2); }
+.marketing-record-metadata > span { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
 .marketing-detail .detail-tags > .semi-tag { max-width: 100%; height: auto; white-space: normal; overflow-wrap: anywhere; }
 .marketing-rail-rule { margin-top: 20px; }
 .marketing-rail-rule h3 { margin: 0 0 15px; font-size: 12px; font-weight: 600; }

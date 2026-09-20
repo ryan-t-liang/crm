@@ -58,6 +58,8 @@ export interface MarketingActivity {
   startAt: string; endAt: string; bookingEnabled: boolean; allowWalkIn: boolean;
   allowCancel: boolean; allowReschedule: boolean;
   bookingStart: string; bookingEnd: string; completion: "CHECKIN" | "STAFF"; slots: MarketingSlot[];
+  /** One activity-wide choice. Optional only for reading pre-scope local data. */
+  lotteryScope?: "ACTIVITY" | "SESSION";
   lotteryEnabled: boolean; lotteryStart: string; lotteryEnd: string; grantCount: number;
   drawLimit: number; dailyLimit: number | null; winLimit: number; noWinProbability: number;
   pool: MarketingPoolItem[]; sessionPrizes?: SessionPrize[]; sessionPrizeConfigVersion?: number;

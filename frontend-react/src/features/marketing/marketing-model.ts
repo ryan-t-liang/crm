@@ -1,6 +1,6 @@
 import type { DemoUser } from "@/types/crm";
 import type { MemberOperationsState, SowindBrandCode, SowindBrandUser } from "@/types/member-operations";
-import type { ActivityPrize, MarketingActivity, MarketingAward, MarketingBooking, MarketingDrawProbabilitySnapshot, MarketingParticipantIdentity, MarketingParticipation, MarketingParticipationChannel, MarketingPoolItem, MarketingSlot, MarketingState, MarketingStatus, SessionPrize } from "@/types/marketing";
+import type { ActivityPrize, MarketingActivity, MarketingAward, MarketingBooking, MarketingDrawProbabilitySnapshot, MarketingParticipantIdentity, MarketingParticipation, MarketingParticipationChannel, MarketingPickupSchedule, MarketingPoolItem, MarketingSlot, MarketingState, MarketingStatus, SessionPrize } from "@/types/marketing";
 import { readBrandPhone } from "@/features/member-operations/sowind-read";
 import { matchPurchaseIntentMember } from "@/features/member-operations/member-model";
 import { memberAccess, parseCreatedAt, shanghaiDate } from "@/features/dashboard/dashboard-model";
@@ -16,11 +16,11 @@ export function activityCreationIssue(access: MarketingPermissions) { return !ac
 export interface MarketingContext { actor: DemoUser; members: MemberOperationsState; now: number; random?: () => number; id?: () => string; access?: MarketingPermissions }
 export type MarketingCommand =
   | PickupCommand
-  | { type: "SAVE_ACTIVITY"; activity: MarketingActivity; section?: "basic" | "booking" | "lottery" }
+  | { type: "SAVE_ACTIVITY"; activity: MarketingActivity; section?: "basic" | "information" | "booking" | "lottery" }
   | { type: "STATUS"; activityId: string; status: MarketingStatus }
   | { type: "COPY_ACTIVITY"; activityId: string }
   | { type: "DELETE_ACTIVITY"; activityId: string }
-  | { type: "SAVE_ACTIVITY_PRIZE"; activityId: string; prize: ActivityPrize }
+  | { type: "SAVE_ACTIVITY_PRIZE"; activityId: string; prize: ActivityPrize; newPickupSchedule?: MarketingPickupSchedule }
   | { type: "DELETE_ACTIVITY_PRIZE"; activityId: string; poolItemId: string }
   | { type: "IMPORT_CODES"; activityId: string; poolItemId: string; codes: string[] }
   | { type: "DELETE_CODES"; activityId: string; poolItemId: string; codes: string[] }
@@ -51,6 +51,8 @@ export const participationMode = (activity: Pick<MarketingActivity, "bookingEnab
 export const prizeQuantityMode = (item: Pick<ActivityPrize, "quantityMode">) => item.quantityMode ?? "LIMITED";
 export const prizeQuantityLimit = (item: Pick<ActivityPrize, "quantityMode" | "quantityLimit" | "quota">) => prizeQuantityMode(item) === "UNLIMITED" ? null : item.quantityLimit !== undefined ? item.quantityLimit : item.quota;
 export const prizeDefaultProbability = (item: Pick<ActivityPrize, "defaultProbability" | "probability">) => item.defaultProbability ?? item.probability;
+/** Legacy records get one uniform mode, never a per-session fallback. */
+export const lotteryScope = (activity: Pick<MarketingActivity, "lotteryScope" | "bookingEnabled" | "sessionPrizes">): "ACTIVITY" | "SESSION" => activity.lotteryScope ?? (activity.bookingEnabled && activity.sessionPrizes?.length ? "SESSION" : "ACTIVITY");
 export function normalizedPrizeContract(item: ActivityPrize): ActivityPrize {
   const quantityMode = prizeQuantityMode(item), quantityLimit = prizeQuantityLimit(item), defaultProbability = prizeDefaultProbability(item);
   return { ...item, quantityMode, quantityLimit, defaultProbability, quota: quantityLimit ?? 0, probability: defaultProbability };
@@ -142,6 +144,7 @@ export function sessionCanProduceFutureDraw(activity: MarketingActivity, session
   return Boolean(session && !session.disabled && !session.deleted && activity.status !== "CANCELED" && now < time(session.endAt) && now < time(activity.endAt));
 }
 export function sessionPrizeEffectiveReserved(state: MarketingState, activity: MarketingActivity, sessionId: string, item: ActivityPrize, now = Date.now()) {
+  if (lotteryScope(activity) !== "SESSION") return 0;
   const config = sessionPrizeConfigurations(activity, sessionId).find((row) => row.prizeId === item.id);
   if (!config?.enabled || prizeQuantityMode(item) === "UNLIMITED" || !sessionCanProduceFutureDraw(activity, sessionId, now)) return 0;
   return Math.max(0, (config.allocatedQuantity ?? 0) - sessionWonCount(state, activity.id, sessionId, item.id));
@@ -281,14 +284,11 @@ function sessionPrizeErrors(state: MarketingState, activity: MarketingActivity, 
   return [...new Set(errors)];
 }
 export function sessionPrizeReadiness(state: MarketingState, activity: MarketingActivity, now = Date.now()) {
-  if (!activity.bookingEnabled || !activity.lotteryEnabled) return [];
+  if (lotteryScope(activity) !== "SESSION" || !activity.lotteryEnabled) return [];
   return activity.slots.filter((slot) => !slot.disabled && !slot.deleted && sessionCanProduceFutureDraw(activity, slot.id, now)).flatMap((slot) => {
     const rows = sessionPrizeConfigurations(activity, slot.id);
     if (!rows.length) {
-      const total = activity.pool.reduce((sum, item) => sum + prizeDefaultProbability(item), 0);
-      const errors = total > 100 ? ["活动默认中奖概率合计不能超过100%"] : [];
-      if (!activity.pool.some(item => prizeDefaultProbability(item) > 0 && winnable(state, activity.id, item, now) > 0 && (activityPrizeAllocation(state, activity, item, now).unallocated ?? Infinity) > 0)) errors.push("活动默认奖池暂无可中奖奖品或未分配库存");
-      return errors.length ? [{ sessionId: slot.id, label: slot.label, errors }] : [];
+      return [{ sessionId: slot.id, label: slot.label, errors: ["请配置本场奖品、概率和数量"] }];
     }
     const errors = sessionPrizeErrors(state, activity, slot.id, rows, now);
     const hasWinnablePrize = rows.some((row) => {
@@ -325,8 +325,9 @@ export function publishChecks(activity: MarketingActivity, state: MarketingState
     if (!positive(activity.grantCount) || !positive(activity.drawLimit) || !positive(activity.winLimit) || activity.grantCount > activity.drawLimit || (activity.dailyLimit !== null && !positive(activity.dailyLimit))) errors.push("次数 / 中奖上限须为正整数，发放次数不得超过累计上限");
     if (!activity.pool.length) errors.push("开启抽奖须配置奖品");
     const probabilities = activity.pool.map(prizeDefaultProbability);
-    if (probabilities.some((value) => typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 100) || probabilities.reduce((sum, value) => sum + value, 0) > 100) errors.push(`${activity.bookingEnabled ? "活动默认中奖概率" : "奖品中奖概率"}合计不能超过100%，未中奖概率由系统自动计算`);
-    if (activity.bookingEnabled) {
+    if (lotteryScope(activity) === "ACTIVITY" && (probabilities.some((value) => typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 100) || probabilities.reduce((sum, value) => sum + value, 0) > 100)) errors.push("奖品中奖概率合计不能超过100%，未中奖概率由系统自动计算");
+    if (lotteryScope(activity) === "SESSION") {
+      if (!activity.bookingEnabled) errors.push("按场次抽奖须使用预约参与");
       const sessionIssues = sessionPrizeReadiness(state, activity, now);
       if (sessionIssues.length) errors.push(`还有${sessionIssues.length}个活动场次尚未完成奖品配置：${sessionIssues.map((issue) => issue.label).join("、")}`);
     } else if (!activity.pool.some((item) => prizeDefaultProbability(item) > 0 && winnable(state, activity.id, item, now) > 0)) errors.push("发布时须有可中奖概率和可发放奖品");
@@ -337,7 +338,7 @@ export function publishChecks(activity: MarketingActivity, state: MarketingState
         const capacity = fulfillmentCapacity(state, activity.id, item, now).remainingSlots;
         if (capacity < 1) checks[4].errors.push(`${item.name}：兑奖预约设置没有可预约名额，请配置有效时段及容量。`);
       }
-      if (prizeDefaultProbability(item) > 0 && winnable(state, activity.id, item, now) < 1 && !completeErrors.length) target.errors.push(`${item.name}：中奖概率大于0，发布时必须至少有1个真实可发放单位（数量、有效期、领奖预约名额或兑换码不足）。`);
+      if (lotteryScope(activity) === "ACTIVITY" && prizeDefaultProbability(item) > 0 && winnable(state, activity.id, item, now) < 1 && !completeErrors.length) target.errors.push(`${item.name}：中奖概率大于0，发布时必须至少有1个真实可发放单位（数量、有效期、领奖预约名额或兑换码不足）。`);
     });
   }
   if (new Set(activity.slots.map((slot) => slot.id)).size !== activity.slots.length || new Set(activity.pool.map((item) => item.id)).size !== activity.pool.length) errors.push("场次 / 活动奖品标识不能重复");
@@ -348,6 +349,8 @@ export function publishChecks(activity: MarketingActivity, state: MarketingState
 export function validateActivity(activity: MarketingActivity, state: MarketingState, brands: SowindBrandCode[], now = Date.now()): string[] { return [...new Set(publishChecks(activity, state, brands, now).flatMap((check) => check.errors))]; }
 export function draftActivityErrors(activity: MarketingActivity) {
   const errors = activity.pool.flatMap((item) => prizeErrors(item, activity, false));
+  if (activity.lotteryScope !== undefined && !["ACTIVITY", "SESSION"].includes(activity.lotteryScope)) errors.push("请选择按活动抽奖或按场次抽奖");
+  if (activity.lotteryEnabled && lotteryScope(activity) === "SESSION" && !activity.bookingEnabled) errors.push("按场次抽奖须使用预约参与，以确定参与者所属场次");
   if (activity.ruleContent !== undefined && typeof activity.ruleContent !== "string") errors.push("活动规则须为文本");
   if (activity.ruleContentFormat !== undefined && activity.ruleContentFormat !== "html") errors.push("活动规则格式无效");
   for (const [label, start, end] of [["活动", activity.startAt, activity.endAt], ["预约", activity.bookingStart, activity.bookingEnd], ["抽奖", activity.lotteryStart, activity.lotteryEnd]]) errors.push(...partialWindowError(label, start, end));
@@ -358,7 +361,7 @@ export function draftActivityErrors(activity: MarketingActivity) {
     errors.push(...partialWindowError("活动场次", slot.startAt, slot.endAt), ...partialWindowError("签到窗口", slot.checkinStart, slot.checkinEnd));
   });
   const defaultProbabilityTotal = activity.pool.reduce((sum, item) => sum + prizeDefaultProbability(item), 0);
-  if (defaultProbabilityTotal > 100) errors.push(`${activity.bookingEnabled ? "活动默认中奖概率" : "奖品中奖概率"}合计为${defaultProbabilityTotal}%，请调整至100%以内`);
+  if (lotteryScope(activity) === "ACTIVITY" && defaultProbabilityTotal > 100) errors.push(`奖品中奖概率合计为${defaultProbabilityTotal}%，请调整至100%以内`);
   return [...new Set(errors)];
 }
 function assignedCodesPreserved(before: ActivityPrize[], after: ActivityPrize[]) {
@@ -442,16 +445,20 @@ function drawRules(state: MarketingState, activity: MarketingActivity, row: Mark
     if (!booking || !slot || slot.disabled || slot.deleted) return { error: "预约参与者缺少当前有效场次，不能抽奖" };
     if (!inWindow(now, slot.startAt, slot.endAt)) return { error: now >= time(slot.endAt) ? "当前活动场次已结束，不能产生新的抽奖记录" : "当前活动场次尚未开始，不能抽奖" };
     sessionId = slot.id;
-    const rows = sessionPrizeConfigurations(activity, sessionId);
-    const errors = rows.length ? sessionPrizeErrors(state, activity, sessionId, rows, now) : [];
+    const rows = lotteryScope(activity) === "SESSION" ? sessionPrizeConfigurations(activity, sessionId) : [];
+    if (lotteryScope(activity) === "SESSION" && !rows.length) return { error: "当前场次尚未配置奖池，不能抽奖" };
+    const errors = lotteryScope(activity) === "SESSION" ? sessionPrizeErrors(state, activity, sessionId, rows, now) : [];
     if (errors.length) return { error: errors.join("；") };
-    configured = !rows.length ? activity.pool.map(item => ({ item, probability: prizeDefaultProbability(item), sessionRemaining: activityPrizeAllocation(state, activity, item, now).unallocated ?? undefined })) : rows.filter((config) => config.enabled).flatMap((config) => {
+    configured = lotteryScope(activity) === "ACTIVITY" ? activity.pool.map(item => ({ item, probability: prizeDefaultProbability(item), sessionRemaining: activityPrizeAllocation(state, activity, item, now).remaining ?? undefined })) : rows.filter((config) => config.enabled).flatMap((config) => {
       const item = activity.pool.find((candidate) => candidate.id === config.prizeId);
       if (!item) return [];
       const allocation = sessionPrizeAllocation(state, activity, sessionId!, item, now);
       return [{ item, probability: config.probability, sessionRemaining: allocation.remaining ?? undefined }];
     });
-  } else configured = activity.pool.map((item) => ({ item, probability: prizeDefaultProbability(item) }));
+  } else {
+    if (lotteryScope(activity) === "SESSION") return { error: "按场次抽奖必须关联有效活动场次" };
+    configured = activity.pool.map((item) => ({ item, probability: prizeDefaultProbability(item) }));
+  }
   const configuredTotal = configured.reduce((sum, rule) => sum + rule.probability, 0);
   if (configured.some(rule => !Number.isFinite(rule.probability) || rule.probability < 0 || rule.probability > 100)) return { error: "中奖概率须为0至100的有效数字" };
   if (configuredTotal > 100) return { error: `当前中奖概率合计为${configuredTotal}%，请调整至100%以内。` };
@@ -541,8 +548,11 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     const existing = state.activities.find((row) => row.id === command.activity.id);
     if (existing && !access.brands.includes(existing.brand)) return reject("无权编辑活动");
     activityId = command.activity.id;
-    if (!existing && command.section && command.section !== "basic") return reject("请先创建活动，再配置业务规则");
-    const fields: Record<"basic" | "booking" | "lottery", Array<keyof MarketingActivity>> = {
+    if (!existing && command.section && !["basic", "information"].includes(command.section)) return reject("请先创建活动，再配置业务规则");
+    if (!existing && !command.activity.lotteryScope) return reject("创建活动时请选择抽奖方式");
+    if (existing && lotteryScope(existing) !== lotteryScope(command.activity)) return reject("抽奖方式在创建时确定，不能在同一活动中切换；请新建活动");
+    const fields: Record<"basic" | "information" | "booking" | "lottery", Array<keyof MarketingActivity>> = {
+      information: ["name", "brand", "mode", "location", "startAt", "endAt", "bookingEnabled", "lotteryEnabled", "ruleContent", "ruleContentFormat", "bookingStart", "bookingEnd", "completion", "allowCancel", "allowReschedule", "allowWalkIn", "slots"],
       basic: ["name", "brand", "mode", "location", "startAt", "endAt", "bookingEnabled", "lotteryEnabled", "ruleContent", "ruleContentFormat"],
       booking: ["bookingStart", "bookingEnd", "completion", "allowCancel", "allowReschedule", "allowWalkIn", "slots"],
       lottery: ["lotteryStart", "lotteryEnd", "grantCount", "drawLimit", "dailyLimit", "winLimit", "noWinProbability"],
@@ -551,6 +561,7 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     // Session allocations have one dedicated write path. A stale activity form
     // must never erase or overwrite live allocation and probability history.
     if (existing) {
+      candidate.lotteryScope = lotteryScope(existing);
       candidate.pickupSchedules = structuredClone(existing.pickupSchedules);
       candidate.status = existing.status;
       candidate.pool = structuredClone(existing.pool);
@@ -561,7 +572,7 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
       candidate.sessionPrizeConfigVersion = 1;
     }
     // Switching an editable draft online cannot retain an offline-only completion rule.
-    if (existing && command.section === "basic" && existing.mode !== "ONLINE" && candidate.mode === "ONLINE") candidate.completion = "STAFF";
+    if (existing && ["basic", "information"].includes(command.section ?? "") && existing.mode !== "ONLINE" && candidate.mode === "ONLINE") candidate.completion = "STAFF";
     const code = existing ? activityCodes(state).get(existing.id)! : nextActivityCode(state, stamp);
     if (existing && command.activity.activityCode !== undefined && command.activity.activityCode !== code) return reject("活动编号由系统生成，不可修改");
     const basicPrizeErrors = draftActivityErrors(candidate);
@@ -578,7 +589,7 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
         if (candidate.brand !== existing.brand) return reject("已有发布或业务历史的活动不能变更品牌归属");
         if (hasActivityBusinessData(state, existing.id) && candidate.bookingEnabled !== existing.bookingEnabled) return reject("已有参与历史的活动不能切换预约 / 直接参与模式。");
         if (!candidate.name.trim()) return reject("填写活动名称");
-        if (command.section === "booking") {
+        if (command.section === "booking" || command.section === "information") {
           for (const old of existing.slots) {
             const used = state.bookings.some(row => row.activityId === existing.id && row.kind === "ACTIVITY" && row.slotId === old.id) || state.draws.some((row) => row.activityId === existing.id && row.sessionId === old.id);
             if (!used) continue;
@@ -687,6 +698,7 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
   const activity = allowedActivity(command.activityId);
   if (!activity) return reject("活动不存在或不在品牌授权范围"); activityId = activity.id;
   if (management && !access.manage) return reject("无权管理活动规则");
+  activity.lotteryScope = lotteryScope(activity);
   if (pickupCommand) {
     const result = executePickupCommand(state, activity, command as PickupCommand, ctx.now);
     return result.error ? reject(result.error) : done(result.id, result.detail);
@@ -700,6 +712,19 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     return done(activity.id, "发布状态变更；既有获奖权益及奖品预约保留");
   }
   if (command.type === "SAVE_ACTIVITY_PRIZE") {
+    if (!command.prize.name.trim()) return reject("请填写奖品名称");
+    if (command.newPickupSchedule) {
+      const schedule = command.newPickupSchedule;
+      if (!needsReservation(command.prize) || command.prize.pickupScheduleId !== schedule.id || pickupSchedules(activity).some(row => row.id === schedule.id)) return reject("请选择当前奖品的新兑奖预约，已有预约设置须通过原入口编辑");
+      if (!schedule.slots.length) return reject("请添加至少一个兑奖时段");
+      if (new Set(schedule.slots.map(slot => slot.id)).size !== schedule.slots.length) return reject("兑奖时段标识不能重复");
+      const saved = executePickupCommand(state, activity, { type: "SAVE_PICKUP_SCHEDULE", activityId: activity.id, schedule: { ...schedule, slots: [] } }, ctx.now);
+      if (saved.error) return reject(saved.error);
+      for (const slot of schedule.slots) {
+        const result = executePickupCommand(state, activity, { type: "SAVE_PICKUP_SLOT", activityId: activity.id, scheduleId: schedule.id, slot }, ctx.now);
+        if (result.error) return reject(result.error);
+      }
+    }
     const item = normalizedPrizeContract(command.prize), old = activity.pool.find((row) => row.id === item.id);
     const errors = prizeErrors(item, activity, false);
     if (errors.length) return reject([...new Set(errors)].join("；"));
@@ -715,7 +740,7 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
       if ((won || activity.publishedAt) && prizeQuantityLimit(old) !== limit) return reject("已发布奖品请使用增加可发放数量；历史数量与权益保留。");
       if (JSON.stringify(old.slots) !== JSON.stringify(item.slots)) return reject("兑奖时段请通过兑奖预约设置专用操作维护。");
     } else if (item.slots.length) return reject("新奖品不能创建私有领奖时段，请关联兑奖预约设置。");
-    if (activity.pool.filter(prize => prize.id !== item.id).reduce((sum, prize) => sum + prizeDefaultProbability(prize), prizeDefaultProbability(item)) > 100) return reject("默认中奖概率合计不能超过100%。");
+    if (lotteryScope(activity) === "ACTIVITY" && activity.pool.filter(prize => prize.id !== item.id).reduce((sum, prize) => sum + prizeDefaultProbability(prize), prizeDefaultProbability(item)) > 100) return reject("中奖概率合计不能超过100%。");
     if (item.codes.some((code) => code.assignedAwardId && !old?.codes.some((row) => JSON.stringify(row) === JSON.stringify(code)))) return reject("不允许修改兑换码分配状态");
     const codes = state.activities.flatMap((row) => row.pool.filter((prize) => row.id !== activity.id || prize.id !== item.id).flatMap((prize) => prize.codes.map((code) => code.code))).concat(item.codes.map((code) => code.code));
     if (new Set(codes).size !== codes.length) return reject("兑换码已存在，不允许重复导入");
@@ -729,7 +754,7 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     if (old) activity.pool[activity.pool.indexOf(old)] = structuredClone(item); else activity.pool.push(structuredClone(item));
     activity.sessionPrizeConfigVersion = (activity.sessionPrizeConfigVersion ?? 0) + 1;
     if (prizeQuantityMode(item) === "UNLIMITED") activity.sessionPrizes = (activity.sessionPrizes ?? []).map((row) => row.prizeId === item.id ? (() => { const { allocatedQuantity: _allocated, ...retained } = row; return retained; })() : row);
-    return done(item.id, `保存当前活动奖品；默认概率 ${old ? prizeDefaultProbability(old) : 0}% → ${prizeDefaultProbability(item)}%；不覆盖既有场次配置或历史中奖快照`);
+    return done(item.id, lotteryScope(activity) === "ACTIVITY" ? `保存奖品；中奖概率 ${old ? prizeDefaultProbability(old) : 0}% → ${prizeDefaultProbability(item)}%；历史快照保留` : "保存奖品资料；场次概率与历史快照保留");
   }
   if (command.type === "DELETE_ACTIVITY_PRIZE") {
     if (activity.publishedAt || state.draws.some((row) => row.activityId === activity.id && row.poolItemId === command.poolItemId) || state.awards.some((row) => row.activityId === activity.id && row.poolItemId === command.poolItemId)) return reject("已发布或已产生业务数据的活动奖品不能删除");
@@ -775,10 +800,10 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
   }
   if (command.type === "SAVE_SESSION_PRIZES") {
     const slot = activity.slots.find((row) => row.id === command.sessionId && !row.disabled && !row.deleted);
-    if (!activity.bookingEnabled || !activity.lotteryEnabled || !slot) return reject("仅预约参与且启用抽奖的有效场次可以配置奖品");
+    if (lotteryScope(activity) !== "SESSION" || !activity.bookingEnabled || !activity.lotteryEnabled || !slot) return reject("仅按场次抽奖的有效场次可以配置奖池");
     if (activity.status === "CANCELED" || ctx.now >= time(activity.endAt) || ctx.now >= time(slot.endAt)) return reject("活动或场次已结束，奖品配置只读");
     const current = sessionPrizeConfigurations(activity, slot.id);
-    if (!command.prizes.length) return reject("请保留完整场次奖池；停止抽奖请关闭奖品参与，不能清空后隐式继承活动默认。");
+    if (!command.prizes.length) return reject("请配置本场奖池；停止抽奖请关闭奖品参与");
     const submitted = command.prizes.map((row) => {
       const item = activity.pool.find((prize) => prize.id === row.prizeId);
       if (!item) return { ...row, sessionId: slot.id };
@@ -815,7 +840,7 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
   }
   if (command.type === "COPY_SESSION_PRIZES") {
     const source = activity.slots.find((row) => row.id === command.sourceSessionId), target = activity.slots.find((row) => row.id === command.targetSessionId);
-    if (!activity.bookingEnabled || !activity.lotteryEnabled || !source || !target || source.id === target.id || source.disabled || source.deleted || target.disabled || target.deleted) return reject("请选择其它有效场次复制配置");
+    if (lotteryScope(activity) !== "SESSION" || !activity.bookingEnabled || !activity.lotteryEnabled || !source || !target || source.id === target.id || source.disabled || source.deleted || target.disabled || target.deleted) return reject("仅按场次抽奖支持复制场次配置");
     if (activity.status === "CANCELED" || ctx.now >= time(activity.endAt) || ctx.now >= time(target.startAt)) return reject("活动已结束或目标场次已开始，不能覆盖奖品配置");
     if (state.draws.some((draw) => draw.activityId === activity.id && draw.sessionId === target.id)) return reject("目标场次已有抽奖记录，不能覆盖其配置");
     const copied = sessionPrizeConfigurations(activity, source.id).map((row) => ({ ...row, sessionId: target.id }));
@@ -830,7 +855,7 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     if (!["INCREASE", "DECREASE"].includes(command.direction)) return reject("选择增加或减少数量");
     const slot = activity.slots.find((row) => row.id === command.sessionId), item = activity.pool.find((row) => row.id === command.prizeId);
     const config = (activity.sessionPrizes ?? []).find((row) => row.sessionId === command.sessionId && row.prizeId === command.prizeId);
-    if (!activity.bookingEnabled || !activity.lotteryEnabled || !slot || slot.disabled || slot.deleted || !item || !config || !config.enabled || prizeQuantityMode(item) !== "LIMITED") return reject("请选择当前场次已启用的限量奖品");
+    if (lotteryScope(activity) !== "SESSION" || !activity.bookingEnabled || !activity.lotteryEnabled || !slot || slot.disabled || slot.deleted || !item || !config || !config.enabled || prizeQuantityMode(item) !== "LIMITED") return reject("请选择按场次抽奖中已启用的限量奖品");
     if (activity.status === "CANCELED" || ctx.now >= time(activity.endAt) || ctx.now >= time(slot.endAt)) return reject("活动或场次已结束，奖品配置只读");
     if (!positive(command.count) || !Number.isSafeInteger(command.count)) return reject("调整数量须为安全正整数");
     const before = config.allocatedQuantity ?? 0, won = sessionWonCount(state, activity.id, slot.id, item.id);

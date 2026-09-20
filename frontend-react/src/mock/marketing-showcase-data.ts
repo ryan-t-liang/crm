@@ -33,7 +33,7 @@ export function appendMarketingShowcase(source: MarketingState, brand: SowindBra
   }));
   // First session inherits activity defaults; the future session demonstrates
   // an explicit whole-pool override and reserves only 20 per prize.
-  activity.sessionPrizes = activity.pool.map((prize, index) => ({ sessionId: future.id, prizeId: prize.id, enabled: true, probability: [40, 20, 10][index], allocatedQuantity: 20 }));
+  activity.sessionPrizes = [];
   state.activities.unshift(activity);
   for (let index = 0; index < 200; index++) {
     const prefix = `${id}:${index + 1}`, completed = index >= 40;

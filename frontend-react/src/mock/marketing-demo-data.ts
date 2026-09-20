@@ -22,7 +22,7 @@ export function createMarketingSlot(id: string, parentStart: string, capacity = 
 export function createMarketingActivity(brand: SowindBrandCode, now: number): MarketingActivity {
   return { id: crypto.randomUUID(), name: "新活动", brand, description: "", ruleContent: "", cover: "", mode: "OFFLINE", location: "", status: "DRAFT", ruleVersion: 1,
     startAt: "", endAt: "", bookingEnabled: true, allowWalkIn: true, allowCancel: true, allowReschedule: true, bookingStart: "", bookingEnd: "", completion: "STAFF", slots: [],
-    lotteryEnabled: true, lotteryStart: "", lotteryEnd: "", grantCount: 2, drawLimit: 2, dailyLimit: null, winLimit: 1, noWinProbability: 100, pool: [], sessionPrizes: [], sessionPrizeConfigVersion: 1, createdAt: new Date(now).toISOString() };
+    lotteryScope: "ACTIVITY", lotteryEnabled: true, lotteryStart: "", lotteryEnd: "", grantCount: 2, drawLimit: 2, dailyLimit: null, winLimit: 1, noWinProbability: 100, pool: [], sessionPrizes: [], sessionPrizeConfigVersion: 1, createdAt: new Date(now).toISOString() };
 }
 /** Dynamic dates and virtual stock belong only to demo seeding / isolated QA fixtures. */
 export function createDemoMarketingActivity(brand: SowindBrandCode, now: number, prizes = marketingDemoPrizes): MarketingActivity {
