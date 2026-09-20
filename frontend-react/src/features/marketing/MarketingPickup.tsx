@@ -88,30 +88,27 @@ export function PickupScheduleDrawer({ activity, scheduleId, onClose }: { activi
   const { state } = useMarketing(), { currentUser } = useCrm(), { run, feedback } = useAction();
   const manage = marketingPermissions(currentUser).manage;
   const schedule = pickupSchedules(activity).find(row => row.id === scheduleId);
-  const [edit, setEdit] = useState(false), [batch, setBatch] = useState(false), [slot, setSlot] = useState<MarketingSlot | null>(null), [viewSlot, setViewSlot] = useState<MarketingSlot | null>(null);
+  const [edit, setEdit] = useState(false), [batch, setBatch] = useState(false), [slot, setSlot] = useState<MarketingSlot | null>(null);
   const [adjust, setAdjust] = useState<{ id: string; capacity: number } | null>(null), [roster, setRoster] = useState("ALL"), [activeTab, setActiveTab] = useState("schedule");
   if (!schedule) return <SideSheet visible title="兑奖预约设置待核对" onCancel={onClose}><EmptyBlock title="兑奖预约设置不存在" /></SideSheet>;
   const summary = pickupScheduleSummary(state, activity, schedule, Date.now());
   const adjustingSlot = schedule.slots.find(row => row.id === adjust?.id), booked = adjustingSlot ? pickupBookedCount(state, activity, schedule.id, adjustingSlot.id) : 0;
   return <>
-    <SideSheet visible={!edit && !batch && !slot && !viewSlot && !adjust} closeOnEsc className={isCoachPrototype() ? "coach-marketing-sheet" : undefined} title={schedule.name} width={Math.min(820, window.innerWidth - 24)} onCancel={onClose} footer={<Button onClick={onClose}>关闭</Button>}>
+    <SideSheet visible={!edit && !batch && !slot && !adjust} closeOnEsc className={isCoachPrototype() ? "coach-marketing-sheet" : undefined} title={schedule.name} width={Math.min(820, window.innerWidth - 24)} onCancel={onClose} footer={<Button onClick={onClose}>关闭</Button>}>
       {feedback}<Tabs type="line" activeKey={activeTab} onChange={setActiveTab}>
         <TabPane itemKey="schedule" tab="兑奖预约"><Panel actions={<Button size="small" theme="borderless" icon={<IconEdit />} aria-label="编辑兑奖预约" disabled={!manage} onClick={() => setEdit(true)} />}>
           <DataList rows={[["地点", prototypeLocationLabel(schedule.location)], ["有效日期", displayDateRange(schedule.startAt, schedule.endAt).compact], ["关联奖品", summary.prizes.map(prize => prize.name).join("、") || "未关联"], ["可预约数量 / 已预约 / 剩余", `${summary.total} / ${summary.booked} / ${summary.remaining}`]]} />
           {summary.warning && <Banner type="warning" title={summary.warning} closeIcon={null} />}
         </Panel></TabPane>
-        <TabPane itemKey="slots" tab="兑奖时段"><Panel actions={<div className="row-actions"><Button size="small" disabled={!manage} onClick={() => setBatch(true)}>批量生成时段</Button><Button size="small" icon={<IconPlus />} disabled={!manage} onClick={() => setSlot({ id: crypto.randomUUID(), label: "兑奖时段", location: isCoachPrototype() ? COACH_EVENT_LOCATION : schedule.location, startAt: "", endAt: "", bookingClosesAt: "", checkinStart: "", checkinEnd: "", capacity: 10, createdAt: new Date().toISOString() })}>新增时段</Button></div>}><Table rowKey="id" dataSource={schedule.slots.filter(row => !row.deleted)} pagination={{ pageSize: 8 }} scroll={{ x: isCoachPrototype() ? 1040 : 730 }} empty={<EmptyBlock title="暂无兑奖时段" description="新增单个时段，或批量生成可预约时间。" />} columns={[
+        <TabPane itemKey="slots" tab="兑奖时段"><Panel actions={<div className="row-actions"><Button size="small" disabled={!manage} onClick={() => setBatch(true)}>批量生成时段</Button><Button size="small" icon={<IconPlus />} disabled={!manage} onClick={() => setSlot({ id: crypto.randomUUID(), label: "兑奖时段", location: isCoachPrototype() ? COACH_EVENT_LOCATION : schedule.location, startAt: "", endAt: "", bookingClosesAt: "", checkinStart: "", checkinEnd: "", capacity: 10, createdAt: new Date().toISOString() })}>新增时段</Button></div>}><Table rowKey="id" dataSource={schedule.slots.filter(row => !row.deleted)} pagination={{ pageSize: 8 }} scroll={{ x: isCoachPrototype() ? 820 : 730 }} empty={<EmptyBlock title="暂无兑奖时段" description="新增单个时段，或批量生成可预约时间。" />} columns={[
           { title: "日期 / 时间", width: 160, render: (_: unknown, row: MarketingSlot) => <DateRange start={row.startAt} end={row.endAt} /> },
           { title: "地点", width: 190, render: (_: unknown, row: MarketingSlot) => prototypeLocationLabel(row.location) },
           { title: "可预约数量", width: 160, render: (_: unknown, row: MarketingSlot) => { const used = pickupBookedCount(state, activity, schedule.id, row.id); return <div className="marketing-summary-cell"><span>总容量 {row.capacity}</span><small>已预约 {used} · 剩余 {Math.max(0, row.capacity - used)}</small></div>; } },
           { title: "状态", width: 90, render: (_: unknown, row: MarketingSlot) => <Tag size="small">{pickupSlotStatus(state, activity, schedule, row, Date.now())}</Tag> },
-          { title: "操作", width: isCoachPrototype() ? 410 : 140, fixed: "right", render: (_: unknown, row: MarketingSlot) => <div className="row-actions">
-            {isCoachPrototype() && <Button theme="borderless" size="small" onClick={() => setViewSlot(structuredClone(row))}>查看</Button>}
+          { title: "操作", width: isCoachPrototype() ? 210 : 140, fixed: "right", render: (_: unknown, row: MarketingSlot) => <div className="row-actions">
             <Button theme="borderless" size="small" onClick={() => { setRoster(row.id); setActiveTab("records"); }}>预约记录</Button>
             {isCoachPrototype() ? <>
               <Button theme="borderless" size="small" disabled={!manage} onClick={() => setSlot(structuredClone(row))}>编辑</Button>
-              <Button theme="borderless" size="small" disabled={!manage} onClick={() => setAdjust({ id: row.id, capacity: row.capacity })}>调整容量</Button>
-              <Button theme="borderless" size="small" disabled={!manage} onClick={() => run({ type: "SET_PICKUP_SLOT_OPEN", activityId: activity.id, scheduleId: schedule.id, slotId: row.id, open: Boolean(row.disabled) })}>{row.disabled ? "恢复预约" : "停止预约"}</Button>
               <Button theme="borderless" type="danger" size="small" disabled={!manage || pickupBookings(state, activity, schedule.id, row.id).length > 0} onClick={() => run({ type: "DELETE_PICKUP_SLOT", activityId: activity.id, scheduleId: schedule.id, slotId: row.id })}>删除</Button>
             </> : <MarketingMenu menu={[
             { node: "item", name: "编辑时段", disabled: !manage, onClick: () => setSlot(structuredClone(row)) },
@@ -129,7 +126,6 @@ export function PickupScheduleDrawer({ activity, scheduleId, onClose }: { activi
     {edit && <ScheduleEditor activity={activity} initial={schedule} onClose={() => setEdit(false)} />}
     {batch && <BatchSlots activity={activity} schedule={schedule} onClose={() => setBatch(false)} />}
     {slot && <SlotEditor activity={activity} schedule={schedule} slot={slot} onClose={() => setSlot(null)} />}
-    {viewSlot && <SlotEditor activity={activity} schedule={schedule} slot={viewSlot} readOnly onClose={() => setViewSlot(null)} />}
     {adjust && adjustingSlot && <Modal visible title="调整可预约数量" maskClosable={false} width={520} onCancel={() => setAdjust(null)} onOk={() => { if (run({ type: "ADJUST_PICKUP_CAPACITY", activityId: activity.id, scheduleId: schedule.id, slotId: adjust.id, capacity: adjust.capacity }).ok) setAdjust(null); }}>
       {feedback}<DataList rows={[["兑奖预约设置", schedule.name], ["时段", displayDateRange(adjustingSlot.startAt, adjustingSlot.endAt).compact], ["当前容量", String(adjustingSlot.capacity)], ["已预约", String(booked)], ["当前剩余", String(Math.max(0, adjustingSlot.capacity - booked))]]} />
       <NumberField label="调整后容量" value={adjust.capacity} onChange={capacity => setAdjust({ ...adjust, capacity })} />
