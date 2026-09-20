@@ -26,7 +26,7 @@ export type MarketingCommand =
   | { type: "DELETE_CODES"; activityId: string; poolItemId: string; codes: string[] }
   | { type: "SAVE_ACTIVITY_SLOT"; activityId: string; slot: MarketingSlot }
   | { type: "DELETE_ACTIVITY_SLOT"; activityId: string; slotId: string }
-  | { type: "SAVE_SESSION_PRIZES"; activityId: string; sessionId: string; prizes: SessionPrize[] }
+  | { type: "SAVE_SESSION_PRIZES"; activityId: string; sessionId: string; prizes: SessionPrize[]; allowQuantityEdit?: boolean }
   | { type: "COPY_SESSION_PRIZES"; activityId: string; sourceSessionId: string; targetSessionId: string }
   | { type: "ADJUST_SESSION_PRIZE_QUANTITY"; activityId: string; sessionId: string; prizeId: string; direction: "INCREASE" | "DECREASE"; count: number }
   | { type: "ADD_QUOTA"; activityId: string; poolItemId: string; count: number }
@@ -821,7 +821,7 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     if (errors.length) return reject(errors.join("；"));
     const hasDraws = state.draws.some((draw) => draw.activityId === activity.id && draw.sessionId === slot.id);
     const quantityLocked = current.length > 0 && (hasDraws || ctx.now >= time(slot.startAt));
-    if (quantityLocked && normalized.some((row) => row.enabled && (current.find((old) => old.prizeId === row.prizeId)?.allocatedQuantity ?? 0) !== (row.allocatedQuantity ?? 0))) return reject("场次已开始或已有抽奖记录，请使用“调整数量”保留变更语义和审计记录");
+    if (quantityLocked && !command.allowQuantityEdit && normalized.some((row) => row.enabled && (current.find((old) => old.prizeId === row.prizeId)?.allocatedQuantity ?? 0) !== (row.allocatedQuantity ?? 0))) return reject("场次已开始或已有抽奖记录，请使用“调整数量”保留变更语义和审计记录");
     const probabilityChanges = normalized.flatMap((row) => {
       const before = current.find((old) => old.prizeId === row.prizeId)?.probability ?? 0;
       return before === row.probability ? [] : [`${row.prizeId}:${before}%→${row.probability}%`];

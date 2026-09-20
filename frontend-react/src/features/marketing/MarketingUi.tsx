@@ -74,8 +74,13 @@ export function SlotFields({ slot, onChange, disabled = false, simplified = fals
     if (simplified && key === "endAt") Object.assign(next, { checkinEnd: value });
     onChange(next);
   };
-  const timeFields = simplified ? (["startAt", "endAt"] as const) : (["startAt", "endAt", "bookingClosesAt", "checkinStart", "checkinEnd"] as const);
-  const labels = simplified ? ["场次开始", "场次结束"] : ["场次开始", "场次结束", "预约截止", "签到开始", "签到截止"];
+  if (simplified) return <div className="form-grid marketing-form-grid">
+    <NumberField label="场次容量" value={slot.capacity} onChange={(value) => update("capacity", value)} disabled={disabled} />
+    <TimeField label="场次开始" value={slot.startAt} onChange={(value) => update("startAt", value)} disabled={disabled} />
+    <TimeField label="场次结束" value={slot.endAt} onChange={(value) => update("endAt", value)} disabled={disabled} />
+  </div>;
+  const timeFields = ["startAt", "endAt", "bookingClosesAt", "checkinStart", "checkinEnd"] as const;
+  const labels = ["场次开始", "场次结束", "预约截止", "签到开始", "签到截止"];
   return <div className="form-grid marketing-form-grid"><TextField label="场次名称" value={slot.label} onChange={(value) => update("label", value)} disabled={disabled} /><TextField label="场地" value={locationOverride ?? slot.location} onChange={(value) => update("location", value)} disabled={disabled || Boolean(locationOverride)} /><NumberField label="场次容量" value={slot.capacity} onChange={(value) => update("capacity", value)} disabled={disabled} />{timeFields.map((key, index) => <TimeField key={key} label={labels[index]} value={slot[key]} onChange={(value) => update(key, value)} disabled={disabled} />)}</div>;
 }
 export function useAction() {

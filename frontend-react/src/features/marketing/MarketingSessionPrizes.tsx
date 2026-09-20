@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Banner, Button, InputNumber, Modal, Radio, RadioGroup, Select, Switch, Table, Tag } from "@douyinfe/semi-ui";
+import { Banner, Button, InputNumber, Modal, Radio, RadioGroup, Select, Switch, Table, TabPane, Tabs, Tag } from "@douyinfe/semi-ui";
 import { FormSideSheet } from "@/components/CrmUi";
 import { useCrm } from "@/stores/crm-store";
 import { useMarketing } from "@/stores/marketing-store";
@@ -17,7 +17,7 @@ import {
   slotOccupancy,
 } from "./marketing-model";
 import { DefinitionGrid, displayDateRange, SlotFields, useAction } from "./MarketingUi";
-import { COACH_EVENT_LOCATION, isCoachPrototype } from "@/utils/prototype-variant";
+import { isCoachPrototype } from "@/utils/prototype-variant";
 
 export type MarketingSessionLifecycle = "UPCOMING" | "ONGOING" | "ENDED";
 
@@ -123,6 +123,7 @@ export function SessionPrizeDrawer({ activity, session, onClose, editSessionDeta
   const [sessionDraft, setSessionDraft] = useState<MarketingSlot>(() => structuredClone(currentSession));
   const [rows, setRows] = useState<SessionPrize[]>(() => initialSessionPrizes(currentActivity, currentSession, state));
   const [sourceSessionId, setSourceSessionId] = useState(""), [copyOpen, setCopyOpen] = useState(false), [adjustPrizeId, setAdjustPrizeId] = useState(""), [localError, setLocalError] = useState("");
+  const [activeTab, setActiveTab] = useState(editSessionDetails ? "information" : "prizes");
   const lifecycle = marketingSessionLifecycle(currentActivity, currentSession, now);
   const sessionPrizeMode = currentActivity.lotteryEnabled && lotteryScope(currentActivity) === "SESSION";
   const readOnly = !access.manage || lifecycle === "ENDED" || !sessionPrizeMode;
@@ -152,7 +153,7 @@ export function SessionPrizeDrawer({ activity, session, onClose, editSessionDeta
       if (!sessionResult.ok) return;
     }
     if (sessionPrizeMode) {
-      const prizeResult = run({ type: "SAVE_SESSION_PRIZES", activityId: currentActivity.id, sessionId: sessionDraft.id, prizes: rows });
+      const prizeResult = run({ type: "SAVE_SESSION_PRIZES", activityId: currentActivity.id, sessionId: sessionDraft.id, prizes: rows, allowQuantityEdit: coachMode });
       if (!prizeResult.ok) return;
     }
     onClose();
@@ -167,11 +168,40 @@ export function SessionPrizeDrawer({ activity, session, onClose, editSessionDeta
   };
 
   return <>
-    <FormSideSheet visible={!copyOpen && !adjustedPrize} className={`marketing-session-prize-drawer ${coachMode ? "coach-marketing-sheet" : ""}`} width={820} title={editSessionDetails ? "场次设置" : `${titleRange.compact} · 场次奖品`} onCancel={onClose} onOk={save}
+    <FormSideSheet visible={!copyOpen && !adjustedPrize} className={`marketing-session-prize-drawer ${coachMode ? "coach-marketing-sheet" : ""}`} width={coachMode ? Math.min(1040, window.innerWidth - 24) : 820} title={editSessionDetails ? "场次设置" : `${titleRange.compact} · 场次奖品`} onCancel={onClose} onOk={save}
       okText={editSessionDetails ? "保存场次设置" : "保存本场奖池"} cancelText="取消" okButtonProps={{ disabled: !access.manage || lifecycle === "ENDED" || probabilityTotal > 100 }} footer={!access.manage || lifecycle === "ENDED" ? <Button onClick={onClose}>关闭</Button> : undefined}>
       {feedback}{localError && <Banner type="warning" title={localError} closeIcon={null} />}
       {readOnly && <Banner type="info" title={lifecycle === "ENDED" ? "活动或场次已结束，场次设置只读。" : !access.manage ? "当前账号没有活动管理权限。" : "当前活动不是按场次抽奖，不能配置本场奖品。"} closeIcon={null} />}
-      {editSessionDetails && <section className="marketing-form-section"><h2>场次信息</h2><SlotFields slot={sessionDraft} onChange={setSessionDraft} disabled={!access.manage || lifecycle === "ENDED"} simplified={coachMode} locationOverride={coachMode ? COACH_EVENT_LOCATION : undefined} /></section>}
+      {coachMode && <Tabs type="line" activeKey={activeTab} onChange={setActiveTab}>
+        <TabPane itemKey="information" tab="场次信息">
+          <section className="marketing-form-section"><SlotFields slot={sessionDraft} onChange={setSessionDraft} disabled={!access.manage || lifecycle === "ENDED"} simplified /></section>
+        </TabPane>
+        <TabPane itemKey="prizes" tab="本场奖品">
+          <section className="marketing-form-section">
+            <Table rowKey="id" dataSource={currentActivity.pool} pagination={false} empty="暂无可配置奖品" columns={[
+              { title: "奖品名称", width: 170, render: (_: unknown, item: ActivityPrize) => <strong>{item.name}</strong> },
+              { title: "参与本场", width: 92, render: (_: unknown, item: ActivityPrize) => { const row = rows.find((entry) => entry.prizeId === item.id)!; return <Switch size="small" checked={row?.enabled ?? false} disabled={readOnly} onChange={(value) => toggle(item, value)} aria-label={`${item.name}参与本场`} />; } },
+              { title: "中奖概率", width: 126, render: (_: unknown, item: ActivityPrize) => { const row = rows.find((entry) => entry.prizeId === item.id)!; return <InputNumber suffix="%" min={0} max={100} value={row?.probability ?? 0} disabled={readOnly || !row?.enabled} onChange={(value) => update(item.id, { probability: numberValue(value) })} aria-label={`${item.name}中奖概率`} />; } },
+              { title: "场次总库存", width: 126, render: (_: unknown, item: ActivityPrize) => { const row = rows.find((entry) => entry.prizeId === item.id)!; return prizeQuantityMode(item) === "UNLIMITED" ? "不限量" : <InputNumber min={0} precision={0} value={row?.allocatedQuantity ?? 0} disabled={readOnly || !row?.enabled} onChange={(value) => update(item.id, { allocatedQuantity: numberValue(value) })} aria-label={`${item.name}场次总库存`} />; } },
+              { title: "场次剩余库存", width: 126, render: (_: unknown, item: ActivityPrize) => { const row = rows.find((entry) => entry.prizeId === item.id)!; if (prizeQuantityMode(item) === "UNLIMITED") return "不限量"; const won = sessionWonCount(state, currentActivity.id, currentSession.id, item.id); return Math.max(0, (row?.allocatedQuantity ?? 0) - won); } },
+              { title: "活动可分配库存", width: 138, render: (_: unknown, item: ActivityPrize) => {
+                if (prizeQuantityMode(item) === "UNLIMITED") return "不限量";
+                const row = rows.find((entry) => entry.prizeId === item.id)!;
+                const saved = savedRows.find((entry) => entry.prizeId === item.id);
+                const won = sessionWonCount(state, currentActivity.id, currentSession.id, item.id);
+                const currentAvailable = activityPrizeAllocation(state, currentActivity, item, now).unallocated ?? 0;
+                const savedReserved = lifecycle === "ENDED" || !saved?.enabled ? 0 : Math.max(0, (saved.allocatedQuantity ?? 0) - won);
+                const draftReserved = lifecycle === "ENDED" || !row?.enabled ? 0 : Math.max(0, (row?.allocatedQuantity ?? 0) - won);
+                return Math.max(0, currentAvailable + savedReserved - draftReserved);
+              } },
+            ]} />
+            <div className="marketing-probability-summary"><span>中奖概率合计：<strong>{probabilityTotal}%</strong></span><span>未中奖概率：<strong>{noWinProbability}%</strong></span></div>
+            {probabilityTotal > 100 && <Banner type="warning" title={`当前中奖概率合计为${probabilityTotal}%，请调整至100%以内。`} closeIcon={null} />}
+          </section>
+        </TabPane>
+      </Tabs>}
+      {!coachMode && <>
+      {editSessionDetails && <section className="marketing-form-section"><h2>场次信息</h2><SlotFields slot={sessionDraft} onChange={setSessionDraft} disabled={!access.manage || lifecycle === "ENDED"} /></section>}
       <section className="marketing-form-section"><h2>本场奖品</h2>
       {!coachMode && <div className="marketing-session-context">
         <strong>{titleRange.compact}</strong>
@@ -213,11 +243,12 @@ export function SessionPrizeDrawer({ activity, session, onClose, editSessionDeta
       <div className="marketing-probability-summary"><span>中奖概率合计：<strong>{probabilityTotal}%</strong></span><span>未中奖概率：<strong>{noWinProbability}%</strong></span></div>
       {probabilityTotal > 100 && <Banner type="warning" title={`当前中奖概率合计为${probabilityTotal}%，请调整至100%以内。`} closeIcon={null} />}
       </section>
+      </>}
     </FormSideSheet>
-    <Modal visible={copyOpen} maskClosable={false} title="从其他场次复制" width={460} okText="复制配置" cancelText="取消" okButtonProps={{ disabled: !sourceSessionId }} onCancel={() => { setCopyOpen(false); setSourceSessionId(""); setLocalError(""); }} onOk={copy}>
+    {!coachMode && <Modal visible={copyOpen} maskClosable={false} title="从其他场次复制" width={460} okText="复制配置" cancelText="取消" okButtonProps={{ disabled: !sourceSessionId }} onCancel={() => { setCopyOpen(false); setSourceSessionId(""); setLocalError(""); }} onOk={copy}>
       {feedback}{localError && <Banner type="warning" title={localError} closeIcon={null} />}
       <label className="marketing-field"><span>选择来源场次</span><Select aria-label="复制场次配置" placeholder="选择其它场次" value={sourceSessionId || undefined} optionList={copySources.map((row) => ({ value: row.id, label: `${row.label} · ${displayDateRange(row.startAt, row.endAt).compact}` }))} onChange={(value) => { setSourceSessionId(String(value)); setLocalError(""); }} /></label>
-    </Modal>
+    </Modal>}
     {adjustedPrize && <SessionPrizeQuantityModal activity={currentActivity} session={currentSession} prize={adjustedPrize} visible onClose={() => setAdjustPrizeId("")} />}
   </>;
 }

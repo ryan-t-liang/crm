@@ -148,7 +148,7 @@ function ActivitySessions({ activity }: { activity: MarketingActivity }) {
   };
   return <Panel actions={<Button size="small" icon={<IconPlus />} onClick={create}>新增场次</Button>}>
     <Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: 1320 }} empty={<EmptyBlock title="暂无活动场次" description="新增场次后，可设置场次信息及本场奖品。" />} columns={[
-      { title: "场次编号", width: 260, render: (_: unknown, row: MarketingSlot) => <div className="marketing-summary-cell"><Button theme="borderless" size="small" onClick={() => setSession(row)}>{row.id}</Button><small>{row.label}</small></div> },
+      { title: "场次编号", width: 260, render: (_: unknown, row: MarketingSlot) => <Button theme="borderless" size="small" onClick={() => setSession(row)}>{row.id}</Button> },
       { title: "场次开始时间", width: 175, render: (_: unknown, row: MarketingSlot) => displayDate(row.startAt) },
       { title: "场次结束时间", width: 175, render: (_: unknown, row: MarketingSlot) => displayDate(row.endAt) },
       { title: "场次库存", dataIndex: "capacity", width: 110 },
