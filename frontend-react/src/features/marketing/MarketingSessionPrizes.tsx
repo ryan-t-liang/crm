@@ -168,7 +168,7 @@ export function SessionPrizeDrawer({ activity, session, onClose, editSessionDeta
   };
 
   return <>
-    <FormSideSheet visible={!copyOpen && !adjustedPrize} className={`marketing-session-prize-drawer ${coachMode ? "coach-marketing-sheet" : ""}`} width={coachMode ? Math.min(1040, window.innerWidth - 24) : 820} title={editSessionDetails ? "场次设置" : `${titleRange.compact} · 场次奖品`} onCancel={onClose} onOk={save}
+    <FormSideSheet visible={!copyOpen && !adjustedPrize} className={`marketing-session-prize-drawer ${coachMode ? "coach-marketing-sheet" : ""}`} width={820} title={editSessionDetails ? "场次设置" : `${titleRange.compact} · 场次奖品`} onCancel={onClose} onOk={save}
       okText={editSessionDetails ? "保存场次设置" : "保存本场奖池"} cancelText="取消" okButtonProps={{ disabled: !access.manage || lifecycle === "ENDED" || probabilityTotal > 100 }} footer={!access.manage || lifecycle === "ENDED" ? <Button onClick={onClose}>关闭</Button> : undefined}>
       {feedback}{localError && <Banner type="warning" title={localError} closeIcon={null} />}
       {readOnly && <Banner type="info" title={lifecycle === "ENDED" ? "活动或场次已结束，场次设置只读。" : !access.manage ? "当前账号没有活动管理权限。" : "当前活动不是按场次抽奖，不能配置本场奖品。"} closeIcon={null} />}
