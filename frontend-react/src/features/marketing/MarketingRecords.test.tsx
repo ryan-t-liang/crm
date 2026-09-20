@@ -36,8 +36,8 @@ describe("activity record workspace with real Semi components", () => {
     expect(menu.slice(0, 5).map(item => item.textContent)).toEqual(["创建奖品", "编辑活动信息", "编辑预约设置", "管理场次", "抽奖设置"]);
     for (const name of ["创建奖品", "编辑活动信息", "编辑预约设置", "管理场次", "抽奖设置"]) expect(menu.find(item => item.textContent === name)?.getAttribute("aria-disabled")).not.toBe("true");
     await act(async () => menu.find(item => item.textContent === "编辑活动信息")!.click());
-    expect(document.querySelector(".semi-sidesheet")?.textContent).toContain("编辑活动");
-    expect(document.querySelector(".semi-modal")).toBeNull(); expect(write).not.toHaveBeenCalled();
+    expect(document.querySelector(".semi-modal")?.textContent).toContain("编辑活动");
+    expect(document.querySelector(".semi-sidesheet")).toBeNull(); expect(write).not.toHaveBeenCalled();
   });
   it("retains all three tabs when booking/draw capabilities are disabled", async () => {
     const activity = { ...state.activities[2], bookingEnabled: false, status: "DRAFT" as const, publishedAt: undefined, pool: [] };

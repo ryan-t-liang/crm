@@ -59,24 +59,11 @@ export const activityBookingLabels = { PENDING: "待核销", REDEEMED: "已核�
 export function activityBookingPhase(booking: MarketingBooking): keyof typeof activityBookingLabels {
   return booking.status === "CANCELED" ? "CANCELED" : ["CHECKED_IN", "FULFILLED"].includes(booking.status) ? "REDEEMED" : "PENDING";
 }
-export type ActivityDetailPrimaryTab = "overview" | "settings" | "participants" | "awards";
-export type ActivityDetailSecondaryTab = "basic" | "booking" | "lottery" | "prizes" | "users" | "bookings" | "draws" | "awards" | "redemptions";
-export function activityDetailLocation(requested?: string, requestedSecondary?: string): { primary: ActivityDetailPrimaryTab; secondary: ActivityDetailSecondaryTab } {
-  if (requested === "settings") return { primary: "settings", secondary: ["booking", "lottery", "prizes"].includes(requestedSecondary ?? "") ? requestedSecondary as ActivityDetailSecondaryTab : "basic" };
-  if (requested === "participants") return { primary: "participants", secondary: ["bookings", "draws"].includes(requestedSecondary ?? "") ? requestedSecondary as ActivityDetailSecondaryTab : "users" };
-  if (requested === "awards") return { primary: "awards", secondary: ["bookings", "redemptions"].includes(requestedSecondary ?? "") ? requestedSecondary as ActivityDetailSecondaryTab : "awards" };
-  if (requested === "overview") return { primary: "overview", secondary: "basic" };
-  // Stable compatibility for older bookmarks and member-record links.
-  if (requested === "bookings") return { primary: "participants", secondary: "bookings" };
-  if (requested === "prizes") return { primary: "settings", secondary: "prizes" };
-  if (requested === "draws") return { primary: "participants", secondary: "draws" };
-  if (requested === "prize-bookings") return { primary: "awards", secondary: "bookings" };
-  if (requested === "redemptions") return { primary: "awards", secondary: "redemptions" };
-  if (requested === "lottery") return { primary: "settings", secondary: "lottery" };
-  return { primary: "overview", secondary: "basic" };
-}
-/** Legacy single-level route adapter retained for existing links and consumers. */
-export function activityDetailTab(requested?: string): "bookings" | "prizes" | "draws" {
+/** Three-tab activity workspace with compatibility for the superseded nested routes. */
+export function activityDetailTab(requested?: string, requestedSecondary?: string): "bookings" | "prizes" | "draws" {
+  if (requested === "settings") return requestedSecondary === "prizes" ? "prizes" : requestedSecondary === "lottery" ? "draws" : "bookings";
+  if (requested === "participants") return requestedSecondary === "draws" ? "draws" : "bookings";
+  if (requested === "awards") return "draws";
   return requested === "prizes" ? "prizes" : ["draws", "awards", "prize-bookings", "redemptions", "lottery"].includes(requested ?? "") ? "draws" : "bookings";
 }
 export function participantGender(participant?: MarketingParticipation) {

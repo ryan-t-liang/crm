@@ -104,6 +104,7 @@ describe("booking records, optional form fields and legacy links", () => {
     expect(participantIdentityIssue({ gender: 1 as never })).toBeTruthy();
   });
   it.each([[undefined, "bookings"], ["overview", "bookings"], ["basic", "bookings"], ["booking-settings", "bookings"], ["participants", "bookings"], ["prizes", "prizes"], ["awards", "draws"], ["prize-bookings", "draws"], ["redemptions", "draws"], ["lottery", "draws"]] as const)("adapts legacy %s to %s", (requested, expected) => expect(activityDetailTab(requested)).toBe(expected));
+  it.each([["settings", "prizes", "prizes"], ["settings", "lottery", "draws"], ["participants", "bookings", "bookings"], ["participants", "draws", "draws"], ["awards", "bookings", "draws"], ["awards", "redemptions", "draws"]] as const)("maps nested %s/%s to %s", (requested, secondary, expected) => expect(activityDetailTab(requested, secondary)).toBe(expected));
   it("records the actual creator for new/copy records and cannot overwrite a saved creator", () => {
     const f = fixture(), draft = { ...createMarketingActivity("gp", now), name: "创建人检查", createdBy: "forged" };
     expect(f.run({ type: "SAVE_ACTIVITY", activity: draft, section: "basic" }).ok).toBe(true);
