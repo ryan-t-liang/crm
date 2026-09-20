@@ -10,12 +10,12 @@ const marketingDemoPrizes = [
 ] satisfies Pick<ActivityPrize, "id" | "name" | "description" | "image" | "method">[];
 function createDemoMarketingSlot(id: string, now: number, capacity = 10): MarketingSlot {
   const at = (minutes: number) => new Date(now + minutes * 60_000).toISOString();
-  return { id, label: "体验场次（演示）", startAt: at(30), endAt: at(120), bookingClosesAt: at(20), checkinStart: at(-30), checkinEnd: at(150), location: "演示工作室", capacity };
+  return { id, label: "体验场次（演示）", startAt: at(30), endAt: at(120), bookingClosesAt: at(20), checkinStart: at(-30), checkinEnd: at(150), location: "演示工作室", capacity, createdAt: at(0) };
 }
 /** Suggestions are never in the past. An unset parent window keeps every time unset. */
 export function createMarketingSlot(id: string, parentStart: string, capacity = 10, now = Date.now()): MarketingSlot {
   const start = Date.parse(parentStart), at = (minutes: number) => Number.isFinite(start) ? new Date(Math.max(start, now + 30 * 60_000) + minutes * 60_000).toISOString() : "";
-  return { id, label: "新场次", startAt: at(0), endAt: at(60), bookingClosesAt: at(-10), checkinStart: at(-10), checkinEnd: at(70), location: "", capacity };
+  return { id, label: "新场次", startAt: at(0), endAt: at(60), bookingClosesAt: at(-10), checkinStart: at(-10), checkinEnd: at(70), location: "", capacity, createdAt: new Date(now).toISOString() };
 }
 /** Operator-created drafts are distinct from runnable demonstration fixtures.
  * Empty strings preserve the V2 time contract without rewriting existing LocalStorage. */

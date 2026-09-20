@@ -67,9 +67,16 @@ export function ImageField({ label, value, onChange }: { label: string; value: s
     const reader = new FileReader(); reader.onload = () => { onChange(String(reader.result)); setError(""); }; reader.readAsDataURL(file);
   }} />{value && <img className="marketing-cover" src={value} alt="活动图片" />}{error && <small>{error}</small>}</label>;
 }
-export function SlotFields({ slot, onChange, disabled = false }: { slot: MarketingSlot; onChange: (slot: MarketingSlot) => void; disabled?: boolean }) {
-  const update = <K extends keyof MarketingSlot>(key: K, value: MarketingSlot[K]) => onChange({ ...slot, [key]: value });
-  return <div className="form-grid marketing-form-grid"><TextField label="场次名称" value={slot.label} onChange={(value) => update("label", value)} disabled={disabled} /><TextField label="场地" value={slot.location} onChange={(value) => update("location", value)} disabled={disabled} /><NumberField label="场次容量" value={slot.capacity} onChange={(value) => update("capacity", value)} disabled={disabled} />{(["startAt", "endAt", "bookingClosesAt", "checkinStart", "checkinEnd"] as const).map((key, index) => <TimeField key={key} label={["场次开始", "场次结束", "预约截止", "签到开始", "签到截止"][index]} value={slot[key]} onChange={(value) => update(key, value)} disabled={disabled} />)}</div>;
+export function SlotFields({ slot, onChange, disabled = false, simplified = false, locationOverride }: { slot: MarketingSlot; onChange: (slot: MarketingSlot) => void; disabled?: boolean; simplified?: boolean; locationOverride?: string }) {
+  const update = <K extends keyof MarketingSlot>(key: K, value: MarketingSlot[K]) => {
+    const next = { ...slot, [key]: value };
+    if (simplified && key === "startAt") Object.assign(next, { bookingClosesAt: value, checkinStart: value });
+    if (simplified && key === "endAt") Object.assign(next, { checkinEnd: value });
+    onChange(next);
+  };
+  const timeFields = simplified ? (["startAt", "endAt"] as const) : (["startAt", "endAt", "bookingClosesAt", "checkinStart", "checkinEnd"] as const);
+  const labels = simplified ? ["场次开始", "场次结束"] : ["场次开始", "场次结束", "预约截止", "签到开始", "签到截止"];
+  return <div className="form-grid marketing-form-grid"><TextField label="场次名称" value={slot.label} onChange={(value) => update("label", value)} disabled={disabled} /><TextField label="场地" value={locationOverride ?? slot.location} onChange={(value) => update("location", value)} disabled={disabled || Boolean(locationOverride)} /><NumberField label="场次容量" value={slot.capacity} onChange={(value) => update("capacity", value)} disabled={disabled} />{timeFields.map((key, index) => <TimeField key={key} label={labels[index]} value={slot[key]} onChange={(value) => update(key, value)} disabled={disabled} />)}</div>;
 }
 export function useAction() {
   const { act } = useMarketing(); const [message, setMessage] = useState("");

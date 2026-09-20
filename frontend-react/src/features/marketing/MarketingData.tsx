@@ -9,6 +9,7 @@ import type { MarketingActivity, MarketingAward, MarketingBooking, MarketingPart
 import { parseCreatedAt, shanghaiDate } from "@/features/dashboard/dashboard-model";
 import { bookingStatus, chances, marketingPermissions, needsReservation, participantChannel, participantDisplayName, participantIdentity, participantIdentityReview, participationIssue, prizeTypeLabels, redemptionLabels, slotFor } from "./marketing-model";
 import { DefinitionGrid, displayDate, displayAwardStatus as awardFulfillmentLabel, displayBookingLabels as bookingLabels, displayChannelLabels, marketingBusinessCopy, Panel, prizeReceivingLabel } from "./MarketingUi";
+import { prototypeLocationLabel } from "@/utils/prototype-variant";
 
 export const channelLabels = displayChannelLabels;
 export function maskedPhone(value?: string | null) { if (!value) return "—"; const digits = value.replace(/\s/g, ""); return digits.length > 7 ? `${digits.slice(0, 3)}****${digits.slice(-4)}` : "****"; }
@@ -66,7 +67,7 @@ export function BookingData({ activity, scope, participationId, awardId, dataSta
     <Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: 1430 }} empty={<EmptyBlock title={scope === "PRIZE" ? "暂无领奖预约" : "暂无预约记录"} description="预约后，相关时间和状态将在这里展示。" />} columns={[
       { title: "用户", width: 180, render: (_: unknown, row: MarketingBooking) => (() => { const participant = state.participations.find((item) => item.id === row.participationId); return participant ? participantDisplayName(participant, members) : "身份待核对"; })() },
       { title: "预约类型", width: 140, render: (_: unknown, row: MarketingBooking) => row.kind === "ACTIVITY" ? "活动预约" : "领奖预约" },
-      { title: "场次 / 场地", width: 230, render: (_: unknown, row: MarketingBooking) => { const slot = slotFor(state, row); return slot ? `${slot.label} · ${displayDate(slot.startAt)} · ${slot.location}` : "场次待核对"; } },
+      { title: "场次 / 场地", width: 270, render: (_: unknown, row: MarketingBooking) => { const slot = slotFor(state, row); return slot ? `${slot.label} · ${displayDate(slot.startAt)} · ${prototypeLocationLabel(slot.location)}` : "场次待核对"; } },
       { title: "预约状态", width: 120, render: (_: unknown, row: MarketingBooking) => bookingLabels[bookingStatus(row, slotFor(state, row), Date.now())] },
       { title: "预约时间", width: 180, render: (_: unknown, row: MarketingBooking) => displayDate(row.createdAt) },
       { title: "签到 / 核销时间", width: 180, render: (_: unknown, row: MarketingBooking) => displayDate(row.kind === "ACTIVITY" ? row.status === "CHECKED_IN" ? state.participations.find((participant) => participant.id === row.participationId)?.checkedInAt : undefined : row.status === "FULFILLED" ? state.awards.find((award) => award.id === row.awardId)?.fulfilledAt : undefined) },
@@ -99,7 +100,7 @@ export function AwardData({ activity, dataState }: { activity: MarketingActivity
     { title: "当前状态", width: 140, render: (_: unknown, row: MarketingAward) => awardFulfillmentLabel(state, row, Date.now()) },
     { title: "操作", width: 100, fixed: "right", render: (_: unknown, row: MarketingAward) => <Button theme="borderless" size="small" onClick={() => setSelectedId(row.id)}>查看权益</Button> },
   ]} /><SideSheet visible={Boolean(selected)} closeOnEsc title="中奖权益详情" width={Math.min(600, window.innerWidth - 24)} onCancel={() => setSelectedId("")}>
-    {selected && <><DataList rows={[["奖品", selected.prizeName], ["奖项", selected.awardLabel], ["奖品类型", prizeTypeLabels[selected.prizeType]], ["领取方式", prizeReceivingLabel(selected)], ["领奖凭证", <code>{selected.credential}</code>], ["中奖时间", displayDate(selected.wonAt)], ["核销时间", displayDate(selected.fulfilledAt)], ["发放时间", displayDate(selected.issuedAt)], ["预约状态", currentBooking(selected) ? bookingLabels[bookingStatus(currentBooking(selected)!, slotFor(state, currentBooking(selected)!), Date.now())] : needsReservation(selected) ? "未预约" : "无需预约"]]} />{selected.prizeType === "VIRTUAL" ? <VirtualAwardContent award={selected} dataState={state} /> : <DataList rows={[["领取地点（快照）", selected.location], ["领取说明（快照）", selected.instructions], ["有效期", `${displayDate(selected.claimStart)} 至 ${displayDate(selected.claimEnd)}`]]} />}</>}
+    {selected && <><DataList rows={[["奖品", selected.prizeName], ["奖项", selected.awardLabel], ["奖品类型", prizeTypeLabels[selected.prizeType]], ["领取方式", prizeReceivingLabel(selected)], ["领奖凭证", <code>{selected.credential}</code>], ["中奖时间", displayDate(selected.wonAt)], ["核销时间", displayDate(selected.fulfilledAt)], ["发放时间", displayDate(selected.issuedAt)], ["预约状态", currentBooking(selected) ? bookingLabels[bookingStatus(currentBooking(selected)!, slotFor(state, currentBooking(selected)!), Date.now())] : needsReservation(selected) ? "未预约" : "无需预约"]]} />{selected.prizeType === "VIRTUAL" ? <VirtualAwardContent award={selected} dataState={state} /> : <DataList rows={[["领取地点（快照）", prototypeLocationLabel(selected.location)], ["领取说明（快照）", selected.instructions], ["有效期", `${displayDate(selected.claimStart)} 至 ${displayDate(selected.claimEnd)}`]]} />}</>}
   </SideSheet></>;
 }
 export function RedemptionData({ activity, dataState }: { activity: MarketingActivity; dataState?: MarketingState }) {

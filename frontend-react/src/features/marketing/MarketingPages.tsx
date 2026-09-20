@@ -8,6 +8,7 @@ import { navigate } from "@/utils/format";
 import { bookingStatus, canViewMarketing, isAwardFulfilled, marketingPermissions, participantDisplayName, participationIssue, resolveCredential, slotFor, slotOccupancy } from "./marketing-model";
 import { MarketingDetail, MarketingList } from "./MarketingAdmin";
 import { displayDate, displayAwardStatus as awardFulfillmentLabel, displayBookingLabels as bookingLabels, Panel, SelectField, TextField, options, useAction } from "./MarketingUi";
+import { isCoachPrototype } from "@/utils/prototype-variant";
 
 const uid = () => crypto.randomUUID();
 const decodeCode = (value: string) => { try { return decodeURIComponent(value); } catch { return value; } };
@@ -24,7 +25,7 @@ export function MarketingPage({ path }: { path: string[] }) {
     if (!activity) return <div className="page"><Empty title="活动不存在或无权访问" /></div>;
     return <MarketingDetail key={activity.id} activity={activity} requestedTab={path[0] === "activity" ? path[2] : undefined} requestedSecondaryTab={path[0] === "activity" ? path[3] : undefined} />;
   }
-  return <div className="page marketing-page"><MarketingList migratedEntry={path[0]} /></div>;
+  return <div className={`page marketing-page ${isCoachPrototype() ? "coach-marketing-page" : ""}`}><MarketingList migratedEntry={path[0]} /></div>;
 }
 export function MarketingRedemptionSurface({ code = "" }: { code?: string }) {
   const { currentUser } = useCrm(), { issue } = useMarketing();

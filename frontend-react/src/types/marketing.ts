@@ -18,7 +18,7 @@ export interface MarketingParticipantIdentity {
   /** Optional activity-form snapshot, NOT a Sowind profile field or inferred from salutation. */
   gender?: "MALE" | "FEMALE" | "UNDISCLOSED" | null;
 }
-export interface MarketingSlot { id: string; label: string; startAt: string; endAt: string; location: string; capacity: number; bookingClosesAt: string; checkinStart: string; checkinEnd: string; disabled?: boolean; deleted?: boolean }
+export interface MarketingSlot { id: string; label: string; startAt: string; endAt: string; location: string; capacity: number; bookingClosesAt: string; checkinStart: string; checkinEnd: string; createdAt?: string; disabled?: boolean; deleted?: boolean }
 /** Activity-owned shared collection points. Slots reuse the existing time contract. */
 export interface MarketingPickupSchedule {
   id: string; activityId: string; name: string; location: string;

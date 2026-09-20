@@ -716,7 +716,6 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     if (command.newPickupSchedule) {
       const schedule = command.newPickupSchedule;
       if (!needsReservation(command.prize) || command.prize.pickupScheduleId !== schedule.id || pickupSchedules(activity).some(row => row.id === schedule.id)) return reject("请选择当前奖品的新兑奖预约，已有预约设置须通过原入口编辑");
-      if (!schedule.slots.length) return reject("请添加至少一个兑奖时段");
       if (new Set(schedule.slots.map(slot => slot.id)).size !== schedule.slots.length) return reject("兑奖时段标识不能重复");
       const saved = executePickupCommand(state, activity, { type: "SAVE_PICKUP_SCHEDULE", activityId: activity.id, schedule: { ...schedule, slots: [] } }, ctx.now);
       if (saved.error) return reject(saved.error);

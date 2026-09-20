@@ -6,7 +6,7 @@ export function appendMarketingIllustrations(state: MarketingState, activity: Ma
   const at = (minutes: number) => new Date(now + minutes * 60_000).toISOString();
   const key = `${activity.id}:illustration`;
   const usesSession = activity.bookingEnabled;
-  const slot = { id: `${key}:slot`, label: "活动场次", startAt: at(-30), endAt: at(180), bookingClosesAt: at(-31), checkinStart: at(-45), checkinEnd: at(210), location: activity.location, capacity: 35 };
+  const slot = { id: `${key}:slot`, label: "活动场次", startAt: at(-30), endAt: at(180), bookingClosesAt: at(-31), checkinStart: at(-45), checkinEnd: at(210), location: activity.location, capacity: 35, createdAt: at(-1440) };
   if (usesSession) activity.slots.push(slot);
   const sessionPrizes = usesSession && activity.lotteryEnabled ? activity.pool.map((prize) => ({
     sessionId: slot.id, prizeId: prize.id, enabled: true, probability: prize.defaultProbability ?? prize.probability,

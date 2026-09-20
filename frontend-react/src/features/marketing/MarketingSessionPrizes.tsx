@@ -17,6 +17,7 @@ import {
   slotOccupancy,
 } from "./marketing-model";
 import { DefinitionGrid, displayDateRange, SlotFields, useAction } from "./MarketingUi";
+import { COACH_EVENT_LOCATION, isCoachPrototype } from "@/utils/prototype-variant";
 
 export type MarketingSessionLifecycle = "UPCOMING" | "ONGOING" | "ENDED";
 
@@ -116,6 +117,7 @@ function SessionPrizeQuantityModal({ activity, session, prize, visible, onClose 
 export function SessionPrizeDrawer({ activity, session, onClose, editSessionDetails = false }: { activity: MarketingActivity; session: MarketingSlot; onClose: () => void; editSessionDetails?: boolean }) {
   const { state } = useMarketing(), { currentUser } = useCrm(), { run, feedback } = useAction();
   const access = marketingPermissions(currentUser), now = Date.now();
+  const coachMode = isCoachPrototype();
   const currentActivity = state.activities.find((row) => row.id === activity.id) ?? activity;
   const currentSession = currentActivity.slots.find((row) => row.id === session.id) ?? session;
   const [sessionDraft, setSessionDraft] = useState<MarketingSlot>(() => structuredClone(currentSession));
@@ -165,17 +167,17 @@ export function SessionPrizeDrawer({ activity, session, onClose, editSessionDeta
   };
 
   return <>
-    <FormSideSheet visible={!copyOpen && !adjustedPrize} className="marketing-session-prize-drawer" width={820} title={editSessionDetails ? "场次设置" : `${titleRange.compact} · 场次奖品`} onCancel={onClose} onOk={save}
+    <FormSideSheet visible={!copyOpen && !adjustedPrize} className={`marketing-session-prize-drawer ${coachMode ? "coach-marketing-sheet" : ""}`} width={820} title={editSessionDetails ? "场次设置" : `${titleRange.compact} · 场次奖品`} onCancel={onClose} onOk={save}
       okText={editSessionDetails ? "保存场次设置" : "保存本场奖池"} cancelText="取消" okButtonProps={{ disabled: !access.manage || lifecycle === "ENDED" || probabilityTotal > 100 }} footer={!access.manage || lifecycle === "ENDED" ? <Button onClick={onClose}>关闭</Button> : undefined}>
       {feedback}{localError && <Banner type="warning" title={localError} closeIcon={null} />}
       {readOnly && <Banner type="info" title={lifecycle === "ENDED" ? "活动或场次已结束，场次设置只读。" : !access.manage ? "当前账号没有活动管理权限。" : "当前活动不是按场次抽奖，不能配置本场奖品。"} closeIcon={null} />}
-      {editSessionDetails && <section className="marketing-form-section"><h2>场次信息</h2><SlotFields slot={sessionDraft} onChange={setSessionDraft} disabled={!access.manage || lifecycle === "ENDED"} /></section>}
+      {editSessionDetails && <section className="marketing-form-section"><h2>场次信息</h2><SlotFields slot={sessionDraft} onChange={setSessionDraft} disabled={!access.manage || lifecycle === "ENDED"} simplified={coachMode} locationOverride={coachMode ? COACH_EVENT_LOCATION : undefined} /></section>}
       <section className="marketing-form-section"><h2>本场奖品</h2>
-      <div className="marketing-session-context">
+      {!coachMode && <div className="marketing-session-context">
         <strong>{titleRange.compact}</strong>
         <span>{sessionDraft.location || "—"}</span>
         <span>预约 {slotOccupancy(state, currentActivity.id, "ACTIVITY", currentSession.id)} / {sessionDraft.capacity}</span>
-      </div>
+      </div>}
       <div className="marketing-session-toolbar"><Button theme="borderless" disabled={copyDisabled || !copySources.length} onClick={() => setCopyOpen(true)}>从其他场次复制</Button></div>
       <Table rowKey="id" dataSource={currentActivity.pool} pagination={false} empty="暂无可配置奖品" columns={[
         { title: "奖品", width: 170, render: (_: unknown, item: ActivityPrize) => <div className="marketing-summary-cell"><strong>{item.name}</strong><small>{item.label}</small></div> },

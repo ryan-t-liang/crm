@@ -14,7 +14,7 @@ import { participantTaskClues, participantTaskCompleted } from "./marketing-part
 import { maskedPhone, VirtualAwardContent } from "./MarketingData";
 import { PickupRoster } from "./MarketingPickup";
 import { displayAwardStatus, displayBookingLabels, displayDate, displayDateRange, prizeReceivingLabel, Panel } from "./MarketingUi";
-import { isCoachPrototype } from "@/utils/prototype-variant";
+import { isCoachPrototype, prototypeLocationLabel } from "@/utils/prototype-variant";
 
 const maskedOpenId = (value?: string | null) => !value ? "—" : value.length > 8 ? `${value.slice(0, 4)}…${value.slice(-4)}` : "****";
 const participantOpenId = (participant: MarketingParticipation | undefined, members: MemberOperationsState) => participant ? participantIdentity(participant, members).openId || participant.identities[0]?.openid || "" : "";
@@ -164,7 +164,7 @@ export function DrawData({ activity, now, dataState }: { activity: MarketingActi
       <Panel title="领奖信息">{selected.award ? <><DataList rows={[
         ["领取方式", prizeReceivingLabel(selected.award)], ["领取情况", displayAwardStatus(state, selected.award, now)],
         ["领取有效期", displayDateRange(selected.award.claimStart, selected.award.claimEnd).compact],
-        ["领取地点", selected.award.location || "—"], ["核销时间", displayDate(selected.award.fulfilledAt)], ["领取说明", selected.award.instructions || "—"],
+        ["领取地点", prototypeLocationLabel(selected.award.location)], ["核销时间", displayDate(selected.award.fulfilledAt)], ["领取说明", selected.award.instructions || "—"],
       ]} />{selected.award.prizeType === "VIRTUAL" && <VirtualAwardContent award={selected.award} dataState={state} />}</> : <p>未产生中奖权益。</p>}</Panel>
       <Panel title="系统信息"><DataList rows={[
         ["抽奖编号", selected.draw?.id], ["参与编号", selected.participant?.id], ["中奖编号", selected.award?.id], ["领奖凭证", selected.award?.credential],

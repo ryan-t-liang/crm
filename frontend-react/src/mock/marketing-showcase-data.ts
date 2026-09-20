@@ -16,8 +16,8 @@ export function appendMarketingShowcase(source: MarketingState, brand: SowindBra
     lotteryStart: at(-120), lotteryEnd: at(7 * 1440), noWinProbability: 20,
     description: "独立虚构活动，预约和抽奖各200条；不涉及真实客户或奖品发放。",
     ruleContent: "完成活动后获得2次抽奖机会。咖啡券现场核销，DIY皮牌需预约兑奖时段，京东购物卡为虚构兑换码。" };
-  const session = { id: `${id}:session`, label: "品牌体验", location: activity.location, startAt: at(-120), endAt: at(1440), bookingClosesAt: at(-121), checkinStart: at(-150), checkinEnd: at(1440), capacity: 250 };
-  const future = { ...session, id: `${id}:future`, label: "品牌体验", startAt: at(2 * 1440), endAt: at(2 * 1440 + 120), bookingClosesAt: at(2 * 1440 - 10), checkinStart: at(2 * 1440 - 15), checkinEnd: at(2 * 1440 + 120), capacity: 50 };
+  const session = { id: `${id}:session`, label: "品牌体验", location: activity.location, startAt: at(-120), endAt: at(1440), bookingClosesAt: at(-121), checkinStart: at(-150), checkinEnd: at(1440), capacity: 250, createdAt: at(-2880) };
+  const future = { ...session, id: `${id}:future`, label: "品牌体验", startAt: at(2 * 1440), endAt: at(2 * 1440 + 120), bookingClosesAt: at(2 * 1440 - 10), checkinStart: at(2 * 1440 - 15), checkinEnd: at(2 * 1440 + 120), capacity: 50, createdAt: at(-2820) };
   activity.slots = [session, future];
   const pickupId = `${id}:pickup`, pickupSlot = { ...session, id: `${id}:pickup-slot`, label: "兑奖时段", capacity: 100, bookingClosesAt: at(1440) };
   activity.pickupSchedules = [{ id: pickupId, activityId: id, name: "DIY皮牌兑奖预约", location: activity.location, startAt: at(-120), endAt: at(8 * 1440), slots: [pickupSlot, { ...pickupSlot, id: `${id}:pickup-next`, startAt: at(1440 + 60), endAt: at(1440 + 180), bookingClosesAt: at(1440 + 180), checkinStart: at(1440 + 60), checkinEnd: at(1440 + 180) }] }];

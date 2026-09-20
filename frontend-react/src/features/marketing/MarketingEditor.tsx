@@ -11,7 +11,7 @@ import { codeInventory, hasActivityBusinessData, lotteryScope, marketingPermissi
 import { inspectMarketingCodes, parseMarketingCodeRows, type MarketingCodeImportReport } from "./marketing-code-import";
 import { parseCreatedAt } from "@/features/dashboard/dashboard-model";
 import { MarketingRuleEditor } from "./MarketingRuleEditor";
-import { isCoachPrototype } from "@/utils/prototype-variant";
+import { COACH_EVENT_LOCATION, isCoachPrototype, prototypeBrandLabel, prototypeLocationLabel, prototypeMarketingCopy } from "@/utils/prototype-variant";
 import { pickupBookings, pickupScheduleForPrize, pickupSchedules, pickupScheduleSummary } from "./marketing-pickup";
 import { activityCodes, activityLifecycle, lifecycleLabels } from "./marketing-activity-code";
 import { DefinitionGrid, ImageField, NumberField, options, Panel, SelectField, SlotFields, TextField, TimeField, useAction } from "./MarketingUi";
@@ -28,6 +28,7 @@ export function CodeImporter({ onImport }: { onImport: (codes: string[]) => Mark
 
 export function PrizeFields({ prize, onChange, locked = false, quantityLocked = false, newSchedule, onNewSchedule }: { prize: ActivityPrize; onChange: (prize: ActivityPrize) => void; locked?: boolean; quantityLocked?: boolean; newSchedule?: MarketingPickupSchedule; onNewSchedule?: (schedule: MarketingPickupSchedule | undefined) => void }) {
   const { state } = useMarketing();
+  const coachMode = isCoachPrototype();
   const activity = state.activities.find((row) => row.id === prize.activityId);
   const update = <K extends keyof ActivityPrize>(key: K, value: ActivityPrize[K]) => onChange({ ...prize, [key]: value });
   const saved = activity?.pool.find(item => item.id === prize.id);
@@ -44,7 +45,12 @@ export function PrizeFields({ prize, onChange, locked = false, quantityLocked = 
     const mode = value as "DIRECT" | "RESERVATION";
     if (mode === "DIRECT") onNewSchedule?.(undefined);
     const method = prize.prizeType === "PHYSICAL" ? mode === "DIRECT" ? "DIRECT" : prize.method === "EXPERIENCE" ? "EXPERIENCE" : "PICKUP" : prize.method;
-    onChange({ ...prize, method, fulfillmentMode: mode, ...(mode === "RESERVATION" ? { quantityMode: "LIMITED", quantityLimit: prizeQuantityLimit(prize) ?? prize.quota, quota: prizeQuantityLimit(prize) ?? prize.quota } : { pickupScheduleId: undefined }) });
+    const next = { ...prize, method, fulfillmentMode: mode, ...(mode === "RESERVATION" ? { quantityMode: "LIMITED" as const, quantityLimit: prizeQuantityLimit(prize) ?? prize.quota, quota: prizeQuantityLimit(prize) ?? prize.quota } : { pickupScheduleId: undefined }) };
+    if (coachMode && mode === "RESERVATION" && activity && onNewSchedule && !selectedSchedule && !newSchedule) {
+      const schedule = { id: crypto.randomUUID(), activityId: activity.id, name: `${prize.name || "奖品"}兑奖预约`, location: COACH_EVENT_LOCATION, startAt: prize.claimStart, endAt: prize.claimEnd, slots: [] };
+      onNewSchedule(schedule); onChange({ ...next, pickupScheduleId: schedule.id, location: schedule.location }); return;
+    }
+    onChange(next);
   };
   const changeQuantityMode = (value: string) => {
     const quantityMode = value as "LIMITED" | "UNLIMITED";
@@ -53,6 +59,14 @@ export function PrizeFields({ prize, onChange, locked = false, quantityLocked = 
   };
   const changeQuantityLimit = (value: number) => onChange({ ...prize, quantityMode: "LIMITED", quantityLimit: value, quota: value });
   const changeDefaultProbability = (value: number) => onChange({ ...prize, defaultProbability: value, probability: value });
+  if (coachMode) return <div className="form-grid marketing-form-grid">
+    <div className="marketing-field-wide"><TextField label="奖品名称" value={prize.name} onChange={(value) => update("name", value)} /></div>
+    <SelectField disabled={locked} label="奖品类型" value={prize.prizeType} list={options({ ...(prize.prizeType === "UNKNOWN" ? { UNKNOWN: "类型待确认" } : {}), PHYSICAL: prizeTypeLabels.PHYSICAL, VIRTUAL: prizeTypeLabels.VIRTUAL })} onChange={changeType} />
+    <SelectField disabled={locked || scheduleLocked} label="领取方式" value={fulfillment} list={options(prize.prizeType === "VIRTUAL" ? { DIRECT: "直接发放", RESERVATION: "预约领取" } : { DIRECT: "直接领取", RESERVATION: "预约领取" })} onChange={changeFulfillment} />
+    <NumberField disabled={locked || quantityLocked} label="总库存" value={prizeQuantityLimit(prize) ?? 0} onChange={changeQuantityLimit} />
+    <TimeField disabled={locked} label="有效期开始" value={prize.claimStart} onChange={(value) => update("claimStart", value)} />
+    <TimeField disabled={locked} label="有效期结束" value={prize.claimEnd} onChange={(value) => update("claimEnd", value)} />
+  </div>;
   return <>
     <div className="form-grid marketing-form-grid">
       <TextField label="奖品名称" value={prize.name} onChange={(value) => update("name", value)} /><TextField label="奖项名称" value={prize.label} onChange={(value) => update("label", value)} />
@@ -65,7 +79,7 @@ export function PrizeFields({ prize, onChange, locked = false, quantityLocked = 
       <NumberField label="每人该奖品最多获得" value={prize.perPersonLimit} onChange={(value) => update("perPersonLimit", value)} />
       {prize.prizeType === "VIRTUAL" && <SelectField disabled={locked} label="虚拟奖品内容" value={prize.method} list={options({ REDEMPTION_CODE: "兑换码", VIRTUAL_VOUCHER: "虚拟权益", LINK: "领取链接" })} onChange={(value) => update("method", value as ActivityPrize["method"])} />}
       {prize.prizeType === "PHYSICAL" && fulfillment === "RESERVATION" && <SelectField disabled={locked} label="预约类型" value={prize.method} list={options({ PICKUP: "预约领取", EXPERIENCE: "预约使用" })} onChange={(value) => update("method", value as ActivityPrize["method"])} />}
-      {(prize.prizeType === "PHYSICAL" || fulfillment === "RESERVATION") && <TextField disabled={locked} label="奖品领取地点" value={prize.location} onChange={(value) => update("location", value)} />}
+      {(prize.prizeType === "PHYSICAL" || fulfillment === "RESERVATION") && <TextField disabled={locked || coachMode} label="奖品领取地点" value={coachMode ? COACH_EVENT_LOCATION : prize.location} onChange={(value) => update("location", value)} />}
       <TextField label="使用 / 领取说明" value={prize.instructions} onChange={(value) => update("instructions", value)} /><TimeField disabled={locked} label="奖品有效开始" value={prize.claimStart} onChange={(value) => update("claimStart", value)} /><TimeField disabled={locked} label="奖品有效截止" value={prize.claimEnd} onChange={(value) => update("claimEnd", value)} />
     </div>
     <p className="marketing-field-help">{fulfillment === "RESERVATION" ? "中奖后需先选择领取时间，再领取或使用奖品。" : prize.prizeType === "VIRTUAL" ? "中奖后直接发放所配置的虚拟权益。" : "中奖后直接生成领奖核销凭证。"}</p>
@@ -81,7 +95,7 @@ export function PrizeFields({ prize, onChange, locked = false, quantityLocked = 
       }} />
       {newSchedule && onNewSchedule && <>
         <div className="form-grid marketing-form-grid"><TextField label="兑奖预约名称" value={newSchedule.name} onChange={name => onNewSchedule({ ...newSchedule, name })} />
-          <TextField label="兑奖地点" value={newSchedule.location} onChange={location => { onNewSchedule({ ...newSchedule, location }); onChange({ ...prize, location }); }} />
+          <TextField label="兑奖地点" disabled={coachMode} value={coachMode ? COACH_EVENT_LOCATION : newSchedule.location} onChange={location => { onNewSchedule({ ...newSchedule, location }); onChange({ ...prize, location }); }} />
           <TimeField label="兑奖有效开始" value={newSchedule.startAt} onChange={startAt => onNewSchedule({ ...newSchedule, startAt })} /><TimeField label="兑奖有效截止" value={newSchedule.endAt} onChange={endAt => onNewSchedule({ ...newSchedule, endAt })} />
         </div><h3>兑奖时段</h3>
         {newSchedule.slots.map((slot, index) => <section className="marketing-form-section" key={slot.id}><h4>时段 {index + 1}</h4><div className="form-grid marketing-form-grid">
@@ -92,7 +106,7 @@ export function PrizeFields({ prize, onChange, locked = false, quantityLocked = 
         <Button onClick={() => { const slot = createMarketingSlot(crypto.randomUUID(), newSchedule.startAt, 10); onNewSchedule({ ...newSchedule, slots: [...newSchedule.slots, { ...slot, label: `兑奖时段 ${newSchedule.slots.length + 1}`, location: newSchedule.location, bookingClosesAt: slot.endAt, checkinStart: slot.startAt, checkinEnd: slot.endAt }] }); }}>添加兑奖时段</Button>
       </>}
       {scheduleLocked && <p className="marketing-field-help">已有领奖预约记录，不能更换兑奖预约设置。</p>}
-      {selectedSchedule && activity && <><DefinitionGrid rows={[["地点", selectedSchedule.location], ["时段数量", selectedSchedule.slots.length], ["已预约", pickupBookings(state, activity, selectedSchedule.id).filter(row => row.status !== "CANCELED").length]]} />
+      {selectedSchedule && activity && <><DefinitionGrid rows={[["地点", prototypeLocationLabel(selectedSchedule.location)], ["时段数量", selectedSchedule.slots.length], ["已预约", pickupBookings(state, activity, selectedSchedule.id).filter(row => row.status !== "CANCELED").length]]} />
         {pickupScheduleSummary(state, { ...activity, pool: [...activity.pool.filter(item => item.id !== prize.id), prize] }, selectedSchedule, Date.now()).warning && <Banner type="warning" title={pickupScheduleSummary(state, { ...activity, pool: [...activity.pool.filter(item => item.id !== prize.id), prize] }, selectedSchedule, Date.now()).warning} closeIcon={null} />}
       </>}
     </Panel>}
@@ -128,15 +142,15 @@ export function ActivityEditor({ initial, onClose }: { initial: MarketingActivit
     onClose();
     if (!existing) navigate(`marketing/activity/${form.id}/${simpleCreate ? "sessions" : form.lotteryEnabled ? "prizes" : "bookings"}`);
   };
-  return <FormSideSheet visible className="marketing-activity-editor" width={820} title={existing ? "活动信息设置" : "新建活动"} onCancel={onClose}
+  return <FormSideSheet visible className={`marketing-activity-editor ${coachMode ? "coach-marketing-sheet" : ""}`} width={820} title={existing ? "活动信息设置" : "新建活动"} onCancel={onClose}
     okText={existing ? "保存" : simpleCreate ? "创建活动" : form.lotteryEnabled ? "创建并设置奖品" : "创建活动"} cancelText="取消" onOk={save} okButtonProps={{ disabled: !access.manage || !access.brands.includes(initial.brand) }}>
     <Form className="marketing-editor" onSubmit={save}>{feedback}{error && <Banner type="warning" title={error} closeIcon={null} />}
       <section className="marketing-form-section"><h2>基本信息</h2><div className="form-grid marketing-form-grid">
-        <div className="marketing-field-wide"><TextField label="活动名称" value={form.name} onChange={value => update("name", value)} /></div>
+        <div className="marketing-field-wide"><TextField label="活动名称" value={coachMode ? prototypeMarketingCopy(form.name) : form.name} onChange={value => update("name", value)} /></div>
         {coachMode && existing && <><TextField label="活动编号" value={activityCode} onChange={() => undefined} disabled /><SelectField label="活动状态" value={activityLifecycle(form, Date.now())} list={options(lifecycleLabels)} onChange={() => undefined} disabled /></>}
-        <SelectField label="所属品牌" value={form.brand} disabled={locked} list={access.brands.map(brand => ({ value: brand, label: brandScopeLabels[brand] }))} onChange={value => update("brand", value as MarketingActivity["brand"])} />
+        <SelectField label="所属品牌" value={form.brand} disabled={locked} list={access.brands.map(brand => ({ value: brand, label: prototypeBrandLabel(brandScopeLabels[brand]) }))} onChange={value => update("brand", value as MarketingActivity["brand"])} />
         <div className="marketing-field"><span>活动类型</span><RadioGroup aria-label="活动类型" value={form.mode} onChange={event => setForm(old => ({ ...old, mode: event.target.value, completion: event.target.value === "ONLINE" ? "STAFF" : old.completion }))}><Radio value="ONLINE">线上活动</Radio><Radio value="OFFLINE">线下活动</Radio></RadioGroup></div>
-        {form.mode === "OFFLINE" && <div className="marketing-field-wide"><TextField label="场地" value={form.location} onChange={value => update("location", value)} /></div>}
+        {form.mode === "OFFLINE" && <div className="marketing-field-wide"><TextField label="场地" disabled={coachMode} value={coachMode ? COACH_EVENT_LOCATION : form.location} onChange={value => update("location", value)} /></div>}
         <TimeField label="活动开始时间" value={form.startAt} onChange={value => setForm(old => ({ ...old, startAt: value, ...(!existing && (!old.lotteryStart || old.lotteryStart === old.startAt) ? { lotteryStart: value } : {}) }))} /><TimeField label="活动结束时间" value={form.endAt} onChange={value => setForm(old => ({ ...old, endAt: value, ...(!existing && (!old.lotteryEnd || old.lotteryEnd === old.endAt) ? { lotteryEnd: value } : {}) }))} />
         {!coachMode && <div className="marketing-field marketing-field-wide"><span>参与方式</span><RadioGroup disabled={hasActivityBusinessData(state, initial.id)} className="marketing-mode-options" aria-label="参与方式" value={form.bookingEnabled ? "RESERVATION" : "DIRECT"} onChange={event => setForm(old => ({ ...old, bookingEnabled: event.target.value === "RESERVATION", ...(!existing && event.target.value === "DIRECT" ? { lotteryScope: "ACTIVITY" as const } : {}) }))}>
           <Radio value="RESERVATION"><span>预约参与<small>用户需要先预约活动场次。</small></span></Radio><Radio value="DIRECT"><span>直接参与<small>用户无需预约，可直接参加活动。</small></span></Radio>
