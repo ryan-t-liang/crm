@@ -11,18 +11,27 @@ import { generatePickupSlots, pickupBookedCount, pickupBookings, pickupScheduleS
 import { DateRange, displayDate, displayDateRange, MarketingMenu, NumberField, Panel, TextField, TimeField, useAction } from "./MarketingUi";
 import { COACH_EVENT_LOCATION, isCoachPrototype, prototypeLocationLabel } from "@/utils/prototype-variant";
 
+function coachOrderDetails(booking: MarketingBooking) {
+  const serial = Number(booking.id.match(/:(\d+):/)?.[1] ?? 0);
+  const sizes = ["大号 Large", "中号 Medium"];
+  const colors = ["Bold Red", "Black", "Chalk"];
+  const patterns = ["字母 A · 龙", "字母 B · 马", "字母 C · 龙"];
+  return { size: sizes[serial % sizes.length], color: colors[serial % colors.length], pattern: patterns[serial % patterns.length] };
+}
+
 export function PickupRoster({ activity, rows }: { activity: MarketingActivity; rows: MarketingBooking[] }) {
   const { state } = useMarketing(), { state: members } = useMemberOperations();
   const coachMode = isCoachPrototype();
-  return <Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: 710 }} empty={<EmptyBlock title="暂无预约记录" description="用户提交领奖预约后在此展示。" />} columns={[
+  return <Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: coachMode ? 980 : 710 }} empty={<EmptyBlock title="暂无预约记录" description="用户提交领奖预约后在此展示。" />} columns={[
     { title: `${coachMode ? "OpenID" : "用户"} / 奖品`, width: coachMode ? 260 : 190, render: (_: unknown, row: MarketingBooking) => {
       const participant = state.participations.find(p => p.activityId === activity.id && p.id === row.participationId);
       const identity = participant && participantIdentity(participant, members);
       return <div className="marketing-summary-cell"><span>{coachMode ? identity?.openId || participant?.identities[0]?.openid || "—" : participant ? participantDisplayName(participant, members) : "用户待核对"}</span><small>{state.awards.find(award => award.id === row.awardId)?.prizeName ?? "奖品待核对"}</small></div>;
     } },
+    ...(coachMode ? [{ title: "订单预约信息", width: 220, render: (_: unknown, row: MarketingBooking) => { const order = coachOrderDetails(row); return <div className="marketing-summary-cell"><span>COACH 定制皮牌</span><small>尺寸：{order.size}</small><small>颜色：{order.color}</small><small>压印：{order.pattern}</small></div>; } }] : []),
     { title: "中奖时间", width: 140, render: (_: unknown, row: MarketingBooking) => displayDate(state.awards.find(award => award.id === row.awardId)?.wonAt) },
-    { title: "兑奖时段", width: 155, render: (_: unknown, row: MarketingBooking) => { const slot = pickupSlotForBooking(activity, row); return slot ? <DateRange start={slot.startAt} end={slot.endAt} /> : "时段待核对"; } },
-    { title: "预约时间", width: 140, render: (_: unknown, row: MarketingBooking) => displayDate(row.createdAt) },
+    { title: coachMode ? "预约日期 / 时间" : "兑奖时段", width: 155, render: (_: unknown, row: MarketingBooking) => { const slot = pickupSlotForBooking(activity, row); return slot ? <DateRange start={slot.startAt} end={slot.endAt} /> : "时段待核对"; } },
+    { title: coachMode ? "提交预约时间" : "预约时间", width: 140, render: (_: unknown, row: MarketingBooking) => displayDate(row.createdAt) },
     { title: "状态", width: 85, render: (_: unknown, row: MarketingBooking) => <Tag size="small">{({ BOOKED: "待领取", CHECKED_IN: "已到场", CANCELED: "已取消", NO_SHOW: "未到场", FULFILLED: "已领取" })[row.status]}</Tag> },
   ]} />;
 }
