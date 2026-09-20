@@ -4,7 +4,8 @@
 }
 .marketing-panel { min-width: 0; margin: 0 0 20px; }
 .marketing-panel p, .marketing-panel li { overflow-wrap: anywhere; }
-.marketing-field { display: flex; flex-direction: column; gap: 5px; margin: 0; min-width: 0; font-size: 10.5px; line-height: 20px; font-weight: 600; color: var(--crm-text-2); }
+.marketing-field { display: flex; flex-direction: column; gap: 6px; margin: 0; min-width: 0; font-size: 12px; line-height: 18px; font-weight: 500; color: var(--crm-text-2); }
+.marketing-form-grid { gap: 16px; }
 .marketing-form-section h2 { margin: 0; font-size: 14px; line-height: 20px; }
 .marketing-field .semi-select, .marketing-field .semi-input-number { width: 100%; min-width: 0; }
 .marketing-activity-name { font-weight: 500; }
@@ -12,7 +13,7 @@
 .marketing-date-range { font-size: 13px; line-height: 20px; font-variant-numeric: tabular-nums; }
 .marketing-field-wide { grid-column: 1 / -1; min-width: 0; }
 .marketing-form-section > h2 { margin-bottom: 12px; }
-.marketing-form-section + .marketing-form-section { margin-top: 16px; }
+.marketing-form-section + .marketing-form-section { margin-top: 20px; }
 .marketing-switch-field { flex-direction: row; align-items: center; justify-content: flex-start; gap: 12px; min-height: 32px; }
 .marketing-switch-field > .semi-switch { flex-shrink: 0; }
 .marketing-mode-options { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
@@ -43,15 +44,17 @@
 /* Explicit activity-page typography: readable body copy and equal-weight rail/tab titles. */
 .marketing-detail .record-tabs > .semi-tabs-bar .semi-tabs-tab,
 .marketing-detail .side-section > header h6 { font-size: 14px; line-height: 24px; }
-.marketing-detail .data-list dt, .marketing-detail .data-list dd,
-.marketing-prize-booking-modal .data-list dt, .marketing-prize-booking-modal .data-list dd { font-size: 14px; line-height: 22px; }
+.marketing-detail .data-list dt, .marketing-prize-booking-modal .data-list dt { font-size: 12px; line-height: 18px; font-weight: 500; }
+.marketing-detail .data-list dd, .marketing-prize-booking-modal .data-list dd { font-size: 14px; line-height: 22px; }
 .marketing-detail .data-list > div { column-gap: 15px; }
 .marketing-detail .marketing-record-metadata { font-size: 14px; line-height: 22px; }
 .marketing-detail .marketing-rail-rule h3 { font-size: 14px; line-height: 22px; }
+.marketing-detail .semi-table-tbody > .semi-table-row > .semi-table-row-cell { font-size: 14px; line-height: 22px; }
+.marketing-detail .semi-table-thead > .semi-table-row > .semi-table-row-head { font-size: 12px; line-height: 18px; }
 .marketing-session-actions { margin-top: 20px; }
 .marketing-panel-actions { justify-content: flex-end; margin-bottom: 20px; }
 .marketing-record-content { min-width: 0; margin-bottom: 20px; }
-.marketing-detail .table-toolbar { gap: 15px; }
+.marketing-detail .table-toolbar { gap: 12px; }
 .marketing-record-content > .semi-banner { margin-bottom: 20px; }
 .marketing-prize-booking-history { min-width: 0; margin-top: 20px; }
 .marketing-prize-booking-history .table-toolbar { gap: 15px; }
@@ -59,8 +62,8 @@
 .marketing-prize-booking-modal .data-list > div { padding: 0; border-bottom: 0; }
 .marketing-definition { margin: 0; min-width: 0; }
 .marketing-definition > div { min-width: 0; }
-.marketing-definition dt { font-size: 10.5px; line-height: 20px; color: var(--crm-text-3); margin-bottom: 4px; }
-.marketing-definition dd { margin: 0; font-size: 11.5px; line-height: 20px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.marketing-definition dt { font-size: 12px; line-height: 18px; font-weight: 500; color: var(--crm-text-3); margin-bottom: 6px; }
+.marketing-definition dd { margin: 0; font-size: 14px; line-height: 22px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .marketing-definition-wide { grid-column: 1 / -1; }
 .marketing-rich-toolbar { flex-wrap: wrap; }
 .marketing-editor { min-width: 0; }
@@ -79,10 +82,9 @@
 .marketing-subtabs .marketing-panel:last-child { margin-bottom: 0; }
 .marketing-session-context { display: flex; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; padding: 12px 15px; border: 1px solid var(--crm-border); border-radius: var(--crm-radius); background: var(--crm-subtle); font-size: 14px; line-height: 22px; }
 .marketing-session-context > span { color: var(--crm-text-2); }
-.marketing-copy-session { display: flex; align-items: center; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
-.marketing-copy-session > .semi-select { min-width: 260px; flex: 1; }
+.marketing-session-toolbar { display: flex; justify-content: flex-end; margin-bottom: 12px; }
 .marketing-probability-summary { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 15px; margin-top: 20px; font-size: 14px; line-height: 22px; }
-.marketing-adjust-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(160px, 0.45fr); gap: 20px; margin: 20px 0; }
+.marketing-adjust-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(160px, 0.45fr); gap: 16px; margin: 20px 0; }
 .marketing-session-prize-drawer .semi-table-wrapper { min-width: 0; }
 .marketing-code-summary { display: flex; flex-wrap: wrap; gap: 12px 20px; margin: 12px 0 20px; }
 .marketing-rich-toolbar .semi-button { min-width: 32px; }

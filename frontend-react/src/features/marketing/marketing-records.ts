@@ -6,7 +6,7 @@ import { bookingStatus, isAwardFulfilled, needsReservation, slotFor } from "./ma
 export type DrawRecordPhase = 1 | 2 | 3 | 4 | 5;
 export const drawRecordLabels: Record<DrawRecordPhase, string> = { 1: "未抽奖", 2: "已抽奖", 3: "已核销", 4: "已预约", 5: "已核销" };
 export const drawPhaseOptions = [
-  { value: "1", label: "未抽奖" }, { value: "2", label: "已抽奖" },
+  { value: "2", label: "已抽奖" },
   { value: "3", label: "已核销 · 无需预约" }, { value: "4", label: "已预约" },
   { value: "5", label: "已核销 · 需要预约" },
 ];

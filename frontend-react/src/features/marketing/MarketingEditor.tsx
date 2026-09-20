@@ -48,6 +48,7 @@ export function SlotConfigurationTable({ slots, onChange, parentStart, activityI
 
 export function PrizeFields({ prize, onChange }: { prize: ActivityPrize; onChange: (prize: ActivityPrize) => void }) {
   const { state } = useMarketing(); const [viewCodes, setViewCodes] = useState(false);
+  const activity = state.activities.find((row) => row.id === prize.activityId);
   const update = <K extends keyof ActivityPrize>(key: K, value: ActivityPrize[K]) => onChange({ ...prize, [key]: value });
   const inventory = codeInventory(prize), fulfillment = needsReservation(prize) ? "RESERVATION" : "DIRECT";
   const changeType = (type: string) => {
@@ -75,7 +76,7 @@ export function PrizeFields({ prize, onChange }: { prize: ActivityPrize; onChang
       <SelectField label="领取方式" value={fulfillment} list={options(prize.prizeType === "VIRTUAL" ? { DIRECT: "直接发放", RESERVATION: "预约使用" } : { DIRECT: "直接领取", RESERVATION: "预约领取" })} onChange={changeFulfillment} />
       <SelectField label="数量模式" value={prizeQuantityMode(prize)} list={options({ LIMITED: "限量", UNLIMITED: "不限量" })} onChange={changeQuantityMode} />
       {prizeQuantityMode(prize) === "LIMITED" && <NumberField label="可发放数量" value={prizeQuantityLimit(prize) ?? 0} onChange={changeQuantityLimit} />}
-      <NumberField label="默认中奖概率（%）" value={prizeDefaultProbability(prize)} onChange={changeDefaultProbability} />
+      <NumberField label={activity?.bookingEnabled ? "新场次默认概率（%）" : "中奖概率（%）"} value={prizeDefaultProbability(prize)} onChange={changeDefaultProbability} />
       <NumberField label="每人该奖品最多获得" value={prize.perPersonLimit} onChange={(value) => update("perPersonLimit", value)} />
       {prize.prizeType === "VIRTUAL" && <SelectField label="虚拟奖品内容" value={prize.method} list={options({ REDEMPTION_CODE: "兑换码", VIRTUAL_VOUCHER: "虚拟权益", LINK: "领取链接" })} onChange={(value) => update("method", value as ActivityPrize["method"])} />}
       {prize.prizeType === "PHYSICAL" && fulfillment === "RESERVATION" && <SelectField label="预约类型" value={prize.method} list={options({ PICKUP: "预约领取", EXPERIENCE: "预约使用" })} onChange={(value) => update("method", value as ActivityPrize["method"])} />}

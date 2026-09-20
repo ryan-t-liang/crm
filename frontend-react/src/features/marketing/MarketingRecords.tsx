@@ -69,7 +69,7 @@ export function DrawData({ activity, now, dataState }: { activity: MarketingActi
   const [search, setSearch] = useState(""), [status, setStatus] = useState("ALL"), [date, setDate] = useState("");
   const [selectedId, setSelectedId] = useState(""), [historyId, setHistoryId] = useState("");
   const rows = activityDrawRecords(state, activity, now).filter(row =>
-    (activity.lotteryEnabled || row.draw || row.award || row.participant?.id.startsWith(`${activity.id}:record-samples-v2:`)) && participantSearch(row.participant, members).includes(search.trim().toLowerCase()) &&
+    Boolean(row.draw) && participantSearch(row.participant, members).includes(search.trim().toLowerCase()) &&
     (status === "ALL" || String(row.phase) === status) && dateMatches(row.draw?.occurredAt ?? row.award?.wonAt ?? row.participant?.registeredAt, date));
   const selected = rows.find(row => row.id === selectedId), history = rows.find(row => row.id === historyId);
   const result = (row: ActivityDrawRecord) => row.award?.prizeName || (row.phase === 1 ? "—" : row.draw?.poolItemId ? "中奖权益待核对" : "未中奖");
@@ -78,7 +78,7 @@ export function DrawData({ activity, now, dataState }: { activity: MarketingActi
     <Input prefix={<IconSearch />} aria-label="搜索抽奖记录" placeholder="姓名、手机号或 OpenID" value={search} onChange={setSearch} showClear />
     <Select aria-label="抽奖记录状态" value={status} onChange={value => setStatus(String(value))} optionList={[{ value: "ALL", label: "全部状态" }, ...drawPhaseOptions]} />
     <Input aria-label="抽奖记录日期" type="date" value={date} onChange={setDate} />
-  </div><Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: 1760 }} empty={<EmptyBlock title="暂无抽奖记录" description="参与用户与每次抽奖结果将在这里展示。" />} columns={[
+  </div><Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: 1760 }} empty={<EmptyBlock title="暂无抽奖记录" description="每次实际发生的抽奖结果将在这里展示。" />} columns={[
     { title: "OpenID", width: 155, render: (_: unknown, row: ActivityDrawRecord) => maskedOpenId(identityFor(row)?.openId) },
     { title: "姓名", width: 150, render: (_: unknown, row: ActivityDrawRecord) => row.participant ? participantDisplayName(row.participant, members) : "身份待核对" },
     { title: "手机号", width: 140, render: (_: unknown, row: ActivityDrawRecord) => maskedPhone(identityFor(row)?.phone) },
@@ -93,7 +93,7 @@ export function DrawData({ activity, now, dataState }: { activity: MarketingActi
   ]} />
     <SideSheet visible={Boolean(selected)} closeOnEsc title="抽奖记录详情" width={Math.min(640, window.innerWidth)} onCancel={() => setSelectedId("")}>
       {selected && <><IdentityData participant={selected.participant} members={members} full={marketingPermissions(currentUser).manage} /><DefinitionGrid rows={[
-        ["活动名称", activity.name], ["状态", drawRecordLabels[selected.phase]], ["状态值", selected.phase],
+        ["活动名称", activity.name], ["状态", drawRecordLabels[selected.phase]],
         ["结果", result(selected)], ["处理说明", selected.note || "—"],
         ["业务流程", selected.award ? selected.reservation ? "未抽奖 → 已抽奖 → 已预约 → 已核销" : "未抽奖 → 已抽奖 → 已核销" : "未抽奖 → 已抽奖"],
         ["参与时间", displayDate(selected.participant?.registeredAt)], ["抽奖时间", displayDate(selected.draw?.occurredAt)],

@@ -115,7 +115,21 @@ export function decodeMarketing(value: string): DecodedMarketing {
         const allocated = row.allocatedQuantity!;
         return allocated >= won && (row.enabled || allocated === won);
       });
-      const totals = activity.pool.every((prize) => prize.quantityMode === "UNLIMITED" || rows.filter((row) => row.prizeId === prize.id).reduce((sum, row) => sum + (row.allocatedQuantity ?? 0), 0) <= (prize.quantityLimit !== undefined && prize.quantityLimit !== null ? prize.quantityLimit : prize.quota));
+      const totals = activity.pool.every((prize) => {
+        if (prize.quantityMode === "UNLIMITED") return true;
+        const limit = prize.quantityLimit !== undefined && prize.quantityLimit !== null ? prize.quantityLimit : prize.quota;
+        const won = parsed.awards.filter((award) => award.activityId === activity.id && award.poolItemId === prize.id).length;
+        const reserved = rows.filter((row) => row.prizeId === prize.id && row.enabled).reduce((sum, row) => {
+          const slot = activity.slots.find((candidate) => candidate.id === row.sessionId);
+          const activityEnd = Date.parse(activity.endAt), sessionEnd = slot ? Date.parse(slot.endAt) : Number.NaN;
+          const ended = activity.status === "CANCELED" || slot?.disabled || slot?.deleted || Number.isFinite(activityEnd) && Date.now() >= activityEnd || Number.isFinite(sessionEnd) && Date.now() >= sessionEnd;
+          if (ended) return sum;
+          const drawIds = new Set(parsed.draws.filter((draw) => draw.activityId === activity.id && draw.sessionId === row.sessionId).map((draw) => draw.id));
+          const sessionWon = parsed.awards.filter((award) => award.activityId === activity.id && award.poolItemId === prize.id && drawIds.has(award.drawId)).length;
+          return sum + Math.max(0, (row.allocatedQuantity ?? 0) - sessionWon);
+        }, 0);
+        return won + reserved <= limit;
+      });
       return unique && references && probabilities && quantities && totals && (!rows.length || Number.isInteger(activity.sessionPrizeConfigVersion) && activity.sessionPrizeConfigVersion! > 0);
     });
     const validDrawSnapshots = owned && parsed.draws.every((draw) => {

@@ -135,21 +135,35 @@ export function drawSessionId(state: MarketingState, drawId: string) {
 export function sessionWonCount(state: MarketingState, activityId: string, sessionId: string, prizeId: string) {
   return state.awards.filter((award) => award.activityId === activityId && award.poolItemId === prizeId && drawSessionId(state, award.drawId) === sessionId).length;
 }
-export function activityPrizeAllocation(state: MarketingState, activity: MarketingActivity, item: ActivityPrize) {
+export function sessionCanProduceFutureDraw(activity: MarketingActivity, sessionId: string, now = Date.now()) {
+  const session = activity.slots.find((row) => row.id === sessionId);
+  return Boolean(session && !session.disabled && !session.deleted && activity.status !== "CANCELED" && now < time(session.endAt) && now < time(activity.endAt));
+}
+export function sessionPrizeEffectiveReserved(state: MarketingState, activity: MarketingActivity, sessionId: string, item: ActivityPrize, now = Date.now()) {
+  const config = sessionPrizeConfigurations(activity, sessionId).find((row) => row.prizeId === item.id);
+  if (!config?.enabled || prizeQuantityMode(item) === "UNLIMITED" || !sessionCanProduceFutureDraw(activity, sessionId, now)) return 0;
+  return Math.max(0, (config.allocatedQuantity ?? 0) - sessionWonCount(state, activity.id, sessionId, item.id));
+}
+export function activityPrizeAllocation(state: MarketingState, activity: MarketingActivity, item: ActivityPrize, now = Date.now()) {
   const quantityLimit = prizeQuantityLimit(item);
   const allocated = (activity.sessionPrizes ?? []).filter((row) => row.prizeId === item.id).reduce((sum, row) => sum + (row.allocatedQuantity ?? 0), 0);
   const won = state.awards.filter((row) => row.activityId === activity.id && row.poolItemId === item.id).length;
+  const reserved = [...new Set((activity.sessionPrizes ?? []).filter((row) => row.prizeId === item.id).map((row) => row.sessionId))]
+    .reduce((sum, sessionId) => sum + sessionPrizeEffectiveReserved(state, activity, sessionId, item, now), 0);
+  const remaining = quantityLimit === null ? null : Math.max(0, quantityLimit - won);
   return {
-    quantityMode: prizeQuantityMode(item), quantityLimit, allocated, won,
-    unallocated: quantityLimit === null ? null : Math.max(0, quantityLimit - allocated),
-    remaining: quantityLimit === null ? null : Math.max(0, quantityLimit - won),
+    quantityMode: prizeQuantityMode(item), quantityLimit, allocated, won, reserved,
+    unallocated: remaining === null ? null : Math.max(0, remaining - reserved),
+    remaining,
   };
 }
-export function sessionPrizeAllocation(state: MarketingState, activity: MarketingActivity, sessionId: string, item: ActivityPrize) {
+export function sessionPrizeAllocation(state: MarketingState, activity: MarketingActivity, sessionId: string, item: ActivityPrize, now = Date.now()) {
   const config = sessionPrizeConfigurations(activity, sessionId).find((row) => row.prizeId === item.id);
   const won = sessionWonCount(state, activity.id, sessionId, item.id);
   const allocated = prizeQuantityMode(item) === "UNLIMITED" ? undefined : config?.allocatedQuantity ?? 0;
-  return { config, won, allocated, remaining: allocated === undefined ? null : Math.max(0, allocated - won) };
+  const remaining = allocated === undefined ? null : Math.max(0, allocated - won);
+  const released = remaining !== null && !sessionCanProduceFutureDraw(activity, sessionId, now) ? remaining : 0;
+  return { config, won, allocated, remaining, effectiveReserved: remaining === null ? 0 : Math.max(0, remaining - released), released };
 }
 export function codeInventory(item: ActivityPrize) {
   const assigned = item.codes.filter((row) => row.assignedAwardId).length;
@@ -221,7 +235,7 @@ export function prizeErrors(item: ActivityPrize, activity: MarketingActivity, co
   if (new Set(item.slots.map((slot) => slot.id)).size !== item.slots.length) errors.push("领奖场次标识不能重复");
   return errors;
 }
-function sessionPrizeErrors(state: MarketingState, activity: MarketingActivity, sessionId: string, rows: SessionPrize[]) {
+function sessionPrizeErrors(state: MarketingState, activity: MarketingActivity, sessionId: string, rows: SessionPrize[], now = Date.now()) {
   const errors: string[] = [];
   if (!activity.slots.some((slot) => slot.id === sessionId && !slot.deleted)) errors.push("活动场次不存在或已删除");
   if (new Set(rows.map((row) => row.prizeId)).size !== rows.length) errors.push("同一场次的奖品配置不能重复");
@@ -248,12 +262,32 @@ function sessionPrizeErrors(state: MarketingState, activity: MarketingActivity, 
     if (won > 0 && !rows.some((row) => row.prizeId === item.id)) errors.push(`${item.name}已有${won}份中奖记录，不能移除其场次配置`);
   }
   for (const item of activity.pool.filter((prize) => prizeQuantityMode(prize) === "LIMITED")) {
-    const otherAllocated = (activity.sessionPrizes ?? []).filter((row) => row.sessionId !== sessionId && row.prizeId === item.id).reduce((sum, row) => sum + (row.allocatedQuantity ?? 0), 0);
-    const currentAllocated = rows.filter((row) => row.prizeId === item.id).reduce((sum, row) => sum + (row.allocatedQuantity ?? 0), 0);
+    const otherReserved = [...new Set((activity.sessionPrizes ?? []).filter((row) => row.sessionId !== sessionId && row.prizeId === item.id).map((row) => row.sessionId))]
+      .reduce((sum, otherSessionId) => sum + sessionPrizeEffectiveReserved(state, activity, otherSessionId, item, now), 0);
+    const currentWon = sessionWonCount(state, activity.id, sessionId, item.id);
+    const currentReserved = sessionCanProduceFutureDraw(activity, sessionId, now)
+      ? rows.filter((row) => row.prizeId === item.id && row.enabled).reduce((sum, row) => sum + Math.max(0, (row.allocatedQuantity ?? 0) - currentWon), 0)
+      : 0;
+    const totalWon = state.awards.filter((award) => award.activityId === activity.id && award.poolItemId === item.id).length;
     const limit = prizeQuantityLimit(item) ?? 0;
-    if (otherAllocated + currentAllocated > limit) errors.push(`当前可分配数量不足，请调整本场数量。`);
+    if (totalWon + otherReserved + currentReserved > limit) errors.push(`当前可分配数量不足，请调整本场数量。`);
   }
   return [...new Set(errors)];
+}
+export function sessionPrizeReadiness(state: MarketingState, activity: MarketingActivity, now = Date.now()) {
+  if (!activity.bookingEnabled || !activity.lotteryEnabled) return [];
+  return activity.slots.filter((slot) => !slot.disabled && !slot.deleted && sessionCanProduceFutureDraw(activity, slot.id, now)).flatMap((slot) => {
+    const rows = sessionPrizeConfigurations(activity, slot.id);
+    const errors = rows.length ? sessionPrizeErrors(state, activity, slot.id, rows, now) : ["尚未配置场次奖品"];
+    const hasWinnablePrize = rows.some((row) => {
+      if (!row.enabled || row.probability <= 0) return false;
+      const item = activity.pool.find((prize) => prize.id === row.prizeId);
+      if (!item || winnable(state, activity.id, item, now) < 1) return false;
+      return prizeQuantityMode(item) === "UNLIMITED" || (row.allocatedQuantity ?? 0) > sessionWonCount(state, activity.id, slot.id, item.id);
+    });
+    if (!hasWinnablePrize) errors.push("至少启用一个有中奖概率且可发放的奖品");
+    return errors.length ? [{ sessionId: slot.id, label: slot.label, errors: [...new Set(errors)] }] : [];
+  });
 }
 export interface MarketingPublishCheck { key: string; label: string; step: number; errors: string[] }
 export function publishChecks(activity: MarketingActivity, state: MarketingState, brands: SowindBrandCode[], now = Date.now()): MarketingPublishCheck[] {
@@ -279,8 +313,11 @@ export function publishChecks(activity: MarketingActivity, state: MarketingState
     if (!positive(activity.grantCount) || !positive(activity.drawLimit) || !positive(activity.winLimit) || activity.grantCount > activity.drawLimit || (activity.dailyLimit !== null && !positive(activity.dailyLimit))) errors.push("次数 / 中奖上限须为正整数，发放次数不得超过累计上限");
     if (!activity.pool.length) errors.push("开启抽奖须配置奖品");
     const probabilities = activity.pool.map(prizeDefaultProbability);
-    if (probabilities.some((value) => typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 100) || probabilities.reduce((sum, value) => sum + value, 0) > 100) errors.push("奖品默认中奖概率合计不能超过100%，未中奖概率由系统自动计算");
-    if (!activity.pool.some((item) => prizeDefaultProbability(item) > 0 && winnable(state, activity.id, item, now) > 0)) errors.push("发布时须有可中奖概率和可发放奖品");
+    if (probabilities.some((value) => typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 100) || probabilities.reduce((sum, value) => sum + value, 0) > 100) errors.push(`${activity.bookingEnabled ? "新场次默认中奖概率" : "奖品中奖概率"}合计不能超过100%，未中奖概率由系统自动计算`);
+    if (activity.bookingEnabled) {
+      const sessionIssues = sessionPrizeReadiness(state, activity, now);
+      if (sessionIssues.length) errors.push(`还有${sessionIssues.length}个活动场次尚未完成奖品配置：${sessionIssues.map((issue) => issue.label).join("、")}`);
+    } else if (!activity.pool.some((item) => prizeDefaultProbability(item) > 0 && winnable(state, activity.id, item, now) > 0)) errors.push("发布时须有可中奖概率和可发放奖品");
     activity.pool.forEach((item) => {
       const completeErrors = prizeErrors(item, activity), target = item.prizeType === "VIRTUAL" ? checks[5] : checks[3];
       completeErrors.forEach((error) => (error.includes("领奖时段") || error.includes("预约型奖品") ? checks[4] : error.includes("兑换码不足") ? checks[6] : target).errors.push(error));
@@ -310,7 +347,7 @@ export function draftActivityErrors(activity: MarketingActivity) {
     errors.push(...partialWindowError("活动场次", slot.startAt, slot.endAt), ...partialWindowError("签到窗口", slot.checkinStart, slot.checkinEnd));
   });
   const defaultProbabilityTotal = activity.pool.reduce((sum, item) => sum + prizeDefaultProbability(item), 0);
-  if (defaultProbabilityTotal > 100) errors.push(`奖品默认中奖概率合计为${defaultProbabilityTotal}%，请调整至100%以内`);
+  if (defaultProbabilityTotal > 100) errors.push(`${activity.bookingEnabled ? "新场次默认中奖概率" : "奖品中奖概率"}合计为${defaultProbabilityTotal}%，请调整至100%以内`);
   return [...new Set(errors)];
 }
 function assignedCodesPreserved(before: ActivityPrize[], after: ActivityPrize[]) {
@@ -396,7 +433,7 @@ function drawRules(state: MarketingState, activity: MarketingActivity, row: Mark
     sessionId = slot.id;
     const rows = sessionPrizeConfigurations(activity, sessionId);
     if (!rows.length) return { error: "本场奖品尚未配置，不能抽奖" };
-    const errors = sessionPrizeErrors(state, activity, sessionId, rows);
+    const errors = sessionPrizeErrors(state, activity, sessionId, rows, now);
     if (errors.length) return { error: errors.join("；") };
     configured = rows.filter((config) => config.enabled).flatMap((config) => {
       const item = activity.pool.find((candidate) => candidate.id === config.prizeId);
@@ -635,8 +672,8 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     const item = normalizedPrizeContract(command.prize), old = activity.pool.find((row) => row.id === item.id);
     const errors = prizeErrors(item, activity, Boolean(activity.publishedAt));
     if (errors.length) return reject([...new Set(errors)].join("；"));
-    const limit = prizeQuantityLimit(item), allocated = (activity.sessionPrizes ?? []).filter((row) => row.prizeId === item.id).reduce((sum, row) => sum + (row.allocatedQuantity ?? 0), 0);
-    if (limit !== null && allocated > limit) return reject(`当前已分配${allocated}份，可发放数量不能低于已分配数量。`);
+    const limit = prizeQuantityLimit(item), allocation = activityPrizeAllocation(state, activity, item, ctx.now);
+    if (limit !== null && allocation.won + allocation.reserved > limit) return reject(`当前已有${allocation.won}份中奖记录、${allocation.reserved}份有效场次占用，可发放数量不能低于两者合计。`);
     const won = state.awards.filter((row) => row.activityId === activity.id && row.poolItemId === item.id).length;
     if (limit !== null && won > limit) return reject(`当前已有${won}份中奖记录，可发放数量不能低于${won}份。`);
     if (old && !assignedCodesPreserved([old], [item])) return reject("已分配兑换码永久保留，不允许删除或修改分配状态");
@@ -711,7 +748,7 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
       const won = sessionWonCount(state, activity.id, slot.id, row.prizeId);
       return { ...row, enabled: false, probability: 0, allocatedQuantity: item && prizeQuantityMode(item) === "UNLIMITED" ? undefined : won };
     })];
-    const errors = sessionPrizeErrors(state, activity, slot.id, normalized);
+    const errors = sessionPrizeErrors(state, activity, slot.id, normalized, ctx.now);
     if (errors.length) return reject(errors.join("；"));
     const hasDraws = state.draws.some((draw) => draw.activityId === activity.id && draw.sessionId === slot.id);
     const quantityLocked = hasDraws || ctx.now >= time(slot.startAt);
@@ -738,7 +775,7 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     if (state.draws.some((draw) => draw.activityId === activity.id && draw.sessionId === target.id)) return reject("目标场次已有抽奖记录，不能覆盖其配置");
     const copied = sessionPrizeConfigurations(activity, source.id).map((row) => ({ ...row, sessionId: target.id }));
     if (!copied.length) return reject("来源场次尚未配置奖品");
-    const errors = sessionPrizeErrors(state, activity, target.id, copied);
+    const errors = sessionPrizeErrors(state, activity, target.id, copied, ctx.now);
     if (errors.length) return reject(errors.join("；"));
     activity.sessionPrizes = [...(activity.sessionPrizes ?? []).filter((row) => row.sessionId !== target.id), ...structuredClone(copied)];
     activity.sessionPrizeConfigVersion = (activity.sessionPrizeConfigVersion ?? 0) + 1;
@@ -751,8 +788,8 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     if (activity.status === "CANCELED" || ctx.now >= time(activity.endAt) || ctx.now >= time(slot.endAt)) return reject("活动或场次已结束，奖品配置只读");
     if (!positive(command.count) || !Number.isSafeInteger(command.count)) return reject("调整数量须为安全正整数");
     const before = config.allocatedQuantity ?? 0, won = sessionWonCount(state, activity.id, slot.id, item.id);
-    const unallocated = activityPrizeAllocation(state, activity, item).unallocated ?? 0;
-    if (command.direction === "INCREASE" && command.count > unallocated) return reject(`当前奖品仅剩${unallocated}份未分配数量。`);
+    const unallocated = activityPrizeAllocation(state, activity, item, ctx.now).unallocated ?? 0;
+    if (command.direction === "INCREASE" && command.count > unallocated) return reject(`当前奖品仅剩${unallocated}份活动可分配数量。`);
     const after = command.direction === "INCREASE" ? before + command.count : before - command.count;
     if (!Number.isSafeInteger(after)) return reject("调整后的本场可发放数量超出安全整数范围");
     if (after < won) return reject(`当前场次已有${won}份中奖记录，本场可发放数量不能低于${won}份。`);
