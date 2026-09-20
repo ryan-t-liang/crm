@@ -88,7 +88,7 @@ function SlotEditor({ activity, schedule, slot, onClose, readOnly = false }: { a
     <div className="form-grid">
       <TextField label="领取地点" disabled={readOnly || history || coachMode} value={coachMode ? COACH_EVENT_LOCATION : form.location} onChange={location => setForm({ ...form, location })} />
       <NumberField label="可预约数量" disabled={readOnly || history} value={form.capacity} onChange={capacity => setForm({ ...form, capacity })} />
-      {(["startAt", "endAt", "bookingClosesAt", "checkinStart", "checkinEnd"] as const).map((key, i) => <TimeField key={key} label={["领取开始", "领取结束", "预约截止", "核销开放", "核销截止"][i]} disabled={readOnly || history} value={form[key]} onChange={value => setForm({ ...form, [key]: value })} />)}
+      {(coachMode ? ["startAt", "endAt"] as const : ["startAt", "endAt", "bookingClosesAt", "checkinStart", "checkinEnd"] as const).map((key, i) => <TimeField key={key} label={["领取开始", "领取结束", "预约截止", "核销开放", "核销截止"][i]} disabled={readOnly || history} value={form[key]} onChange={value => setForm({ ...form, [key]: value, ...(coachMode && key === "startAt" ? { bookingClosesAt: value, checkinStart: value } : {}), ...(coachMode && key === "endAt" ? { checkinEnd: value } : {}) })} />)}
     </div>
   </FormSideSheet>;
 }
