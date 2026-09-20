@@ -150,8 +150,20 @@ export function DrawData({ activity, now, dataState }: { activity: MarketingActi
     <Select aria-label="抽奖记录状态" value={status} onChange={value => setStatus(String(value))} optionList={coachMode ? [{ value: "ALL", label: "全部兑奖状态" }, { value: "PENDING_PRODUCTION", label: "待制作" }, { value: "PENDING_REDEMPTION", label: "待核销" }, { value: "REDEEMED", label: "已核销" }] : [{ value: "ALL", label: "全部状态" }, ...drawPhaseOptions]} />
     <Input aria-label="抽奖记录日期" type="date" value={date} onChange={setDate} />
   </div><Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: coachMode ? 1940 : 990 }} empty={<EmptyBlock title="暂无抽奖记录" description="每次实际发生的抽奖结果将在这里展示。" />} columns={coachMode ? coachColumns : standardColumns} />
-    <SideSheet visible={Boolean(selected)} closeOnEsc title="抽奖记录详情" width={Math.min(640, window.innerWidth)} onCancel={() => setSelectedId("")}>
-      {selected && <><Panel title="抽奖信息"><IdentityData participant={selected.participant} members={members} full={marketingPermissions(currentUser).manage} openIdOnly={coachMode} /><DataList rows={[
+    <SideSheet visible={Boolean(selected)} closeOnEsc className={coachMode ? "coach-marketing-sheet" : undefined} title="抽奖记录详情" width={Math.min(640, window.innerWidth)} onCancel={() => setSelectedId("")}>
+      {selected && (coachMode ? <Panel title="抽奖记录"><DataList rows={[
+        ["OpenID", participantOpenId(selected.participant, members) || "—"],
+        ["活动场次", (() => { const slot = activity.slots.find(item => item.id === selected.draw?.sessionId); return slot ? `${slot.label} · ${displayDateRange(slot.startAt, slot.endAt).compact}` : activity.bookingEnabled ? "历史场次未记录" : "直接参与"; })()],
+        ["奖品", result(selected)],
+        ["抽奖状态", selected.draw?.poolItemId ? "中奖" : "未中奖"],
+        ["兑奖状态", ({ NONE: "—", PENDING_PRODUCTION: "待制作", PENDING_REDEMPTION: "待核销", REDEEMED: "已核销" })[redemptionStatus(selected)]],
+        ["抽奖时间", displayDate(selected.draw?.occurredAt)],
+        ["兑奖时间", (() => { const booking = prizeBookingFor(selected), slot = booking && slotFor(state, booking); return slot ? displayDateRange(slot.startAt, slot.endAt).compact : displayDate(selected.award?.fulfilledAt); })()],
+        ["制作时间", displayDate(selected.award?.issuedAt)],
+        ["核销账号", redemptionFor(selected)?.actorId || "—"],
+        ["核销时间", displayDate(redemptionFor(selected)?.occurredAt ?? selected.award?.fulfilledAt)],
+        ["创建时间", displayDate(selected.draw?.occurredAt)],
+      ]} /></Panel> : <><Panel title="抽奖信息"><IdentityData participant={selected.participant} members={members} full={marketingPermissions(currentUser).manage} /><DataList rows={[
         ["活动", activity.name], ["场次", selected.draw?.sessionId ? (() => { const slot = activity.slots.find(slot => slot.id === selected.draw?.sessionId); return slot ? displayDateRange(slot.startAt, slot.endAt).compact : "历史场次待核对"; })() : activity.bookingEnabled ? "历史场次未记录" : "直接参与"],
         ["抽奖时间", displayDate(selected.draw?.occurredAt)],
       ]} /></Panel><Panel title="抽奖结果"><DataList rows={[["结果", selected.draw?.poolItemId ? "中奖" : "未中奖"], ["奖品", result(selected)], ["处理说明", selected.note || "—"]]} /></Panel>
@@ -170,7 +182,7 @@ export function DrawData({ activity, now, dataState }: { activity: MarketingActi
         ["抽奖编号", selected.draw?.id], ["参与编号", selected.participant?.id], ["中奖编号", selected.award?.id], ["领奖凭证", selected.award?.credential],
         ["OpenID", marketingPermissions(currentUser).manage ? identityFor(selected)?.openId || "—" : maskedOpenId(identityFor(selected)?.openId)], ["微信应用", identityFor(selected)?.wechatAppId || "未记录"],
         ["规则版本", String(selected.draw?.drawConfigVersion ?? selected.draw?.ruleVersion ?? "未记录")],
-      ]} /></Panel></>}
+      ]} /></Panel></>)}
 
     </SideSheet>
     <Modal visible={Boolean(history?.award)} className="marketing-prize-booking-modal" title="奖品预约记录" width={Math.min(800, window.innerWidth - 40)} bodyStyle={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto" }} onCancel={() => setHistoryId("")} footer={<Button onClick={() => setHistoryId("")}>关闭</Button>}>
