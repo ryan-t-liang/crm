@@ -30,6 +30,21 @@
 .marketing-rail-rule h3 { margin: 0 0 15px; font-size: 12px; font-weight: 600; }
 .marketing-rail-rule .marketing-rule-content p { margin-bottom: 15px; }
 .marketing-detail .marketing-record-metadata { margin: 0; }
+.coach-marketing-detail .detail-title h1 { margin-bottom: 8px; line-height: 1.35; }
+.coach-marketing-detail .detail-tags { row-gap: 8px; line-height: 22px; }
+.coach-marketing-detail .marketing-record-metadata { margin-top: 2px; line-height: 22px; }
+.coach-marketing-detail .detail-sidebar .side-section > header h6,
+.coach-marketing-detail .detail-sidebar .data-list dt,
+.coach-marketing-detail .detail-sidebar .data-list dd { font-size: 12px; line-height: 20px; }
+.coach-marketing-detail .marketing-rail-rule .marketing-rule-content {
+  display: -webkit-box;
+  max-height: 60px;
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 20px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
 .marketing-panel-actions { justify-content: flex-end; margin-bottom: 20px; }
 .marketing-record-content { min-width: 0; margin-bottom: 20px; }
 .marketing-record-content > .semi-banner { margin-bottom: 20px; }

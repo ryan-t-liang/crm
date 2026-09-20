@@ -17,13 +17,15 @@ import { displayAwardStatus, displayBookingLabels, displayDate, displayDateRange
 import { isCoachPrototype } from "@/utils/prototype-variant";
 
 const maskedOpenId = (value?: string | null) => !value ? "—" : value.length > 8 ? `${value.slice(0, 4)}…${value.slice(-4)}` : "****";
+const participantOpenId = (participant: MarketingParticipation | undefined, members: MemberOperationsState) => participant ? participantIdentity(participant, members).openId || participant.identities[0]?.openid || "" : "";
 const dateMatches = (value: string | undefined, date: string) => !date || Boolean(value && Number.isFinite(parseCreatedAt(value)) && shanghaiDate(parseCreatedAt(value)) === date);
 function participantSearch(participant: MarketingParticipation | undefined, members: MemberOperationsState) {
   const identity = participant && participantIdentity(participant, members);
   return participant ? `${participantDisplayName(participant, members)} ${identity?.phone ?? ""} ${identity?.openId ?? ""} ${participant.id}`.toLowerCase() : "身份待核对";
 }
-function IdentityData({ participant, members, full }: { participant?: MarketingParticipation; members: MemberOperationsState; full: boolean }) {
+function IdentityData({ participant, members, full, openIdOnly = false }: { participant?: MarketingParticipation; members: MemberOperationsState; full: boolean; openIdOnly?: boolean }) {
   const identity = participant && participantIdentity(participant, members);
+  if (openIdOnly) return <DataList rows={[["OpenID", full ? participantOpenId(participant, members) || "—" : maskedOpenId(participantOpenId(participant, members))]]} />;
   return <DataList rows={[
     ["姓名", participant ? participantDisplayName(participant, members) : "身份待核对"],
 
@@ -72,18 +74,17 @@ export function ParticipantTaskData({ activity, dataState }: { activity: Marketi
   const coachMode = isCoachPrototype();
   const [search, setSearch] = useState(""), [status, setStatus] = useState("ALL"), [selectedId, setSelectedId] = useState("");
   const rows = state.participations.filter((participant) => participant.activityId === activity.id)
-    .filter((participant) => participantSearch(participant, members).includes(search.trim().toLowerCase()))
+    .filter((participant) => (coachMode ? participantOpenId(participant, members) : participantSearch(participant, members)).toLowerCase().includes(search.trim().toLowerCase()))
     .filter((participant) => status === "ALL" || (participantTaskCompleted(participant) ? "COMPLETED" : "INCOMPLETE") === status);
   const selected = rows.find((participant) => participant.id === selectedId);
   const identityFor = (participant: MarketingParticipation) => participantIdentity(participant, members);
-  const openIdFor = (participant: MarketingParticipation) => identityFor(participant).openId || participant.identities[0]?.openid || "";
+  const openIdFor = (participant: MarketingParticipation) => participantOpenId(participant, members);
   const displayName = (participant: MarketingParticipation) => participantDisplayName(participant, members);
-  const maskedName = (participant: MarketingParticipation) => { const value = displayName(participant); return value.length <= 1 ? "*" : value.slice(0, 1) + "*".repeat(Math.min(3, value.length - 1)); };
   const progress = (participant: MarketingParticipation) => <div className={`marketing-clue-progress ${coachMode ? "coach-clue-progress" : ""}`}>{participantTaskClues(participant).map((clue) => coachMode
     ? <Tag key={clue.id} size="small" color={clue.completed ? "green" : "grey"}>{clue.label}：{clue.completed ? "已完成" : "未完成"}</Tag>
     : <span key={clue.id} data-complete={clue.completed}>{clue.label}：{clue.completed ? "已完成" : "未完成"}</span>)}</div>;
   const columns = coachMode ? [
-    { title: "姓名", width: 170, render: (_: unknown, participant: MarketingParticipation) => maskedName(participant) },
+    { title: "OpenID", width: 240, render: (_: unknown, participant: MarketingParticipation) => openIdFor(participant) || "—" },
     { title: "完成情况", width: 480, render: (_: unknown, participant: MarketingParticipation) => progress(participant) },
     { title: "状态", width: 120, render: (_: unknown, participant: MarketingParticipation) => <Tag size="small" color={participantTaskCompleted(participant) ? "green" : "grey"}>{participantTaskCompleted(participant) ? "已完成" : "未完成"}</Tag> },
     { title: "操作", width: 80, fixed: "right" as const, render: (_: unknown, participant: MarketingParticipation) => <Button theme="borderless" size="small" onClick={() => setSelectedId(participant.id)}>查看</Button> },
@@ -96,11 +97,11 @@ export function ParticipantTaskData({ activity, dataState }: { activity: Marketi
     { title: "操作", width: 70, fixed: "right" as const, render: (_: unknown, participant: MarketingParticipation) => <Button theme="borderless" size="small" onClick={() => setSelectedId(participant.id)}>查看</Button> },
   ];
   return <><div className="table-toolbar">
-    <Input prefix={<IconSearch />} aria-label="搜索参与用户" placeholder={coachMode ? "搜索姓名" : "用户、手机号或 OpenID"} value={search} onChange={setSearch} showClear />
+    <Input prefix={<IconSearch />} aria-label="搜索参与用户" placeholder={coachMode ? "搜索 OpenID" : "用户、手机号或 OpenID"} value={search} onChange={setSearch} showClear />
     <Select aria-label="参与用户任务状态" value={status} onChange={value => setStatus(String(value))} optionList={[{ value: "ALL", label: "全部状态" }, { value: "COMPLETED", label: "已完成" }, { value: "INCOMPLETE", label: "未完成" }]} />
   </div><Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: coachMode ? 820 : 1120 }} empty={<EmptyBlock title="暂无参与用户" description="用户参与活动后，任务进度将在这里展示。" />} columns={columns} />
     <SideSheet visible={Boolean(selected)} closeOnEsc title="参与用户详情" width={Math.min(640, window.innerWidth)} onCancel={() => setSelectedId("")}>
-      {selected && <><Panel title="用户信息"><DataList rows={coachMode ? [["姓名", maskedName(selected)], ["参与时间", displayDate(selected.registeredAt)]] : [["用户", displayName(selected)], ["OpenID", full ? openIdFor(selected) || "—" : maskedOpenId(openIdFor(selected))], ["手机号", full ? identityFor(selected).phone || "—" : maskedPhone(identityFor(selected).phone)], ["参与时间", displayDate(selected.registeredAt)]]} /></Panel>
+      {selected && <><Panel title="用户信息"><DataList rows={coachMode ? [["OpenID", openIdFor(selected) || "—"], ["参与时间", displayDate(selected.registeredAt)]] : [["用户", displayName(selected)], ["OpenID", full ? openIdFor(selected) || "—" : maskedOpenId(openIdFor(selected))], ["手机号", full ? identityFor(selected).phone || "—" : maskedPhone(identityFor(selected).phone)], ["参与时间", displayDate(selected.registeredAt)]]} /></Panel>
         <Panel title="活动任务"><div className="marketing-clue-detail">{participantTaskClues(selected).map((clue) => <div key={clue.id}><span>{clue.label}</span><strong data-complete={clue.completed}>{clue.completed ? "已完成" : "未完成"}</strong></div>)}</div><DataList rows={[["整体状态", participantTaskCompleted(selected) ? "已完成" : "未完成"]]} /></Panel></>}
     </SideSheet>
   </>;
@@ -109,20 +110,21 @@ export function ParticipantTaskData({ activity, dataState }: { activity: Marketi
 export function DrawData({ activity, now, dataState }: { activity: MarketingActivity; now: number; dataState?: MarketingState }) {
   const { state: stored } = useMarketing(), { state: members } = useMemberOperations(), { currentUser } = useCrm();
   const state = dataState ?? stored;
+  const coachMode = isCoachPrototype();
   const [search, setSearch] = useState(""), [status, setStatus] = useState("ALL"), [date, setDate] = useState("");
   const [selectedId, setSelectedId] = useState(""), [historyId, setHistoryId] = useState("");
   const rows = activityDrawRecords(state, activity, now).filter(row =>
-    Boolean(row.draw) && participantSearch(row.participant, members).includes(search.trim().toLowerCase()) &&
+    Boolean(row.draw) && (coachMode ? participantOpenId(row.participant, members) : participantSearch(row.participant, members)).toLowerCase().includes(search.trim().toLowerCase()) &&
     (status === "ALL" || String(row.phase) === status) && dateMatches(row.draw?.occurredAt ?? row.award?.wonAt ?? row.participant?.registeredAt, date));
   const selected = rows.find(row => row.id === selectedId), history = rows.find(row => row.id === historyId);
   const result = (row: ActivityDrawRecord) => row.award?.prizeName || (row.phase === 1 ? "—" : row.draw?.poolItemId ? "中奖权益待核对" : "未中奖");
   const identityFor = (row: ActivityDrawRecord) => row.participant && participantIdentity(row.participant, members);
   return <><div className="table-toolbar">
-    <Input prefix={<IconSearch />} aria-label="搜索抽奖记录" placeholder="姓名、手机号或 OpenID" value={search} onChange={setSearch} showClear />
+    <Input prefix={<IconSearch />} aria-label="搜索抽奖记录" placeholder={coachMode ? "搜索 OpenID" : "姓名、手机号或 OpenID"} value={search} onChange={setSearch} showClear />
     <Select aria-label="抽奖记录状态" value={status} onChange={value => setStatus(String(value))} optionList={[{ value: "ALL", label: "全部状态" }, ...drawPhaseOptions]} />
     <Input aria-label="抽奖记录日期" type="date" value={date} onChange={setDate} />
   </div><Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: 990 }} empty={<EmptyBlock title="暂无抽奖记录" description="每次实际发生的抽奖结果将在这里展示。" />} columns={[
-    { title: "用户", width: 130, render: (_: unknown, row: ActivityDrawRecord) => <div className="marketing-summary-cell"><span>{row.participant ? participantDisplayName(row.participant, members) : "身份待核对"}</span><small>{maskedPhone(identityFor(row)?.phone)}</small></div> },
+    { title: coachMode ? "OpenID" : "用户", width: coachMode ? 240 : 130, render: (_: unknown, row: ActivityDrawRecord) => coachMode ? participantOpenId(row.participant, members) || "—" : <div className="marketing-summary-cell"><span>{row.participant ? participantDisplayName(row.participant, members) : "身份待核对"}</span><small>{maskedPhone(identityFor(row)?.phone)}</small></div> },
     { title: "活动场次", width: 175, render: (_: unknown, row: ActivityDrawRecord) => { const slot = activity.slots.find(slot => slot.id === row.draw?.sessionId); return slot ? displayDateRange(slot.startAt, slot.endAt).compact : activity.bookingEnabled ? "历史场次未记录" : "直接参与"; } },
     { title: "结果", width: 80, render: (_: unknown, row: ActivityDrawRecord) => row.draw?.poolItemId ? "中奖" : "未中奖" },
     { title: "奖品", width: 165, render: (_: unknown, row: ActivityDrawRecord) => result(row) },
@@ -131,7 +133,7 @@ export function DrawData({ activity, now, dataState }: { activity: MarketingActi
     { title: "操作", width: 165, fixed: "right", render: (_: unknown, row: ActivityDrawRecord) => <div className="row-actions"><Button theme="borderless" size="small" onClick={() => setSelectedId(row.id)}>查看</Button>{row.reservation && row.award && <Button theme="borderless" size="small" onClick={() => setHistoryId(row.id)}>预约记录</Button>}</div> },
   ]} />
     <SideSheet visible={Boolean(selected)} closeOnEsc title="抽奖记录详情" width={Math.min(640, window.innerWidth)} onCancel={() => setSelectedId("")}>
-      {selected && <><Panel title="抽奖信息"><IdentityData participant={selected.participant} members={members} full={marketingPermissions(currentUser).manage} /><DataList rows={[
+      {selected && <><Panel title="抽奖信息"><IdentityData participant={selected.participant} members={members} full={marketingPermissions(currentUser).manage} openIdOnly={coachMode} /><DataList rows={[
         ["活动", activity.name], ["场次", selected.draw?.sessionId ? (() => { const slot = activity.slots.find(slot => slot.id === selected.draw?.sessionId); return slot ? displayDateRange(slot.startAt, slot.endAt).compact : "历史场次待核对"; })() : activity.bookingEnabled ? "历史场次未记录" : "直接参与"],
         ["抽奖时间", displayDate(selected.draw?.occurredAt)],
       ]} /></Panel><Panel title="抽奖结果"><DataList rows={[["结果", selected.draw?.poolItemId ? "中奖" : "未中奖"], ["奖品", result(selected)], ["处理说明", selected.note || "—"]]} /></Panel>
@@ -154,7 +156,7 @@ export function DrawData({ activity, now, dataState }: { activity: MarketingActi
 
     </SideSheet>
     <Modal visible={Boolean(history?.award)} className="marketing-prize-booking-modal" title="奖品预约记录" width={Math.min(800, window.innerWidth - 40)} bodyStyle={{ maxHeight: "calc(100vh - 200px)", overflowY: "auto" }} onCancel={() => setHistoryId("")} footer={<Button onClick={() => setHistoryId("")}>关闭</Button>}>
-      {history?.award && <><DataList rows={[["用户", history.participant ? participantDisplayName(history.participant, members) : "身份待核对"], ["奖品", history.award.prizeName]]} /><div className="marketing-prize-booking-history"><PickupRoster activity={activity} rows={state.bookings.filter(row => row.activityId === activity.id && row.kind === "PRIZE" && row.awardId === history.award!.id)} /></div></>}
+      {history?.award && <><DataList rows={[[coachMode ? "OpenID" : "用户", coachMode ? participantOpenId(history.participant, members) || "—" : history.participant ? participantDisplayName(history.participant, members) : "身份待核对"], ["奖品", history.award.prizeName]]} /><div className="marketing-prize-booking-history"><PickupRoster activity={activity} rows={state.bookings.filter(row => row.activityId === activity.id && row.kind === "PRIZE" && row.awardId === history.award!.id)} /></div></>}
     </Modal>
   </>;
 }

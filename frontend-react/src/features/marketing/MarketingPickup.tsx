@@ -6,16 +6,19 @@ import { useMarketing } from "@/stores/marketing-store";
 import { useCrm } from "@/stores/crm-store";
 import { useMemberOperations } from "@/stores/member-operations-store";
 import type { MarketingActivity, MarketingBooking, MarketingPickupSchedule, MarketingSlot } from "@/types/marketing";
-import { marketingPermissions, participantDisplayName } from "./marketing-model";
+import { marketingPermissions, participantDisplayName, participantIdentity } from "./marketing-model";
 import { generatePickupSlots, pickupBookedCount, pickupBookings, pickupScheduleSummary, pickupSchedules, pickupSlotForBooking, pickupSlotStatus, type PickupGenerationInput } from "./marketing-pickup";
 import { DateRange, displayDate, displayDateRange, MarketingMenu, NumberField, Panel, TextField, TimeField, useAction } from "./MarketingUi";
+import { isCoachPrototype } from "@/utils/prototype-variant";
 
 export function PickupRoster({ activity, rows }: { activity: MarketingActivity; rows: MarketingBooking[] }) {
   const { state } = useMarketing(), { state: members } = useMemberOperations();
+  const coachMode = isCoachPrototype();
   return <Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: 710 }} empty={<EmptyBlock title="暂无预约记录" description="用户提交领奖预约后在此展示。" />} columns={[
-    { title: "用户 / 奖品", width: 190, render: (_: unknown, row: MarketingBooking) => {
+    { title: `${coachMode ? "OpenID" : "用户"} / 奖品`, width: coachMode ? 260 : 190, render: (_: unknown, row: MarketingBooking) => {
       const participant = state.participations.find(p => p.activityId === activity.id && p.id === row.participationId);
-      return <div className="marketing-summary-cell"><span>{participant ? participantDisplayName(participant, members) : "用户待核对"}</span><small>{state.awards.find(award => award.id === row.awardId)?.prizeName ?? "奖品待核对"}</small></div>;
+      const identity = participant && participantIdentity(participant, members);
+      return <div className="marketing-summary-cell"><span>{coachMode ? identity?.openId || participant?.identities[0]?.openid || "—" : participant ? participantDisplayName(participant, members) : "用户待核对"}</span><small>{state.awards.find(award => award.id === row.awardId)?.prizeName ?? "奖品待核对"}</small></div>;
     } },
     { title: "中奖时间", width: 140, render: (_: unknown, row: MarketingBooking) => displayDate(state.awards.find(award => award.id === row.awardId)?.wonAt) },
     { title: "兑奖时段", width: 155, render: (_: unknown, row: MarketingBooking) => { const slot = pickupSlotForBooking(activity, row); return slot ? <DateRange start={slot.startAt} end={slot.endAt} /> : "时段待核对"; } },

@@ -179,7 +179,7 @@ export function MarketingDetail({ activity, requestedTab, requestedSecondaryTab 
     ["参与方式", activity.bookingEnabled ? "预约参与" : "直接参与"],
     ["启用抽奖", activity.lotteryEnabled ? "是" : "否"],
   ];
-  return <><div className="marketing-detail"><DetailWorkspace eyebrow="营销活动" title={activity.name} backRoute="marketing"
+  return <><div className={`marketing-detail ${coachMode ? "coach-marketing-detail" : ""}`}><DetailWorkspace eyebrow="营销活动" title={activity.name} backRoute="marketing"
     tags={<>
       <LifecycleTag activity={activity} now={now} /><span>{brandLabels[activity.brand]} · {activity.mode === "OFFLINE" ? "线下活动" : "线上活动"} · {activity.bookingEnabled ? "预约参与" : "直接参与"}</span>
       <span className="marketing-record-metadata"><span><IconUser aria-hidden /> 创建人：{creator}</span>{activity.mode === "OFFLINE" && <span><IconMapPin aria-hidden /> {activity.location || "未设置地点"}</span>}<span><IconCalendar aria-hidden /> {displayDateRange(activity.startAt, activity.endAt).compact}</span></span>
@@ -197,7 +197,7 @@ export function MarketingDetail({ activity, requestedTab, requestedSecondaryTab 
         ]} /></div>}
         <div className="marketing-rail-rule"><h3>活动规则</h3><ActivityRuleContent activity={activity} /></div>
       </SideSection>
-      {activity.lotteryEnabled && <SideSection title="抽奖设置" onEdit={() => setConfiguration("lottery")} editDisabled={!access.manage}><DataList rows={[
+      {activity.lotteryEnabled && !coachMode && <SideSection title="抽奖设置" onEdit={() => setConfiguration("lottery")} editDisabled={!access.manage}><DataList rows={[
         ["抽奖方式", lotteryScope(activity) === "ACTIVITY" ? "按活动抽奖" : "按场次抽奖"],
         ["抽奖时间", displayDateRange(activity.lotteryStart, activity.lotteryEnd).compact],
         ["完成后发放次数", String(activity.grantCount)], ["累计抽奖上限", String(activity.drawLimit)],
