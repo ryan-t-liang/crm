@@ -111,10 +111,11 @@ function PrizeSettings({ activity, onCreate, coachMode = false }: { activity: Ma
   const [newSchedule, setNewSchedule] = useState<MarketingPickupSchedule>();
   const rulesLocked = Boolean(activity.publishedAt || hasActivityBusinessData(state, activity.id));
   const codePrize = activity.pool.find((item) => item.id === codesId);
-  const prizeIds = new Map(activity.pool.map((item, index) => [item.id, index + 1]));
+  const visiblePrizes = coachMode ? activity.pool.filter((item) => item.prizeType === "PHYSICAL") : activity.pool;
+  const prizeIds = new Map(visiblePrizes.map((item, index) => [item.id, index + 1]));
   return <>{feedback}
     <Panel title="奖品" actions={<Button size="small" icon={<IconPlus />} disabled={!access.manage} onClick={onCreate}>创建奖品</Button>}>
-      <Table rowKey="id" dataSource={activity.pool} pagination={{ pageSize: 10 }} scroll={{ x: coachMode ? 1240 : 990 }} empty={<EmptyBlock title="暂无奖品" description={coachMode ? "创建奖品并设置领取方式与中奖概率。" : lotteryScope(activity) === "SESSION" ? "创建奖品后，在下方配置各场次的中奖概率和数量。" : "创建奖品并设置中奖概率。"} />} columns={[
+      <Table rowKey="id" dataSource={visiblePrizes} pagination={{ pageSize: 10 }} scroll={{ x: coachMode ? 1240 : 990 }} empty={<EmptyBlock title="暂无奖品" description={coachMode ? "创建实体奖品并设置领取方式与有效期。" : lotteryScope(activity) === "SESSION" ? "创建奖品后，在下方配置各场次的中奖概率和数量。" : "创建奖品并设置中奖概率。"} />} columns={[
         ...(coachMode ? [
           { title: "奖品ID", width: 90, render: (_: unknown, item: ActivityPrize) => prizeIds.get(item.id) },
           { title: "奖品名称", width: 180, dataIndex: "name" },
@@ -136,14 +137,10 @@ function PrizeSettings({ activity, onCreate, coachMode = false }: { activity: Ma
           return <div className="marketing-summary-cell">{needsReservation(item) && (schedule ? <Button theme="borderless" size="small" onClick={() => setScheduleId(schedule.id)}>{schedule.name}</Button> : <span>兑奖预约设置待配置</span>)}<DateRange start={item.claimStart} end={item.claimEnd} /></div>;
           } },
         ]),
-        { title: "操作", width: coachMode ? 330 : 130, fixed: "right", render: (_: unknown, item: ActivityPrize) => <div className="row-actions">
+        { title: "操作", width: coachMode ? 150 : 130, fixed: "right", render: (_: unknown, item: ActivityPrize) => <div className="row-actions">
           {coachMode && <Button theme="borderless" size="small" onClick={() => setViewing(item)}>查看</Button>}
           <Button theme="borderless" size="small" disabled={!access.manage} onClick={() => { setNewSchedule(undefined); setEditing(structuredClone(item)); }}>编辑</Button>
-          {coachMode ? <>
-            {item.method === "REDEMPTION_CODE" && <><Button theme="borderless" size="small" disabled={!access.manage} onClick={() => setImportId(item.id)}>导入兑换码</Button><Button theme="borderless" size="small" disabled={!access.manage} onClick={() => setCodesId(item.id)}>查看兑换码</Button></>}
-            {rulesLocked && prizeQuantityMode(item) === "LIMITED" && <Button theme="borderless" size="small" disabled={!access.manage} onClick={() => setExtra({ itemId: item.id, count: 1 })}>增加库存</Button>}
-            {!rulesLocked && <Button theme="borderless" type="danger" size="small" disabled={!access.manage} onClick={() => run({ type: "DELETE_ACTIVITY_PRIZE", activityId: activity.id, poolItemId: item.id })}>删除</Button>}
-          </> : <MarketingMenu menu={[
+          {!coachMode && <MarketingMenu menu={[
           ...(item.method === "REDEMPTION_CODE" ? [{ node: "item" as const, name: "导入兑换码", disabled: !access.manage, onClick: () => setImportId(item.id) }, { node: "item" as const, name: "查看兑换码", disabled: !access.manage, onClick: () => setCodesId(item.id) }] : []),
           ...(rulesLocked && prizeQuantityMode(item) === "LIMITED" ? [{ node: "item" as const, name: "增加可发放数量", disabled: !access.manage, onClick: () => setExtra({ itemId: item.id, count: 1 }) }] : []),
           ...(!coachMode && needsReservation(item) && pickupScheduleForPrize(activity, item) ? [{ node: "item" as const, name: "管理兑奖预约设置", onClick: () => setScheduleId(pickupScheduleForPrize(activity, item)!.id) }] : []),
@@ -153,12 +150,12 @@ function PrizeSettings({ activity, onCreate, coachMode = false }: { activity: Ma
       ]} />
     </Panel>
     {!coachMode && activity.lotteryEnabled && lotteryScope(activity) === "SESSION" && <SessionPools activity={activity} />}
-    {editing && <FormSideSheet visible className={`marketing-prize-editor ${coachMode ? "coach-marketing-sheet" : ""}`} title="编辑奖品" width={720} okText="保存" cancelText="取消" okButtonProps={{ disabled: !access.manage }} onCancel={() => setEditing(null)} onOk={() => { if (!access.manage) return; if (run({ type: "SAVE_ACTIVITY_PRIZE", activityId: activity.id, prize: editing, newPickupSchedule: newSchedule }).ok) setEditing(null); }}>{feedback}
+    {editing && <FormSideSheet visible className={`marketing-prize-editor ${coachMode ? "coach-marketing-sheet" : ""}`} title="编辑奖品" width={720} okText="保存" cancelText="取消" okButtonProps={{ disabled: !access.manage }} onCancel={() => setEditing(null)} onOk={() => { if (!access.manage) return; if (run({ type: "SAVE_ACTIVITY_PRIZE", activityId: activity.id, prize: editing, newPickupSchedule: newSchedule, allowHistoricalEdit: coachMode }).ok) setEditing(null); }}>{feedback}
       {coachMode ? <TextField label="奖品ID" value={String(prizeIds.get(editing.id))} onChange={() => undefined} disabled /> : <DefinitionGrid rows={[
       ["可继续中奖", winnable(state, activity.id, editing, now)], ["已领取 / 发放", quota(state, activity.id, editing).issued],
       ...(needsReservation(editing) ? [["待预约权益", fulfillmentCapacity(state, activity.id, editing, now).unreservedPromises], ["预约名额缺口", fulfillmentCapacity(state, activity.id, editing, now).shortfall]] as Array<[string, ReactNode]> : []),
       ...(editing.method === "REDEMPTION_CODE" ? [["兑换码：导入 / 分配 / 剩余", `${codeInventory(editing).imported} / ${codeInventory(editing).assigned} / ${codeInventory(editing).remaining}`]] as Array<[string, ReactNode]> : []),
-      ]} />}<PrizeFields prize={editing} onChange={setEditing} newSchedule={newSchedule} onNewSchedule={setNewSchedule} quantityLocked={rulesLocked} locked={state.awards.some(row => row.activityId === activity.id && row.poolItemId === editing.id)} /></FormSideSheet>}
+      ]} />}<PrizeFields prize={editing} onChange={setEditing} newSchedule={newSchedule} onNewSchedule={setNewSchedule} quantityLocked={coachMode ? false : rulesLocked} locked={coachMode ? false : state.awards.some(row => row.activityId === activity.id && row.poolItemId === editing.id)} /></FormSideSheet>}
     <SideSheet visible={Boolean(viewing)} closeOnEsc className={coachMode ? "coach-marketing-sheet" : undefined} title="奖品详情" width={Math.min(620, window.innerWidth - 24)} onCancel={() => setViewing(null)} footer={<Button onClick={() => setViewing(null)}>关闭</Button>}>
       {viewing && <DataList rows={[["奖品ID", String(prizeIds.get(viewing.id))], ["奖品名称", viewing.name], ["奖品类型", prizeTypeLabels[viewing.prizeType]], ["领取方式", prizeReceivingLabel(viewing)], ["总库存", prizeQuantityMode(viewing) === "UNLIMITED" ? "不限量" : String(viewing.quantityLimit ?? viewing.quota)], ["有效期", displayDateRange(viewing.claimStart, viewing.claimEnd).compact]]} />}
     </SideSheet>

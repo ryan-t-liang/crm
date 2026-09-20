@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { useCrm } from "./crm-store";
 import { useMemberOperations } from "./member-operations-store";
 import { createMarketingDemoState } from "@/mock/marketing-demo-data";
-import { appendMarketingShowcase } from "@/mock/marketing-showcase-data";
+import { appendMarketingShowcase, makeMarketingShowcasePhysicalOnly } from "@/mock/marketing-showcase-data";
 import { executeMarketing, marketingPermissions, type MarketingCommand, type MarketingResult } from "@/features/marketing/marketing-model";
 import type { MarketingState } from "@/types/marketing";
 import { decodeMarketing, MARKETING_STORAGE_KEY, MARKETING_V1_BACKUP_KEY, saveMarketing, type DecodedMarketing } from "@/features/marketing/marketing-storage";
@@ -22,7 +22,8 @@ export function MarketingProvider({ children }: { children: ReactNode }) {
       const decoded = value !== null ? decodeMarketing(value) : { state: createMarketingDemoState(members, Date.now()) };
       const access = marketingPermissions(getCurrentActor());
       if (!decoded.state || decoded.issue || !access.manage || !access.brands.length) return decoded;
-      const next = appendMarketingShowcase(decoded.state, access.brands[0], Date.now());
+      const appended = appendMarketingShowcase(decoded.state, access.brands[0], Date.now());
+      const next = isCoachPrototype() ? makeMarketingShowcasePhysicalOnly(appended) : appended;
       if (next === decoded.state) return decoded;
       const verified = decodeMarketing(JSON.stringify(next));
       if (!verified.state) return { ...decoded, issue: "新增演示活动校验失败，原数据未改动。" };
@@ -60,7 +61,7 @@ export function MarketingProvider({ children }: { children: ReactNode }) {
     }
     return result;
   };
-  const reset = () => { const access = marketingPermissions(getCurrentActor()); if (!access.manage) return; const seed = createMarketingDemoState(membersRef.current, Date.now()); const next = access.brands.length ? appendMarketingShowcase(seed, access.brands[0], Date.now()) : seed; try { scopedStorage.setItem(MARKETING_STORAGE_KEY, JSON.stringify(next)); stateRef.current = next; migrationRef.current = undefined; issueRef.current = ""; setState(next); setIssue(""); } catch { setIssue("重置保存失败，旧数据未被删除。"); } };
+  const reset = () => { const access = marketingPermissions(getCurrentActor()); if (!access.manage) return; const seed = createMarketingDemoState(membersRef.current, Date.now()); const appended = access.brands.length ? appendMarketingShowcase(seed, access.brands[0], Date.now()) : seed; const next = isCoachPrototype() ? makeMarketingShowcasePhysicalOnly(appended) : appended; try { scopedStorage.setItem(MARKETING_STORAGE_KEY, JSON.stringify(next)); stateRef.current = next; migrationRef.current = undefined; issueRef.current = ""; setState(next); setIssue(""); } catch { setIssue("重置保存失败，旧数据未被删除。"); } };
   return <Context.Provider value={{ state, issue, act, reset }}>{children}</Context.Provider>;
 }
 export function useMarketing() { const value = useContext(Context); if (!value) throw new Error("MarketingProvider missing"); return value; }

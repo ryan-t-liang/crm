@@ -28,7 +28,7 @@ describe("redemption settings iteration", () => {
     expect(f.state.bookings.filter(row => row.activityId === f.activity.id && row.kind === "ACTIVITY")).toHaveLength(200);
     expect(f.state.draws.filter(row => row.activityId === f.activity.id)).toHaveLength(200);
     expect(activityDrawRecords(f.state, f.activity, now)).toHaveLength(200);
-    expect(f.activity.pool.map(row => [row.name, row.prizeType, row.fulfillmentMode])).toEqual([["咖啡券", "PHYSICAL", "DIRECT"], ["DIY皮牌", "PHYSICAL", "RESERVATION"], ["京东购物卡", "VIRTUAL", "DIRECT"]]);
+    expect(f.activity.pool.map(row => [row.name, row.prizeType, row.fulfillmentMode])).toEqual([["咖啡券", "PHYSICAL", "DIRECT"], ["DIY皮牌", "PHYSICAL", "RESERVATION"]]);
     expect(decodeMarketing(JSON.stringify(f.state)).issue).toBeUndefined();
     f.activity.name = "用户改名";
     expect(appendMarketingShowcase(f.state, "gp", now + 1000)).toBe(f.state);
@@ -40,7 +40,7 @@ describe("redemption settings iteration", () => {
     const before = structuredClone(f.state.draws);
     expect(f.draw().ok).toBe(true);
     expect(f.state.draws.at(-1)?.poolItemId).toBe(f.activity.pool[0].id);
-    expect(f.state.draws.at(-1)?.probabilitySnapshot?.map(row => row.configuredProbability)).toEqual([30, 30, 20]);
+    expect(f.state.draws.at(-1)?.probabilitySnapshot?.map(row => row.configuredProbability)).toEqual([30, 30]);
     expect(f.state.draws.slice(0, before.length)).toEqual(before);
     expect(decodeMarketing(JSON.stringify(f.state)).issue).toBeUndefined();
   });
@@ -52,7 +52,7 @@ describe("redemption settings iteration", () => {
     const current = f.state.activities.find(row => row.id === f.activity.id)!;
     current.sessionPrizes = prizes;
     expect(f.draw().ok).toBe(true);
-    expect(f.state.draws.at(-1)?.probabilitySnapshot?.map(row => row.configuredProbability)).toEqual([30, 30, 20]);
+    expect(f.state.draws.at(-1)?.probabilitySnapshot?.map(row => row.configuredProbability)).toEqual([30, 30]);
   });
   it("activity probability edits affect future draws only, reject over 100%, and preserve history", () => {
     const f = fixture(), before = structuredClone(f.state.draws), explicit = structuredClone(f.activity.sessionPrizes);
@@ -60,7 +60,7 @@ describe("redemption settings iteration", () => {
     expect(f.run({ type: "SAVE_ACTIVITY_PRIZE", activityId: f.activity.id, prize: { ...f.activity.pool[0], probability: 0, defaultProbability: 0 } }).ok).toBe(true);
     expect(f.draw().ok).toBe(true);
     expect(f.state.draws.at(-1)?.poolItemId).toBe(f.activity.pool[1].id);
-    expect(f.state.draws.at(-1)?.probabilitySnapshot?.map(row => row.configuredProbability)).toEqual([0, 30, 20]);
+    expect(f.state.draws.at(-1)?.probabilitySnapshot?.map(row => row.configuredProbability)).toEqual([0, 30]);
     expect(f.state.draws.at(-1)?.drawConfigVersion).toBe(2);
     expect(f.state.draws.slice(0, before.length)).toEqual(before);
     expect(f.state.activities.find(row => row.id === f.activity.id)?.sessionPrizes).toEqual(explicit);

@@ -34,7 +34,7 @@ export function PrizeFields({ prize, onChange, locked = false, quantityLocked = 
   const saved = activity?.pool.find(item => item.id === prize.id);
   const schedules = activity ? pickupSchedules(activity) : [];
   const selectedSchedule = activity && pickupScheduleForPrize(activity, prize);
-  const scheduleLocked = Boolean(activity && saved && state.bookings.some(row => row.activityId === activity.id && row.kind === "PRIZE" && row.poolItemId === prize.id));
+  const scheduleLocked = Boolean(!coachMode && activity && saved && state.bookings.some(row => row.activityId === activity.id && row.kind === "PRIZE" && row.poolItemId === prize.id));
   const inventory = codeInventory(prize), fulfillment = needsReservation(prize) ? "RESERVATION" : "DIRECT";
   const changeType = (type: string) => {
     const virtual = type === "VIRTUAL";
@@ -61,7 +61,7 @@ export function PrizeFields({ prize, onChange, locked = false, quantityLocked = 
   const changeDefaultProbability = (value: number) => onChange({ ...prize, defaultProbability: value, probability: value });
   if (coachMode) return <div className="form-grid marketing-form-grid">
     <div className="marketing-field-wide"><TextField label="奖品名称" value={prize.name} onChange={(value) => update("name", value)} /></div>
-    <SelectField disabled={locked} label="奖品类型" value={prize.prizeType} list={options({ ...(prize.prizeType === "UNKNOWN" ? { UNKNOWN: "类型待确认" } : {}), PHYSICAL: prizeTypeLabels.PHYSICAL, VIRTUAL: prizeTypeLabels.VIRTUAL })} onChange={changeType} />
+    <SelectField disabled={locked} label="奖品类型" value={prize.prizeType} list={options({ PHYSICAL: prizeTypeLabels.PHYSICAL })} onChange={changeType} />
     <SelectField disabled={locked || scheduleLocked} label="领取方式" value={fulfillment} list={options(prize.prizeType === "VIRTUAL" ? { DIRECT: "直接发放", RESERVATION: "预约领取" } : { DIRECT: "直接领取", RESERVATION: "预约领取" })} onChange={changeFulfillment} />
     <NumberField disabled={locked || quantityLocked} label="总库存" value={prizeQuantityLimit(prize) ?? 0} onChange={changeQuantityLimit} />
     <TimeField disabled={locked} label="有效期开始" value={prize.claimStart} onChange={(value) => update("claimStart", value)} />

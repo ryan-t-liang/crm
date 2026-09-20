@@ -20,7 +20,7 @@ export type MarketingCommand =
   | { type: "STATUS"; activityId: string; status: MarketingStatus; allowRestart?: boolean }
   | { type: "COPY_ACTIVITY"; activityId: string }
   | { type: "DELETE_ACTIVITY"; activityId: string }
-  | { type: "SAVE_ACTIVITY_PRIZE"; activityId: string; prize: ActivityPrize; newPickupSchedule?: MarketingPickupSchedule }
+  | { type: "SAVE_ACTIVITY_PRIZE"; activityId: string; prize: ActivityPrize; newPickupSchedule?: MarketingPickupSchedule; allowHistoricalEdit?: boolean }
   | { type: "DELETE_ACTIVITY_PRIZE"; activityId: string; poolItemId: string }
   | { type: "IMPORT_CODES"; activityId: string; poolItemId: string; codes: string[] }
   | { type: "DELETE_CODES"; activityId: string; poolItemId: string; codes: string[] }
@@ -753,9 +753,9 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     if (old && !assignedCodesPreserved([old], [item])) return reject("已分配兑换码永久保留，不允许删除或修改分配状态");
     if (old) {
       const booked = state.bookings.some(row => row.activityId === activity.id && row.poolItemId === old.id && row.kind === "PRIZE");
-      if (booked && pickupScheduleForPrize(activity, old)?.id !== pickupScheduleForPrize(activity, item)?.id) return reject("该奖品已有领奖预约记录，不能切换兑奖预约设置。");
-      if (won && ["prizeType", "method", "fulfillmentMode", "claimStart", "claimEnd", "location", "quantityMode", "link", "voucherName", "voucherDescription"].some(key => normalizedPrizeContract(old)[key as keyof ActivityPrize] !== item[key as keyof ActivityPrize])) return reject("已有中奖权益的奖品类型、领取规则和有效期不能直接修改，请创建新奖品。");
-      if ((won || activity.publishedAt) && prizeQuantityLimit(old) !== limit) return reject("已发布奖品请使用增加可发放数量；历史数量与权益保留。");
+      if (!command.allowHistoricalEdit && booked && pickupScheduleForPrize(activity, old)?.id !== pickupScheduleForPrize(activity, item)?.id) return reject("该奖品已有领奖预约记录，不能切换兑奖预约设置。");
+      if (!command.allowHistoricalEdit && won && ["prizeType", "method", "fulfillmentMode", "claimStart", "claimEnd", "location", "quantityMode", "link", "voucherName", "voucherDescription"].some(key => normalizedPrizeContract(old)[key as keyof ActivityPrize] !== item[key as keyof ActivityPrize])) return reject("已有中奖权益的奖品类型、领取规则和有效期不能直接修改，请创建新奖品。");
+      if (!command.allowHistoricalEdit && (won || activity.publishedAt) && prizeQuantityLimit(old) !== limit) return reject("已发布奖品请使用增加可发放数量；历史数量与权益保留。");
       if (JSON.stringify(old.slots) !== JSON.stringify(item.slots)) return reject("兑奖时段请通过兑奖预约设置专用操作维护。");
     } else if (item.slots.length) return reject("新奖品不能创建私有领奖时段，请关联兑奖预约设置。");
     if (lotteryScope(activity) === "ACTIVITY" && activity.pool.filter(prize => prize.id !== item.id).reduce((sum, prize) => sum + prizeDefaultProbability(prize), prizeDefaultProbability(item)) > 100) return reject("中奖概率合计不能超过100%。");

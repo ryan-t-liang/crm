@@ -3,6 +3,32 @@ import type { SowindBrandCode } from "@/types/member-operations";
 import { createActivityPrize, createMarketingActivity } from "./marketing-demo-data";
 
 export const MARKETING_SHOWCASE_ID = "activity-demo-redemption-200-v1";
+const MARKETING_SHOWCASE_PHYSICAL_ONLY_AUDIT_ID = `${MARKETING_SHOWCASE_ID}:physical-only-v1`;
+
+/** Coach-only forward migration: remove the no-longer-used virtual prize while
+ * retaining all 200 draw records. Draws that selected it become no-win rows. */
+export function makeMarketingShowcasePhysicalOnly(source: MarketingState): MarketingState {
+  if (source.audits.some((row) => row.id === MARKETING_SHOWCASE_PHYSICAL_ONLY_AUDIT_ID)) return source;
+  const existing = source.activities.find((row) => row.id === MARKETING_SHOWCASE_ID);
+  if (!existing) return source;
+  const state = structuredClone(source), activity = state.activities.find((row) => row.id === MARKETING_SHOWCASE_ID)!;
+  const virtualPrizeIds = new Set(activity.pool.filter((prize) => prize.prizeType === "VIRTUAL").map((prize) => prize.id));
+  const removedAwardIds = new Set(state.awards.filter((award) => award.activityId === activity.id && virtualPrizeIds.has(award.poolItemId)).map((award) => award.id));
+  activity.pool = activity.pool.filter((prize) => !virtualPrizeIds.has(prize.id));
+  activity.sessionPrizes = (activity.sessionPrizes ?? []).filter((row) => !virtualPrizeIds.has(row.prizeId));
+  activity.ruleContent = "完成活动后获得2次抽奖机会。咖啡券现场核销，DIY皮牌需预约兑奖时段。";
+  state.draws = state.draws.map((draw) => draw.activityId !== activity.id ? draw : {
+    ...draw,
+    poolItemId: draw.poolItemId && virtualPrizeIds.has(draw.poolItemId) ? null : draw.poolItemId,
+    probabilitySnapshot: draw.probabilitySnapshot?.filter((row) => !virtualPrizeIds.has(row.prizeId)),
+  });
+  state.awards = state.awards.filter((award) => !removedAwardIds.has(award.id));
+  state.bookings = state.bookings.filter((booking) => !booking.awardId || !removedAwardIds.has(booking.awardId));
+  state.redemptions = state.redemptions.filter((redemption) => !redemption.awardId || !removedAwardIds.has(redemption.awardId));
+  state.revision += 1;
+  state.audits.push({ id: MARKETING_SHOWCASE_PHYSICAL_ONLY_AUDIT_ID, activityId: activity.id, action: "DEMO_SEED", targetId: activity.id, actorId: "prototype", occurredAt: new Date().toISOString(), result: "SUCCESS", detail: "Coach 原型仅保留实体奖品；抽奖记录总数保持不变。" });
+  return state;
+}
 
 /** User-requested, versioned addition of ONE independent fictional activity.
  * Never replace, reseed, merge into, or change any existing activity/record. */
@@ -15,21 +41,21 @@ export function appendMarketingShowcase(source: MarketingState, brand: SowindBra
     startAt: at(-120), endAt: at(7 * 1440), bookingStart: at(-2880), bookingEnd: at(6 * 1440),
     lotteryStart: at(-120), lotteryEnd: at(7 * 1440), noWinProbability: 20,
     description: "独立虚构活动，预约和抽奖各200条；不涉及真实客户或奖品发放。",
-    ruleContent: "完成活动后获得2次抽奖机会。咖啡券现场核销，DIY皮牌需预约兑奖时段，京东购物卡为虚构兑换码。" };
+    ruleContent: "完成活动后获得2次抽奖机会。咖啡券现场核销，DIY皮牌需预约兑奖时段。" };
   const session = { id: `${id}:session`, label: "品牌体验", location: activity.location, startAt: at(-120), endAt: at(1440), bookingClosesAt: at(-121), checkinStart: at(-150), checkinEnd: at(1440), capacity: 250, createdAt: at(-2880) };
   const future = { ...session, id: `${id}:future`, label: "品牌体验", startAt: at(2 * 1440), endAt: at(2 * 1440 + 120), bookingClosesAt: at(2 * 1440 - 10), checkinStart: at(2 * 1440 - 15), checkinEnd: at(2 * 1440 + 120), capacity: 50, createdAt: at(-2820) };
   activity.slots = [session, future];
   const pickupId = `${id}:pickup`, pickupSlot = { ...session, id: `${id}:pickup-slot`, label: "兑奖时段", capacity: 100, bookingClosesAt: at(1440) };
   activity.pickupSchedules = [{ id: pickupId, activityId: id, name: "DIY皮牌兑奖预约", location: activity.location, startAt: at(-120), endAt: at(8 * 1440), slots: [pickupSlot, { ...pickupSlot, id: `${id}:pickup-next`, startAt: at(1440 + 60), endAt: at(1440 + 180), bookingClosesAt: at(1440 + 180), checkinStart: at(1440 + 60), checkinEnd: at(1440 + 180) }] }];
-  activity.pool = ["咖啡券", "DIY皮牌", "京东购物卡"].map((name, index) => ({ ...createActivityPrize(id, now), id: `${id}:prize-${index}`, name,
-    description: "虚构演示奖品，不可真实兑换。", label: ["咖啡礼遇", "手作礼遇", "购物礼遇"][index],
-    prizeType: index === 2 ? "VIRTUAL" as const : "PHYSICAL" as const,
-    method: index === 2 ? "REDEMPTION_CODE" as const : index === 1 ? "PICKUP" as const : "DIRECT" as const,
+  activity.pool = ["咖啡券", "DIY皮牌"].map((name, index) => ({ ...createActivityPrize(id, now), id: `${id}:prize-${index}`, name,
+    description: "虚构演示奖品，不可真实兑换。", label: ["咖啡礼遇", "手作礼遇"][index],
+    prizeType: "PHYSICAL" as const,
+    method: index === 1 ? "PICKUP" as const : "DIRECT" as const,
     fulfillmentMode: index === 1 ? "RESERVATION" as const : "DIRECT" as const,
-    location: index === 2 ? "" : activity.location, quantityLimit: 200, quota: 200,
-    probability: [30, 30, 20][index], defaultProbability: [30, 30, 20][index],
+    location: activity.location, quantityLimit: 200, quota: 200,
+    probability: [30, 30][index], defaultProbability: [30, 30][index],
     claimStart: at(-120), claimEnd: at(8 * 1440), pickupScheduleId: index === 1 ? pickupId : undefined,
-    codes: index === 2 ? Array.from({ length: 200 }, (_, n) => ({ code: `DEMO-JD-${id}-${n + 1}` })) : [],
+    codes: [],
   }));
   activity.lotteryScope = "SESSION";
   activity.sessionPrizes = activity.slots.flatMap((slot, slotIndex) => activity.pool.map((prize) => ({
@@ -54,7 +80,7 @@ export function appendMarketingShowcase(source: MarketingState, brand: SowindBra
     if (!completed) continue;
     state.chances.push({ id: `${prefix}:chance`, activityId: id, participationId: participant.id, count: 2, grantedAt: at(-55), ruleVersion: 1 });
     for (const type of ["CHECKIN", "COMPLETE"] as const) state.redemptions.push({ id: `${prefix}:${type}`, activityId: id, participationId: participant.id, targetId: participant.id, type, credential: participant.credential, occurredAt: type === "CHECKIN" ? at(-60) : at(-55), actorId: "prototype", result: "SUCCESS", source: "DEMO_SEED", detail: "虚构演示记录" });
-    const prizeIndex = index % 10 < 3 ? 0 : index % 10 < 6 ? 1 : index % 10 < 8 ? 2 : -1;
+    const prizeIndex = index % 10 < 3 ? 0 : index % 10 < 6 ? 1 : -1;
     const prize = activity.pool[prizeIndex], drawId = `${prefix}:draw`, awardId = `${prefix}:award`;
     const snapshot = activity.pool.map(item => ({ prizeId: item.id, prizeName: item.name, configuredProbability: item.probability, effectiveProbability: item.probability, quantityMode: "LIMITED" as const,
       sessionRemaining: 180 - state.awards.filter(award => award.activityId === id && award.poolItemId === item.id).length }));
