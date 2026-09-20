@@ -79,7 +79,9 @@ export function ParticipantTaskData({ activity, dataState }: { activity: Marketi
   const openIdFor = (participant: MarketingParticipation) => identityFor(participant).openId || participant.identities[0]?.openid || "";
   const displayName = (participant: MarketingParticipation) => participantDisplayName(participant, members);
   const maskedName = (participant: MarketingParticipation) => { const value = displayName(participant); return value.length <= 1 ? "*" : value.slice(0, 1) + "*".repeat(Math.min(3, value.length - 1)); };
-  const progress = (participant: MarketingParticipation) => <div className={`marketing-clue-progress ${coachMode ? "coach-clue-progress" : ""}`}>{participantTaskClues(participant).map((clue) => <span key={clue.id} data-complete={clue.completed}>{clue.label}：{clue.completed ? "已完成" : "未完成"}</span>)}</div>;
+  const progress = (participant: MarketingParticipation) => <div className={`marketing-clue-progress ${coachMode ? "coach-clue-progress" : ""}`}>{participantTaskClues(participant).map((clue) => coachMode
+    ? <Tag key={clue.id} size="small" color={clue.completed ? "green" : "grey"}>{clue.label}：{clue.completed ? "已完成" : "未完成"}</Tag>
+    : <span key={clue.id} data-complete={clue.completed}>{clue.label}：{clue.completed ? "已完成" : "未完成"}</span>)}</div>;
   const columns = coachMode ? [
     { title: "姓名", width: 170, render: (_: unknown, participant: MarketingParticipation) => maskedName(participant) },
     { title: "完成情况", width: 480, render: (_: unknown, participant: MarketingParticipation) => progress(participant) },
