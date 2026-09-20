@@ -115,14 +115,15 @@ export function ActivityEditor({ initial, onClose }: { initial: MarketingActivit
     if (!form.name.trim() || !access.brands.includes(form.brand)) { setError("填写活动名称并选择授权品牌。"); return; }
     if (!Number.isFinite(parseCreatedAt(form.startAt)) || !Number.isFinite(parseCreatedAt(form.endAt)) || parseCreatedAt(form.endAt) <= parseCreatedAt(form.startAt)) { setError("填写有效的开始、结束时间，结束时间须晚于开始时间。"); return; }
     if (form.mode === "OFFLINE" && !form.location.trim()) { setError("填写线下活动场地。"); return; }
+    const candidate = simpleCreate ? { ...form, bookingEnabled: true, bookingStart: form.startAt, bookingEnd: form.endAt, lotteryEnabled: true, lotteryScope: "SESSION" as const, lotteryStart: form.startAt, lotteryEnd: form.endAt } : form;
     if (!existing) {
-      const setupErrors = publishChecks(form, state, access.brands).filter(check => check.key === "basic" || check.key === "booking").flatMap(check => check.errors);
+      const setupErrors = publishChecks(candidate, state, access.brands).filter(check => check.key === "basic" || (!simpleCreate && check.key === "booking")).flatMap(check => check.errors);
       if (setupErrors.length) { setError(setupErrors.join("；")); return; }
     }
-    const result = run({ type: "SAVE_ACTIVITY", activity: form, section: "information" });
+    const result = run({ type: "SAVE_ACTIVITY", activity: candidate, section: "information" });
     if (!result.ok) return;
     onClose();
-    if (!existing) navigate(`marketing/activity/${form.id}/${form.lotteryEnabled ? "prizes" : "bookings"}`);
+    if (!existing) navigate(`marketing/activity/${form.id}/${simpleCreate ? "sessions" : form.lotteryEnabled ? "prizes" : "bookings"}`);
   };
   return <FormSideSheet visible className="marketing-activity-editor" width={820} title={existing ? "活动信息设置" : "新建活动"} onCancel={onClose}
     okText={existing ? "保存" : simpleCreate ? "创建活动" : form.lotteryEnabled ? "创建并设置奖品" : "创建活动"} cancelText="取消" onOk={save} okButtonProps={{ disabled: !access.manage || !access.brands.includes(initial.brand) }}>

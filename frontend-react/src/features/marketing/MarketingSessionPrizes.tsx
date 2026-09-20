@@ -16,7 +16,7 @@ import {
   sessionWonCount,
   slotOccupancy,
 } from "./marketing-model";
-import { DefinitionGrid, displayDateRange, useAction } from "./MarketingUi";
+import { DefinitionGrid, displayDateRange, SlotFields, useAction } from "./MarketingUi";
 
 export type MarketingSessionLifecycle = "UPCOMING" | "ONGOING" | "ENDED";
 
@@ -113,15 +113,17 @@ function SessionPrizeQuantityModal({ activity, session, prize, visible, onClose 
   </Modal>;
 }
 
-export function SessionPrizeDrawer({ activity, session, onClose }: { activity: MarketingActivity; session: MarketingSlot; onClose: () => void }) {
+export function SessionPrizeDrawer({ activity, session, onClose, editSessionDetails = false }: { activity: MarketingActivity; session: MarketingSlot; onClose: () => void; editSessionDetails?: boolean }) {
   const { state } = useMarketing(), { currentUser } = useCrm(), { run, feedback } = useAction();
   const access = marketingPermissions(currentUser), now = Date.now();
   const currentActivity = state.activities.find((row) => row.id === activity.id) ?? activity;
   const currentSession = currentActivity.slots.find((row) => row.id === session.id) ?? session;
+  const [sessionDraft, setSessionDraft] = useState<MarketingSlot>(() => structuredClone(currentSession));
   const [rows, setRows] = useState<SessionPrize[]>(() => initialSessionPrizes(currentActivity, currentSession, state));
   const [sourceSessionId, setSourceSessionId] = useState(""), [copyOpen, setCopyOpen] = useState(false), [adjustPrizeId, setAdjustPrizeId] = useState(""), [localError, setLocalError] = useState("");
   const lifecycle = marketingSessionLifecycle(currentActivity, currentSession, now);
-  const readOnly = !access.manage || lifecycle === "ENDED" || lotteryScope(currentActivity) !== "SESSION";
+  const sessionPrizeMode = currentActivity.lotteryEnabled && lotteryScope(currentActivity) === "SESSION";
+  const readOnly = !access.manage || lifecycle === "ENDED" || !sessionPrizeMode;
   const sessionHasDraws = state.draws.some((draw) => draw.activityId === currentActivity.id && draw.sessionId === currentSession.id);
   const savedRows = sessionPrizeConfigurations(currentActivity, currentSession.id);
   const probabilityTotal = rows.filter((row) => row.enabled).reduce((sum, row) => sum + row.probability, 0);
@@ -129,7 +131,7 @@ export function SessionPrizeDrawer({ activity, session, onClose }: { activity: M
   const copySources = currentActivity.slots.filter((row) => row.id !== currentSession.id && sessionPrizeConfigurations(currentActivity, row.id).length > 0);
   const copyDisabled = readOnly || lifecycle !== "UPCOMING" || sessionHasDraws;
   const adjustedPrize = currentActivity.pool.find((row) => row.id === adjustPrizeId);
-  const titleRange = displayDateRange(currentSession.startAt, currentSession.endAt);
+  const titleRange = displayDateRange(sessionDraft.startAt, sessionDraft.endAt);
 
   useEffect(() => {
     setRows(initialSessionPrizes(currentActivity, currentSession, state));
@@ -143,8 +145,15 @@ export function SessionPrizeDrawer({ activity, session, onClose }: { activity: M
   };
   const save = () => {
     if (probabilityTotal > 100) { setLocalError(`当前中奖概率合计为${probabilityTotal}%，请调整至100%以内。`); return; }
-    const result = run({ type: "SAVE_SESSION_PRIZES", activityId: currentActivity.id, sessionId: currentSession.id, prizes: rows });
-    if (result.ok) onClose();
+    if (editSessionDetails) {
+      const sessionResult = run({ type: "SAVE_ACTIVITY_SLOT", activityId: currentActivity.id, slot: sessionDraft });
+      if (!sessionResult.ok) return;
+    }
+    if (sessionPrizeMode) {
+      const prizeResult = run({ type: "SAVE_SESSION_PRIZES", activityId: currentActivity.id, sessionId: sessionDraft.id, prizes: rows });
+      if (!prizeResult.ok) return;
+    }
+    onClose();
   };
   const copy = () => {
     if (!sourceSessionId) { setLocalError("请选择要复制的来源场次。"); return; }
@@ -156,14 +165,16 @@ export function SessionPrizeDrawer({ activity, session, onClose }: { activity: M
   };
 
   return <>
-    <FormSideSheet visible={!copyOpen && !adjustedPrize} className="marketing-session-prize-drawer" width={820} title={`${titleRange.compact} · 场次奖品`} onCancel={onClose} onOk={save}
-      okText="保存本场奖池" cancelText="取消" okButtonProps={{ disabled: readOnly || probabilityTotal > 100 }} footer={readOnly ? <Button onClick={onClose}>关闭</Button> : undefined}>
+    <FormSideSheet visible={!copyOpen && !adjustedPrize} className="marketing-session-prize-drawer" width={820} title={editSessionDetails ? "场次设置" : `${titleRange.compact} · 场次奖品`} onCancel={onClose} onOk={save}
+      okText={editSessionDetails ? "保存场次设置" : "保存本场奖池"} cancelText="取消" okButtonProps={{ disabled: !access.manage || lifecycle === "ENDED" || probabilityTotal > 100 }} footer={!access.manage || lifecycle === "ENDED" ? <Button onClick={onClose}>关闭</Button> : undefined}>
       {feedback}{localError && <Banner type="warning" title={localError} closeIcon={null} />}
-      {readOnly && <Banner type="info" title={lifecycle === "ENDED" ? "活动或场次已结束，奖品配置只读。" : "当前账号没有活动管理权限。"} closeIcon={null} />}
+      {readOnly && <Banner type="info" title={lifecycle === "ENDED" ? "活动或场次已结束，场次设置只读。" : !access.manage ? "当前账号没有活动管理权限。" : "当前活动不是按场次抽奖，不能配置本场奖品。"} closeIcon={null} />}
+      {editSessionDetails && <section className="marketing-form-section"><h2>场次信息</h2><SlotFields slot={sessionDraft} onChange={setSessionDraft} disabled={!access.manage || lifecycle === "ENDED"} /></section>}
+      <section className="marketing-form-section"><h2>本场奖品</h2>
       <div className="marketing-session-context">
         <strong>{titleRange.compact}</strong>
-        <span>{currentSession.location || "—"}</span>
-        <span>预约 {slotOccupancy(state, currentActivity.id, "ACTIVITY", currentSession.id)} / {currentSession.capacity}</span>
+        <span>{sessionDraft.location || "—"}</span>
+        <span>预约 {slotOccupancy(state, currentActivity.id, "ACTIVITY", currentSession.id)} / {sessionDraft.capacity}</span>
       </div>
       <div className="marketing-session-toolbar"><Button theme="borderless" disabled={copyDisabled || !copySources.length} onClick={() => setCopyOpen(true)}>从其他场次复制</Button></div>
       <Table rowKey="id" dataSource={currentActivity.pool} pagination={false} empty="暂无可配置奖品" columns={[
@@ -199,6 +210,7 @@ export function SessionPrizeDrawer({ activity, session, onClose }: { activity: M
       ]} />
       <div className="marketing-probability-summary"><span>中奖概率合计：<strong>{probabilityTotal}%</strong></span><span>未中奖概率：<strong>{noWinProbability}%</strong></span></div>
       {probabilityTotal > 100 && <Banner type="warning" title={`当前中奖概率合计为${probabilityTotal}%，请调整至100%以内。`} closeIcon={null} />}
+      </section>
     </FormSideSheet>
     <Modal visible={copyOpen} maskClosable={false} title="从其他场次复制" width={460} okText="复制配置" cancelText="取消" okButtonProps={{ disabled: !sourceSessionId }} onCancel={() => { setCopyOpen(false); setSourceSessionId(""); setLocalError(""); }} onOk={copy}>
       {feedback}{localError && <Banner type="warning" title={localError} closeIcon={null} />}

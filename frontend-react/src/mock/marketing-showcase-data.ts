@@ -31,9 +31,14 @@ export function appendMarketingShowcase(source: MarketingState, brand: SowindBra
     claimStart: at(-120), claimEnd: at(8 * 1440), pickupScheduleId: index === 1 ? pickupId : undefined,
     codes: index === 2 ? Array.from({ length: 200 }, (_, n) => ({ code: `DEMO-JD-${id}-${n + 1}` })) : [],
   }));
-  // First session inherits activity defaults; the future session demonstrates
-  // an explicit whole-pool override and reserves only 20 per prize.
-  activity.sessionPrizes = [];
+  activity.lotteryScope = "SESSION";
+  activity.sessionPrizes = activity.slots.flatMap((slot, slotIndex) => activity.pool.map((prize) => ({
+    sessionId: slot.id,
+    prizeId: prize.id,
+    enabled: true,
+    probability: prize.defaultProbability ?? prize.probability,
+    allocatedQuantity: slotIndex === 0 ? 100 : 20,
+  })));
   state.activities.unshift(activity);
   const clueLabels = ["线索一", "线索二", "线索三", "线索四"];
   for (let index = 0; index < 200; index++) {

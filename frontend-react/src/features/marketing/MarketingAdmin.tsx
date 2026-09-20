@@ -5,7 +5,7 @@ import { FormSideSheet, DataList, DetailWorkspace, EmptyBlock, PageHeader, SideS
 import { useCrm } from "@/stores/crm-store";
 import { brandLabels } from "@/stores/member-operations-store";
 import { useMarketing } from "@/stores/marketing-store";
-import { createActivityPrize, createMarketingActivity } from "@/mock/marketing-demo-data";
+import { createActivityPrize, createMarketingActivity, createMarketingSlot } from "@/mock/marketing-demo-data";
 import { PickupScheduleSection } from "./MarketingPickup";
 import { pickupScheduleForPrize, pickupSchedules } from "./marketing-pickup";
 import type { ActivityPrize, MarketingActivity, MarketingPickupSchedule, MarketingSlot, MarketingState } from "@/types/marketing";
@@ -19,7 +19,7 @@ import { CodeManager } from "./MarketingCodes";
 import { ActivityBookingData, DrawData, ParticipantTaskData } from "./MarketingRecords";
 import { activityDetailTab } from "./marketing-records";
 import { DateRange, DefinitionGrid, displayDate, displayDateRange, MarketingMenu, NumberField, options, Panel, prizeReceivingLabel, useAction } from "./MarketingUi";
-import { SessionPrizeDrawer, sessionPrizeSummary } from "./MarketingSessionPrizes";
+import { marketingSessionLifecycle, marketingSessionLifecycleLabels, SessionPrizeDrawer, sessionPrizeSummary } from "./MarketingSessionPrizes";
 import { isCoachPrototype } from "@/utils/prototype-variant";
 
 function useClock() { const [now, setNow] = useState(Date.now); useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 30_000); return () => clearInterval(timer); }, []); return now; }
@@ -58,7 +58,7 @@ export function MarketingList({ migratedEntry }: { migratedEntry?: string }) {
   const creationIssue = activityCreationIssue(access);
   const coachMode = isCoachPrototype();
   return <>
-    <PageHeader title="营销活动" description="管理品牌活动。" actions={<Button theme="solid" disabled={Boolean(creationIssue)} onClick={() => setEditing({ ...createMarketingActivity(access.brands[0], Date.now()), name: "", ...(coachMode ? { bookingEnabled: false } : {}) })} icon={<IconPlus />}>新建活动</Button>} />
+    <PageHeader title="营销活动" description="管理品牌活动。" actions={<Button theme="solid" disabled={Boolean(creationIssue)} onClick={() => setEditing({ ...createMarketingActivity(access.brands[0], Date.now()), name: "" })} icon={<IconPlus />}>新建活动</Button>} />
     {feedback}{migratedEntry && <Banner type="info" title="请选择活动查看相关记录" closeIcon={null} />}{creationIssue && <Banner type="warning" title={creationIssue} closeIcon={null} />}
     <section className="data-surface">
     <div className="table-toolbar">
@@ -138,16 +138,25 @@ function PrizeSettings({ activity, onCreate, coachMode = false }: { activity: Ma
   </>;
 }
 
-function ActivitySessions({ activity, onManage }: { activity: MarketingActivity; onManage: () => void }) {
+function ActivitySessions({ activity }: { activity: MarketingActivity }) {
+  const { state } = useMarketing();
+  const [session, setSession] = useState<MarketingSlot | null>(null);
   const rows = activity.slots.filter((row) => !row.deleted);
-  return <Panel title="活动场次" actions={<Button size="small" onClick={onManage}>管理活动场次</Button>}>
-    <Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: 820 }} empty={<EmptyBlock title="暂无活动场次" description="通过活动信息设置添加场次。" />} columns={[
+  const create = () => {
+    const next = createMarketingSlot(crypto.randomUUID(), activity.startAt, 10);
+    setSession({ ...next, label: `场次 ${rows.length + 1}`, location: activity.location });
+  };
+  return <Panel title="活动场次" actions={<Button size="small" icon={<IconPlus />} onClick={create}>新增场次</Button>}>
+    <Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: 1040 }} empty={<EmptyBlock title="暂无活动场次" description="新增场次后，可设置场次信息及本场奖品。" />} columns={[
       { title: "场次", dataIndex: "label", width: 180 },
       { title: "日期 / 时间", width: 210, render: (_: unknown, row: MarketingSlot) => <DateRange start={row.startAt} end={row.endAt} /> },
       { title: "地点", dataIndex: "location", width: 180 },
       { title: "可预约数量", dataIndex: "capacity", width: 130 },
-      { title: "状态", width: 100, render: (_: unknown, row: MarketingSlot) => <Tag size="small" color={row.disabled ? "grey" : "green"}>{row.disabled ? "已停止" : "开放中"}</Tag> },
+      { title: "奖品配置", width: 180, render: (_: unknown, row: MarketingSlot) => sessionPrizeSummary(state, activity, row.id) },
+      { title: "状态", width: 100, render: (_: unknown, row: MarketingSlot) => { const lifecycle = marketingSessionLifecycle(activity, row, Date.now()); return <Tag size="small" color={lifecycle === "ONGOING" ? "green" : "grey"}>{marketingSessionLifecycleLabels[lifecycle]}</Tag>; } },
+      { title: "操作", width: 90, fixed: "right", render: (_: unknown, row: MarketingSlot) => <Button theme="borderless" size="small" onClick={() => setSession(row)}>设置</Button> },
     ]} />
+    {session && <SessionPrizeDrawer key={session.id} activity={activity} session={session} editSessionDetails onClose={() => setSession(null)} />}
   </Panel>;
 }
 
@@ -197,7 +206,7 @@ export function MarketingDetail({ activity, requestedTab, requestedSecondaryTab 
       ]} /></SideSection>}
     </>}
     tabs={<>{feedback}<Tabs type="line" className="record-tabs" activeKey={tab} onChange={go}>
-      {coachMode ? <TabPane itemKey="sessions" tab="活动场次"><section className="marketing-record-content"><ActivitySessions activity={activity} onManage={() => setEditing(true)} /></section></TabPane> : <TabPane itemKey="bookings" tab="活动预约记录"><section className="marketing-record-content"><ActivityBookingData key={`${activity.id}:${currentUser.id}`} activity={activity} now={now} dataState={state} /></section></TabPane>}
+      {coachMode ? <TabPane itemKey="sessions" tab="活动场次"><section className="marketing-record-content"><ActivitySessions activity={activity} /></section></TabPane> : <TabPane itemKey="bookings" tab="活动预约记录"><section className="marketing-record-content"><ActivityBookingData key={`${activity.id}:${currentUser.id}`} activity={activity} now={now} dataState={state} /></section></TabPane>}
       <TabPane itemKey="participants" tab="参与用户"><section className="marketing-record-content"><ParticipantTaskData key={`${activity.id}:${currentUser.id}`} activity={activity} dataState={state} /></section></TabPane>
       <TabPane itemKey="prizes" tab="奖品设置">{!activity.lotteryEnabled && <Banner type="info" title="此活动未启用抽奖" closeIcon={null} />}<PrizeSettings key={`${activity.id}:${currentUser.id}`} coachMode={coachMode} activity={activity} onCreate={() => { setNewSchedule(undefined); setNewPrize({ ...createActivityPrize(activity.id, Date.now()), fulfillmentMode: "DIRECT" }); }} /></TabPane>
       {coachMode && <TabPane itemKey="pickups" tab="兑奖预约设置"><section className="marketing-record-content"><PickupScheduleSection activity={activity} openId={scheduleId} onOpen={setScheduleId} onClose={() => setScheduleId("")} /></section></TabPane>}

@@ -48,9 +48,8 @@ export function AppShell({ route, children, onLogout, coachMode = false }: { rou
   return (
     <div className={`app-shell ${collapsed ? "is-collapsed" : ""}`}>
       <aside className="app-sidebar">
-        <button className="brand" onClick={() => navigate(coachMode ? "marketing" : "dashboard")} aria-label={coachMode ? "打开营销活动" : "打开数据概览"}>
-          <span className="brand-mark"><img src="./kivisense-logo.svg" alt="" /></span>
-          {!collapsed && <span><strong>KIVISENSE</strong><small>CRM PROTOTYPE</small></span>}
+        <button className={`brand ${coachMode ? "coach-brand" : ""}`} onClick={() => navigate(coachMode ? "marketing" : "dashboard")} aria-label={coachMode ? "打开营销活动" : "打开数据概览"}>
+          {coachMode ? <img className="coach-brand-logo" src="./coach-logo.png" alt="Coach" /> : <><span className="brand-mark"><img src="./kivisense-logo.svg" alt="" /></span>{!collapsed && <span><strong>KIVISENSE</strong><small>CRM PROTOTYPE</small></span>}</>}
         </button>
         <nav className="sidebar-nav" aria-label="主导航">
           {groups.map((group) => {
@@ -77,13 +76,13 @@ export function AppShell({ route, children, onLogout, coachMode = false }: { rou
           </div>
           <div className="topbar-actions">
             {isHq && !coachMode && <span className="scope-pill">{isMemberWorkspace ? `会员运营 · ${memberState.brandScope === "ALL" ? "全品牌" : brandScopeLabels[memberState.brandScope]}` : "HQ · 全局视图"}</span>}
-            <Select
+            {!coachMode && <Select
               className="demo-user-select"
               value={currentUser.id}
               onChange={(value) => setCurrentUser(String(value))}
               optionList={state.users.map((user) => ({ value: user.id, label: `${user.name} · ${user.title}` }))}
               aria-label="切换 Demo User"
-            />
+            />}
             <Dropdown
               trigger="click"
               render={<Dropdown.Menu>{!coachMode && <Dropdown.Item onClick={() => navigate("settings")}>Prototype 设置</Dropdown.Item>}{isHq && !coachMode && <><Dropdown.Item onClick={() => Modal.confirm({ title: "Reset Sales Demo Data?", content: "此操作会清除当前浏览器中的 Sales Demo 数据并恢复初始数据。会员和营销数据不会受影响。", onOk: () => { reset(); } })}>Reset Sales Demo Data</Dropdown.Item><Dropdown.Item onClick={() => Modal.confirm({ title: "Reset Member Demo Data?", content: "此操作会清除当前浏览器中的 Member Demo 数据并恢复初始数据。销售和营销数据不会受影响。", onOk: () => { resetMemberData(); } })}>Reset Member Demo Data</Dropdown.Item></>}<Dropdown.Item onClick={onLogout}>退出登录</Dropdown.Item></Dropdown.Menu>}
