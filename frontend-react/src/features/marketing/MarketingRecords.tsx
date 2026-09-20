@@ -8,7 +8,7 @@ import { useCrm } from "@/stores/crm-store";
 import type { MarketingActivity, MarketingBooking, MarketingParticipation, MarketingState } from "@/types/marketing";
 import type { MemberOperationsState } from "@/types/member-operations";
 import { parseCreatedAt, shanghaiDate } from "@/features/dashboard/dashboard-model";
-import { bookingStatus, marketingPermissions, participantDisplayName, participantIdentity, slotFor } from "./marketing-model";
+import { bookingStatus, marketingPermissions, needsReservation, participantDisplayName, participantIdentity, slotFor } from "./marketing-model";
 import { activityBookingLabels, activityBookingPhase, activityDrawRecords, drawPhaseOptions, drawRecordLabels, participantGender, type ActivityDrawRecord } from "./marketing-records";
 import { participantTaskClues, participantTaskCompleted } from "./marketing-participant-tasks";
 import { maskedPhone, VirtualAwardContent } from "./MarketingData";
@@ -113,25 +113,43 @@ export function DrawData({ activity, now, dataState }: { activity: MarketingActi
   const coachMode = isCoachPrototype();
   const [search, setSearch] = useState(""), [status, setStatus] = useState("ALL"), [date, setDate] = useState("");
   const [selectedId, setSelectedId] = useState(""), [historyId, setHistoryId] = useState("");
+  const prizeBookingFor = (row: ActivityDrawRecord) => row.award ? state.bookings.filter(booking => booking.activityId === activity.id && booking.kind === "PRIZE" && booking.awardId === row.award!.id && booking.status !== "CANCELED").at(-1) : undefined;
+  const redemptionFor = (row: ActivityDrawRecord) => row.award ? state.redemptions.find(redemption => redemption.awardId === row.award!.id && redemption.result === "SUCCESS" && ["PRIZE_CLAIM", "EXPERIENCE_CLAIM"].includes(redemption.type)) : undefined;
+  const redemptionStatus = (row: ActivityDrawRecord) => !row.award ? "NONE" : row.award.fulfilledAt ? "REDEEMED" : needsReservation(row.award) && !prizeBookingFor(row) ? "PENDING_PRODUCTION" : "PENDING_REDEMPTION";
   const rows = activityDrawRecords(state, activity, now).filter(row =>
     Boolean(row.draw) && (coachMode ? participantOpenId(row.participant, members) : participantSearch(row.participant, members)).toLowerCase().includes(search.trim().toLowerCase()) &&
-    (status === "ALL" || String(row.phase) === status) && dateMatches(row.draw?.occurredAt ?? row.award?.wonAt ?? row.participant?.registeredAt, date));
+    (status === "ALL" || (coachMode ? redemptionStatus(row) : String(row.phase)) === status) && dateMatches(row.draw?.occurredAt ?? row.award?.wonAt ?? row.participant?.registeredAt, date));
   const selected = rows.find(row => row.id === selectedId), history = rows.find(row => row.id === historyId);
   const result = (row: ActivityDrawRecord) => row.award?.prizeName || (row.phase === 1 ? "—" : row.draw?.poolItemId ? "中奖权益待核对" : "未中奖");
   const identityFor = (row: ActivityDrawRecord) => row.participant && participantIdentity(row.participant, members);
-  return <><div className="table-toolbar">
-    <Input prefix={<IconSearch />} aria-label="搜索抽奖记录" placeholder={coachMode ? "搜索 OpenID" : "姓名、手机号或 OpenID"} value={search} onChange={setSearch} showClear />
-    <Select aria-label="抽奖记录状态" value={status} onChange={value => setStatus(String(value))} optionList={[{ value: "ALL", label: "全部状态" }, ...drawPhaseOptions]} />
-    <Input aria-label="抽奖记录日期" type="date" value={date} onChange={setDate} />
-  </div><Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: 990 }} empty={<EmptyBlock title="暂无抽奖记录" description="每次实际发生的抽奖结果将在这里展示。" />} columns={[
-    { title: coachMode ? "OpenID" : "用户", width: coachMode ? 240 : 130, render: (_: unknown, row: ActivityDrawRecord) => coachMode ? participantOpenId(row.participant, members) || "—" : <div className="marketing-summary-cell"><span>{row.participant ? participantDisplayName(row.participant, members) : "身份待核对"}</span><small>{maskedPhone(identityFor(row)?.phone)}</small></div> },
-    { title: "活动场次", width: 175, render: (_: unknown, row: ActivityDrawRecord) => { const slot = activity.slots.find(slot => slot.id === row.draw?.sessionId); return slot ? displayDateRange(slot.startAt, slot.endAt).compact : activity.bookingEnabled ? "历史场次未记录" : "直接参与"; } },
+  const coachColumns = [
+    { title: "OpenID", width: 240, render: (_: unknown, row: ActivityDrawRecord) => participantOpenId(row.participant, members) || "—" },
+    { title: "活动场次", width: 210, render: (_: unknown, row: ActivityDrawRecord) => { const slot = activity.slots.find(item => item.id === row.draw?.sessionId); return slot ? <div className="marketing-summary-cell"><span>{slot.label}</span><small>{displayDateRange(slot.startAt, slot.endAt).compact}</small></div> : activity.bookingEnabled ? "历史场次未记录" : "直接参与"; } },
+    { title: "奖品", width: 150, render: (_: unknown, row: ActivityDrawRecord) => result(row) },
+    { title: "抽奖状态", width: 100, render: (_: unknown, row: ActivityDrawRecord) => <Tag size="small" color={row.draw?.poolItemId ? "green" : "grey"}>{row.draw?.poolItemId ? "中奖" : "未中奖"}</Tag> },
+    { title: "兑奖状态", width: 110, render: (_: unknown, row: ActivityDrawRecord) => { const value = redemptionStatus(row); return value === "NONE" ? "—" : <Tag size="small" color={value === "REDEEMED" ? "green" : value === "PENDING_REDEMPTION" ? "blue" : "grey"}>{({ PENDING_PRODUCTION: "待制作", PENDING_REDEMPTION: "待核销", REDEEMED: "已核销" })[value]}</Tag>; } },
+    { title: "抽奖时间", width: 160, render: (_: unknown, row: ActivityDrawRecord) => displayDate(row.draw?.occurredAt) },
+    { title: "兑奖时间", width: 200, render: (_: unknown, row: ActivityDrawRecord) => { const booking = prizeBookingFor(row), slot = booking && slotFor(state, booking); return slot ? displayDateRange(slot.startAt, slot.endAt).compact : displayDate(row.award?.fulfilledAt); } },
+    { title: "制作时间", width: 160, render: (_: unknown, row: ActivityDrawRecord) => displayDate(row.award?.issuedAt) },
+    { title: "核销账号", width: 130, render: (_: unknown, row: ActivityDrawRecord) => redemptionFor(row)?.actorId || "—" },
+    { title: "核销时间", width: 160, render: (_: unknown, row: ActivityDrawRecord) => displayDate(redemptionFor(row)?.occurredAt ?? row.award?.fulfilledAt) },
+    { title: "创建时间", width: 160, render: (_: unknown, row: ActivityDrawRecord) => displayDate(row.draw?.occurredAt) },
+    { title: "操作", width: 150, fixed: "right" as const, render: (_: unknown, row: ActivityDrawRecord) => <div className="row-actions"><Button theme="borderless" size="small" onClick={() => setSelectedId(row.id)}>查看</Button>{row.reservation && row.award && <Button theme="borderless" size="small" onClick={() => setHistoryId(row.id)}>预约记录</Button>}</div> },
+  ];
+  const standardColumns = [
+    { title: "用户", width: 130, render: (_: unknown, row: ActivityDrawRecord) => <div className="marketing-summary-cell"><span>{row.participant ? participantDisplayName(row.participant, members) : "身份待核对"}</span><small>{maskedPhone(identityFor(row)?.phone)}</small></div> },
+    { title: "活动场次", width: 175, render: (_: unknown, row: ActivityDrawRecord) => { const slot = activity.slots.find(item => item.id === row.draw?.sessionId); return slot ? displayDateRange(slot.startAt, slot.endAt).compact : activity.bookingEnabled ? "历史场次未记录" : "直接参与"; } },
     { title: "结果", width: 80, render: (_: unknown, row: ActivityDrawRecord) => row.draw?.poolItemId ? "中奖" : "未中奖" },
     { title: "奖品", width: 165, render: (_: unknown, row: ActivityDrawRecord) => result(row) },
     { title: "领取状态", width: 135, render: (_: unknown, row: ActivityDrawRecord) => <div className="marketing-summary-cell"><Tag size="small" color={[3, 5].includes(row.phase) ? "green" : row.phase === 4 ? "blue" : "grey"}>{drawRecordLabels[row.phase]}</Tag>{row.note && <small>{row.note}</small>}</div> },
     { title: "抽奖时间", width: 140, render: (_: unknown, row: ActivityDrawRecord) => displayDate(row.draw?.occurredAt) },
-    { title: "操作", width: 165, fixed: "right", render: (_: unknown, row: ActivityDrawRecord) => <div className="row-actions"><Button theme="borderless" size="small" onClick={() => setSelectedId(row.id)}>查看</Button>{row.reservation && row.award && <Button theme="borderless" size="small" onClick={() => setHistoryId(row.id)}>预约记录</Button>}</div> },
-  ]} />
+    { title: "操作", width: 165, fixed: "right" as const, render: (_: unknown, row: ActivityDrawRecord) => <div className="row-actions"><Button theme="borderless" size="small" onClick={() => setSelectedId(row.id)}>查看</Button>{row.reservation && row.award && <Button theme="borderless" size="small" onClick={() => setHistoryId(row.id)}>预约记录</Button>}</div> },
+  ];
+  return <><div className="table-toolbar">
+    <Input prefix={<IconSearch />} aria-label="搜索抽奖记录" placeholder={coachMode ? "搜索 OpenID" : "姓名、手机号或 OpenID"} value={search} onChange={setSearch} showClear />
+    <Select aria-label="抽奖记录状态" value={status} onChange={value => setStatus(String(value))} optionList={coachMode ? [{ value: "ALL", label: "全部兑奖状态" }, { value: "PENDING_PRODUCTION", label: "待制作" }, { value: "PENDING_REDEMPTION", label: "待核销" }, { value: "REDEEMED", label: "已核销" }] : [{ value: "ALL", label: "全部状态" }, ...drawPhaseOptions]} />
+    <Input aria-label="抽奖记录日期" type="date" value={date} onChange={setDate} />
+  </div><Table rowKey="id" dataSource={rows} pagination={{ pageSize: 10 }} scroll={{ x: coachMode ? 1940 : 990 }} empty={<EmptyBlock title="暂无抽奖记录" description="每次实际发生的抽奖结果将在这里展示。" />} columns={coachMode ? coachColumns : standardColumns} />
     <SideSheet visible={Boolean(selected)} closeOnEsc title="抽奖记录详情" width={Math.min(640, window.innerWidth)} onCancel={() => setSelectedId("")}>
       {selected && <><Panel title="抽奖信息"><IdentityData participant={selected.participant} members={members} full={marketingPermissions(currentUser).manage} openIdOnly={coachMode} /><DataList rows={[
         ["活动", activity.name], ["场次", selected.draw?.sessionId ? (() => { const slot = activity.slots.find(slot => slot.id === selected.draw?.sessionId); return slot ? displayDateRange(slot.startAt, slot.endAt).compact : "历史场次待核对"; })() : activity.bookingEnabled ? "历史场次未记录" : "直接参与"],
