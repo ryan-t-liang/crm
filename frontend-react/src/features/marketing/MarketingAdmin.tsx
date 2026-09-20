@@ -223,7 +223,7 @@ export function MarketingDetail({ activity, requestedTab, requestedSecondaryTab 
     actions={coachMode ? <div className="row-actions">{activityMenu(state, activity, access.manage, now, run).map((action) => <Button key={action.name} size="small" theme={action.type === "danger" ? "light" : "solid"} type={action.type === "danger" ? "danger" : "primary"} disabled={action.disabled} onClick={action.onClick}>{action.name}</Button>)}</div> : <>{activity.status === "DRAFT" && <Button theme="solid" disabled={!access.manage} onClick={() => run({ type: "STATUS", activityId: activity.id, status: "PUBLISHED" })}>发布活动</Button>}<MarketingMenu menu={[
       ...activityMenu(state, activity, access.manage, now, run, () => go("prizes")),
     ]}><Button size="small" icon={<IconChevronDown />} iconPosition="right" aria-label="活动状态操作">活动状态操作</Button></MarketingMenu></>}
-    sidebar={<>
+    sidebar={coachMode ? undefined : <>
       <SideSection title="活动信息" onEdit={() => setEditing(true)} editDisabled={!access.manage}><DataList rows={coreInfo} />
         {activity.bookingEnabled && !coachMode && <div className="marketing-rail-rule"><h3>活动预约</h3><DataList rows={[
           ["预约开放", displayDate(activity.bookingStart)], ["预约截止", displayDate(activity.bookingEnd)],

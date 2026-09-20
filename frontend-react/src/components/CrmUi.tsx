@@ -37,7 +37,7 @@ export function EmptyBlock({ title, description, action }: { title: string; desc
 export function DetailWorkspace({
   eyebrow, title, subtitle, tags, actions, tabs, sidebar, backRoute,
 }: {
-  eyebrow: string; title: string; subtitle?: string; tags?: ReactNode; actions?: ReactNode; tabs: ReactNode; sidebar: ReactNode; backRoute: string;
+  eyebrow: string; title: string; subtitle?: string; tags?: ReactNode; actions?: ReactNode; tabs: ReactNode; sidebar?: ReactNode; backRoute: string;
 }) {
   return <div className="detail-page">
     <button className="back-link" onClick={() => navigate(backRoute)}><IconArrowLeft />返回列表</button>
@@ -45,7 +45,7 @@ export function DetailWorkspace({
       <div className="detail-title"><span>{eyebrow}</span><h1>{title}</h1>{subtitle && <p>{subtitle}</p>}<div className="detail-tags">{tags}</div></div>
       <div className="detail-actions">{actions}</div>
     </header>
-    <div className="detail-grid"><section className="detail-main">{tabs}</section><aside className="detail-sidebar">{sidebar}</aside></div>
+    <div className={`detail-grid ${sidebar ? "" : "detail-grid-full"}`}><section className="detail-main">{tabs}</section>{sidebar && <aside className="detail-sidebar">{sidebar}</aside>}</div>
   </div>;
 }
 

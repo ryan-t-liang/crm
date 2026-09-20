@@ -29,6 +29,7 @@
 .detail-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 6px; }
 .detail-actions .semi-select { min-width: 132px; }
 .detail-grid { min-width: 0; display: grid; grid-template-columns: minmax(0,1fr) 290px; gap: 12px; align-items: start; }
+.detail-grid.detail-grid-full { grid-template-columns: minmax(0,1fr); }
 .detail-main, .detail-sidebar { min-width: 0; }
 .detail-sidebar { display: grid; gap: 10px; }
 .record-tabs { min-width: 0; overflow: hidden; border: 1px solid var(--crm-border); border-radius: var(--crm-radius); background: var(--crm-surface); }
