@@ -72,7 +72,7 @@ export function AppShell({ route, children, onLogout, coachMode = false }: { rou
         <header className="topbar">
           <div className="topbar-leading">
             <Button theme="borderless" icon={<IconMenu />} aria-label={collapsed ? "展开侧栏" : "收起侧栏"} onClick={() => setCollapsed((value) => !value)} />
-            <span className="breadcrumb">Kivisense CRM <b>/</b> {groups.flatMap((group) => group.items).find((item) => item.route === activeTop)?.label || "详情"}</span>
+            <span className="breadcrumb">{coachMode ? "活动管理后台" : "Kivisense CRM"} <b>/</b> {groups.flatMap((group) => group.items).find((item) => item.route === activeTop)?.label || "详情"}</span>
           </div>
           <div className="topbar-actions">
             {isHq && !coachMode && <span className="scope-pill">{isMemberWorkspace ? `会员运营 · ${memberState.brandScope === "ALL" ? "全品牌" : brandScopeLabels[memberState.brandScope]}` : "HQ · 全局视图"}</span>}
