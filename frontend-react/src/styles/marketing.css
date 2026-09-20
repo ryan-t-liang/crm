@@ -40,6 +40,11 @@
   font-size: 14px;
   line-height: 22px;
 }
+.coach-marketing-detail .semi-table :is(.semi-table-row-head, .semi-table-row-cell, .semi-button-content),
+.coach-marketing-sheet :is(.semi-form-field-label, .semi-input, .semi-input-number, .semi-radio-content, .semi-select-selection-text, .semi-button-content) {
+  font-size: 14px;
+  line-height: 22px;
+}
 .coach-marketing-detail .detail-sidebar .side-section > header h6,
 .coach-marketing-detail .detail-sidebar .data-list dt,
 .coach-marketing-detail .detail-sidebar .data-list dd { font-size: 14px; line-height: 22px; }
