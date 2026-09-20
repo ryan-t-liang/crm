@@ -198,7 +198,7 @@ export function MarketingDetail({ activity, requestedTab, requestedSecondaryTab 
   const [editing, setEditing] = useState(false), [configuration, setConfiguration] = useState<"lottery" | null>(null), [newPrize, setNewPrize] = useState<ActivityPrize | null>(null), [scheduleId, setScheduleId] = useState("");
   const [newSchedule, setNewSchedule] = useState<MarketingPickupSchedule>();
   useEffect(() => { setNewSchedule(undefined); setEditing(false); setConfiguration(null); setNewPrize(null); }, [activity.id, currentUser.id]);
-  const coachTab = ["sessions", "participants", "prizes", "pickups", "draws"].includes(requestedTab ?? "") ? requestedTab! : "sessions";
+  const coachTab = ["sessions", "prizes", "pickups", "draws"].includes(requestedTab ?? "") ? requestedTab! : "sessions";
   const code = coachMode ? String(state.activities.findIndex((row) => row.id === activity.id) + 1) : activityCodes(state).get(activity.id), tab = coachMode ? coachTab : activityDetailTab(requestedTab, requestedSecondaryTab);
   const creator = coachMode ? "Ryan" : activity.createdBy ? sales.users.find(user => user.id === activity.createdBy)?.name || "历史人员待核对" : "未记录";
   const go = (key: string) => navigate(`marketing/activity/${activity.id}/${key}`);
@@ -239,7 +239,7 @@ export function MarketingDetail({ activity, requestedTab, requestedSecondaryTab 
     </>}
     tabs={<>{feedback}<Tabs type="line" className="record-tabs" activeKey={tab} onChange={go}>
       {coachMode ? <TabPane itemKey="sessions" tab="活动场次"><section className="marketing-record-content"><ActivitySessions activity={activity} /></section></TabPane> : <TabPane itemKey="bookings" tab="活动预约记录"><section className="marketing-record-content"><ActivityBookingData key={`${activity.id}:${currentUser.id}`} activity={activity} now={now} dataState={state} /></section></TabPane>}
-      <TabPane itemKey="participants" tab="参与用户"><section className="marketing-record-content"><ParticipantTaskData key={`${activity.id}:${currentUser.id}`} activity={activity} dataState={state} /></section></TabPane>
+      {!coachMode && <TabPane itemKey="participants" tab="参与用户"><section className="marketing-record-content"><ParticipantTaskData key={`${activity.id}:${currentUser.id}`} activity={activity} dataState={state} /></section></TabPane>}
       <TabPane itemKey="prizes" tab="奖品设置">{!activity.lotteryEnabled && <Banner type="info" title="此活动未启用抽奖" closeIcon={null} />}<PrizeSettings key={`${activity.id}:${currentUser.id}`} coachMode={coachMode} activity={activity} onCreate={() => { setNewSchedule(undefined); setNewPrize({ ...createActivityPrize(activity.id, Date.now()), fulfillmentMode: "DIRECT" }); }} /></TabPane>
       {coachMode && <TabPane itemKey="pickups" tab="兑奖预约设置"><section className="marketing-record-content"><PickupScheduleSection activity={activity} openId={scheduleId} onOpen={setScheduleId} onClose={() => setScheduleId("")} /></section></TabPane>}
       <TabPane itemKey="draws" tab="抽奖记录"><section className="marketing-record-content">{!activity.lotteryEnabled && <Banner type="info" title="此活动未启用抽奖" closeIcon={null} />}<DrawData key={`${activity.id}:${currentUser.id}`} activity={activity} now={now} dataState={state} /></section></TabPane>
