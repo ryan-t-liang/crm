@@ -10,7 +10,7 @@
 
 > 文档角色：营销业务、数据和兼容合同。页面描述仅记录模块当前或历史行为，不是 Kivisense 视觉规范；如有冲突，以 `DESIGN_SYSTEM.md` 和成熟 CRM 页面为准。
 
-现有纯前端原型的活动管理与独立数据模块，使用现有React、Semi Design / Icons、Kivisense主题及LocalStorage。不新增后端、数据库、SQL表、登录系统、微信服务或部署架构。营销合同为前端原型扩展，不混入Sowind四表，品牌显示名为Kivisense，底层gp / un范围保留。
+现有纯前端原型的活动管理与独立数据模块，使用现有React、Semi Design / Icons、Kivisense主题及LocalStorage。不新增后端、数据库、SQL表、登录系统、微信服务或部署架构。营销合同为前端原型扩展，不混入Sowind四表；底层gp / un范围保留，用户界面分别显示为Kivisense与Kivicube。
 
 销售仍为Lead → Qualified → Convert to Deal → Won/Lost，不新增Opportunity或金额。营销参与不成为Sales Lead / Deal或Sowind购买意向；集团 / 品牌用户关联、会员匹配、销售 / 会员Store、三视图Dashboard均未修改。
 

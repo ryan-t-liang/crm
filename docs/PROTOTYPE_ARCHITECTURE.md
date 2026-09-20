@@ -83,7 +83,7 @@ Detailed marketing field and business contracts remain in `MARKETING_ACTIVITY_MO
 
 Products belongs to SALES after Organizations and retains its existing routes and HQ-only write permissions.
 
-All brand display names are Kivisense. The raw `gp` / `un` codes remain in stored data, permissions and scope logic. `utils/brand-display.ts` owns display-only mapping.
+Brand display names are Kivisense for the raw `gp` scope and Kivicube for the raw `un` scope. The raw `gp` / `un` codes remain in stored data, permissions and scope logic. `utils/brand-display.ts` owns display-only mapping.
 
 Direct detail routes apply the same visible authority boundaries as their parent lists. Legacy marketing routes may resolve to current records, but compatibility routing does not create new business objects or rewrite stored history.
 

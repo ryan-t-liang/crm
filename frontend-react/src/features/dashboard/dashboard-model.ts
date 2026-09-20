@@ -141,7 +141,7 @@ export function buildDashboard(sales: CrmState, members: MemberOperationsState, 
   const groupRelationships: RowGroup<SowindCustomer>[] = showGroupRelationship ? partition(visibleCustomers, ["gp", "un", "both", "none"], (customer) => {
     const brands = new Set(authorizedUsers.filter((user) => user.is_deleted === 0 && notFuture(user.created_at) && user.customer_id === customer.id).map((user) => user.brand));
     return brands.size === 2 ? "both" : brands.has("gp") ? "gp" : brands.has("un") ? "un" : "none";
-  }, { gp: `仅 ${brandScopeLabels.gp}`, un: `仅 ${brandScopeLabels.un}`, both: "Kivisense · 两个品牌范围", none: "暂无有效品牌关联" }) : [];
+  }, { gp: `仅 ${brandScopeLabels.gp}`, un: `仅 ${brandScopeLabels.un}`, both: `${brandScopeLabels.gp} + ${brandScopeLabels.un}`, none: "暂无有效品牌关联" }) : [];
   const brandComparison = access.brands.filter((brand) => query.brand === "ALL" || brand === query.brand).map((brand) => {
     const current = effectiveUsers.filter((row) => row.brand === brand), currentIntents = intents.filter((row) => row.brand === brand);
     const brandUsers = users.filter((row) => row.brand === brand);
