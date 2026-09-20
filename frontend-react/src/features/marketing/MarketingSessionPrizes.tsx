@@ -33,8 +33,9 @@ export const marketingSessionLifecycleLabels: Record<MarketingSessionLifecycle, 
 };
 
 export function sessionPrizeSummary(state: ReturnType<typeof useMarketing>["state"], activity: MarketingActivity, sessionId: string) {
+  if (!sessionPrizeConfigurations(activity, sessionId).length) return "继承活动默认奖池";
   const configured = sessionPrizeConfigurations(activity, sessionId).filter((row) => row.enabled);
-  if (!configured.length) return "未配置";
+  if (!configured.length) return "本场奖品全部停用";
   const session = activity.slots.find((row) => row.id === sessionId);
   const ended = session ? marketingSessionLifecycle(activity, session, Date.now()) === "ENDED" : false;
   const knownRemaining = configured.reduce((sum, row) => {
@@ -53,18 +54,18 @@ export function sessionPrizeSummary(state: ReturnType<typeof useMarketing>["stat
   return `${configured.length}个奖品 · ${hasTrulyUnlimited ? "含不限量" : `剩余${knownRemaining}份`}`;
 }
 
-function initialSessionPrizes(activity: MarketingActivity, session: MarketingSlot): SessionPrize[] {
+function initialSessionPrizes(activity: MarketingActivity, session: MarketingSlot, state: ReturnType<typeof useMarketing>["state"]): SessionPrize[] {
   const existing = sessionPrizeConfigurations(activity, session.id);
   return activity.pool.map((item) => {
     const saved = existing.find((row) => row.prizeId === item.id);
     if (saved) return structuredClone(saved);
-    const probability = prizeDefaultProbability(item);
+    const probability = existing.length ? 0 : prizeDefaultProbability(item);
     return {
       sessionId: session.id,
       prizeId: item.id,
       enabled: probability > 0,
       probability,
-      allocatedQuantity: prizeQuantityMode(item) === "LIMITED" ? 0 : undefined,
+      allocatedQuantity: prizeQuantityMode(item) === "LIMITED" ? sessionWonCount(state, activity.id, session.id, item.id) : undefined,
     };
   });
 }
@@ -117,12 +118,14 @@ export function SessionPrizeDrawer({ activity, session, onClose }: { activity: M
   const access = marketingPermissions(currentUser), now = Date.now();
   const currentActivity = state.activities.find((row) => row.id === activity.id) ?? activity;
   const currentSession = currentActivity.slots.find((row) => row.id === session.id) ?? session;
-  const [rows, setRows] = useState<SessionPrize[]>(() => initialSessionPrizes(currentActivity, currentSession));
+  const [rows, setRows] = useState<SessionPrize[]>(() => initialSessionPrizes(currentActivity, currentSession, state));
+  const [customizing, setCustomizing] = useState(false);
   const [sourceSessionId, setSourceSessionId] = useState(""), [copyOpen, setCopyOpen] = useState(false), [adjustPrizeId, setAdjustPrizeId] = useState(""), [localError, setLocalError] = useState("");
   const lifecycle = marketingSessionLifecycle(currentActivity, currentSession, now);
   const readOnly = !access.manage || lifecycle === "ENDED";
   const sessionHasDraws = state.draws.some((draw) => draw.activityId === currentActivity.id && draw.sessionId === currentSession.id);
   const savedRows = sessionPrizeConfigurations(currentActivity, currentSession.id);
+  const inherited = !savedRows.length && !customizing;
   const probabilityTotal = rows.filter((row) => row.enabled).reduce((sum, row) => sum + row.probability, 0);
   const noWinProbability = Math.max(0, 100 - probabilityTotal);
   const copySources = currentActivity.slots.filter((row) => row.id !== currentSession.id && sessionPrizeConfigurations(currentActivity, row.id).length > 0);
@@ -131,7 +134,7 @@ export function SessionPrizeDrawer({ activity, session, onClose }: { activity: M
   const titleRange = displayDateRange(currentSession.startAt, currentSession.endAt);
 
   useEffect(() => {
-    setRows(initialSessionPrizes(currentActivity, currentSession));
+    setRows(initialSessionPrizes(currentActivity, currentSession, state));
   }, [currentActivity.sessionPrizeConfigVersion, currentActivity.pool, currentSession.id]);
 
   const update = (prizeId: string, patch: Partial<SessionPrize>) => setRows((current) => current.map((row) => row.prizeId === prizeId ? { ...row, ...patch } : row));
@@ -150,15 +153,17 @@ export function SessionPrizeDrawer({ activity, session, onClose }: { activity: M
     const result = run({ type: "COPY_SESSION_PRIZES", activityId: currentActivity.id, sourceSessionId, targetSessionId: currentSession.id });
     if (!result.ok) return;
     const nextActivity = result.state.activities.find((row) => row.id === currentActivity.id);
-    if (nextActivity) setRows(initialSessionPrizes(nextActivity, currentSession));
+    if (nextActivity) setRows(initialSessionPrizes(nextActivity, currentSession, result.state));
     setLocalError(""); setCopyOpen(false); setSourceSessionId("");
   };
 
   return <>
     <FormSideSheet visible={!copyOpen && !adjustedPrize} className="marketing-session-prize-drawer" width={820} title={`${titleRange.compact} · 场次奖品`} onCancel={onClose} onOk={save}
-      okText="保存" cancelText="取消" okButtonProps={{ disabled: readOnly || probabilityTotal > 100 }} footer={readOnly ? <Button onClick={onClose}>关闭</Button> : undefined}>
+      okText="保存本场奖池" cancelText="取消" okButtonProps={{ disabled: readOnly || inherited || probabilityTotal > 100 }} footer={readOnly ? <Button onClick={onClose}>关闭</Button> : undefined}>
       {feedback}{localError && <Banner type="warning" title={localError} closeIcon={null} />}
       {readOnly && <Banner type="info" title={lifecycle === "ENDED" ? "活动或场次已结束，奖品配置只读。" : "当前账号没有活动管理权限。"} closeIcon={null} />}
+      <Banner type="info" title={inherited ? "当前继承活动默认奖池，数量共用活动未分配库存。无需逐场设置。" : "本场单独配置：只使用本页启用的奖品和概率，不再补入活动默认奖品。"} closeIcon={null} />
+      {!savedRows.length && !readOnly && <label className="marketing-field"><span>单独配置本场奖池</span><Switch checked={customizing} onChange={setCustomizing} aria-label="单独配置本场奖池" /></label>}
       <div className="marketing-session-context">
         <strong>{titleRange.compact}</strong>
         <span>{currentSession.location || "—"}</span>
@@ -167,16 +172,17 @@ export function SessionPrizeDrawer({ activity, session, onClose }: { activity: M
       <div className="marketing-session-toolbar"><Button theme="borderless" disabled={copyDisabled || !copySources.length} onClick={() => setCopyOpen(true)}>从其他场次复制</Button></div>
       <Table rowKey="id" dataSource={currentActivity.pool} pagination={false} empty="暂无可配置奖品" columns={[
         { title: "奖品", width: 170, render: (_: unknown, item: ActivityPrize) => <div className="marketing-summary-cell"><strong>{item.name}</strong><small>{item.label}</small></div> },
-        { title: "参与", width: 72, render: (_: unknown, item: ActivityPrize) => { const row = rows.find((entry) => entry.prizeId === item.id)!; return <Switch size="small" checked={row?.enabled ?? false} disabled={readOnly} onChange={(value) => toggle(item, value)} aria-label={`${item.name}参与本场`} />; } },
-        { title: "中奖概率", width: 118, render: (_: unknown, item: ActivityPrize) => { const row = rows.find((entry) => entry.prizeId === item.id)!; return readOnly ? `${row?.probability ?? 0}%` : <InputNumber suffix="%" min={0} max={100} value={row?.probability ?? 0} disabled={!row?.enabled} onChange={(value) => update(item.id, { probability: numberValue(value) })} aria-label={`${item.name}中奖概率`} />; } },
+        { title: "参与", width: 72, render: (_: unknown, item: ActivityPrize) => { const row = rows.find((entry) => entry.prizeId === item.id)!; return <Switch size="small" checked={row?.enabled ?? false} disabled={readOnly || inherited} onChange={(value) => toggle(item, value)} aria-label={`${item.name}参与本场`} />; } },
+        { title: "中奖概率", width: 118, render: (_: unknown, item: ActivityPrize) => { const row = rows.find((entry) => entry.prizeId === item.id)!; return readOnly || inherited ? `${row?.probability ?? 0}%` : <InputNumber suffix="%" min={0} max={100} value={row?.probability ?? 0} disabled={!row?.enabled} onChange={(value) => update(item.id, { probability: numberValue(value) })} aria-label={`${item.name}中奖概率`} />; } },
         { title: "本场数量", width: 185, render: (_: unknown, item: ActivityPrize) => {
+          if (inherited) return <span>共享活动库存 · {activityPrizeAllocation(state, currentActivity, item, now).unallocated ?? "不限量"}</span>;
           const row = rows.find((entry) => entry.prizeId === item.id)!;
           const codeRemaining = item.method === "REDEMPTION_CODE" ? codeInventory(item).remaining : Number.POSITIVE_INFINITY;
           if (prizeQuantityMode(item) === "UNLIMITED") return <div className="marketing-summary-cell"><span>{item.method === "REDEMPTION_CODE" ? `可用码 ${codeRemaining}` : "不限量"}</span>{codeRemaining === 0 && <Tag size="small">已发完</Tag>}</div>;
           const won = sessionWonCount(state, currentActivity.id, currentSession.id, item.id), allocated = row?.allocatedQuantity ?? 0;
           const remaining = Math.min(Math.max(0, allocated - won), codeRemaining);
           if (lifecycle === "ENDED") return <div className="marketing-summary-cell"><span>历史分配 {allocated}</span><small>已中奖 {won}</small><small>未使用 {Math.max(0, allocated - won)} · 已释放</small></div>;
-          const requiresAdjustment = sessionHasDraws || now >= parseCreatedAt(currentSession.startAt);
+          const requiresAdjustment = savedRows.length > 0 && (sessionHasDraws || now >= parseCreatedAt(currentSession.startAt));
           return <div className="marketing-summary-cell">{requiresAdjustment ? <span>分配 {allocated}</span> : <InputNumber min={0} precision={0} value={allocated} disabled={readOnly || !row?.enabled} onChange={(value) => update(item.id, { allocatedQuantity: numberValue(value) })} aria-label={`${item.name}本场分配`} />}<small>已中 {won} · 剩余 {remaining}</small></div>;
         } },
         { title: "活动可分配", width: 108, render: (_: unknown, item: ActivityPrize) => {
@@ -190,6 +196,7 @@ export function SessionPrizeDrawer({ activity, session, onClose }: { activity: M
           return Math.max(0, currentAvailable + savedReserved - draftReserved);
         } },
         { title: "操作", width: 105, render: (_: unknown, item: ActivityPrize) => {
+          if (inherited || !savedRows.length) return "—";
           const row = rows.find((entry) => entry.prizeId === item.id), saved = savedRows.some((entry) => entry.prizeId === item.id);
           const requiresAdjustment = sessionHasDraws || now >= parseCreatedAt(currentSession.startAt);
           return prizeQuantityMode(item) === "LIMITED" && requiresAdjustment && lifecycle !== "ENDED" ? <Button theme="borderless" size="small" disabled={readOnly || !row?.enabled || !saved} onClick={() => setAdjustPrizeId(item.id)}>{saved ? "调整数量" : "保存后调整"}</Button> : "—";

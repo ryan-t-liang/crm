@@ -56,7 +56,7 @@ export function PrizeFields({ prize, onChange, locked = false, quantityLocked = 
       <SelectField disabled={locked || scheduleLocked} label="领取方式" value={fulfillment} list={options(prize.prizeType === "VIRTUAL" ? { DIRECT: "直接发放", RESERVATION: "预约使用" } : { DIRECT: "直接领取", RESERVATION: "预约领取" })} onChange={changeFulfillment} />
       <SelectField disabled={locked || quantityLocked} label="数量模式" value={prizeQuantityMode(prize)} list={options(fulfillment === "RESERVATION" ? { LIMITED: "限量" } : { LIMITED: "限量", UNLIMITED: "不限量" })} onChange={changeQuantityMode} />
       {prizeQuantityMode(prize) === "LIMITED" && <NumberField disabled={locked || quantityLocked} label="可发放数量" value={prizeQuantityLimit(prize) ?? 0} onChange={changeQuantityLimit} />}
-      <NumberField label={activity?.bookingEnabled ? "新场次默认概率（%）" : "中奖概率（%）"} value={prizeDefaultProbability(prize)} onChange={changeDefaultProbability} />
+      <NumberField label={activity?.bookingEnabled ? "活动默认概率（%）" : "中奖概率（%）"} value={prizeDefaultProbability(prize)} onChange={changeDefaultProbability} />
       <NumberField label="每人该奖品最多获得" value={prize.perPersonLimit} onChange={(value) => update("perPersonLimit", value)} />
       {prize.prizeType === "VIRTUAL" && <SelectField disabled={locked} label="虚拟奖品内容" value={prize.method} list={options({ REDEMPTION_CODE: "兑换码", VIRTUAL_VOUCHER: "虚拟权益", LINK: "领取链接" })} onChange={(value) => update("method", value as ActivityPrize["method"])} />}
       {prize.prizeType === "PHYSICAL" && fulfillment === "RESERVATION" && <SelectField disabled={locked} label="预约类型" value={prize.method} list={options({ PICKUP: "预约领取", EXPERIENCE: "预约使用" })} onChange={(value) => update("method", value as ActivityPrize["method"])} />}
@@ -64,13 +64,13 @@ export function PrizeFields({ prize, onChange, locked = false, quantityLocked = 
       <TextField label="使用 / 领取说明" value={prize.instructions} onChange={(value) => update("instructions", value)} /><TimeField disabled={locked} label="奖品有效开始" value={prize.claimStart} onChange={(value) => update("claimStart", value)} /><TimeField disabled={locked} label="奖品有效截止" value={prize.claimEnd} onChange={(value) => update("claimEnd", value)} />
     </div>
     <p className="marketing-field-help">{fulfillment === "RESERVATION" ? "中奖后需先选择领取时间，再领取或使用奖品。" : prize.prizeType === "VIRTUAL" ? "中奖后直接发放所配置的虚拟权益。" : "中奖后直接生成领奖核销凭证。"}</p>
-    {needsReservation(prize) && <Panel title="领取安排">
-      <SelectField label="选择当前活动的领取安排" disabled={scheduleLocked} value={selectedSchedule?.id ?? ""} list={schedules.map(row => ({ value: row.id, label: row.name }))} onChange={pickupScheduleId => {
+    {needsReservation(prize) && <Panel title="兑奖预约">
+      <SelectField label="选择当前活动的兑奖预约" disabled={scheduleLocked} value={selectedSchedule?.id ?? ""} list={schedules.map(row => ({ value: row.id, label: row.name }))} onChange={pickupScheduleId => {
         const schedule = schedules.find(row => row.id === pickupScheduleId);
         onChange({ ...prize, pickupScheduleId, location: schedule?.location ?? prize.location });
       }} />
-      {!schedules.length && <p className="marketing-field-help">当前活动没有领取安排，请先在奖品设置中“新建领取安排”，再选择预约领取。</p>}
-      {scheduleLocked && <p className="marketing-field-help">已有领奖预约记录，不能更换领取安排。</p>}
+      {!schedules.length && <p className="marketing-field-help">当前活动没有兑奖预约设置，请先在奖品设置中“新建兑奖预约”，再选择预约领取。</p>}
+      {scheduleLocked && <p className="marketing-field-help">已有领奖预约记录，不能更换兑奖预约设置。</p>}
       {selectedSchedule && activity && <><DefinitionGrid rows={[["地点", selectedSchedule.location], ["时段数量", selectedSchedule.slots.length], ["已预约", pickupBookings(state, activity, selectedSchedule.id).filter(row => row.status !== "CANCELED").length]]} />
         {pickupScheduleSummary(state, { ...activity, pool: [...activity.pool.filter(item => item.id !== prize.id), prize] }, selectedSchedule, Date.now()).warning && <Banner type="warning" title={pickupScheduleSummary(state, { ...activity, pool: [...activity.pool.filter(item => item.id !== prize.id), prize] }, selectedSchedule, Date.now()).warning} closeIcon={null} />}
       </>}

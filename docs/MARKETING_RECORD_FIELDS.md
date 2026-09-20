@@ -47,19 +47,21 @@ Sowind四表和会员/销售Store未改；可选gender不混入user_profile，�
 
 只有营销存储不存在或用户明确重置时创建新Seed；旧数据不自动加入示意、不清空、不自动更换日期。现有用户若无数据仍为空，不能用渲染层补齐30行。
 
+2026-09-20追加授权例外：新增独立 `activity-demo-redemption-200-v1`，名称“Kivisense 品牌体验日（200条演示）”。管理账号加载时仅追加一次完整活动及关联事实：ACTIVITY Booking恰好200、Draw恰好200；奖品为咖啡券（实体直接领取）、DIY皮牌（实体预约领取）、京东购物卡（虚拟演示兑换码）。旧活动、旧奖品、所有历史事实和用户修改不替换；销售/会员不写入。校验失败或原存储已被其他页面更新时不覆盖。新空活动仍为空，不在渲染层生成记录。
+
 ## 当前列表与详情
 
 活动预约列表：用户、脱敏手机号、真实参与时间段、预约时间、状态、签到 / 完成、查看。详情分用户信息 / 预约信息 / 参与状态 / 系统信息，OpenID、微信应用、参与编号和预约编号只在系统信息展示。
 
 抽奖列表：用户、活动场次、结果、奖品、抽奖时间、领取状态、查看及需要预约时的预约记录。详情分抽奖信息 / 抽奖结果 / 规则快照 / 领奖信息 / 系统信息。快照逐个显示配置概率、实际概率、当时剩余及未中奖概率，不输出JSON；新增Draw保存可选prizeName，旧缺失快照不以当前配置补写。
 
-领奖预约名单按Activity / Schedule / Slot筛选，展示用户、中奖奖品、中奖时间、领取时段、预约时间、状态。奖品预约记录弹窗仅查询该Award的PRIZE Booking。取消 / 改约历史保留，已领取也占用该时段容量。
+领奖预约名单按Activity / Schedule / Slot筛选，展示用户、中奖奖品、中奖时间、兑奖时段、预约时间、状态。奖品预约记录弹窗仅查询该Award的PRIZE Booking。取消 / 改约历史保留，已领取也占用该时段容量。
 
 | 新页面字段 | 前端字段 / 派生规则 | 扩展边界 |
 | --- | --- | --- |
-| 领取安排名称 / 地点 / 日期 | activity.pickupSchedules[].name / location / startAt / endAt | Activity下的前端配置，不是Sowind字段 |
-| 关联领取安排 | prize.pickupScheduleId | 显式关联，不按文字推断 |
-| 领取时段 / 容量 | schedule.slots[].startAt / endAt / capacity | 复用MarketingSlot，独立于活动场次 |
+| 兑奖预约设置名称 / 地点 / 日期 | activity.pickupSchedules[].name / location / startAt / endAt | Activity下的前端配置，不是Sowind字段 |
+| 关联兑奖预约设置 | prize.pickupScheduleId | 显式关联，不按文字推断 |
+| 兑奖时段 / 容量 | schedule.slots[].startAt / endAt / capacity | 复用MarketingSlot，独立于活动场次 |
 | 已预约 / 剩余 | 同活动安排时段的非取消PRIZE Booking数 / capacity减该数 | 派生，不持久化冗余计数 |
 | 预约安排关系 | booking.scheduleId，可选；旧值由prize映射 | 保留kind / poolItemId / awardId / slotId |
 

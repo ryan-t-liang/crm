@@ -19,7 +19,7 @@ const legacyScheduleId = (prize: ActivityPrize) => `pickup-legacy:${prize.id}`;
 export function pickupSchedules(activity: MarketingActivity): MarketingPickupSchedule[] {
   const saved = activity.pickupSchedules ?? [];
   return [...saved, ...activity.pool.filter(prize => reservation(prize) && !prize.pickupScheduleId && prize.slots.length && !saved.some(schedule => schedule.id === legacyScheduleId(prize))).map(prize => ({
-    id: legacyScheduleId(prize), activityId: activity.id, name: `${prize.name}领取安排`, location: prize.location,
+    id: legacyScheduleId(prize), activityId: activity.id, name: `${prize.name}兑奖预约设置`, location: prize.location,
     startAt: prize.claimStart, endAt: prize.claimEnd, slots: prize.slots,
   }))];
 }
@@ -40,9 +40,9 @@ export function pickupBookedCount(state: MarketingState, activity: MarketingActi
 }
 export function pickupSlotErrors(slot: MarketingSlot, schedule: MarketingPickupSchedule) {
   const errors: string[] = [];
-  if (!slot.id || !slot.label.trim() || !slot.location.trim() || !capacityValid(slot.capacity)) errors.push("领取时段须有时间、地点和非负整数预约容量。");
-  if (!validWindow(slot.startAt, slot.endAt) || !validWindow(schedule.startAt, schedule.endAt) || time(slot.startAt) < time(schedule.startAt) || time(slot.endAt) > time(schedule.endAt)) errors.push("领取时段须在领取安排有效日期内，结束晚于开始。");
-  if (!Number.isFinite(time(slot.bookingClosesAt)) || time(slot.bookingClosesAt) > time(slot.endAt) || !validWindow(slot.checkinStart, slot.checkinEnd) || time(slot.checkinStart) > time(slot.startAt) || time(slot.checkinEnd) < time(slot.endAt)) errors.push("领取时段的预约截止和核销窗口无效。");
+  if (!slot.id || !slot.label.trim() || !slot.location.trim() || !capacityValid(slot.capacity)) errors.push("兑奖时段须有时间、地点和非负整数预约容量。");
+  if (!validWindow(slot.startAt, slot.endAt) || !validWindow(schedule.startAt, schedule.endAt) || time(slot.startAt) < time(schedule.startAt) || time(slot.endAt) > time(schedule.endAt)) errors.push("兑奖时段须在兑奖预约设置有效日期内，结束晚于开始。");
+  if (!Number.isFinite(time(slot.bookingClosesAt)) || time(slot.bookingClosesAt) > time(slot.endAt) || !validWindow(slot.checkinStart, slot.checkinEnd) || time(slot.checkinStart) > time(slot.startAt) || time(slot.checkinEnd) < time(slot.endAt)) errors.push("兑奖时段的预约截止和核销窗口无效。");
   return errors;
 }
 export function pickupSlotOpen(schedule: MarketingPickupSchedule, slot: MarketingSlot, now: number) {
@@ -61,7 +61,7 @@ export function pickupScheduleSummary(state: MarketingState, activity: Marketing
   const prizes = activity.pool.filter(prize => reservation(prize) && pickupScheduleForPrize(activity, prize)?.id === schedule.id);
   const demand = prizes.reduce((sum, prize) => sum + (prize.quantityLimit ?? prize.quota), 0);
   const status = now >= time(schedule.endAt) ? "已结束" : available > 0 ? "可预约" : slots.some(slot => pickupSlotOpen(schedule, slot, now)) ? "已满" : "已停止";
-  return { total, booked, remaining: Math.max(0, total - booked), available, prizes, status, warning: demand > total ? `当前领取安排总容量为${total}，关联奖品最多可能产生${demand}个领奖预约，建议增加领取时段或容量。` : "" };
+  return { total, booked, remaining: Math.max(0, total - booked), available, prizes, status, warning: demand > total ? `当前兑奖预约设置总容量为${total}，关联奖品最多可能产生${demand}个领奖预约，建议增加兑奖时段或容量。` : "" };
 }
 export function pickupSlotForBooking(activity: MarketingActivity, booking: MarketingBooking) {
   return pickupSchedules(activity).find(schedule => schedule.id === bookingScheduleId(activity, booking))?.slots.find(slot => slot.id === booking.slotId);
@@ -96,10 +96,10 @@ export function generatePickupSlots(schedule: MarketingPickupSchedule, input: Pi
   for (let day = from; day <= to; day += 86_400_000) for (let minute = start; minute + input.duration <= end; minute += input.duration) {
     const startAt = new Date(day + minute * 60_000).toISOString(), endAt = new Date(day + (minute + input.duration) * 60_000).toISOString();
     if (schedule.slots.some(slot => !slot.deleted && time(slot.startAt) === time(startAt) && time(slot.endAt) === time(endAt))) { skipped++; continue; }
-    const slot = { id: `pickup:${schedule.id}:${startAt}`, label: "领取时段", startAt, endAt, location: schedule.location, capacity: input.capacity, bookingClosesAt: endAt, checkinStart: startAt, checkinEnd: endAt };
+    const slot = { id: `pickup:${schedule.id}:${startAt}`, label: "兑奖时段", startAt, endAt, location: schedule.location, capacity: input.capacity, bookingClosesAt: endAt, checkinStart: startAt, checkinEnd: endAt };
     const errors = pickupSlotErrors(slot, schedule);
     if (errors.length) return fail(errors.join("；"));
-    if (schedule.slots.some(old => !old.deleted && time(startAt) < time(old.endAt) && time(endAt) > time(old.startAt))) return fail("当前领取安排中已存在重叠时段，请调整时间。");
+    if (schedule.slots.some(old => !old.deleted && time(startAt) < time(old.endAt) && time(endAt) > time(old.startAt))) return fail("当前兑奖预约设置中已存在重叠时段，请调整时间。");
     slots.push(slot);
   }
   return { slots, skipped, days };
@@ -107,25 +107,25 @@ export function generatePickupSlots(schedule: MarketingPickupSchedule, input: Pi
 export function executePickupCommand(state: MarketingState, activity: MarketingActivity, command: PickupCommand, now: number): { error?: string; id?: string; detail?: string } {
   if (command.type === "SAVE_PICKUP_SCHEDULE") {
     const { schedule } = command;
-    if (!schedule.id || schedule.activityId !== activity.id || !schedule.name.trim() || !schedule.location.trim() || !validWindow(schedule.startAt, schedule.endAt)) return { error: "填写领取安排名称、地点和有效日期。" };
+    if (!schedule.id || schedule.activityId !== activity.id || !schedule.name.trim() || !schedule.location.trim() || !validWindow(schedule.startAt, schedule.endAt)) return { error: "填写兑奖预约设置名称、地点和有效日期。" };
     const old = pickupSchedules(activity).find(row => row.id === schedule.id);
     if (old && pickupBookings(state, activity, old.id).length && schedule.location !== old.location) return { error: "已有领奖预约的领取地点不能直接更改。" };
     const candidate = { id: schedule.id, activityId: activity.id, name: schedule.name.trim(), location: schedule.location.trim(), startAt: schedule.startAt, endAt: schedule.endAt, slots: old?.slots ?? [] };
-    if (candidate.slots.some(slot => !slot.deleted && (slot.startAt || slot.endAt) && pickupSlotErrors(slot, candidate).length)) return { error: "有效日期必须覆盖已有领取时段。" };
+    if (candidate.slots.some(slot => !slot.deleted && (slot.startAt || slot.endAt) && pickupSlotErrors(slot, candidate).length)) return { error: "有效日期必须覆盖已有兑奖时段。" };
     const saved = old && materializeSchedule(activity, old.id);
     activity.pickupSchedules ??= [];
     if (saved) Object.assign(saved, candidate); else activity.pickupSchedules.push(structuredClone(candidate));
-    return { id: candidate.id, detail: "保存领取安排基本信息，时段及历史预约保留" };
+    return { id: candidate.id, detail: "保存兑奖预约设置基本信息，时段及历史预约保留" };
   }
   const schedule = materializeSchedule(activity, command.scheduleId);
-  if (!schedule) return { error: "领取安排不存在或不属于当前活动。" };
+  if (!schedule) return { error: "兑奖预约设置不存在或不属于当前活动。" };
   if (command.type === "GENERATE_PICKUP_SLOTS") {
     const preview = generatePickupSlots(schedule, command.input);
     if (preview.error) return { error: preview.error };
-    if (preview.slots.some(slot => time(slot.endAt) <= now)) return { error: "不能生成已经结束的领取时段。" };
+    if (preview.slots.some(slot => time(slot.endAt) <= now)) return { error: "不能生成已经结束的兑奖时段。" };
     if (preview.slots.some(slot => pickupSchedules(activity).some(other => other.slots.some(old => old.id === slot.id)))) return { error: "时段标识已经存在，请核对。" };
     schedule.slots.push(...preview.slots);
-    return { id: schedule.id, detail: `生成${preview.slots.length}个领取时段；已跳过${preview.skipped}个重复时段。` };
+    return { id: schedule.id, detail: `生成${preview.slots.length}个兑奖时段；已跳过${preview.skipped}个重复时段。` };
   }
   const slotId = command.type === "SAVE_PICKUP_SLOT" ? command.slot.id : command.slotId;
   const old = schedule.slots.find(row => row.id === slotId);
@@ -133,22 +133,22 @@ export function executePickupCommand(state: MarketingState, activity: MarketingA
   if (command.type === "SAVE_PICKUP_SLOT") {
     const candidate = { ...command.slot, disabled: old?.disabled ?? false, deleted: old?.deleted ?? false };
     if (old?.deleted) return { error: "已删除时段不能通过编辑恢复。" };
-    if (!old && pickupSchedules(activity).some(other => other.slots.some(slot => slot.id === candidate.id))) return { error: "领取时段标识重复。" };
+    if (!old && pickupSchedules(activity).some(other => other.slots.some(slot => slot.id === candidate.id))) return { error: "兑奖时段标识重复。" };
     const errors = pickupSlotErrors(candidate, schedule);
     if (errors.length) return { error: errors.join("；") };
-    if (!old && time(candidate.endAt) <= now) return { error: "不能新增已经结束的领取时段。" };
+    if (!old && time(candidate.endAt) <= now) return { error: "不能新增已经结束的兑奖时段。" };
     if (bookings.length && ["startAt", "endAt", "checkinStart", "checkinEnd", "bookingClosesAt", "location"].some(key => candidate[key as keyof MarketingSlot] !== old?.[key as keyof MarketingSlot])) return { error: "已有预约记录的时段不能直接更改日期、时间或地点。" };
     if (old && booked && candidate.capacity !== old.capacity) return { error: "已有预约，请使用“调整容量”。" };
     if (candidate.capacity < booked) return { error: `当前时段已有${booked}条有效预约，预约容量不能低于${booked}人。` };
-    if (schedule.slots.some(slot => slot.id !== slotId && !slot.deleted && time(candidate.startAt) < time(slot.endAt) && time(candidate.endAt) > time(slot.startAt))) return { error: "当前领取安排中已存在重叠时段，请调整时间。" };
+    if (schedule.slots.some(slot => slot.id !== slotId && !slot.deleted && time(candidate.startAt) < time(slot.endAt) && time(candidate.endAt) > time(slot.startAt))) return { error: "当前兑奖预约设置中已存在重叠时段，请调整时间。" };
     if (old) Object.assign(old, candidate); else schedule.slots.push(structuredClone(candidate));
-    return { id: slotId, detail: "保存领取时段" };
+    return { id: slotId, detail: "保存兑奖时段" };
   }
-  if (!old || old.deleted) return { error: "领取时段不存在。" };
+  if (!old || old.deleted) return { error: "兑奖时段不存在。" };
   if (command.type === "DELETE_PICKUP_SLOT") {
     if (bookings.length) return { error: "已有预约记录的时段不能删除，可以停止预约。" };
     schedule.slots = schedule.slots.filter(slot => slot.id !== old.id);
-    return { id: old.id, detail: "删除未使用领取时段" };
+    return { id: old.id, detail: "删除未使用兑奖时段" };
   }
   if (command.type === "ADJUST_PICKUP_CAPACITY") {
     if (!capacityValid(command.capacity) || command.capacity < booked) return { error: `当前时段已有${booked}条有效预约，预约容量不能低于${booked}人，且须为非负整数。` };
@@ -157,5 +157,5 @@ export function executePickupCommand(state: MarketingState, activity: MarketingA
   }
   if (command.open && now >= time(old.endAt)) return { error: "已结束时段不能恢复预约。" };
   old.disabled = !command.open;
-  return { id: old.id, detail: command.open ? "恢复领取时段预约" : "停止新预约，已有预约和中奖权益继续有效" };
+  return { id: old.id, detail: command.open ? "恢复兑奖时段预约" : "停止新预约，已有预约和中奖权益继续有效" };
 }

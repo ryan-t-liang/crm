@@ -108,7 +108,7 @@ function PrizeSettings({ activity, onManageSessions, onCreate }: { activity: Mar
   const rulesLocked = Boolean(activity.publishedAt || hasActivityBusinessData(state, activity.id));
   const codePrize = activity.pool.find((item) => item.id === codesId);
   return <>{feedback}
-    <Panel title="奖品" actions={<Button size="small" icon={<IconPlus />} disabled={!access.manage} onClick={onCreate}>创建奖品</Button>}>
+    <Panel title="奖品" note="未单独配置的场次使用活动默认概率及未分配库存；已单独配置的场次只使用本场奖池。" actions={<Button size="small" icon={<IconPlus />} disabled={!access.manage} onClick={onCreate}>创建奖品</Button>}>
       <Table rowKey="id" dataSource={activity.pool} pagination={{ pageSize: 10 }} scroll={{ x: 990 }} empty={<EmptyBlock title="暂无奖品" description="添加奖品后，可分别配置领取方式、可发放数量和中奖概率。" />} columns={[
         { title: "奖品", width: 160, render: (_: unknown, item: ActivityPrize) => <div className="marketing-summary-cell"><strong>{item.name}</strong><span>{item.label}</span></div> },
         { title: "类型 / 领取方式", width: 130, render: (_: unknown, item: ActivityPrize) => <div className="marketing-summary-cell"><span>{prizeTypeLabels[item.prizeType]}</span><small>{prizeReceivingLabel(item)}</small></div> },
@@ -121,16 +121,17 @@ function PrizeSettings({ activity, onManageSessions, onCreate }: { activity: Mar
           if (!activity.bookingEnabled) return <div className="marketing-summary-cell"><span>中奖概率 {prizeDefaultProbability(item)}%</span></div>;
           const slots = activity.slots.filter((slot) => !slot.disabled && !slot.deleted);
           const configured = slots.filter((slot) => (activity.sessionPrizes ?? []).some((row) => row.sessionId === slot.id && row.prizeId === item.id && row.enabled)).length;
-          return <div className="marketing-summary-cell"><span>新场次默认 {prizeDefaultProbability(item)}%</span><Button theme="borderless" size="small" onClick={onManageSessions}>{configured} / {slots.length} 场已配置</Button></div>;
+          const inherited = slots.filter(slot => !(activity.sessionPrizes ?? []).some(row => row.sessionId === slot.id)).length;
+          return <div className="marketing-summary-cell"><span>活动默认 {prizeDefaultProbability(item)}%</span><Button theme="borderless" size="small" onClick={onManageSessions}>{inherited} 场继承 · {configured} 场单独启用</Button></div>;
         } },
-        { title: "领取安排 / 有效期", width: 210, render: (_: unknown, item: ActivityPrize) => {
+        { title: "兑奖预约设置 / 有效期", width: 210, render: (_: unknown, item: ActivityPrize) => {
           const schedule = pickupScheduleForPrize(activity, item);
-          return <div className="marketing-summary-cell">{needsReservation(item) && (schedule ? <Button theme="borderless" size="small" onClick={() => setScheduleId(schedule.id)}>{schedule.name}</Button> : <span>领取安排待配置</span>)}<DateRange start={item.claimStart} end={item.claimEnd} /></div>;
+          return <div className="marketing-summary-cell">{needsReservation(item) && (schedule ? <Button theme="borderless" size="small" onClick={() => setScheduleId(schedule.id)}>{schedule.name}</Button> : <span>兑奖预约设置待配置</span>)}<DateRange start={item.claimStart} end={item.claimEnd} /></div>;
         } },
         { title: "操作", width: 130, fixed: "right", render: (_: unknown, item: ActivityPrize) => <div className="row-actions"><Button theme="borderless" size="small" disabled={!access.manage} onClick={() => setEditing(structuredClone(item))}>编辑</Button><MarketingMenu menu={[
           ...(item.method === "REDEMPTION_CODE" ? [{ node: "item" as const, name: "导入兑换码", disabled: !access.manage, onClick: () => setImportId(item.id) }, { node: "item" as const, name: "查看兑换码", disabled: !access.manage, onClick: () => setCodesId(item.id) }] : []),
           ...(rulesLocked && prizeQuantityMode(item) === "LIMITED" ? [{ node: "item" as const, name: "增加可发放数量", disabled: !access.manage, onClick: () => setExtra({ itemId: item.id, count: 1 }) }] : []),
-          ...(needsReservation(item) && pickupScheduleForPrize(activity, item) ? [{ node: "item" as const, name: "管理领取安排", onClick: () => setScheduleId(pickupScheduleForPrize(activity, item)!.id) }] : []),
+          ...(needsReservation(item) && pickupScheduleForPrize(activity, item) ? [{ node: "item" as const, name: "管理兑奖预约设置", onClick: () => setScheduleId(pickupScheduleForPrize(activity, item)!.id) }] : []),
           ...(!rulesLocked ? [{ node: "item" as const, name: "删除奖品", type: "danger" as const, disabled: !access.manage, onClick: () => run({ type: "DELETE_ACTIVITY_PRIZE", activityId: activity.id, poolItemId: item.id }) }] : []),
         ]}><Button theme="borderless" size="small" icon={<IconMore />} aria-label={`更多奖品操作 · ${item.name}`} /></MarketingMenu></div> },
       ]} />
@@ -173,27 +174,22 @@ export function MarketingDetail({ activity, requestedTab, requestedSecondaryTab 
       <span className="marketing-record-metadata"><span>{code}</span><span>{displayDateRange(activity.startAt, activity.endAt).compact}</span></span>
     </>}
     actions={<MarketingMenu menu={[
-      { node: "item" as const, name: "创建奖品", disabled: !access.manage, onClick: () => setNewPrize({ ...createActivityPrize(activity.id, Date.now()), fulfillmentMode: "DIRECT" }) },
-      { node: "item" as const, name: "编辑活动信息", disabled: !access.manage, onClick: () => setEditing(true) },
-      { node: "item" as const, name: "编辑预约设置", disabled: !access.manage || !activity.bookingEnabled, onClick: () => setConfiguration("booking") },
-      { node: "item" as const, name: "管理场次", disabled: !access.manage || !activity.bookingEnabled, onClick: () => setSessions(true) },
-      { node: "item" as const, name: "抽奖设置", disabled: !access.manage, onClick: () => setConfiguration("lottery") },
-      { node: "divider" as const }, ...activityMenu(state, activity, access.manage, now, run, () => setSessions(true)),
-    ]}><Button size="small" theme="solid" icon={<IconChevronDown />} iconPosition="right" aria-label="活动管理">活动管理</Button></MarketingMenu>}
+      ...activityMenu(state, activity, access.manage, now, run, () => setSessions(true)),
+    ]}><Button size="small" icon={<IconChevronDown />} iconPosition="right" aria-label="活动状态操作">活动状态操作</Button></MarketingMenu>}
     sidebar={<>
-      <SideSection title="活动信息"><DataList rows={coreInfo} /><div className="marketing-rail-rule"><h3>活动规则</h3><ActivityRuleContent activity={activity} /></div></SideSection>
-      {activity.bookingEnabled && <SideSection title="预约设置"><DataList rows={[
+      <SideSection title="活动信息" onEdit={() => setEditing(true)} editDisabled={!access.manage}><DataList rows={coreInfo} /><div className="marketing-rail-rule"><h3>活动规则</h3><ActivityRuleContent activity={activity} /></div></SideSection>
+      {activity.bookingEnabled && <SideSection title="活动预约设置" onEdit={() => setConfiguration("booking")} editDisabled={!access.manage}><DataList rows={[
         ["预约开放", displayDate(activity.bookingStart)], ["预约截止", displayDate(activity.bookingEnd)],
         ["完成条件", activity.completion === "CHECKIN" ? "签到即完成" : "工作人员确认完成"],
         ["允许取消", activity.allowCancel ? "截止前且未签到" : "不允许"], ["允许改约", activity.allowReschedule ? "允许" : "不允许"],
         ["现场报名", activity.allowWalkIn ? "允许" : "不允许"], ["活动场次", String(activity.slots.length)],
-      ]} /></SideSection>}
-      {activity.lotteryEnabled && <SideSection title="抽奖设置"><DataList rows={[
+      ]} /><div className="marketing-rail-rule"><Button size="small" theme="borderless" onClick={() => setSessions(true)}>管理活动场次</Button></div></SideSection>}
+      {activity.lotteryEnabled && <SideSection title="抽奖设置" onEdit={() => setConfiguration("lottery")} editDisabled={!access.manage}><DataList rows={[
         ["抽奖时间", displayDateRange(activity.lotteryStart, activity.lotteryEnd).compact],
         ["完成后发放次数", String(activity.grantCount)], ["累计抽奖上限", String(activity.drawLimit)],
         ["每日上限", activity.dailyLimit === null ? "不限制" : String(activity.dailyLimit)], ["累计中奖上限", String(activity.winLimit)],
-        [activity.bookingEnabled ? "新场次默认概率合计" : "中奖概率合计", `${activity.pool.reduce((sum, item) => sum + prizeDefaultProbability(item), 0)}%`],
-        [activity.bookingEnabled ? "新场次默认未中奖概率" : "未中奖概率", `${Math.max(0, 100 - activity.pool.reduce((sum, item) => sum + prizeDefaultProbability(item), 0))}%（系统计算）`],
+        [activity.bookingEnabled ? "活动默认概率合计" : "中奖概率合计", `${activity.pool.reduce((sum, item) => sum + prizeDefaultProbability(item), 0)}%`],
+        [activity.bookingEnabled ? "活动默认未中奖概率" : "未中奖概率", `${Math.max(0, 100 - activity.pool.reduce((sum, item) => sum + prizeDefaultProbability(item), 0))}%（系统计算）`],
       ]} /></SideSection>}
     </>}
     tabs={<>{feedback}<Tabs type="line" className="record-tabs" activeKey={tab} onChange={go}>

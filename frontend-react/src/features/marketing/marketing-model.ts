@@ -219,7 +219,7 @@ export function prizeErrors(item: ActivityPrize, activity: MarketingActivity, co
   if (new Set(item.codes.map((row) => row.code)).size !== item.codes.length || item.codes.some((row) => !row.code.trim() || row.code !== row.code.trim())) errors.push("兑换码不能为空或重复");
   errors.push(...partialWindowError("奖品有效期", item.claimStart, item.claimEnd));
   if (needsReservation(item) && quantityMode !== "LIMITED") errors.push("预约领取奖品必须设置有限的可发放数量");
-  if (needsReservation(item) && !pickupScheduleForPrize(activity, item)) errors.push("预约领取奖品必须选择当前活动的领取安排");
+  if (needsReservation(item) && !pickupScheduleForPrize(activity, item)) errors.push("预约领取奖品必须选择当前活动的兑奖预约设置");
   item.slots.forEach((slot) => {
     if (!nonnegative(slot.capacity)) errors.push("领奖时段容量须为合法非负整数");
     errors.push(...partialWindowError("领奖时段", slot.startAt, slot.endAt), ...partialWindowError("领奖签到窗口", slot.checkinStart, slot.checkinEnd));
@@ -236,7 +236,7 @@ export function prizeErrors(item: ActivityPrize, activity: MarketingActivity, co
     if (item.method === "LINK" && !validMarketingLink(item.link)) errors.push("领取链接须使用有效的 HTTP / HTTPS 地址");
   } else errors.push("待补充奖品类型，不能发布");
   if (needsReservation(item)) {
-    if (!pickupScheduleForPrize(activity, item)?.slots.some(slot => !slot.deleted)) errors.push("预约型奖品的领取安排尚无领取时段");
+    if (!pickupScheduleForPrize(activity, item)?.slots.some(slot => !slot.deleted)) errors.push("预约型奖品的兑奖预约设置尚无兑奖时段");
   }
   if (new Set(item.slots.map((slot) => slot.id)).size !== item.slots.length) errors.push("领奖场次标识不能重复");
   return errors;
@@ -284,7 +284,13 @@ export function sessionPrizeReadiness(state: MarketingState, activity: Marketing
   if (!activity.bookingEnabled || !activity.lotteryEnabled) return [];
   return activity.slots.filter((slot) => !slot.disabled && !slot.deleted && sessionCanProduceFutureDraw(activity, slot.id, now)).flatMap((slot) => {
     const rows = sessionPrizeConfigurations(activity, slot.id);
-    const errors = rows.length ? sessionPrizeErrors(state, activity, slot.id, rows, now) : ["尚未配置场次奖品"];
+    if (!rows.length) {
+      const total = activity.pool.reduce((sum, item) => sum + prizeDefaultProbability(item), 0);
+      const errors = total > 100 ? ["活动默认中奖概率合计不能超过100%"] : [];
+      if (!activity.pool.some(item => prizeDefaultProbability(item) > 0 && winnable(state, activity.id, item, now) > 0 && (activityPrizeAllocation(state, activity, item, now).unallocated ?? Infinity) > 0)) errors.push("活动默认奖池暂无可中奖奖品或未分配库存");
+      return errors.length ? [{ sessionId: slot.id, label: slot.label, errors }] : [];
+    }
+    const errors = sessionPrizeErrors(state, activity, slot.id, rows, now);
     const hasWinnablePrize = rows.some((row) => {
       if (!row.enabled || row.probability <= 0) return false;
       const item = activity.pool.find((prize) => prize.id === row.prizeId);
@@ -319,7 +325,7 @@ export function publishChecks(activity: MarketingActivity, state: MarketingState
     if (!positive(activity.grantCount) || !positive(activity.drawLimit) || !positive(activity.winLimit) || activity.grantCount > activity.drawLimit || (activity.dailyLimit !== null && !positive(activity.dailyLimit))) errors.push("次数 / 中奖上限须为正整数，发放次数不得超过累计上限");
     if (!activity.pool.length) errors.push("开启抽奖须配置奖品");
     const probabilities = activity.pool.map(prizeDefaultProbability);
-    if (probabilities.some((value) => typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 100) || probabilities.reduce((sum, value) => sum + value, 0) > 100) errors.push(`${activity.bookingEnabled ? "新场次默认中奖概率" : "奖品中奖概率"}合计不能超过100%，未中奖概率由系统自动计算`);
+    if (probabilities.some((value) => typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 100) || probabilities.reduce((sum, value) => sum + value, 0) > 100) errors.push(`${activity.bookingEnabled ? "活动默认中奖概率" : "奖品中奖概率"}合计不能超过100%，未中奖概率由系统自动计算`);
     if (activity.bookingEnabled) {
       const sessionIssues = sessionPrizeReadiness(state, activity, now);
       if (sessionIssues.length) errors.push(`还有${sessionIssues.length}个活动场次尚未完成奖品配置：${sessionIssues.map((issue) => issue.label).join("、")}`);
@@ -329,7 +335,7 @@ export function publishChecks(activity: MarketingActivity, state: MarketingState
       completeErrors.forEach((error) => (error.includes("领奖时段") || error.includes("预约型奖品") ? checks[4] : error.includes("兑换码不足") ? checks[6] : target).errors.push(error));
       if (needsReservation(item) && !completeErrors.some((error) => error.includes("时段") || error.includes("场次") || error.includes("有效期"))) {
         const capacity = fulfillmentCapacity(state, activity.id, item, now).remainingSlots;
-        if (capacity < 1) checks[4].errors.push(`${item.name}：领取安排没有可预约名额，请配置有效时段及容量。`);
+        if (capacity < 1) checks[4].errors.push(`${item.name}：兑奖预约设置没有可预约名额，请配置有效时段及容量。`);
       }
       if (prizeDefaultProbability(item) > 0 && winnable(state, activity.id, item, now) < 1 && !completeErrors.length) target.errors.push(`${item.name}：中奖概率大于0，发布时必须至少有1个真实可发放单位（数量、有效期、领奖预约名额或兑换码不足）。`);
     });
@@ -352,7 +358,7 @@ export function draftActivityErrors(activity: MarketingActivity) {
     errors.push(...partialWindowError("活动场次", slot.startAt, slot.endAt), ...partialWindowError("签到窗口", slot.checkinStart, slot.checkinEnd));
   });
   const defaultProbabilityTotal = activity.pool.reduce((sum, item) => sum + prizeDefaultProbability(item), 0);
-  if (defaultProbabilityTotal > 100) errors.push(`${activity.bookingEnabled ? "新场次默认中奖概率" : "奖品中奖概率"}合计为${defaultProbabilityTotal}%，请调整至100%以内`);
+  if (defaultProbabilityTotal > 100) errors.push(`${activity.bookingEnabled ? "活动默认中奖概率" : "奖品中奖概率"}合计为${defaultProbabilityTotal}%，请调整至100%以内`);
   return [...new Set(errors)];
 }
 function assignedCodesPreserved(before: ActivityPrize[], after: ActivityPrize[]) {
@@ -437,17 +443,17 @@ function drawRules(state: MarketingState, activity: MarketingActivity, row: Mark
     if (!inWindow(now, slot.startAt, slot.endAt)) return { error: now >= time(slot.endAt) ? "当前活动场次已结束，不能产生新的抽奖记录" : "当前活动场次尚未开始，不能抽奖" };
     sessionId = slot.id;
     const rows = sessionPrizeConfigurations(activity, sessionId);
-    if (!rows.length) return { error: "本场奖品尚未配置，不能抽奖" };
-    const errors = sessionPrizeErrors(state, activity, sessionId, rows, now);
+    const errors = rows.length ? sessionPrizeErrors(state, activity, sessionId, rows, now) : [];
     if (errors.length) return { error: errors.join("；") };
-    configured = rows.filter((config) => config.enabled).flatMap((config) => {
+    configured = !rows.length ? activity.pool.map(item => ({ item, probability: prizeDefaultProbability(item), sessionRemaining: activityPrizeAllocation(state, activity, item, now).unallocated ?? undefined })) : rows.filter((config) => config.enabled).flatMap((config) => {
       const item = activity.pool.find((candidate) => candidate.id === config.prizeId);
       if (!item) return [];
-      const allocation = sessionPrizeAllocation(state, activity, sessionId!, item);
+      const allocation = sessionPrizeAllocation(state, activity, sessionId!, item, now);
       return [{ item, probability: config.probability, sessionRemaining: allocation.remaining ?? undefined }];
     });
   } else configured = activity.pool.map((item) => ({ item, probability: prizeDefaultProbability(item) }));
   const configuredTotal = configured.reduce((sum, rule) => sum + rule.probability, 0);
+  if (configured.some(rule => !Number.isFinite(rule.probability) || rule.probability < 0 || rule.probability > 100)) return { error: "中奖概率须为0至100的有效数字" };
   if (configuredTotal > 100) return { error: `当前中奖概率合计为${configuredTotal}%，请调整至100%以内。` };
   const rules = configured.map((rule) => {
     const remaining = rule.sessionRemaining;
@@ -704,23 +710,24 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     if (old && !assignedCodesPreserved([old], [item])) return reject("已分配兑换码永久保留，不允许删除或修改分配状态");
     if (old) {
       const booked = state.bookings.some(row => row.activityId === activity.id && row.poolItemId === old.id && row.kind === "PRIZE");
-      if (booked && pickupScheduleForPrize(activity, old)?.id !== pickupScheduleForPrize(activity, item)?.id) return reject("该奖品已有领奖预约记录，不能切换领取安排。");
+      if (booked && pickupScheduleForPrize(activity, old)?.id !== pickupScheduleForPrize(activity, item)?.id) return reject("该奖品已有领奖预约记录，不能切换兑奖预约设置。");
       if (won && ["prizeType", "method", "fulfillmentMode", "claimStart", "claimEnd", "location", "quantityMode", "link", "voucherName", "voucherDescription"].some(key => normalizedPrizeContract(old)[key as keyof ActivityPrize] !== item[key as keyof ActivityPrize])) return reject("已有中奖权益的奖品类型、领取规则和有效期不能直接修改，请创建新奖品。");
       if ((won || activity.publishedAt) && prizeQuantityLimit(old) !== limit) return reject("已发布奖品请使用增加可发放数量；历史数量与权益保留。");
-      if (JSON.stringify(old.slots) !== JSON.stringify(item.slots)) return reject("领取时段请通过领取安排专用操作维护。");
-    } else if (item.slots.length) return reject("新奖品不能创建私有领奖时段，请关联领取安排。");
+      if (JSON.stringify(old.slots) !== JSON.stringify(item.slots)) return reject("兑奖时段请通过兑奖预约设置专用操作维护。");
+    } else if (item.slots.length) return reject("新奖品不能创建私有领奖时段，请关联兑奖预约设置。");
     if (activity.pool.filter(prize => prize.id !== item.id).reduce((sum, prize) => sum + prizeDefaultProbability(prize), prizeDefaultProbability(item)) > 100) return reject("默认中奖概率合计不能超过100%。");
     if (item.codes.some((code) => code.assignedAwardId && !old?.codes.some((row) => JSON.stringify(row) === JSON.stringify(code)))) return reject("不允许修改兑换码分配状态");
     const codes = state.activities.flatMap((row) => row.pool.filter((prize) => row.id !== activity.id || prize.id !== item.id).flatMap((prize) => prize.codes.map((code) => code.code))).concat(item.codes.map((code) => code.code));
     if (new Set(codes).size !== codes.length) return reject("兑换码已存在，不允许重复导入");
     if (item.pickupScheduleId) {
       const selectedSchedule = pickupScheduleForPrize(activity, item);
-      if (!selectedSchedule) return reject("领取安排不存在或不属于当前活动");
+      if (!selectedSchedule) return reject("兑奖预约设置不存在或不属于当前活动");
       activity.pickupSchedules ??= [];
       if (!activity.pickupSchedules.some(schedule => schedule.id === selectedSchedule.id)) activity.pickupSchedules.push(structuredClone(selectedSchedule));
       item.slots = [];
     }
     if (old) activity.pool[activity.pool.indexOf(old)] = structuredClone(item); else activity.pool.push(structuredClone(item));
+    activity.sessionPrizeConfigVersion = (activity.sessionPrizeConfigVersion ?? 0) + 1;
     if (prizeQuantityMode(item) === "UNLIMITED") activity.sessionPrizes = (activity.sessionPrizes ?? []).map((row) => row.prizeId === item.id ? (() => { const { allocatedQuantity: _allocated, ...retained } = row; return retained; })() : row);
     return done(item.id, `保存当前活动奖品；默认概率 ${old ? prizeDefaultProbability(old) : 0}% → ${prizeDefaultProbability(item)}%；不覆盖既有场次配置或历史中奖快照`);
   }
@@ -771,6 +778,7 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     if (!activity.bookingEnabled || !activity.lotteryEnabled || !slot) return reject("仅预约参与且启用抽奖的有效场次可以配置奖品");
     if (activity.status === "CANCELED" || ctx.now >= time(activity.endAt) || ctx.now >= time(slot.endAt)) return reject("活动或场次已结束，奖品配置只读");
     const current = sessionPrizeConfigurations(activity, slot.id);
+    if (!command.prizes.length) return reject("请保留完整场次奖池；停止抽奖请关闭奖品参与，不能清空后隐式继承活动默认。");
     const submitted = command.prizes.map((row) => {
       const item = activity.pool.find((prize) => prize.id === row.prizeId);
       if (!item) return { ...row, sessionId: slot.id };
@@ -788,7 +796,7 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     const errors = sessionPrizeErrors(state, activity, slot.id, normalized, ctx.now);
     if (errors.length) return reject(errors.join("；"));
     const hasDraws = state.draws.some((draw) => draw.activityId === activity.id && draw.sessionId === slot.id);
-    const quantityLocked = hasDraws || ctx.now >= time(slot.startAt);
+    const quantityLocked = current.length > 0 && (hasDraws || ctx.now >= time(slot.startAt));
     if (quantityLocked && normalized.some((row) => row.enabled && (current.find((old) => old.prizeId === row.prizeId)?.allocatedQuantity ?? 0) !== (row.allocatedQuantity ?? 0))) return reject("场次已开始或已有抽奖记录，请使用“调整数量”保留变更语义和审计记录");
     const probabilityChanges = normalized.flatMap((row) => {
       const before = current.find((old) => old.prizeId === row.prizeId)?.probability ?? 0;
@@ -855,11 +863,11 @@ export function executeMarketing(input: MarketingState, command: MarketingComman
     if (errors.length || ctx.now >= time(item.claimEnd)) return reject(errors.join("；") || "奖品已过有效期，不能增加可发放数量");
     if (item.method === "REDEMPTION_CODE" && codeInventory(item).remaining < quota(state, activity.id, item).available + command.count) return reject("兑换码不足，请先导入兑换码再增加可发放数量");
     item.quota = proposed.quota; item.quantityLimit = proposed.quantityLimit;
-    return done(item.id, `增加可发放数量 ${command.count}；Before ${limit}；After ${proposed.quantityLimit}；已校验发放资料；领取安排容量独立维护`);
+    return done(item.id, `增加可发放数量 ${command.count}；Before ${limit}；After ${proposed.quantityLimit}；已校验发放资料；兑奖预约设置容量独立维护`);
   }
   if (command.type === "ADD_PRIZE_SLOT") {
     const item = activity.pool.find(row => row.id === command.poolItemId), schedule = item && pickupScheduleForPrize(activity, item);
-    if (!item || !needsReservation(item) || !schedule) return reject("请先为奖品选择领取安排");
+    if (!item || !needsReservation(item) || !schedule) return reject("请先为奖品选择兑奖预约设置");
     const result = executePickupCommand(state, activity, { type: "SAVE_PICKUP_SLOT", activityId: activity.id, scheduleId: schedule.id, slot: command.slot }, ctx.now);
     return result.error ? reject(result.error) : done(result.id, result.detail);
   }

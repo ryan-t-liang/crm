@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import { useCrm } from "./crm-store";
 import { useMemberOperations } from "./member-operations-store";
 import { createMarketingDemoState } from "@/mock/marketing-demo-data";
+import { appendMarketingShowcase } from "@/mock/marketing-showcase-data";
 import { executeMarketing, marketingPermissions, type MarketingCommand, type MarketingResult } from "@/features/marketing/marketing-model";
 import type { MarketingState } from "@/types/marketing";
 import { decodeMarketing, MARKETING_STORAGE_KEY, saveMarketing, type DecodedMarketing } from "@/features/marketing/marketing-storage";
@@ -9,22 +10,30 @@ import { decodeMarketing, MARKETING_STORAGE_KEY, saveMarketing, type DecodedMark
 const Context = createContext<{ state: MarketingState; issue: string; act: (command: MarketingCommand) => MarketingResult; reset: () => void } | null>(null);
 export function MarketingProvider({ children }: { children: ReactNode }) {
   const { getCurrentActor } = useCrm(), { state: members } = useMemberOperations();
-  const [initial] = useState<DecodedMarketing>(() => {
+  const [initial] = useState<DecodedMarketing & { showcaseAdded?: boolean; originalText?: string | null }>(() => {
     try {
       const value = localStorage.getItem(MARKETING_STORAGE_KEY);
-      if (value !== null) return decodeMarketing(value);
-      return { state: createMarketingDemoState(members, Date.now()) };
+      const decoded = value !== null ? decodeMarketing(value) : { state: createMarketingDemoState(members, Date.now()) };
+      const access = marketingPermissions(getCurrentActor());
+      if (!decoded.state || decoded.issue || !access.manage || !access.brands.length) return decoded;
+      const next = appendMarketingShowcase(decoded.state, access.brands[0], Date.now());
+      if (next === decoded.state) return decoded;
+      const verified = decodeMarketing(JSON.stringify(next));
+      if (!verified.state) return { ...decoded, issue: "新增演示活动校验失败，原数据未改动。" };
+      return { ...decoded, state: next, showcaseAdded: true, originalText: value };
     } catch { return { issue: "营销演示无法读取浏览器存储，未清除任何数据。" }; }
   });
   const empty: MarketingState = { version: 2, revision: 0, seededAt: "", activities: [], participations: [], bookings: [], chances: [], draws: [], awards: [], audits: [], redemptions: [] };
   const [state, setState] = useState(initial.state ?? empty), [issue, setIssue] = useState(initial.issue ?? "");
   const stateRef = useRef(state);
   const migrationRef = useRef(initial.originalV1);
+  const showcaseRef = useRef(initial.showcaseAdded);
   const membersRef = useRef(members), issueRef = useRef(issue);
   membersRef.current = members; issueRef.current = issue;
   useEffect(() => { try {
-    if (!initial.issue && (localStorage.getItem(MARKETING_STORAGE_KEY) === null || migrationRef.current)) {
-      saveMarketing(localStorage, stateRef.current, migrationRef.current); migrationRef.current = undefined;
+    if (!initial.issue && (localStorage.getItem(MARKETING_STORAGE_KEY) === null || migrationRef.current || showcaseRef.current)) {
+      if (showcaseRef.current && localStorage.getItem(MARKETING_STORAGE_KEY) !== initial.originalText) throw new Error("另一页面已更新数据，请刷新后重新加载；未覆盖其修改。");
+      saveMarketing(localStorage, stateRef.current, migrationRef.current); migrationRef.current = undefined; showcaseRef.current = false;
     }
   } catch (error) { const message = `营销升级 / 保存失败，原数据保留：${error instanceof Error ? error.message : "请检查浏览器存储空间"}`; issueRef.current = message; setIssue(message); } }, [initial]);
   useEffect(() => { const listener = (event: StorageEvent) => {
@@ -45,7 +54,7 @@ export function MarketingProvider({ children }: { children: ReactNode }) {
     }
     return result;
   };
-  const reset = () => { if (!marketingPermissions(getCurrentActor()).manage) return; const next = createMarketingDemoState(membersRef.current, Date.now()); try { localStorage.setItem(MARKETING_STORAGE_KEY, JSON.stringify(next)); stateRef.current = next; migrationRef.current = undefined; issueRef.current = ""; setState(next); setIssue(""); } catch { setIssue("重置保存失败，旧数据未被删除。"); } };
+  const reset = () => { const access = marketingPermissions(getCurrentActor()); if (!access.manage) return; const seed = createMarketingDemoState(membersRef.current, Date.now()); const next = access.brands.length ? appendMarketingShowcase(seed, access.brands[0], Date.now()) : seed; try { localStorage.setItem(MARKETING_STORAGE_KEY, JSON.stringify(next)); stateRef.current = next; migrationRef.current = undefined; issueRef.current = ""; setState(next); setIssue(""); } catch { setIssue("重置保存失败，旧数据未被删除。"); } };
   return <Context.Provider value={{ state, issue, act, reset }}>{children}</Context.Provider>;
 }
 export function useMarketing() { const value = useContext(Context); if (!value) throw new Error("MarketingProvider missing"); return value; }

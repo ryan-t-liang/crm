@@ -69,6 +69,10 @@ Activity-owned PickupSchedule configurations share pickup-slot capacity across e
 
 Demonstration records are created only by the initial/reset seed. Activity detail selectors never inject fictional bookings or draws into an existing activity; a new empty activity remains empty.
 
+Explicit exception authorized on 2026-09-20: `mock/marketing-showcase-data.ts` adds one independent, versioned demonstration activity (200 ACTIVITY bookings and 200 persisted draws). A manager's loader adds it only once, validates the combined state and checks the original storage value before saving. It does not replace or amend any existing activity, customer, record, or timestamp; corrupt storage is untouched. The original seed and ordinary empty-activity behavior remain unchanged.
+
+Session prize rules: no SessionPrize rows means inherit the activity's default prize pool and share only its unallocated inventory. Any explicit rows form a whole-pool override (omitted/disabled prizes do not fall back). Draw snapshots preserve effective probabilities and availability; explicit session reservations cannot be consumed by inherited sessions.
+
 The marketing store retains `kivisense-marketing-prototype-v1` with schema version 2. Safe V1 conversion preserves the exact source string at `kivisense-marketing-prototype-v1:backup-v1`; unknown, corrupt or conflicting data is preserved rather than silently replaced. Marketing reset changes only the primary marketing namespace.
 
 Frontend role, randomness, capacity and persistence checks demonstrate product behavior. They are not production concurrency, security or backend guarantees.
